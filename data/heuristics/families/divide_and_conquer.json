@@ -1,0 +1,200 @@
+{
+  "asset_id": "family.divide_and_conquer.heuristics.v1",
+  "asset_version": "phase3.v1",
+  "family": "divide_and_conquer",
+  "family_aliases": [],
+  "domain": "algorithmic",
+  "name": "Divide and Conquer Heuristic Registry",
+  "summary": "Family-local interpretation of shared heuristics for split, recurse, and merge algorithms.",
+  "heuristic_bindings": [
+    {
+      "heuristic_id": "split_balance_instability",
+      "sanctioned_producer_kinds": [
+        "runtime_transform"
+      ],
+      "family_notes": [
+        "Uneven partitions create depth pressure and reduce parallel usefulness.",
+        "A split should remain balanced enough that one branch does not dominate the search."
+      ],
+      "supported_action_classes": [
+        "precondition",
+        "branch_and_compare"
+      ],
+      "action_priority": [
+        "precondition",
+        "branch_and_compare"
+      ],
+      "expected_evidence_strength": "strong",
+      "admissibility_notes": [
+        "Imbalanced splits should be surfaced before recursion commits to them."
+      ],
+      "escalation_conditions": [
+        "Escalate when one partition repeatedly dominates the decomposition."
+      ],
+      "uncertainty_notes": [
+        "Best treated as a split-quality warning rather than a hard failure."
+      ],
+      "references": [
+        {
+          "title": "Divide and conquer heuristic registry",
+          "note": "Local family interpretation of the shared split heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "recursion_depth_pressure",
+      "sanctioned_producer_kinds": [
+        "runtime_transform"
+      ],
+      "family_notes": [
+        "Depth can grow too quickly for the input scale or split plan.",
+        "A recursion pattern that gets too deep should be rebalanced or replaced."
+      ],
+      "supported_action_classes": [
+        "precondition",
+        "replace_stage"
+      ],
+      "action_priority": [
+        "precondition",
+        "replace_stage"
+      ],
+      "expected_evidence_strength": "moderate",
+      "admissibility_notes": [
+        "Depth growth should be monitored before it becomes the primary bottleneck."
+      ],
+      "escalation_conditions": [
+        "Escalate when recursion depth grows faster than expected for the input size."
+      ],
+      "uncertainty_notes": [
+        "Use when recursion depth is itself the bottleneck."
+      ],
+      "references": [
+        {
+          "title": "Divide and conquer heuristic registry",
+          "note": "Local family interpretation of the shared recursion heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "merge_cost_pressure",
+      "sanctioned_producer_kinds": [
+        "runtime_transform"
+      ],
+      "family_notes": [
+        "Merging should not dominate total work once subproblems are solved.",
+        "A combine step that dominates runtime should be monitored or revised."
+      ],
+      "supported_action_classes": [
+        "gate_or_validate",
+        "replace_stage"
+      ],
+      "action_priority": [
+        "gate_or_validate",
+        "replace_stage"
+      ],
+      "expected_evidence_strength": "moderate",
+      "admissibility_notes": [
+        "Combine-stage bottlenecks should be validated before further tuning."
+      ],
+      "escalation_conditions": [
+        "Escalate when combine work dominates overall runtime or memory growth."
+      ],
+      "uncertainty_notes": [
+        "Use as a runtime-shaping heuristic when combine cost threatens scalability."
+      ],
+      "references": [
+        {
+          "title": "Divide and conquer heuristic registry",
+          "note": "Local family interpretation of the shared merge-cost heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "coverage_fragmentation",
+      "sanctioned_producer_kinds": [
+        "runtime_transform"
+      ],
+      "family_notes": [
+        "Subproblems should cover the full input without gaps or overlap.",
+        "Fragmented coverage usually means the decomposition plan needs validation."
+      ],
+      "supported_action_classes": [
+        "gate_or_validate",
+        "split_stage"
+      ],
+      "action_priority": [
+        "gate_or_validate",
+        "split_stage"
+      ],
+      "expected_evidence_strength": "strong",
+      "admissibility_notes": [
+        "Coverage gaps or overlaps should be treated as structural defects."
+      ],
+      "escalation_conditions": [
+        "Escalate when decomposition leaves missing or duplicated coverage."
+      ],
+      "uncertainty_notes": [
+        "Useful wherever a decomposition can leave missing or duplicated coverage."
+      ],
+      "references": [
+        {
+          "title": "Divide and conquer heuristic registry",
+          "note": "Local family interpretation of the shared coverage heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "constraint_violation_risk",
+      "sanctioned_producer_kinds": [
+        "runtime_transform"
+      ],
+      "family_notes": [
+        "Partitioning assumptions should stay consistent across recursive steps.",
+        "If the split plan violates declared constraints, reject it early."
+      ],
+      "supported_action_classes": [
+        "gate_or_validate",
+        "precondition"
+      ],
+      "action_priority": [
+        "gate_or_validate",
+        "precondition"
+      ],
+      "expected_evidence_strength": "strong",
+      "admissibility_notes": [
+        "Decomposition invariants should be checked before further recursion."
+      ],
+      "escalation_conditions": [
+        "Escalate when split outputs violate declared family constraints."
+      ],
+      "uncertainty_notes": [
+        "Useful as a family-local admissibility signal."
+      ],
+      "references": [
+        {
+          "title": "Divide and conquer heuristic registry",
+          "note": "Local family interpretation of a shared admissibility heuristic."
+        }
+      ]
+    }
+  ],
+  "audit": {
+    "provenance": "namespace_pilot_asset",
+    "source_kind": "sciona_atoms_asset",
+    "review_status": "draft",
+    "rationale": "Demonstrates that a non-signal family can interpret the shared heuristic surface without redefining it.",
+    "dejargonized_summary": "These are the generic warning signs that matter most for split-and-merge algorithms and the structural responses they justify.",
+    "uncertainty_notes": [
+      "The registry intentionally interprets shared heuristics locally without redefining the canonical identifiers."
+    ],
+    "references": [
+      {
+        "title": "Divide and conquer heuristic registry",
+        "note": "Local transitional family registry for shared heuristic interpretation."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms"
+    ]
+  }
+}
