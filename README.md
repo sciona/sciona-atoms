@@ -6,8 +6,8 @@ This initial cut hosts two namespace slices:
 - signal-processing atom package: `sciona.atoms.signal_processing.biosppy.ecg`
 - signal-processing probe package: `sciona.probes.signal_processing.biosppy_ecg`
 - signal-processing family heuristic asset: `data/heuristics/families/signal_event_rate.json`
-- state-estimation atom package: `sciona.atoms.state_estimation.kalman_filters.filter_rs`
-- state-estimation probe package: `sciona.probes.state_estimation.kalman_filter_rs`
+- state-estimation atom packages: `sciona.atoms.state_estimation.kalman_filters.filter_rs`, `sciona.atoms.state_estimation.particle_filters.basic`
+- state-estimation probe packages: `sciona.probes.state_estimation.kalman_filter_rs`, `sciona.probes.state_estimation.particle_filters_basic`
 - state-estimation family heuristic asset: `data/heuristics/families/sequential_filter.json`
 
 The repo is intentionally PEP 420-style at the shared namespace roots:
