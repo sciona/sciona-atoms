@@ -1,0 +1,137 @@
+{
+  "asset_id": "family.sequential_filter.heuristics.v1",
+  "asset_version": "phase8.v1",
+  "family": "sequential_filter",
+  "family_aliases": [
+    "kalman_filter",
+    "particle_filter"
+  ],
+  "domain": "state_estimation",
+  "name": "Sequential Filter Heuristic Registry",
+  "summary": "Family-local interpretation of shared heuristics for recursive state-estimation pipelines.",
+  "heuristic_bindings": [
+    {
+      "heuristic_id": "residual_structure_after_transform",
+      "sanctioned_producer_kinds": [
+        "atom_output",
+        "runtime_transform"
+      ],
+      "family_notes": [
+        "Prediction residuals should not keep strong structure if the current transition and observation path is explaining the data well.",
+        "Persistent residual structure is usually a sign that the current transform path needs validation or replacement."
+      ],
+      "supported_action_classes": [
+        "gate_or_validate",
+        "replace_stage"
+      ],
+      "action_priority": [
+        "gate_or_validate",
+        "replace_stage"
+      ],
+      "expected_evidence_strength": "strong",
+      "admissibility_notes": [
+        "Use residual structure as a first-class warning before spending more budget on parameter retuning."
+      ],
+      "escalation_conditions": [
+        "Escalate when repeated residual mismatch persists after an otherwise valid update path."
+      ],
+      "uncertainty_notes": [
+        "Residual evidence should be interpreted alongside the current uncertainty model."
+      ],
+      "references": [
+        {
+          "title": "Sequential filter heuristic registry",
+          "note": "Local family interpretation of the shared residual heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "alignment_error",
+      "sanctioned_producer_kinds": [
+        "atom_output",
+        "runtime_transform"
+      ],
+      "family_notes": [
+        "Measurement-space outputs need to stay aligned with the modeled observation boundary.",
+        "Alignment mismatch often indicates the wrong observation mapping or an incompatible stage ordering."
+      ],
+      "supported_action_classes": [
+        "gate_or_validate",
+        "replace_stage"
+      ],
+      "action_priority": [
+        "gate_or_validate",
+        "replace_stage"
+      ],
+      "expected_evidence_strength": "moderate",
+      "admissibility_notes": [
+        "Validate observation alignment before assuming the residual problem is only a tuning issue."
+      ],
+      "escalation_conditions": [
+        "Escalate when predicted observations and consumed measurements drift into different structural coordinates."
+      ],
+      "uncertainty_notes": [
+        "Structural alignment issues can masquerade as poor score metrics."
+      ],
+      "references": [
+        {
+          "title": "Sequential filter heuristic registry",
+          "note": "Local family interpretation of the shared alignment heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "constraint_violation_risk",
+      "sanctioned_producer_kinds": [
+        "runtime_transform"
+      ],
+      "family_notes": [
+        "Recursive updates should preserve declared dimensionality and covariance assumptions across steps.",
+        "If those assumptions drift, reject or validate the candidate before further rollout."
+      ],
+      "supported_action_classes": [
+        "gate_or_validate",
+        "precondition"
+      ],
+      "action_priority": [
+        "gate_or_validate",
+        "precondition"
+      ],
+      "expected_evidence_strength": "strong",
+      "admissibility_notes": [
+        "Use as a family-local admissibility check when recursive state contracts may have been violated."
+      ],
+      "escalation_conditions": [
+        "Escalate when covariance, dimensionality, or update-order assumptions are no longer coherent."
+      ],
+      "uncertainty_notes": [
+        "Treat as a hard warning about structural contract risk, not as a family-specific score."
+      ],
+      "references": [
+        {
+          "title": "Sequential filter heuristic registry",
+          "note": "Local family interpretation of the shared admissibility heuristic."
+        }
+      ]
+    }
+  ],
+  "audit": {
+    "provenance": "namespace_pilot_asset",
+    "source_kind": "sciona_atoms_asset",
+    "review_status": "draft",
+    "rationale": "Demonstrates that recursive state-estimation families can consume the shared heuristic vocabulary without redefining it.",
+    "dejargonized_summary": "These are the generic warning signs that matter most for recursive prediction-update pipelines and the structural responses they justify.",
+    "uncertainty_notes": [
+      "This registry interprets shared heuristic identifiers locally without changing their canonical meaning."
+    ],
+    "references": [
+      {
+        "title": "Sequential filter heuristic registry",
+        "note": "Initial cross-family rollout for recursive state-estimation pipelines."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms"
+    ]
+  }
+}
