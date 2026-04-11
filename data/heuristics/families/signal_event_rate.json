@@ -1,0 +1,160 @@
+{
+  "asset_id": "family.signal_event_rate.heuristics.v1",
+  "asset_version": "phase3.v1",
+  "family": "signal_event_rate",
+  "family_aliases": ["signal_detect_measure"],
+  "domain": "signal_processing",
+  "name": "Signal Event Rate Heuristic Registry",
+  "summary": "Family-local interpretation of shared heuristics for waveform-to-event-to-rate pipelines.",
+  "heuristic_bindings": [
+    {
+      "heuristic_id": "boundary_discontinuity",
+      "sanctioned_producer_kinds": ["atom_output", "runtime_transform"],
+      "family_notes": [
+        "Waveform steps can erase context before the detector sees the raw boundary.",
+        "Cleanup before filtering is preferred when the boundary itself is unstable."
+      ],
+      "supported_action_classes": ["precondition", "insert_correction"],
+      "action_priority": ["precondition", "insert_correction"],
+      "expected_evidence_strength": "strong",
+      "admissibility_notes": [
+        "Prefer cleanup before the first major transform when abrupt input steps are present."
+      ],
+      "escalation_conditions": [
+        "Escalate when discontinuities occur before the first conditioning stage."
+      ],
+      "uncertainty_notes": [
+        "Use as a pre-filter warning, not as a universal rejection signal."
+      ],
+      "references": [
+        {
+          "title": "Signal event rate heuristic registry",
+          "note": "Local family interpretation of the shared boundary heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "quality_instability",
+      "sanctioned_producer_kinds": ["atom_output", "diagnostic_atom", "runtime_transform"],
+      "family_notes": [
+        "A local quality gate helps avoid committing to one brittle conditioning path.",
+        "Branching is justified when the waveform quality changes materially over time."
+      ],
+      "supported_action_classes": ["gate_or_validate", "branch_and_compare"],
+      "action_priority": ["gate_or_validate", "branch_and_compare"],
+      "expected_evidence_strength": "moderate",
+      "admissibility_notes": [
+        "Quality variation should not silently force one brittle path when a gate or alternate branch is available."
+      ],
+      "escalation_conditions": [
+        "Escalate when local quality changes enough that one fixed path is likely to fail on part of the window."
+      ],
+      "uncertainty_notes": [
+        "Windowed quality metrics are heuristic and should not be treated as a universal failure signal."
+      ],
+      "references": [
+        {
+          "title": "Signal event rate heuristic registry",
+          "note": "Local family interpretation of the shared quality heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "interval_instability",
+      "sanctioned_producer_kinds": ["atom_output", "runtime_transform"],
+      "family_notes": [
+        "The detector output should not drift into implausible event spacing before rate estimation.",
+        "After detection, timing cleanup is preferable to letting the rate estimator absorb the error."
+      ],
+      "supported_action_classes": ["insert_correction", "smooth_or_aggregate"],
+      "action_priority": ["insert_correction", "smooth_or_aggregate"],
+      "expected_evidence_strength": "strong",
+      "admissibility_notes": [
+        "Downstream measure stages should not trust unstable event spacing without cleanup or smoothing."
+      ],
+      "escalation_conditions": [
+        "Escalate when implausible event spacing persists after an otherwise valid detector path."
+      ],
+      "uncertainty_notes": [
+        "This is an after-detection heuristic only."
+      ],
+      "references": [
+        {
+          "title": "Signal event rate heuristic registry",
+          "note": "Local family interpretation of the shared interval heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "alignment_error",
+      "sanctioned_producer_kinds": ["runtime_transform"],
+      "family_notes": [
+        "Detected events can drift away from the conditioned waveform or the downstream rate expectation.",
+        "Alignment errors often show up as a structural mismatch before they show up as a score drop."
+      ],
+      "supported_action_classes": ["gate_or_validate", "replace_stage"],
+      "action_priority": ["gate_or_validate", "replace_stage"],
+      "expected_evidence_strength": "moderate",
+      "admissibility_notes": [
+        "Treat detector-to-measure misalignment as a structural warning before retuning parameters."
+      ],
+      "escalation_conditions": [
+        "Escalate when outputs no longer line up with the conditioned representation they were derived from."
+      ],
+      "uncertainty_notes": [
+        "Use when the detector or post-detection stage appears structurally misaligned."
+      ],
+      "references": [
+        {
+          "title": "Signal event rate heuristic registry",
+          "note": "Local family interpretation of the shared alignment heuristic."
+        }
+      ]
+    },
+    {
+      "heuristic_id": "constraint_violation_risk",
+      "sanctioned_producer_kinds": ["runtime_transform"],
+      "family_notes": [
+        "The pipeline should not lose the waveform boundary before the detector can use it.",
+        "If the required inputs or adjacency assumptions are absent, treat the candidate as risky."
+      ],
+      "supported_action_classes": ["gate_or_validate", "precondition"],
+      "action_priority": ["gate_or_validate", "precondition"],
+      "expected_evidence_strength": "strong",
+      "admissibility_notes": [
+        "Boundary and adjacency assumptions should remain explicit before downstream conversion becomes lossy."
+      ],
+      "escalation_conditions": [
+        "Escalate when required boundary inputs or stage adjacency assumptions are absent."
+      ],
+      "uncertainty_notes": [
+        "Useful as a general admissibility heuristic for signal-style pipelines."
+      ],
+      "references": [
+        {
+          "title": "Signal event rate heuristic registry",
+          "note": "Local family interpretation of a shared admissibility heuristic."
+        }
+      ]
+    }
+  ],
+  "audit": {
+    "provenance": "repo_local_transitional_asset",
+    "source_kind": "ageo_atoms_asset",
+    "review_status": "draft",
+    "rationale": "Captures family-local readings of shared heuristics without redefining the canonical meaning.",
+    "dejargonized_summary": "These are the warning signs that matter most for waveform-to-event-to-rate pipelines and the structural responses they support.",
+    "uncertainty_notes": [
+      "Family guidance should remain local and should not redefine the shared heuristic identifiers."
+    ],
+    "references": [
+      {
+        "title": "Signal event rate heuristic registry",
+        "note": "Local transitional family registry for shared heuristic interpretation."
+      }
+    ],
+    "maintainers": [
+      "ageo-atoms"
+    ]
+  }
+}
