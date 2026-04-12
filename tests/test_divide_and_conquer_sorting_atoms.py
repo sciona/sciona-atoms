@@ -4,6 +4,7 @@ import numpy as np
 
 from sciona.atoms.algorithmic.divide_and_conquer.sorting import (
     counting_sort,
+    heapsort,
     merge_sort,
     quicksort,
     radix_sort,
@@ -20,8 +21,18 @@ def test_quicksort_returns_sorted_copy() -> None:
     assert np.array_equal(quicksort(data), np.array([1, 3, 7, 9]))
 
 
-def test_counting_and_radix_sort_handle_integer_inputs() -> None:
+def test_heapsort_returns_sorted_copy() -> None:
+    data = np.array([6, 2, 8, 2, 1])
+    assert np.array_equal(heapsort(data), np.array([1, 2, 2, 6, 8]))
+
+
+def test_counting_sort_handles_negative_integer_inputs() -> None:
+    data = np.array([12, -4, 7, -4, 0, 3], dtype=int)
+    expected = np.array([-4, -4, 0, 3, 7, 12], dtype=int)
+    assert np.array_equal(counting_sort(data), expected)
+
+
+def test_radix_sort_handles_non_negative_integer_inputs() -> None:
     data = np.array([12, 4, 7, 4, 0, 3], dtype=int)
     expected = np.array([0, 3, 4, 4, 7, 12], dtype=int)
-    assert np.array_equal(counting_sort(data), expected)
     assert np.array_equal(radix_sort(data), expected)
