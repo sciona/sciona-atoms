@@ -1,0 +1,116 @@
+{
+  "nodes": [
+    {
+      "node_id": "posterior_canon_root",
+      "parent_id": null,
+      "name": "posterior_canon",
+      "description": "Analytical closed-form parameter folding via sufficient statistics for a binary observation model with conjugate hyperparameter tuple.",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "aggregate_sufficient_statistics",
+        "closed_form_parameter_fold"
+      ],
+      "depth": 0,
+      "type_signature": "",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Two-stage analytical closed-form parameter folding via sufficient statistics. First aggregates binary observations into compact counts, then folds those counts into the prior hyperparameter tuple to produce updated parameters within the same parametric family.",
+      "critic_notes": "",
+      "decomposition_rationale": "Decouples data reduction (sufficient statistics extraction) from the algebraic hyperparameter update, enabling independent testing and reuse of each stage."
+    },
+    {
+      "node_id": "aggregate_sufficient_statistics",
+      "parent_id": "posterior_canon_root",
+      "name": "aggregate_sufficient_statistics",
+      "description": "Computes sufficient statistics from observed data: count of successes (cnt1) and count of failures (cnt0) from binary observations.",
+      "concept_type": "conjugate_update",
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "np.ndarray",
+          "constraints": "Binary observations, each value in {0, 1}."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sufficient_stats",
+          "type_desc": "tuple[int, int]",
+          "constraints": "Pair (cnt1, cnt0) representing success and failure counts."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(data: array<int>) -> tuple<int, int>",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Sufficient_Statistics_Aggregator. Reduces an array of binary observations into a compact pair of counts (successes, failures). The operation is pure, deterministic, and lossless with respect to the information needed by the downstream parameter fold. is_conjugate: true.",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "closed_form_parameter_fold",
+      "parent_id": "posterior_canon_root",
+      "name": "closed_form_parameter_fold",
+      "description": "Applies the analytical closed-form parameter folding via sufficient statistics. Updates hyperparameters: α_post = α_prior + cnt1, β_post = β_prior + cnt0. Returns new immutable parameter tuple.",
+      "concept_type": "conjugate_update",
+      "inputs": [
+        {
+          "name": "prior",
+          "type_desc": "tuple",
+          "constraints": "Two-element hyperparameter vector (α, β) with positive real components."
+        },
+        {
+          "name": "sufficient_stats",
+          "type_desc": "tuple[int, int]",
+          "constraints": "Pair (cnt1, cnt0) from upstream aggregation."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "updated_params",
+          "type_desc": "tuple",
+          "constraints": "New immutable hyperparameter vector within the same parametric family; inputs are not mutated."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(prior: hyperparameter tuple, sufficient_stats: tuple<int, int>) -> hyperparameter tuple",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Closed_Form_Parameter_Fold. Fuses prior pseudo-counts with observed sufficient statistics using exact algebraic addition. The operation is pure: it returns a new hyperparameter tuple without mutating inputs. No sampling or numerical optimisation is required. is_conjugate: true.",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "aggregate_sufficient_statistics",
+      "target_id": "closed_form_parameter_fold",
+      "output_name": "sufficient_stats",
+      "input_name": "sufficient_stats",
+      "source_type": "tuple[int, int]",
+      "target_type": "tuple[int, int]",
+      "requires_glue": false
+    }
+  ],
+  "metadata": {
+    "source": "ingester",
+    "class_name": "posterior_canon",
+    "is_conjugate": true
+  }
+}
+

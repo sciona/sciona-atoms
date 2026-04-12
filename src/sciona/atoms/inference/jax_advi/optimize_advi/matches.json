@@ -1,0 +1,267 @@
+[
+  {
+    "pdg_node": {
+      "predicate_id": "summarize_latent_layout",
+      "statement": "(theta_shape_dict: dict[str, tuple[int, ...]]) -> tuple[jnp.ndarray, flatten/reconstruct metadata]",
+      "informal_desc": "Builds placeholder latent tensors from shape specs and derives flatten/reconstruction metadata for a single unconstrained latent vector.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "summarize_latent_layout",
+          "type_signature": "(theta_shape_dict: dict[str, tuple[int, ...]]) -> tuple[jnp.ndarray, flatten/reconstruct metadata]",
+          "docstring": "Builds placeholder latent tensors from shape specs and derives flatten/reconstruction metadata for a single unconstrained latent vector.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "summarize_latent_layout",
+          "type_signature": "(theta_shape_dict: dict[str, tuple[int, ...]]) -> tuple[jnp.ndarray, flatten/reconstruct metadata]",
+          "docstring": "Builds placeholder latent tensors from shape specs and derives flatten/reconstruction metadata for a single unconstrained latent vector.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "summarize_latent_layout",
+            "type_signature": "(theta_shape_dict: dict[str, tuple[int, ...]]) -> tuple[jnp.ndarray, flatten/reconstruct metadata]",
+            "docstring": "Builds placeholder latent tensors from shape specs and derives flatten/reconstruction metadata for a single unconstrained latent vector.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "prepare_stochastic_elbo_oracle",
+      "statement": "(flat_theta_template: jnp.ndarray, shape_summary: flatten/reconstruct metadata, constrain_fun_dict: dict[str, callable], log_lik_fun: callable, log_prior_fun: callable, seed: int | PRNGKey-like RNG state, M: int) -> tuple[callable, int | PRNGKey-like RNG state]",
+      "informal_desc": "Uses the seed to generate fixed standard-normal Monte Carlo noise and curries a stochastic ELBO objective callable over model-specific components.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "prepare_stochastic_elbo_oracle",
+          "type_signature": "(flat_theta_template: jnp.ndarray, shape_summary: flatten/reconstruct metadata, constrain_fun_dict: dict[str, callable], log_lik_fun: callable, log_prior_fun: callable, seed: int | PRNGKey-like RNG state, M: int) -> tuple[callable, int | PRNGKey-like RNG state]",
+          "docstring": "Uses the seed to generate fixed standard-normal Monte Carlo noise and curries a stochastic ELBO objective callable over model-specific components.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "prepare_stochastic_elbo_oracle",
+          "type_signature": "(flat_theta_template: jnp.ndarray, shape_summary: flatten/reconstruct metadata, constrain_fun_dict: dict[str, callable], log_lik_fun: callable, log_prior_fun: callable, seed: int | PRNGKey-like RNG state, M: int) -> tuple[callable, int | PRNGKey-like RNG state]",
+          "docstring": "Uses the seed to generate fixed standard-normal Monte Carlo noise and curries a stochastic ELBO objective callable over model-specific components.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "prepare_stochastic_elbo_oracle",
+            "type_signature": "(flat_theta_template: jnp.ndarray, shape_summary: flatten/reconstruct metadata, constrain_fun_dict: dict[str, callable], log_lik_fun: callable, log_prior_fun: callable, seed: int | PRNGKey-like RNG state, M: int) -> tuple[callable, int | PRNGKey-like RNG state]",
+            "docstring": "Uses the seed to generate fixed standard-normal Monte Carlo noise and curries a stochastic ELBO objective callable over model-specific components.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "initialize_variational_state",
+      "statement": "(flat_theta_template: jnp.ndarray, var_param_inits: dict[str, tuple[float, float]], rng_state_after_objective_init: int | PRNGKey-like RNG state) -> tuple[np.ndarray, int | PRNGKey-like RNG state]",
+      "informal_desc": "Samples initial mean-field variational parameters (means and log standard deviations) and flattens them for optimization.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "initialize_variational_state",
+          "type_signature": "(flat_theta_template: jnp.ndarray, var_param_inits: dict[str, tuple[float, float]], rng_state_after_objective_init: int | PRNGKey-like RNG state) -> tuple[np.ndarray, int | PRNGKey-like RNG state]",
+          "docstring": "Samples initial mean-field variational parameters (means and log standard deviations) and flattens them for optimization.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "initialize_variational_state",
+          "type_signature": "(flat_theta_template: jnp.ndarray, var_param_inits: dict[str, tuple[float, float]], rng_state_after_objective_init: int | PRNGKey-like RNG state) -> tuple[np.ndarray, int | PRNGKey-like RNG state]",
+          "docstring": "Samples initial mean-field variational parameters (means and log standard deviations) and flattens them for optimization.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "initialize_variational_state",
+            "type_signature": "(flat_theta_template: jnp.ndarray, var_param_inits: dict[str, tuple[float, float]], rng_state_after_objective_init: int | PRNGKey-like RNG state) -> tuple[np.ndarray, int | PRNGKey-like RNG state]",
+            "docstring": "Samples initial mean-field variational parameters (means and log standard deviations) and flattens them for optimization.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "optimize_variational_objective",
+      "statement": "(objective_fun: callable, init_var_params_flat: np.ndarray, opt_method: str, verbose: bool) -> optimizer result object",
+      "informal_desc": "Chooses optimizer backend by method name and minimizes the stochastic objective over flattened variational parameters.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "optimize_variational_objective",
+          "type_signature": "(objective_fun: callable, init_var_params_flat: np.ndarray, opt_method: str, verbose: bool) -> optimizer result object",
+          "docstring": "Chooses optimizer backend by method name and minimizes the stochastic objective over flattened variational parameters.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "optimize_variational_objective",
+          "type_signature": "(objective_fun: callable, init_var_params_flat: np.ndarray, opt_method: str, verbose: bool) -> optimizer result object",
+          "docstring": "Chooses optimizer backend by method name and minimizes the stochastic objective over flattened variational parameters.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "optimize_variational_objective",
+            "type_signature": "(objective_fun: callable, init_var_params_flat: np.ndarray, opt_method: str, verbose: bool) -> optimizer result object",
+            "docstring": "Chooses optimizer backend by method name and minimizes the stochastic objective over flattened variational parameters.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  }
+]
+

@@ -1,0 +1,2 @@
+"""Conjugate priors atoms."""
+
