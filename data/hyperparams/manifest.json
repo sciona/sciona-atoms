@@ -1,0 +1,96 @@
+{
+  "reviewed_atoms": [
+    {
+      "atom": "peak_correction",
+      "path": "src/sciona/atoms/signal_processing/biosppy/ecg.py",
+      "family": "signal_processing",
+      "module_family": "biosppy",
+      "status": "approved",
+      "reason": "Tolerance for peak correction is an explicit algorithm knob on the namespace pilot wrapper.",
+      "tunable_params": [
+        {
+          "name": "tol",
+          "kind": "float",
+          "default": 0.05,
+          "min_value": 0.005,
+          "max_value": 0.15,
+          "semantic_role": "Peak correction tolerance in seconds",
+          "range_source": "biosppy wrapper default plus audit range",
+          "source_confidence": "medium",
+          "safe_to_optimize": true
+        }
+      ],
+      "blocked_params": [],
+      "audit_method": "namespace_wrapper_review"
+    },
+    {
+      "atom": "reject_outlier_intervals",
+      "path": "src/sciona/atoms/signal_processing/biosppy/ecg.py",
+      "family": "signal_processing",
+      "module_family": "biosppy",
+      "status": "approved",
+      "reason": "RR outlier rejection thresholds are explicit robustness knobs on the namespace pilot wrapper.",
+      "tunable_params": [
+        {
+          "name": "mad_scale",
+          "kind": "float",
+          "default": 3.0,
+          "min_value": 1.5,
+          "max_value": 6.0,
+          "semantic_role": "MAD multiplier used to reject implausible RR intervals",
+          "range_source": "robust statistics convention",
+          "source_confidence": "medium",
+          "safe_to_optimize": true
+        },
+        {
+          "name": "min_interval_s",
+          "kind": "float",
+          "default": 0.25,
+          "min_value": 0.15,
+          "max_value": 0.4,
+          "semantic_role": "Minimum allowed RR interval in seconds",
+          "range_source": "physiological lower bound",
+          "source_confidence": "high",
+          "safe_to_optimize": true
+        },
+        {
+          "name": "max_interval_s",
+          "kind": "float",
+          "default": 2.0,
+          "min_value": 1.2,
+          "max_value": 3.0,
+          "semantic_role": "Maximum allowed RR interval in seconds",
+          "range_source": "physiological upper bound",
+          "source_confidence": "high",
+          "safe_to_optimize": true
+        }
+      ],
+      "blocked_params": [],
+      "audit_method": "namespace_wrapper_review"
+    },
+    {
+      "atom": "heart_rate_computation_median_smoothed",
+      "path": "src/sciona/atoms/signal_processing/biosppy/ecg.py",
+      "family": "signal_processing",
+      "module_family": "biosppy",
+      "status": "approved",
+      "reason": "Smoothing window is an explicit post-processing hyperparameter on the namespace pilot wrapper.",
+      "tunable_params": [
+        {
+          "name": "smoothing_window",
+          "kind": "int",
+          "default": 5,
+          "min_value": 1,
+          "max_value": 15,
+          "step": 2,
+          "semantic_role": "Median smoothing window size for heart-rate estimation",
+          "range_source": "empirical",
+          "source_confidence": "medium",
+          "safe_to_optimize": true
+        }
+      ],
+      "blocked_params": [],
+      "audit_method": "namespace_wrapper_review"
+    }
+  ]
+}
