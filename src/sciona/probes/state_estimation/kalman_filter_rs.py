@@ -16,12 +16,12 @@ class ProbeTarget:
 _MODULE = "sciona.atoms.state_estimation.kalman_filters.filter_rs"
 
 KALMAN_FILTER_RS_PROBE_TARGETS: tuple[ProbeTarget, ...] = (
-    ProbeTarget(f"{_MODULE}.initializekalmanstatemodel", _MODULE, "initializekalmanstatemodel"),
-    ProbeTarget(f"{_MODULE}.predictlatentstateandcovariance", _MODULE, "predictlatentstateandcovariance"),
-    ProbeTarget(f"{_MODULE}.predictlatentstatesteadystate", _MODULE, "predictlatentstatesteadystate"),
-    ProbeTarget(f"{_MODULE}.evaluatemeasurementoracle", _MODULE, "evaluatemeasurementoracle"),
-    ProbeTarget(f"{_MODULE}.updateposteriorstateandcovariance", _MODULE, "updateposteriorstateandcovariance"),
-    ProbeTarget(f"{_MODULE}.updateposteriorstatesteadystate", _MODULE, "updateposteriorstatesteadystate"),
+    ProbeTarget(f"{_MODULE}.initialize_kalman_state_model", _MODULE, "initialize_kalman_state_model"),
+    ProbeTarget(f"{_MODULE}.predict_latent_state_and_covariance", _MODULE, "predict_latent_state_and_covariance"),
+    ProbeTarget(f"{_MODULE}.predict_latent_state_steady_state", _MODULE, "predict_latent_state_steady_state"),
+    ProbeTarget(f"{_MODULE}.evaluate_measurement_oracle", _MODULE, "evaluate_measurement_oracle"),
+    ProbeTarget(f"{_MODULE}.update_posterior_state_and_covariance", _MODULE, "update_posterior_state_and_covariance"),
+    ProbeTarget(f"{_MODULE}.update_posterior_state_steady_state", _MODULE, "update_posterior_state_steady_state"),
 )
 
 

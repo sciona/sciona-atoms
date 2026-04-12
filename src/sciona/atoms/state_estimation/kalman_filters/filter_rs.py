@@ -10,8 +10,8 @@ StateDict = dict[str, np.ndarray]
 
 
 @icontract.require(lambda init_config: init_config is not None, "init_config cannot be None")
-@icontract.ensure(lambda result: result is not None, "InitializeKalmanStateModel output must not be None")
-def initializekalmanstatemodel(
+@icontract.ensure(lambda result: result is not None, "initialize_kalman_state_model output must not be None")
+def initialize_kalman_state_model(
     init_config: dict[str, np.ndarray | list[float]],
 ) -> StateDict:
     """Create the initial read-only latent state and covariance."""
@@ -31,8 +31,8 @@ def initializekalmanstatemodel(
 @icontract.require(lambda B: B is not None, "B cannot be None")
 @icontract.require(lambda F: F is not None, "F cannot be None")
 @icontract.require(lambda Q: Q is not None, "Q cannot be None")
-@icontract.ensure(lambda result: result is not None, "PredictLatentStateAndCovariance output must not be None")
-def predictlatentstateandcovariance(
+@icontract.ensure(lambda result: result is not None, "predict_latent_state_and_covariance output must not be None")
+def predict_latent_state_and_covariance(
     state_in: StateDict,
     u: np.ndarray,
     B: np.ndarray,
@@ -54,8 +54,8 @@ def predictlatentstateandcovariance(
 @icontract.require(lambda state_in: state_in is not None, "state_in cannot be None")
 @icontract.require(lambda u: u is not None, "u cannot be None")
 @icontract.require(lambda B: B is not None, "B cannot be None")
-@icontract.ensure(lambda result: result is not None, "PredictLatentStateSteadyState output must not be None")
-def predictlatentstatesteadystate(
+@icontract.ensure(lambda result: result is not None, "predict_latent_state_steady_state output must not be None")
+def predict_latent_state_steady_state(
     state_in: StateDict,
     u: np.ndarray,
     B: np.ndarray,
@@ -72,8 +72,8 @@ def predictlatentstatesteadystate(
 @icontract.require(lambda x: x is not None, "x cannot be None")
 @icontract.require(lambda z: z is not None, "z cannot be None")
 @icontract.require(lambda H: H is not None, "H cannot be None")
-@icontract.ensure(lambda result: all(item is not None for item in result), "EvaluateMeasurementOracle all outputs must not be None")
-def evaluatemeasurementoracle(
+@icontract.ensure(lambda result: all(item is not None for item in result), "evaluate_measurement_oracle all outputs must not be None")
+def evaluate_measurement_oracle(
     x: np.ndarray,
     z: np.ndarray,
     H: np.ndarray,
@@ -92,8 +92,8 @@ def evaluatemeasurementoracle(
 @icontract.require(lambda R: R is not None, "R cannot be None")
 @icontract.require(lambda H: H is not None, "H cannot be None")
 @icontract.require(lambda innovation: innovation is not None, "innovation cannot be None")
-@icontract.ensure(lambda result: result is not None, "UpdatePosteriorStateAndCovariance output must not be None")
-def updateposteriorstateandcovariance(
+@icontract.ensure(lambda result: result is not None, "update_posterior_state_and_covariance output must not be None")
+def update_posterior_state_and_covariance(
     predicted_state: StateDict,
     z: np.ndarray,
     R: np.ndarray,
@@ -116,8 +116,8 @@ def updateposteriorstateandcovariance(
 @icontract.require(lambda predicted_state_steady: predicted_state_steady is not None, "predicted_state_steady cannot be None")
 @icontract.require(lambda z: z is not None, "z cannot be None")
 @icontract.require(lambda innovation: innovation is not None, "innovation cannot be None")
-@icontract.ensure(lambda result: result is not None, "UpdatePosteriorStateSteadyState output must not be None")
-def updateposteriorstatesteadystate(
+@icontract.ensure(lambda result: result is not None, "update_posterior_state_steady_state output must not be None")
+def update_posterior_state_steady_state(
     predicted_state_steady: dict[str, np.ndarray | np.ndarray],
     z: np.ndarray,
     innovation: np.ndarray,
@@ -132,3 +132,30 @@ def updateposteriorstatesteadystate(
     else:
         x_post = x + inn
     return {"x": x_post, "P": P}
+
+
+# Backward-compatible aliases while matcher metadata and legacy assets still reference
+# the collapsed wrapper symbols from the original ageoa package layout.
+initializekalmanstatemodel = initialize_kalman_state_model
+predictlatentstateandcovariance = predict_latent_state_and_covariance
+predictlatentstatesteadystate = predict_latent_state_steady_state
+evaluatemeasurementoracle = evaluate_measurement_oracle
+updateposteriorstateandcovariance = update_posterior_state_and_covariance
+updateposteriorstatesteadystate = update_posterior_state_steady_state
+
+
+__all__ = [
+    "StateDict",
+    "initialize_kalman_state_model",
+    "predict_latent_state_and_covariance",
+    "predict_latent_state_steady_state",
+    "evaluate_measurement_oracle",
+    "update_posterior_state_and_covariance",
+    "update_posterior_state_steady_state",
+    "initializekalmanstatemodel",
+    "predictlatentstateandcovariance",
+    "predictlatentstatesteadystate",
+    "evaluatemeasurementoracle",
+    "updateposteriorstateandcovariance",
+    "updateposteriorstatesteadystate",
+]

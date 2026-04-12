@@ -8,6 +8,7 @@ import json
 def test_sequential_filter_namespace_modules_import_cleanly() -> None:
     atoms = import_module("sciona.atoms.state_estimation.kalman_filters.filter_rs")
     probes = import_module("sciona.probes.state_estimation.kalman_filter_rs")
+    assert hasattr(atoms, "evaluate_measurement_oracle")
     assert hasattr(atoms, "evaluatemeasurementoracle")
     assert hasattr(probes, "KALMAN_FILTER_RS_PROBE_TARGETS")
 
