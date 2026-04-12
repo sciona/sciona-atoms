@@ -1,0 +1,60 @@
+{
+  "records": [
+    {
+      "atom_fqdn": "sciona.atoms.state_estimation.kalman_filters.filter_rs.evaluate_measurement_oracle",
+      "summary": "Measurement residual output that shows how much observed data still disagrees with the current transformed prediction.",
+      "dejargonized_summary": "Expose the mismatch between what the current latent model predicted and what was actually observed so the pipeline can decide whether the transform is still explaining the data well enough.",
+      "heuristic_outputs": [
+        {
+          "output_name": "innovation",
+          "output_path": "innovation",
+          "role": "gating",
+          "semantic_kind": "vector_residual",
+          "heuristic": {
+            "heuristic_id": "residual_structure_after_transform",
+            "display_name": "Residual Structure After Transform",
+            "dejargonized_meaning": "The transformation output still carries structured residual behavior that should not be ignored.",
+            "evidence_type": "structured_summary",
+            "value_kind": "residual_vector",
+            "value_shape": "vector",
+            "confidence": 0.87,
+            "producer_kind": "atom_output",
+            "applicability_scope": "cross_family",
+            "supported_action_classes": [
+              "gate_or_validate",
+              "replace_stage"
+            ],
+            "provenance_requirements": [
+              "metric_name",
+              "metric_value",
+              "threshold"
+            ],
+            "compatibility_aliases": [
+              "innovation_whiteness_pvalue"
+            ]
+          },
+          "provenance_notes": [
+            "The residual is computed as observed output minus transformed prediction for the same step.",
+            "Persistent structure in this residual supports validation or stage replacement across estimation-style families."
+          ],
+          "uncertainty_notes": [
+            "One residual snapshot is rarely decisive; repeated structure matters more than isolated mismatch."
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "Kalman measurement update reference implementation",
+          "citation": "Residual calculation used by the filter measurement oracle.",
+          "note": "Source-backed metadata for cross-family residual evidence."
+        }
+      ],
+      "uncertainty_notes": [
+        "Residual structure should be interpreted with the current uncertainty model, not as a standalone correctness verdict."
+      ],
+      "maintainers": [
+        "sciona-atoms"
+      ]
+    }
+  ]
+}
