@@ -1,0 +1,91 @@
+{
+  "nodes": [
+    {
+      "node_id": "nuts_root",
+      "parent_id": null,
+      "name": "ageoa.mcmc_foundational.kthohr_mcmc.nuts",
+      "description": "Consolidated module for ageoa.mcmc_foundational.kthohr_mcmc.nuts.",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "nuts_recursive_tree_build"
+      ],
+      "depth": 0,
+      "type_signature": "module",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Grouped atoms sharing an upstream family or module.",
+      "critic_notes": "Auto-generated module CDG for consolidation.",
+      "decomposition_rationale": "Replaces singleton atom subpackages with a flat module layout."
+    },
+    {
+      "node_id": "nuts_recursive_tree_build",
+      "parent_id": "nuts_root",
+      "name": "nuts_recursive_tree_build",
+      "description": "Recursively builds a binary tree for a No-U-Turn Sampler (NUTS) step.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "direction_val",
+          "type_desc": "int",
+          "constraints": "required argument"
+        },
+        {
+          "name": "step_size",
+          "type_desc": "float",
+          "constraints": "required argument"
+        },
+        {
+          "name": "log_slice_variable",
+          "type_desc": "float",
+          "constraints": "required argument"
+        },
+        {
+          "name": "initial_hmc_state",
+          "type_desc": "HMCState",
+          "constraints": "required argument"
+        },
+        {
+          "name": "log_prob_oracle",
+          "type_desc": "Callable[[Position], float]",
+          "constraints": "required argument"
+        },
+        {
+          "name": "integrator_fn",
+          "type_desc": "Callable[[State, float, int], State]",
+          "constraints": "required argument"
+        },
+        {
+          "name": "tree_depth",
+          "type_desc": "int",
+          "constraints": "required argument"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "NUTS_Trajectory",
+          "constraints": "function return value"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(direction_val: int, step_size: float, log_slice_variable: float, initial_hmc_state: HMCState, log_prob_oracle: log-prob oracle, integrator_fn: integrator oracle, tree_depth: int) -> NUTS_Trajectory",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Direct callable atom in the consolidated module.",
+      "critic_notes": "Signature derived from the Python wrapper definition.",
+      "decomposition_rationale": "Leaf atom."
+    }
+  ],
+  "edges": []
+}

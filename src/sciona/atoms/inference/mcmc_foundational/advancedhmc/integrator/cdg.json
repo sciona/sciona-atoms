@@ -1,0 +1,542 @@
+{
+  "nodes": [
+    {
+      "node_id": "step_root",
+      "parent_id": null,
+      "name": "step",
+      "description": "Ingested pipeline from step",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "temperingfactorcomputation",
+        "hamiltonianphasepointtransition"
+      ],
+      "depth": 0,
+      "type_signature": "",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "temperingfactorcomputation",
+      "parent_id": "step_root",
+      "name": "TemperingFactorComputation",
+      "description": "Computes a deterministic tempering multiplier across sub-steps (with bounds checking) to scale the transition strength.",
+      "concept_type": "mcmc_proposal",
+      "inputs": [
+        {
+          "name": "lf",
+          "type_desc": "object",
+          "constraints": "Read-only; no persistent mutation"
+        },
+        {
+          "name": "r",
+          "type_desc": "float",
+          "constraints": "Finite"
+        },
+        {
+          "name": "step",
+          "type_desc": "Integer",
+          "constraints": "0 <= step <= n_steps"
+        },
+        {
+          "name": "n_steps",
+          "type_desc": "Integer",
+          "constraints": "Positive"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tempering_scale",
+          "type_desc": "float",
+          "constraints": "Deterministic function of inputs"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(lf: Leapfrog/state-transition context, r: Real scalar, step: Integer, n_steps: Integer) -> Real scalar",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "IndexedTransitionGainSchedule. Maps a global intensity parameter and a discrete sub-step index to a deterministic scalar gain used to modulate update magnitude within a multi-step process. The computation enforces index validity against the total step count, yielding a well-defined scaling factor for every admissible sub-step. This is a pure schedule evaluation: no persistent state is mutated, and output is fully determined by the provided inputs.. Applications: Adaptive learning-rate scaling across inner iterations of numerical optimization in scientific computing, Stepwise trust-region or damping control in nonlinear equation solvers for computational physics, Scheduled actuation gain modulation across micro-steps in robotic trajectory execution, Progressive regularization-strength scheduling over sub-epochs in neural network training",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "hamiltonianphasepointtransition",
+      "parent_id": "step_root",
+      "name": "HamiltonianPhasepointTransition",
+      "description": "Executes one pure Hamiltonian transition kernel step by computing derivatives, applying step-size/tempering, and returning a new phase-point state.",
+      "concept_type": "mcmc_kernel",
+      "inputs": [
+        {
+          "name": "lf",
+          "type_desc": "object",
+          "constraints": "Read-only; no persistent mutation"
+        },
+        {
+          "name": "h",
+          "type_desc": "object",
+          "constraints": "Immutable input state"
+        },
+        {
+          "name": "z",
+          "type_desc": "object",
+          "constraints": "Finite where required"
+        },
+        {
+          "name": "tempering_scale",
+          "type_desc": "float",
+          "constraints": "Provided by tempering computation"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "h_next",
+          "type_desc": "object",
+          "constraints": "New immutable state object (state_out)"
+        },
+        {
+          "name": "is_valid",
+          "type_desc": "Boolean",
+          "constraints": "True iff finite/valid transition"
+        }
+      ],
+      "status": "decomposed",
+      "children": [
+        "normalizeintegrationcontrols",
+        "initializeloopstatefromphasepoint",
+        "proposenextphasepointwithtemperedleapfrog",
+        "commitcandidateanddecidecontinuation",
+        "assembletransitionresult"
+      ],
+      "depth": 1,
+      "type_signature": "(lf: Leapfrog/state-transition context, h: Phase-point or Hamiltonian state, z: Auxiliary state/value, tempering_scale: Real scalar) -> tuple[Phase-point or Hamiltonian state, Boolean]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Tempered Symplectic State Transition Step. Takes an immutable composite state and a read-only transition context, evaluates derivative fields of an underlying scalar potential, and applies one discretized symplectic update scaled by a real tempering factor. The operation produces a new immutable state instance representing a single Markov transition. A numerical validity check flags whether the resulting state remains finite and admissible.. Applications: Bayesian parameter posterior exploration in nonlinear robotics system identification, Latent-field sampling for geophysical inverse modeling from sparse sensor measurements, Posterior sampling of high-dimensional neural-network parameters in Bayesian deep learning, Microstate exploration in computational materials or molecular simulation under energy constraints",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "normalizeintegrationcontrols",
+      "parent_id": "hamiltonianphasepointtransition",
+      "name": "NormalizeIntegrationControls",
+      "description": "Convert integration controls into canonical form: absolute step count, signed step size based on direction, and trajectory collection mode.",
+      "concept_type": "arithmetic",
+      "inputs": [
+        {
+          "name": "lf",
+          "type_desc": "object",
+          "constraints": "must provide step_size(lf)"
+        },
+        {
+          "name": "n_steps",
+          "type_desc": "Int",
+          "constraints": "can be negative; magnitude determines number of iterations"
+        },
+        {
+          "name": "fwd",
+          "type_desc": "Bool",
+          "constraints": "true for forward integration, false for backward"
+        },
+        {
+          "name": "full_trajectory",
+          "type_desc": "bool",
+          "constraints": "compile-time flag"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "step_count",
+          "type_desc": "Int",
+          "constraints": "step_count = abs(n_steps), step_count >= 0"
+        },
+        {
+          "name": "epsilon",
+          "type_desc": "float",
+          "constraints": "epsilon = (fwd ? step_size(lf) : -step_size(lf))'"
+        },
+        {
+          "name": "collect_full_trajectory",
+          "type_desc": "Bool",
+          "constraints": "true iff full_trajectory is Val(true)"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(lf: DefaultLeapfrog context, n_steps: Int, fwd: Bool, full_trajectory: Val{Bool}) -> tuple[Int, Step-size scalar/vector compatible with theta and r, Bool]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "initializeloopstatefromphasepoint",
+      "parent_id": "hamiltonianphasepointtransition",
+      "name": "InitializeLoopStateFromPhasepoint",
+      "description": "Extract phase-point coordinates and cached log-density terms, then initialize loop state and optional trajectory buffer.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "z",
+          "type_desc": "object",
+          "constraints": "must contain theta, r, and z.lpi with value and gradient"
+        },
+        {
+          "name": "step_count",
+          "type_desc": "Int",
+          "constraints": "nonnegative"
+        },
+        {
+          "name": "collect_full_trajectory",
+          "type_desc": "Bool",
+          "constraints": "isinstance(x, bool)"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loop_state",
+          "type_desc": "object",
+          "constraints": "initialized with i = 1 and values from z"
+        },
+        {
+          "name": "trajectory_accum",
+          "type_desc": "Optional[np.ndarray]",
+          "constraints": "if collecting, preallocated capacity/length for step_count"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(z: PhasePoint P, step_count: Int, collect_full_trajectory: Bool) -> tuple[{i::Int, theta, r, value, gradient, z_current}, Nothing | Vector{P}]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "proposenextphasepointwithtemperedleapfrog",
+      "parent_id": "hamiltonianphasepointtransition",
+      "name": "ProposeNextPhasepointWithTemperedLeapfrog",
+      "description": "Execute one leapfrog proposal: pre-temper momentum, half momentum update, full position update via dH/dr, second half momentum update via dH/dtheta, post-temper, then build a cached phase-point candidate.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "lf",
+          "type_desc": "object",
+          "constraints": "must support temper"
+        },
+        {
+          "name": "h",
+          "type_desc": "Hamiltonian",
+          "constraints": "must support dH/dr, dH/dtheta, and phasepoint construction"
+        },
+        {
+          "name": "loop_state",
+          "type_desc": "object",
+          "constraints": "contains current iteration index and state"
+        },
+        {
+          "name": "step_count",
+          "type_desc": "Int",
+          "constraints": "used by temper schedule"
+        },
+        {
+          "name": "epsilon",
+          "type_desc": "float",
+          "constraints": "broadcast-compatible with theta, r, gradient"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "candidate_state",
+          "type_desc": "object",
+          "constraints": "z_candidate = phasepoint(h, theta_next, r_next; lpi=DualValue(value_next, gradient_next))"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(lf: DefaultLeapfrog context, h: Hamiltonian, loop_state: {i, theta, r, value, gradient, z_current}, step_count: Int, epsilon: Step-size scalar/vector) -> {i, theta_next, r_next, value_next, gradient_next, z_candidate}",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "commitcandidateanddecidecontinuation",
+      "parent_id": "hamiltonianphasepointtransition",
+      "name": "CommitCandidateAndDecideContinuation",
+      "description": "Optionally append candidate to trajectory, evaluate finiteness, truncate realized trajectory on first invalid sample, and compute next loop state plus continuation decision.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "candidate_state",
+          "type_desc": "object",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "trajectory_accum",
+          "type_desc": "Optional[np.ndarray]",
+          "constraints": "current accumulation buffer"
+        },
+        {
+          "name": "collect_full_trajectory",
+          "type_desc": "Bool",
+          "constraints": "isinstance(x, bool)"
+        },
+        {
+          "name": "step_count",
+          "type_desc": "Int",
+          "constraints": "loop upper bound"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loop_state_next",
+          "type_desc": "object",
+          "constraints": "if continue, i increments; otherwise holds terminal candidate state"
+        },
+        {
+          "name": "trajectory_accum_next",
+          "type_desc": "Optional[np.ndarray]",
+          "constraints": "contains accepted prefix; truncated to realized length on invalid candidate"
+        },
+        {
+          "name": "continue_loop",
+          "type_desc": "Bool",
+          "constraints": "true iff candidate is finite and i < step_count"
+        },
+        {
+          "name": "is_valid",
+          "type_desc": "Bool",
+          "constraints": "finiteness of terminal candidate"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(candidate_state: {i, theta_next, r_next, value_next, gradient_next, z_candidate}, trajectory_accum: Nothing | Vector{P}, collect_full_trajectory: Bool, step_count: Int) -> tuple[{i, theta, r, value, gradient, z_current}, Nothing | Vector{P}, Bool, Bool]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "assembletransitionresult",
+      "parent_id": "hamiltonianphasepointtransition",
+      "name": "AssembleTransitionResult",
+      "description": "Choose final return payload from terminal state: full trajectory when requested, otherwise final phase-point; propagate validity flag.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "collect_full_trajectory",
+          "type_desc": "Bool",
+          "constraints": "isinstance(x, bool)"
+        },
+        {
+          "name": "trajectory_accum_next",
+          "type_desc": "Optional[np.ndarray]",
+          "constraints": "must be non-nothing when collect_full_trajectory is true"
+        },
+        {
+          "name": "loop_state_next",
+          "type_desc": "object",
+          "constraints": "z_current is the terminal phase-point"
+        },
+        {
+          "name": "is_valid",
+          "type_desc": "Bool",
+          "constraints": "terminal validity from loop"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "h_next",
+          "type_desc": "object",
+          "constraints": "Vector{P} if collect_full_trajectory else P"
+        },
+        {
+          "name": "is_valid",
+          "type_desc": "Bool",
+          "constraints": "unchanged pass-through"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(collect_full_trajectory: Bool, trajectory_accum_next: Nothing | Vector{P}, loop_state_next: {..., z_current}, is_valid: Bool) -> tuple[P | Vector{P}, Bool]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "normalizeintegrationcontrols",
+      "target_id": "initializeloopstatefromphasepoint",
+      "output_name": "step_count",
+      "input_name": "step_count",
+      "source_type": "Int",
+      "target_type": "Int",
+      "requires_glue": false
+    },
+    {
+      "source_id": "normalizeintegrationcontrols",
+      "target_id": "initializeloopstatefromphasepoint",
+      "output_name": "collect_full_trajectory",
+      "input_name": "collect_full_trajectory",
+      "source_type": "Bool",
+      "target_type": "Bool",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initializeloopstatefromphasepoint",
+      "target_id": "proposenextphasepointwithtemperedleapfrog",
+      "output_name": "loop_state",
+      "input_name": "loop_state",
+      "source_type": "LoopState",
+      "target_type": "LoopState",
+      "requires_glue": false
+    },
+    {
+      "source_id": "normalizeintegrationcontrols",
+      "target_id": "proposenextphasepointwithtemperedleapfrog",
+      "output_name": "step_count",
+      "input_name": "step_count",
+      "source_type": "Int",
+      "target_type": "Int",
+      "requires_glue": false
+    },
+    {
+      "source_id": "normalizeintegrationcontrols",
+      "target_id": "proposenextphasepointwithtemperedleapfrog",
+      "output_name": "epsilon",
+      "input_name": "epsilon",
+      "source_type": "StepSize",
+      "target_type": "StepSize",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initializeloopstatefromphasepoint",
+      "target_id": "commitcandidateanddecidecontinuation",
+      "output_name": "trajectory_accum",
+      "input_name": "trajectory_accum",
+      "source_type": "Nothing|Vector{P}",
+      "target_type": "Nothing|Vector{P}",
+      "requires_glue": false
+    },
+    {
+      "source_id": "normalizeintegrationcontrols",
+      "target_id": "commitcandidateanddecidecontinuation",
+      "output_name": "collect_full_trajectory",
+      "input_name": "collect_full_trajectory",
+      "source_type": "Bool",
+      "target_type": "Bool",
+      "requires_glue": false
+    },
+    {
+      "source_id": "normalizeintegrationcontrols",
+      "target_id": "commitcandidateanddecidecontinuation",
+      "output_name": "step_count",
+      "input_name": "step_count",
+      "source_type": "Int",
+      "target_type": "Int",
+      "requires_glue": false
+    },
+    {
+      "source_id": "commitcandidateanddecidecontinuation",
+      "target_id": "proposenextphasepointwithtemperedleapfrog",
+      "output_name": "loop_state_next",
+      "input_name": "loop_state",
+      "source_type": "LoopState",
+      "target_type": "LoopState",
+      "requires_glue": false
+    },
+    {
+      "source_id": "normalizeintegrationcontrols",
+      "target_id": "assembletransitionresult",
+      "output_name": "collect_full_trajectory",
+      "input_name": "collect_full_trajectory",
+      "source_type": "Bool",
+      "target_type": "Bool",
+      "requires_glue": false
+    },
+    {
+      "source_id": "commitcandidateanddecidecontinuation",
+      "target_id": "assembletransitionresult",
+      "output_name": "trajectory_accum_next",
+      "input_name": "trajectory_accum_next",
+      "source_type": "Nothing|Vector{P}",
+      "target_type": "Nothing|Vector{P}",
+      "requires_glue": false
+    },
+    {
+      "source_id": "commitcandidateanddecidecontinuation",
+      "target_id": "assembletransitionresult",
+      "output_name": "loop_state_next",
+      "input_name": "loop_state_next",
+      "source_type": "LoopState",
+      "target_type": "LoopState",
+      "requires_glue": false
+    },
+    {
+      "source_id": "commitcandidateanddecidecontinuation",
+      "target_id": "assembletransitionresult",
+      "output_name": "is_valid",
+      "input_name": "is_valid",
+      "source_type": "Bool",
+      "target_type": "Bool",
+      "requires_glue": false
+    },
+    {
+      "source_id": "temperingfactorcomputation",
+      "target_id": "hamiltonianphasepointtransition",
+      "output_name": "tempering_scale",
+      "input_name": "tempering_scale",
+      "source_type": "Real scalar",
+      "target_type": "Real scalar",
+      "requires_glue": false
+    }
+  ],
+  "metadata": {
+    "source": "ingester",
+    "class_name": "step"
+  }
+}

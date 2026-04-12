@@ -1,0 +1,561 @@
+{
+  "nodes": [
+    {
+      "node_id": "single_step_mh_root",
+      "parent_id": null,
+      "name": "single_step_mh",
+      "description": "Ingested pipeline from single_step_mh",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "metropolishastingstransitionkernel",
+        "targetlogkerneloracle"
+      ],
+      "depth": 0,
+      "type_signature": "",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "metropolishastingstransitionkernel",
+      "parent_id": "single_step_mh_root",
+      "name": "MetropolisHastingsTransitionKernel",
+      "description": "Runs one pure Metropolis-Hastings transition: builds proposal-related terms, consumes oracle log-kernel evaluations, computes acceptance, and returns a new sample/state object.",
+      "concept_type": "mcmc_kernel",
+      "inputs": [
+        {
+          "name": "temper_val",
+          "type_desc": "float",
+          "constraints": "Finite positive temperature/scaling value."
+        },
+        {
+          "name": "target_log_kernel",
+          "type_desc": "Callable",
+          "constraints": "Pure function handle used for target log-kernel evaluation."
+        },
+        {
+          "name": "rng_key_in",
+          "type_desc": "np.ndarray",
+          "constraints": "Thread explicitly for purity when stochastic proposal/acceptance draws are used."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mh_step_state_out",
+          "type_desc": "object",
+          "constraints": "Immutable result containing next sample and acceptance-related values."
+        },
+        {
+          "name": "rng_key_out",
+          "type_desc": "np.ndarray",
+          "constraints": "New key/state after any random draws."
+        }
+      ],
+      "status": "decomposed",
+      "children": [
+        "determinestatedimension",
+        "samplegaussianperturbation",
+        "buildrandomwalkproposal",
+        "evaluatetargetlogkernelpair",
+        "computeclippedlogacceptance",
+        "sampleuniformacceptancethreshold",
+        "selecttransitionoutcome"
+      ],
+      "depth": 1,
+      "type_signature": "(temper_val: float, target_log_kernel: callable, rng_key_in: RNG state / PRNGKey) -> tuple[object, RNG state / PRNGKey]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Temperature-Scaled Stochastic Accept-Reject State Transition. Performs one Markovian update on a current state by generating a candidate state, evaluating log-compatibility scores for current and candidate configurations, and computing an acceptance ratio under a temperature-scaled criterion. The output state is either the candidate or the original state based on a stochastic accept/reject draw, while preserving the information needed for downstream diagnostics and chaining.. Applications: Sampling feasible high-dimensional conformations in computational structural biology, Exploring posterior parameter fields in geophysical or medical inverse imaging, State-space exploration for uncertainty-aware trajectory generation in robotics, Equilibrium configuration sampling in statistical physics lattice/particle systems",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "determinestatedimension",
+      "parent_id": "metropolishastingstransitionkernel",
+      "name": "DetermineStateDimension",
+      "description": "Derive the proposal dimension from the previous state vector size.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "X_prev",
+          "type_desc": "ColVec_t",
+          "constraints": "Must be a valid finite-length vector."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "n_vals",
+          "type_desc": "int",
+          "constraints": "Equals BMO_MATOPS_SIZE(X_prev)."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(X_prev: ColVec_t) -> size_t",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "samplegaussianperturbation",
+      "parent_id": "metropolishastingstransitionkernel",
+      "name": "SampleGaussianPerturbation",
+      "description": "Sample a standard normal random vector for proposal noise and advance RNG state.",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "n_vals",
+          "type_desc": "int",
+          "constraints": "Positive dimension for the perturbation vector."
+        },
+        {
+          "name": "rng_key_in",
+          "type_desc": "np.ndarray",
+          "constraints": "Deterministic RNG state input."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rand_vec",
+          "type_desc": "ColVec_t",
+          "constraints": "Length n_vals; each component is standard normal."
+        },
+        {
+          "name": "rng_key_after_normal",
+          "type_desc": "np.ndarray",
+          "constraints": "Updated RNG state after normal draw."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(n_vals: size_t, rng_key_in: RNG state / PRNGKey) -> tuple[ColVec_t, RNG state / PRNGKey]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "buildrandomwalkproposal",
+      "parent_id": "metropolishastingstransitionkernel",
+      "name": "BuildRandomWalkProposal",
+      "description": "Construct the proposal state using scaled Gaussian perturbation.",
+      "concept_type": "arithmetic",
+      "inputs": [
+        {
+          "name": "X_prev",
+          "type_desc": "ColVec_t",
+          "constraints": "Current state."
+        },
+        {
+          "name": "temper_val",
+          "type_desc": "float",
+          "constraints": "Must be > 0 for sqrt and division."
+        },
+        {
+          "name": "prop_scaling_mat",
+          "type_desc": "Mat_t",
+          "constraints": "Compatible with X_prev and rand_vec dimensions."
+        },
+        {
+          "name": "rand_vec",
+          "type_desc": "ColVec_t",
+          "constraints": "Standard normal perturbation vector."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "X_new",
+          "type_desc": "ColVec_t",
+          "constraints": "Computed as X_prev + sqrt(temper_val) * prop_scaling_mat * rand_vec."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(X_prev: ColVec_t, temper_val: fp_t, prop_scaling_mat: Mat_t, rand_vec: ColVec_t) -> ColVec_t",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "evaluatetargetlogkernelpair",
+      "parent_id": "metropolishastingstransitionkernel",
+      "name": "EvaluateTargetLogKernelPair",
+      "description": "Evaluate target log-kernel at proposal and current states.",
+      "concept_type": "probabilistic_oracle",
+      "inputs": [
+        {
+          "name": "target_log_kernel",
+          "type_desc": "Callable",
+          "constraints": "Deterministic for same inputs."
+        },
+        {
+          "name": "target_data",
+          "type_desc": "object",
+          "constraints": "Opaque context passed through unchanged."
+        },
+        {
+          "name": "X_new",
+          "type_desc": "ColVec_t",
+          "constraints": "Proposed state."
+        },
+        {
+          "name": "X_prev",
+          "type_desc": "ColVec_t",
+          "constraints": "Current state."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "val_new",
+          "type_desc": "float",
+          "constraints": "target_log_kernel(X_new, target_data)."
+        },
+        {
+          "name": "val_prev",
+          "type_desc": "float",
+          "constraints": "target_log_kernel(X_prev, target_data)."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(target_log_kernel: callable (ColVec_t, void*) -> fp_t, target_data: void*, X_new: ColVec_t, X_prev: ColVec_t) -> tuple[fp_t, fp_t]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "computeclippedlogacceptance",
+      "parent_id": "metropolishastingstransitionkernel",
+      "name": "ComputeClippedLogAcceptance",
+      "description": "Compute the clipped log-acceptance score used in MH acceptance probability.",
+      "concept_type": "log_prob",
+      "inputs": [
+        {
+          "name": "val_new",
+          "type_desc": "float",
+          "constraints": "Log-kernel at proposal."
+        },
+        {
+          "name": "val_prev",
+          "type_desc": "float",
+          "constraints": "Log-kernel at current state."
+        },
+        {
+          "name": "temper_val",
+          "type_desc": "float",
+          "constraints": "Must be > 0."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "comp_val",
+          "type_desc": "float",
+          "constraints": "min(0.01, (val_new - val_prev) / temper_val)."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(val_new: fp_t, val_prev: fp_t, temper_val: fp_t) -> fp_t",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "sampleuniformacceptancethreshold",
+      "parent_id": "metropolishastingstransitionkernel",
+      "name": "SampleUniformAcceptanceThreshold",
+      "description": "Draw a uniform random threshold for the acceptance test and advance RNG state.",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "rng_key_in",
+          "type_desc": "np.ndarray",
+          "constraints": "RNG state after normal draw."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "z",
+          "type_desc": "float",
+          "constraints": "Uniform random variate in [0, 1)."
+        },
+        {
+          "name": "rng_key_out",
+          "type_desc": "np.ndarray",
+          "constraints": "Updated RNG state after uniform draw."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(rng_key_in: RNG state / PRNGKey) -> tuple[fp_t, RNG state / PRNGKey]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "selecttransitionoutcome",
+      "parent_id": "metropolishastingstransitionkernel",
+      "name": "SelectTransitionOutcome",
+      "description": "Apply MH acceptance rule and emit the next state payload.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "z",
+          "type_desc": "float",
+          "constraints": "Uniform threshold."
+        },
+        {
+          "name": "comp_val",
+          "type_desc": "float",
+          "constraints": "Clipped log-acceptance score."
+        },
+        {
+          "name": "X_new",
+          "type_desc": "ColVec_t",
+          "constraints": "Proposed state."
+        },
+        {
+          "name": "X_prev",
+          "type_desc": "ColVec_t",
+          "constraints": "Current state."
+        },
+        {
+          "name": "val_new",
+          "type_desc": "float",
+          "constraints": "Log-kernel at proposed state."
+        },
+        {
+          "name": "val_prev",
+          "type_desc": "float",
+          "constraints": "Log-kernel at current state."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mh_step_state_out",
+          "type_desc": "object",
+          "constraints": "If z < exp(comp_val): {X_new, val_new, true}; else {X_prev, val_prev, false}."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(z: fp_t, comp_val: fp_t, X_new: ColVec_t, X_prev: ColVec_t, val_new: fp_t, val_prev: fp_t) -> object { x_next: ColVec_t, log_kernel_val: fp_t, accepted: bool }",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "targetlogkerneloracle",
+      "parent_id": "single_step_mh_root",
+      "name": "TargetLogKernelOracle",
+      "description": "Stateless oracle that evaluates target log-kernel values for candidate/current states used by MH acceptance logic.",
+      "concept_type": "probabilistic_oracle",
+      "inputs": [
+        {
+          "name": "state_candidate",
+          "type_desc": "object",
+          "constraints": "Candidate (or current) state point to score."
+        },
+        {
+          "name": "temper_val",
+          "type_desc": "float",
+          "constraints": "Same temperature/scaling context used by the MH kernel."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "log_kernel_value",
+          "type_desc": "float",
+          "constraints": "Finite log-density/log-kernel value."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(state_candidate: object, temper_val: float) -> float",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "TemperedLogMeasureEvaluator. Maps a single state element from an arbitrary measurable space and a scalar scaling parameter to a real-valued log score representing that state's compatibility with a target measure. The operation evaluates an unnormalized log-kernel (equivalently, negative energy up to constants) at one point, with the scaling parameter modulating concentration/dispersion of the score landscape. It performs no state transition or normalization; it provides a pointwise scalar used by downstream stochastic decision rules.. Applications: Molecular conformation sampling: score candidate geometries via tempered log-potential before accept/reject moves., Bayesian inverse problems in geophysics: evaluate tempered log-posterior for candidate field configurations during stochastic exploration., Robotics trajectory inference: assign tempered log-likelihood to candidate latent motion states in sequential Monte Carlo or MCMC pipelines., Generative model latent-space sampling: compute tempered log-density of candidate latent vectors for transition acceptance criteria.",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "determinestatedimension",
+      "target_id": "samplegaussianperturbation",
+      "output_name": "n_vals",
+      "input_name": "n_vals",
+      "source_type": "size_t",
+      "target_type": "size_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "samplegaussianperturbation",
+      "target_id": "buildrandomwalkproposal",
+      "output_name": "rand_vec",
+      "input_name": "rand_vec",
+      "source_type": "ColVec_t",
+      "target_type": "ColVec_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "buildrandomwalkproposal",
+      "target_id": "evaluatetargetlogkernelpair",
+      "output_name": "X_new",
+      "input_name": "X_new",
+      "source_type": "ColVec_t",
+      "target_type": "ColVec_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "evaluatetargetlogkernelpair",
+      "target_id": "computeclippedlogacceptance",
+      "output_name": "val_new",
+      "input_name": "val_new",
+      "source_type": "fp_t",
+      "target_type": "fp_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "evaluatetargetlogkernelpair",
+      "target_id": "computeclippedlogacceptance",
+      "output_name": "val_prev",
+      "input_name": "val_prev",
+      "source_type": "fp_t",
+      "target_type": "fp_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "samplegaussianperturbation",
+      "target_id": "sampleuniformacceptancethreshold",
+      "output_name": "rng_key_after_normal",
+      "input_name": "rng_key_in",
+      "source_type": "RNG state / PRNGKey",
+      "target_type": "RNG state / PRNGKey",
+      "requires_glue": false
+    },
+    {
+      "source_id": "computeclippedlogacceptance",
+      "target_id": "selecttransitionoutcome",
+      "output_name": "comp_val",
+      "input_name": "comp_val",
+      "source_type": "fp_t",
+      "target_type": "fp_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "sampleuniformacceptancethreshold",
+      "target_id": "selecttransitionoutcome",
+      "output_name": "z",
+      "input_name": "z",
+      "source_type": "fp_t",
+      "target_type": "fp_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "buildrandomwalkproposal",
+      "target_id": "selecttransitionoutcome",
+      "output_name": "X_new",
+      "input_name": "X_new",
+      "source_type": "ColVec_t",
+      "target_type": "ColVec_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "evaluatetargetlogkernelpair",
+      "target_id": "selecttransitionoutcome",
+      "output_name": "val_new",
+      "input_name": "val_new",
+      "source_type": "fp_t",
+      "target_type": "fp_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "evaluatetargetlogkernelpair",
+      "target_id": "selecttransitionoutcome",
+      "output_name": "val_prev",
+      "input_name": "val_prev",
+      "source_type": "fp_t",
+      "target_type": "fp_t",
+      "requires_glue": false
+    },
+    {
+      "source_id": "metropolishastingstransitionkernel",
+      "target_id": "targetlogkerneloracle",
+      "output_name": "state_candidate",
+      "input_name": "state_candidate",
+      "source_type": "object",
+      "target_type": "object",
+      "requires_glue": false
+    },
+    {
+      "source_id": "metropolishastingstransitionkernel",
+      "target_id": "targetlogkerneloracle",
+      "output_name": "temper_val",
+      "input_name": "temper_val",
+      "source_type": "float",
+      "target_type": "float",
+      "requires_glue": false
+    }
+  ],
+  "metadata": {
+    "source": "ingester",
+    "class_name": "single_step_mh"
+  }
+}

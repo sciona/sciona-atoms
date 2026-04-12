@@ -1,0 +1,61 @@
+{
+  "nodes": [
+    {
+      "node_id": "hmc_root",
+      "parent_id": null,
+      "name": "ageoa.mcmc_foundational.kthohr_mcmc.hmc",
+      "description": "Consolidated module for ageoa.mcmc_foundational.kthohr_mcmc.hmc.",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "buildhmckernelfromlogdensityoracle"
+      ],
+      "depth": 0,
+      "type_signature": "module",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Grouped atoms sharing an upstream family or module.",
+      "critic_notes": "Auto-generated module CDG for consolidation.",
+      "decomposition_rationale": "Replaces singleton atom subpackages with a flat module layout."
+    },
+    {
+      "node_id": "buildhmckernelfromlogdensityoracle",
+      "parent_id": "hmc_root",
+      "name": "buildhmckernelfromlogdensityoracle",
+      "description": "Creates a pure Hamiltonian Monte Carlo transition kernel from a provided target log-density oracle, with stochasticity and chain state threaded explicitly.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "target_log_kernel",
+          "type_desc": "Callable[[np.ndarray], float]",
+          "constraints": "required argument"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]",
+          "constraints": "function return value"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(target_log_kernel: log-density oracle) -> Hamiltonian Monte Carlo transition kernel",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Direct callable atom in the consolidated module.",
+      "critic_notes": "Signature derived from the Python wrapper definition.",
+      "decomposition_rationale": "Leaf atom."
+    }
+  ],
+  "edges": []
+}

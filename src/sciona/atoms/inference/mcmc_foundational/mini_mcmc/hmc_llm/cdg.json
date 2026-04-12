@@ -1,0 +1,1035 @@
+{
+  "nodes": [
+    {
+      "node_id": "HMC_root",
+      "parent_id": null,
+      "name": "HMC",
+      "description": "Ingested pipeline from HMC",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "initializehmckernelstate",
+        "initializesamplerrng",
+        "hamiltoniantransitionkernel",
+        "collectposteriorchain"
+      ],
+      "depth": 0,
+      "type_signature": "",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "initializehmckernelstate",
+      "parent_id": "HMC_root",
+      "name": "InitializeHMCKernelState",
+      "description": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "target",
+          "type_desc": "Callable",
+          "constraints": "pure log_prob/gradient-capable density oracle"
+        },
+        {
+          "name": "initial_positions",
+          "type_desc": "np.ndarray",
+          "constraints": "finite numeric latent state"
+        },
+        {
+          "name": "step_size",
+          "type_desc": "float",
+          "constraints": "step_size > 0"
+        },
+        {
+          "name": "n_leapfrog",
+          "type_desc": "int",
+          "constraints": "n_leapfrog >= 1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "kernel_spec",
+          "type_desc": "StateModelSpec",
+          "constraints": "contains step_size, n_leapfrog, mass_matrix (explicit, immutable)"
+        },
+        {
+          "name": "chain_state_0",
+          "type_desc": "HMCState",
+          "constraints": "contains position, logp_current, gradient, momenta placeholder, trace init"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(target: callable oracle, initial_positions: vector/tensor, step_size: float, n_leapfrog: int) -> tuple[StateModelSpec, HMCState]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Immutable Hamiltonian Transition State Initializer. Builds a fixed transition specification and an initial latent-state record for a deterministic, gradient-informed dynamical sampler. The transform maps a differentiable scalar field oracle, an initial coordinate vector, and integration hyperparameters into a normalized state object with explicit coordinates, deferred momentum storage, and cache slots for scalar-field value and first derivative. It also materializes metric assumptions as immutable metadata so downstream updates use a consistent geometry.. Applications: Initializing trajectory-based inference for inverse-parameter estimation in systems biology ODE/PDE models, Bootstrapping constrained latent-state exploration in robot dynamics calibration with differentiable simulators, Setting up gradient-driven posterior traversal for geophysical tomography parameter fields, Preparing high-dimensional probabilistic state evolution in computational materials microstructure reconstruction",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "initializesamplerrng",
+      "parent_id": "HMC_root",
+      "name": "InitializeSamplerRNG",
+      "description": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "seed",
+          "type_desc": "int",
+          "constraints": "deterministic reproducibility seed"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "prng_key_state",
+          "type_desc": "np.ndarray",
+          "constraints": "immutable key to be split per transition"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(seed: int) -> PRNGKey/RNG state",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Deterministic Stochastic-State Bootstrap. Maps a single integer entropy token into an immutable pseudo-random state object that can drive probabilistic transitions in a purely functional pipeline. The produced state is not mutated; instead, successor states are derived and explicitly threaded through subsequent computations. This creates reproducible stochastic behavior where identical seeds yield identical random-state trajectories.. Applications: Monte Carlo trajectory initialization in computational physics with reproducible experiment replay, Deterministic randomized augmentation pipelines in machine learning training workflows, Reproducible randomized search initialization in combinatorial optimization and metaheuristics, Procedural pattern/structure generation in graphics or digital fabrication where exact regeneration is required",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "hamiltoniantransitionkernel",
+      "parent_id": "HMC_root",
+      "name": "HamiltonianTransitionKernel",
+      "description": "Perform one pure HMC transition: generate/consume momenta, run leapfrog integrator proposal, evaluate acceptance, and return a brand-new chain state plus updated RNG key.",
+      "concept_type": "mcmc_kernel",
+      "inputs": [
+        {
+          "name": "state_in",
+          "type_desc": "HMCState",
+          "constraints": "includes position, logp_current, gradient, trace"
+        },
+        {
+          "name": "kernel_spec",
+          "type_desc": "StateModelSpec",
+          "constraints": "includes step_size, n_leapfrog, mass_matrix"
+        },
+        {
+          "name": "prng_key_in",
+          "type_desc": "np.ndarray",
+          "constraints": "must be explicitly provided and split"
+        },
+        {
+          "name": "logp_oracle",
+          "type_desc": "Callable",
+          "constraints": "pure likelihood/log_prob evaluation"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "state_out",
+          "type_desc": "HMCState",
+          "constraints": "new immutable state with updated position/logp_current/gradient/momenta/trace"
+        },
+        {
+          "name": "prng_key_out",
+          "type_desc": "np.ndarray",
+          "constraints": "new key after stochastic draws"
+        },
+        {
+          "name": "transition_stats",
+          "type_desc": "dict",
+          "constraints": "contains accept/reject info and energy diagnostics"
+        }
+      ],
+      "status": "decomposed",
+      "children": [
+        "infer_chain_geometry",
+        "sample_transition_randomness",
+        "evaluate_current_log_density_and_initial_half_grad",
+        "compute_current_hamiltonian",
+        "integrate_leapfrog_proposal",
+        "compute_acceptance_log_ratio",
+        "derive_acceptance_mask",
+        "assemble_transition_result"
+      ],
+      "depth": 1,
+      "type_signature": "(state_in: HMCState, kernel_spec: StateModelSpec, prng_key_in: PRNGKey/RNG state, logp_oracle: callable) -> tuple[HMCState, PRNGKey/RNG state, dict]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Energy-Conserving Augmented-State Transition Operator. The operator maps a current point in a differentiable scalar field to a candidate point by augmenting the state with Gaussian auxiliary variables, then simulating a finite sequence of symplectic updates on the joint system. It computes a scalar energy discrepancy between pre- and post-simulation states and applies a stochastic accept/reject correction to preserve the target invariant distribution despite discretization error. The result is an immutable next state plus diagnostics and an advanced random stream state.. Applications: Calibrating latent parameters in climate or fluid simulation models where gradients are available through differentiable solvers, Posterior sampling of high-dimensional neural network parameters in Bayesian deep learning, Inferring source parameters in inverse problems for medical imaging reconstruction, Estimating hidden biophysical parameters in systems biology differential-equation models",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "infer_chain_geometry",
+      "parent_id": "hamiltoniantransitionkernel",
+      "name": "infer_chain_geometry",
+      "description": "Read the position tensor shape to determine batch size and latent dimension for this transition.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "state_in.positions",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "Rank-2; first axis is chain axis."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "n_chains",
+          "type_desc": "int",
+          "constraints": "n_chains > 0"
+        },
+        {
+          "name": "dim",
+          "type_desc": "int",
+          "constraints": "dim > 0"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(state_in.positions: Tensor[n_chains, dim]) -> tuple[usize, usize]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "sample_transition_randomness",
+      "parent_id": "hamiltoniantransitionkernel",
+      "name": "sample_transition_randomness",
+      "description": "Consume RNG state to draw initial Gaussian momenta and per-chain uniform variates for Metropolis acceptance.",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "prng_key_in",
+          "type_desc": "PRNGKey",
+          "constraints": "Valid RNG state."
+        },
+        {
+          "name": "n_chains",
+          "type_desc": "int",
+          "constraints": "From infer_chain_geometry."
+        },
+        {
+          "name": "dim",
+          "type_desc": "int",
+          "constraints": "From infer_chain_geometry."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "momentum_0",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "IID Normal(0,1)."
+        },
+        {
+          "name": "uniform_u",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "IID Uniform(0,1)."
+        },
+        {
+          "name": "prng_key_out",
+          "type_desc": "PRNGKey",
+          "constraints": "RNG state after all draws."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(prng_key_in: PRNGKey, n_chains: usize, dim: usize) -> tuple[Tensor[n_chains, dim], Tensor[n_chains], PRNGKey]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "evaluate_current_log_density_and_initial_half_grad",
+      "parent_id": "hamiltoniantransitionkernel",
+      "name": "evaluate_current_log_density_and_initial_half_grad",
+      "description": "Evaluate current log density and compute the initial half-step momentum increment from the position gradient.",
+      "concept_type": "oracle_gradient",
+      "inputs": [
+        {
+          "name": "state_in.positions",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "Current positions."
+        },
+        {
+          "name": "kernel_spec.step_size",
+          "type_desc": "float",
+          "constraints": "Typically positive."
+        },
+        {
+          "name": "logp_oracle",
+          "type_desc": "Callable",
+          "constraints": "Differentiable w.r.t. positions."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "logp_current",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "Unnormalized log density at current positions."
+        },
+        {
+          "name": "grad_half_0",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "0.5 * step_size * grad(logp_current)."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(state_in.positions: Tensor[n_chains, dim], kernel_spec.step_size: scalar, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains, dim]]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "compute_current_hamiltonian",
+      "parent_id": "hamiltoniantransitionkernel",
+      "name": "compute_current_hamiltonian",
+      "description": "Compute current kinetic energy and Hamiltonian from sampled momenta and current log density.",
+      "concept_type": "arithmetic",
+      "inputs": [
+        {
+          "name": "momentum_0",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "From sample_transition_randomness."
+        },
+        {
+          "name": "logp_current",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "From evaluate_current_log_density_and_initial_half_grad."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "h_current",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "h_current = -logp_current + 0.5*sum_d(momentum_0^2)."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(momentum_0: Tensor[n_chains, dim], logp_current: Tensor[n_chains]) -> Tensor[n_chains]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "integrate_leapfrog_proposal",
+      "parent_id": "hamiltoniantransitionkernel",
+      "name": "integrate_leapfrog_proposal",
+      "description": "Run n_leapfrog symplectic updates to produce proposed positions/momenta and final proposed log density.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "state_in.positions",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "Initial position."
+        },
+        {
+          "name": "momentum_0",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "Initial momentum."
+        },
+        {
+          "name": "grad_half_0",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "Initial half-step momentum increment."
+        },
+        {
+          "name": "kernel_spec.step_size",
+          "type_desc": "float",
+          "constraints": "Leapfrog step size."
+        },
+        {
+          "name": "kernel_spec.n_leapfrog",
+          "type_desc": "int",
+          "constraints": "Number of integration steps."
+        },
+        {
+          "name": "logp_oracle",
+          "type_desc": "Callable",
+          "constraints": "Differentiable oracle."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "proposed_positions",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "Position after leapfrog integration."
+        },
+        {
+          "name": "proposed_momenta",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "Momentum after leapfrog integration."
+        },
+        {
+          "name": "logp_proposed",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "Unnormalized log density at proposed positions."
+        },
+        {
+          "name": "grad_half_last",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "Final half-step gradient increment from last leapfrog substep."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(state_in.positions: Tensor[n_chains, dim], momentum_0: Tensor[n_chains, dim], grad_half_0: Tensor[n_chains, dim], kernel_spec.step_size: scalar, kernel_spec.n_leapfrog: usize, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains, dim], Tensor[n_chains, dim], Tensor[n_chains], Tensor[n_chains, dim]]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "compute_acceptance_log_ratio",
+      "parent_id": "hamiltoniantransitionkernel",
+      "name": "compute_acceptance_log_ratio",
+      "description": "Compute proposed Hamiltonian and per-chain Metropolis log acceptance ratio.",
+      "concept_type": "arithmetic",
+      "inputs": [
+        {
+          "name": "h_current",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "From compute_current_hamiltonian."
+        },
+        {
+          "name": "proposed_momenta",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "From integrate_leapfrog_proposal."
+        },
+        {
+          "name": "logp_proposed",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "From integrate_leapfrog_proposal."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "h_proposed",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "h_proposed = -logp_proposed + 0.5*sum_d(proposed_momenta^2)."
+        },
+        {
+          "name": "accept_log_ratio",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "accept_log_ratio = h_current - h_proposed."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(h_current: Tensor[n_chains], proposed_momenta: Tensor[n_chains, dim], logp_proposed: Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains]]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "derive_acceptance_mask",
+      "parent_id": "hamiltoniantransitionkernel",
+      "name": "derive_acceptance_mask",
+      "description": "Convert uniform draws and log acceptance ratio into a boolean accept/reject decision per chain.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "accept_log_ratio",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "From compute_acceptance_log_ratio."
+        },
+        {
+          "name": "uniform_u",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "0 < uniform_u < 1."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "accept_mask",
+          "type_desc": "Tensor",
+          "constraints": "accept_mask[i] = (accept_log_ratio[i] >= log(uniform_u[i]))."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(accept_log_ratio: Tensor[n_chains], uniform_u: Tensor[n_chains]) -> Tensor[n_chains] (bool)",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "assemble_transition_result",
+      "parent_id": "hamiltoniantransitionkernel",
+      "name": "assemble_transition_result",
+      "description": "Construct next chain state by selecting proposed vs current positions per chain and package diagnostics.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "state_in",
+          "type_desc": "HMCState",
+          "constraints": "Current state."
+        },
+        {
+          "name": "proposed_positions",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "From integrate_leapfrog_proposal."
+        },
+        {
+          "name": "accept_mask",
+          "type_desc": "Tensor",
+          "constraints": "From derive_acceptance_mask."
+        },
+        {
+          "name": "grad_half_last",
+          "type_desc": "Tensor[n_chains, dim]",
+          "constraints": "From integrate_leapfrog_proposal."
+        },
+        {
+          "name": "prng_key_out",
+          "type_desc": "PRNGKey",
+          "constraints": "From sample_transition_randomness."
+        },
+        {
+          "name": "h_current",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "From compute_current_hamiltonian."
+        },
+        {
+          "name": "h_proposed",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "From compute_acceptance_log_ratio."
+        },
+        {
+          "name": "accept_log_ratio",
+          "type_desc": "Tensor[n_chains]",
+          "constraints": "From compute_acceptance_log_ratio."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "state_out",
+          "type_desc": "HMCState",
+          "constraints": "Positions are masked-select(current, proposed); includes updated cached gradient if state tracks it."
+        },
+        {
+          "name": "prng_key_out_final",
+          "type_desc": "PRNGKey",
+          "constraints": "Forwarded unchanged from RNG sampling output."
+        },
+        {
+          "name": "transition_stats",
+          "type_desc": "dict",
+          "constraints": "Contains per-chain acceptance, energies, and acceptance log-ratios."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(state_in: HMCState, proposed_positions: Tensor[n_chains, dim], accept_mask: Tensor[n_chains] (bool), grad_half_last: Tensor[n_chains, dim], prng_key_out: PRNGKey, h_current: Tensor[n_chains], h_proposed: Tensor[n_chains], accept_log_ratio: Tensor[n_chains]) -> tuple[HMCState, PRNGKey, dict]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "collectposteriorchain",
+      "parent_id": "HMC_root",
+      "name": "CollectPosteriorChain",
+      "description": "Drive warmup/discard and collection loops by repeatedly applying the transition kernel; optionally emit progress while preserving pure state threading.",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "n_collect",
+          "type_desc": "int",
+          "constraints": "n_collect >= 1"
+        },
+        {
+          "name": "n_discard",
+          "type_desc": "int",
+          "constraints": "n_discard >= 0"
+        },
+        {
+          "name": "chain_state_0",
+          "type_desc": "HMCState",
+          "constraints": "initial immutable chain state"
+        },
+        {
+          "name": "kernel_spec",
+          "type_desc": "StateModelSpec",
+          "constraints": "transition hyperparameters"
+        },
+        {
+          "name": "prng_key_state",
+          "type_desc": "np.ndarray",
+          "constraints": "explicit RNG flow through all iterations"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "samples",
+          "type_desc": "np.ndarray",
+          "constraints": "collected posterior positions"
+        },
+        {
+          "name": "final_state",
+          "type_desc": "HMCState",
+          "constraints": "immutable terminal state"
+        },
+        {
+          "name": "final_prng_key",
+          "type_desc": "np.ndarray",
+          "constraints": "terminal RNG state"
+        },
+        {
+          "name": "chain_trace",
+          "type_desc": "object",
+          "constraints": "acceptance and trajectory diagnostics"
+        }
+      ],
+      "status": "decomposed",
+      "children": [
+        "initializecollectioncontext",
+        "rundiscardphase",
+        "seeddiagnosticsfromburnedstate",
+        "collectposteriortransitions",
+        "reordersamplelayout",
+        "finalizechaintrace"
+      ],
+      "depth": 1,
+      "type_signature": "(n_collect: int, n_discard: int, chain_state_0: HMCState, kernel_spec: StateModelSpec, prng_key_state: PRNGKey/RNG state) -> tuple[array, HMCState, PRNGKey/RNG state, array/dict]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Two-Phase Markov State Rollout and Retained Trajectory Extraction. Applies a stochastic state-transition operator repeatedly to an immutable state object while explicitly threading random-generator state through every step. The iteration is split into a non-retained prefix phase (discard/warmup) and a retained phase (collection), producing an ordered subset of visited states plus diagnostic metadata. Optional progress emission is side-effecting observability that does not alter the pure input-to-output state evolution.. Applications: Statistical physics: generate equilibrated microstate trajectories after thermalization for lattice/spin or particle simulations, Computational biology: sample high-dimensional conformational states of macromolecular systems with initial equilibration removed, Robotics and control: propagate belief-state particles through a stochastic dynamics model with burn-in before logging planning samples, Reliability engineering: simulate long-run system-state evolution under random shocks, discarding transient startup behavior before analysis",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "initializecollectioncontext",
+      "parent_id": "collectposteriorchain",
+      "name": "InitializeCollectionContext",
+      "description": "Derive chain dimensions from the initial state, allocate the time-major sample buffer, and initialize trace/progress bookkeeping state.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "n_collect",
+          "type_desc": "int",
+          "constraints": ">= 0"
+        },
+        {
+          "name": "chain_state_0",
+          "type_desc": "HMCState",
+          "constraints": "positions has shape [n_chains, dim]"
+        },
+        {
+          "name": "kernel_spec",
+          "type_desc": "StateModelSpec",
+          "constraints": "may include diagnostics/progress settings"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "collection_buffer_0",
+          "type_desc": "np.ndarray",
+          "constraints": "allocated and empty"
+        },
+        {
+          "name": "chain_dims",
+          "type_desc": "tuple[int, int]",
+          "constraints": "inferred from chain_state_0"
+        },
+        {
+          "name": "trace_state_0",
+          "type_desc": "object",
+          "constraints": "initialized, no observations yet"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(n_collect: int, chain_state_0: HMCState, kernel_spec: StateModelSpec) -> tuple[array/tensor[n_collect, n_chains, dim], tuple(int n_chains, int dim), chain trace accumulator]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "rundiscardphase",
+      "parent_id": "collectposteriorchain",
+      "name": "RunDiscardPhase",
+      "description": "Apply the transition kernel for burn-in/discard steps while threading chain state and RNG state.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "n_discard",
+          "type_desc": "int",
+          "constraints": ">= 0"
+        },
+        {
+          "name": "chain_state_0",
+          "type_desc": "HMCState",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "kernel_spec",
+          "type_desc": "StateModelSpec",
+          "constraints": "contains transition kernel"
+        },
+        {
+          "name": "prng_key_state",
+          "type_desc": "np.ndarray",
+          "constraints": "x is not None"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "chain_state_burned",
+          "type_desc": "HMCState",
+          "constraints": "post-discard state"
+        },
+        {
+          "name": "prng_key_burned",
+          "type_desc": "np.ndarray",
+          "constraints": "advanced by n_discard transitions"
+        },
+        {
+          "name": "discard_events",
+          "type_desc": "object",
+          "constraints": "optional diagnostics from discard phase"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(n_discard: int, chain_state_0: HMCState, kernel_spec: StateModelSpec, prng_key_state: PRNGKey/RNG state) -> tuple[HMCState, PRNGKey/RNG state, array/dict]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "seeddiagnosticsfromburnedstate",
+      "parent_id": "collectposteriorchain",
+      "name": "SeedDiagnosticsFromBurnedState",
+      "description": "Register the post-burn-in state as the initial diagnostics sample and update trace state with any recoverable diagnostics warnings.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "chain_state_burned",
+          "type_desc": "HMCState",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "trace_state_0",
+          "type_desc": "object",
+          "constraints": "x is not None"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trace_state_seeded",
+          "type_desc": "object",
+          "constraints": "includes baseline diagnostics observation"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(chain_state_burned: HMCState, trace_state_0: chain trace accumulator) -> chain trace accumulator",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "collectposteriortransitions",
+      "parent_id": "collectposteriorchain",
+      "name": "CollectPosteriorTransitions",
+      "description": "Iterate n_collect transitions; at each step advance state with kernel, write positions into buffer, and update diagnostics/progress trace.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "n_collect",
+          "type_desc": "int",
+          "constraints": ">= 0"
+        },
+        {
+          "name": "chain_state_burned",
+          "type_desc": "HMCState",
+          "constraints": "initial state for collection loop"
+        },
+        {
+          "name": "prng_key_burned",
+          "type_desc": "np.ndarray",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "kernel_spec",
+          "type_desc": "StateModelSpec",
+          "constraints": "contains transition kernel"
+        },
+        {
+          "name": "collection_buffer_0",
+          "type_desc": "np.ndarray",
+          "constraints": "time-major buffer"
+        },
+        {
+          "name": "chain_dims",
+          "type_desc": "tuple[int, int]",
+          "constraints": "must match state positions"
+        },
+        {
+          "name": "trace_state_seeded",
+          "type_desc": "object",
+          "constraints": "x is not None"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "collection_buffer_filled",
+          "type_desc": "np.ndarray",
+          "constraints": "all collection slots filled in order"
+        },
+        {
+          "name": "final_state",
+          "type_desc": "HMCState",
+          "constraints": "state after final collection transition"
+        },
+        {
+          "name": "final_prng_key",
+          "type_desc": "np.ndarray",
+          "constraints": "advanced by n_collect transitions"
+        },
+        {
+          "name": "trace_state_final",
+          "type_desc": "object",
+          "constraints": "includes per-step diagnostics/progress payloads"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(n_collect: int, chain_state_burned: HMCState, prng_key_burned: PRNGKey/RNG state, kernel_spec: StateModelSpec, collection_buffer_0: array/tensor[n_collect, n_chains, dim], chain_dims: tuple(int n_chains, int dim), trace_state_seeded: chain trace accumulator) -> tuple[array/tensor[n_collect, n_chains, dim], HMCState, PRNGKey/RNG state, chain trace accumulator]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "reordersamplelayout",
+      "parent_id": "collectposteriorchain",
+      "name": "ReorderSampleLayout",
+      "description": "Convert collected samples from time-major [collect, chain, dim] layout to chain-major [chain, collect, dim] layout.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "collection_buffer_filled",
+          "type_desc": "np.ndarray",
+          "constraints": "ndim >= 1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "samples",
+          "type_desc": "np.ndarray",
+          "constraints": "final sample output layout"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(collection_buffer_filled: array/tensor[n_collect, n_chains, dim]) -> array/tensor[n_chains, n_collect, dim]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "finalizechaintrace",
+      "parent_id": "collectposteriorchain",
+      "name": "FinalizeChainTrace",
+      "description": "Compute final run diagnostics/statistics from accumulated trace state and samples, producing a pure chain_trace artifact.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "trace_state_final",
+          "type_desc": "object",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "discard_events",
+          "type_desc": "object",
+          "constraints": "may be empty"
+        },
+        {
+          "name": "samples",
+          "type_desc": "np.ndarray",
+          "constraints": "ndim >= 1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "chain_trace",
+          "type_desc": "object",
+          "constraints": "contains diagnostics summary and optional warnings/progress history"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(trace_state_final: chain trace accumulator, discard_events: array/dict, samples: array/tensor[n_chains, n_collect, dim]) -> array/dict",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "initializehmckernelstate",
+      "target_id": "collectposteriorchain",
+      "output_name": "kernel_spec",
+      "input_name": "kernel_spec",
+      "source_type": "StateModelSpec",
+      "target_type": "StateModelSpec",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initializehmckernelstate",
+      "target_id": "collectposteriorchain",
+      "output_name": "chain_state_0",
+      "input_name": "chain_state_0",
+      "source_type": "HMCState",
+      "target_type": "HMCState",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initializesamplerrng",
+      "target_id": "collectposteriorchain",
+      "output_name": "prng_key_state",
+      "input_name": "prng_key_state",
+      "source_type": "PRNGKey/RNG state",
+      "target_type": "PRNGKey/RNG state",
+      "requires_glue": false
+    },
+    {
+      "source_id": "collectposteriorchain",
+      "target_id": "hamiltoniantransitionkernel",
+      "output_name": "loop_state",
+      "input_name": "state_in",
+      "source_type": "HMCState",
+      "target_type": "HMCState",
+      "requires_glue": false
+    },
+    {
+      "source_id": "collectposteriorchain",
+      "target_id": "hamiltoniantransitionkernel",
+      "output_name": "loop_prng_key",
+      "input_name": "prng_key_in",
+      "source_type": "PRNGKey/RNG state",
+      "target_type": "PRNGKey/RNG state",
+      "requires_glue": false
+    },
+    {
+      "source_id": "collectposteriorchain",
+      "target_id": "hamiltoniantransitionkernel",
+      "output_name": "kernel_spec",
+      "input_name": "kernel_spec",
+      "source_type": "StateModelSpec",
+      "target_type": "StateModelSpec",
+      "requires_glue": false
+    }
+  ],
+  "metadata": {
+    "source": "ingester",
+    "class_name": "HMC"
+  }
+}

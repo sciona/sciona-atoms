@@ -1,0 +1,1322 @@
+[
+  {
+    "pdg_node": {
+      "predicate_id": "initializehmcstate",
+      "statement": "(target: callable log_prob oracle, initial_positions: array[float], step_size: float, n_leapfrog: int, seed: int) -> tuple[StateModelSpec, object]",
+      "informal_desc": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "initializehmcstate",
+          "type_signature": "(target: callable log_prob oracle, initial_positions: array[float], step_size: float, n_leapfrog: int, seed: int) -> tuple[StateModelSpec, object]",
+          "docstring": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
+          "conceptual_summary": "Reproducible Gradient-Kernel State Bootstrap. Builds an immutable initial state for a gradient-informed iterative transition process by evaluating a differentiable scalar-field oracle at an initial tensor point and storing the point, scalar value, local derivative, random generator state, and trace container. In parallel, it factorizes constant transition hyperparameters into a static kernel object so per-iteration updates can reuse fixed settings without reconfiguration. If a seed is provided, stochastic behavior is made exactly replayable under identical inputs and numeric conditions.. Applications: Computational chemistry: initializing reproducible trajectory-based exploration of high-dimensional energy landscapes for molecular conformations., Geophysical inverse modeling: bootstrapping iterative state transitions for parameter-field reconstruction from indirect sensor measurements., Robotics system identification: initializing gradient-informed stochastic search over dynamic model parameters with replayable randomness., Medical image reconstruction: setting up reproducible iterative posterior exploration for latent volume parameters under differentiable forward models.",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "initializehmcstate",
+          "type_signature": "(target: callable log_prob oracle, initial_positions: array[float], step_size: float, n_leapfrog: int, seed: int) -> tuple[StateModelSpec, object]",
+          "docstring": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
+          "conceptual_summary": "Reproducible Gradient-Kernel State Bootstrap. Builds an immutable initial state for a gradient-informed iterative transition process by evaluating a differentiable scalar-field oracle at an initial tensor point and storing the point, scalar value, local derivative, random generator state, and trace container. In parallel, it factorizes constant transition hyperparameters into a static kernel object so per-iteration updates can reuse fixed settings without reconfiguration. If a seed is provided, stochastic behavior is made exactly replayable under identical inputs and numeric conditions.. Applications: Computational chemistry: initializing reproducible trajectory-based exploration of high-dimensional energy landscapes for molecular conformations., Geophysical inverse modeling: bootstrapping iterative state transitions for parameter-field reconstruction from indirect sensor measurements., Robotics system identification: initializing gradient-informed stochastic search over dynamic model parameters with replayable randomness., Medical image reconstruction: setting up reproducible iterative posterior exploration for latent volume parameters under differentiable forward models.",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "initializehmcstate",
+            "type_signature": "(target: callable log_prob oracle, initial_positions: array[float], step_size: float, n_leapfrog: int, seed: int) -> tuple[StateModelSpec, object]",
+            "docstring": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
+            "conceptual_summary": "Reproducible Gradient-Kernel State Bootstrap. Builds an immutable initial state for a gradient-informed iterative transition process by evaluating a differentiable scalar-field oracle at an initial tensor point and storing the point, scalar value, local derivative, random generator state, and trace container. In parallel, it factorizes constant transition hyperparameters into a static kernel object so per-iteration updates can reuse fixed settings without reconfiguration. If a seed is provided, stochastic behavior is made exactly replayable under identical inputs and numeric conditions.. Applications: Computational chemistry: initializing reproducible trajectory-based exploration of high-dimensional energy landscapes for molecular conformations., Geophysical inverse modeling: bootstrapping iterative state transitions for parameter-field reconstruction from indirect sensor measurements., Robotics system identification: initializing gradient-informed stochastic search over dynamic model parameters with replayable randomness., Medical image reconstruction: setting up reproducible iterative posterior exploration for latent volume parameters under differentiable forward models.",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "preparedifferentiablestateandfirsthalfkick",
+      "statement": "(position_in: Tensor<B, 2>, momentum_in: Tensor<B, 2>, last_grad_summands: Tensor<B, 2>) -> tuple[Tensor<B, 2>, Tensor<B, 2>]",
+      "informal_desc": "For one leapfrog iteration, re-enable AD tracking on position and apply the first half-step momentum update using the carried gradient summands from the previous state.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "preparedifferentiablestateandfirsthalfkick",
+          "type_signature": "(position_in: Tensor<B, 2>, momentum_in: Tensor<B, 2>, last_grad_summands: Tensor<B, 2>) -> tuple[Tensor<B, 2>, Tensor<B, 2>]",
+          "docstring": "For one leapfrog iteration, re-enable AD tracking on position and apply the first half-step momentum update using the carried gradient summands from the previous state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "preparedifferentiablestateandfirsthalfkick",
+          "type_signature": "(position_in: Tensor<B, 2>, momentum_in: Tensor<B, 2>, last_grad_summands: Tensor<B, 2>) -> tuple[Tensor<B, 2>, Tensor<B, 2>]",
+          "docstring": "For one leapfrog iteration, re-enable AD tracking on position and apply the first half-step momentum update using the carried gradient summands from the previous state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "preparedifferentiablestateandfirsthalfkick",
+            "type_signature": "(position_in: Tensor<B, 2>, momentum_in: Tensor<B, 2>, last_grad_summands: Tensor<B, 2>) -> tuple[Tensor<B, 2>, Tensor<B, 2>]",
+            "docstring": "For one leapfrog iteration, re-enable AD tracking on position and apply the first half-step momentum update using the carried gradient summands from the previous state.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "driftpositionbyfullstep",
+      "statement": "(position_ad: Tensor<B, 2>, momentum_half_kicked: Tensor<B, 2>, step_size: T) -> Tensor<B, 2>",
+      "informal_desc": "Advance position by a full drift step using the half-kicked momentum and re-enable AD tracking on the new position.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "driftpositionbyfullstep",
+          "type_signature": "(position_ad: Tensor<B, 2>, momentum_half_kicked: Tensor<B, 2>, step_size: T) -> Tensor<B, 2>",
+          "docstring": "Advance position by a full drift step using the half-kicked momentum and re-enable AD tracking on the new position.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "driftpositionbyfullstep",
+          "type_signature": "(position_ad: Tensor<B, 2>, momentum_half_kicked: Tensor<B, 2>, step_size: T) -> Tensor<B, 2>",
+          "docstring": "Advance position by a full drift step using the half-kicked momentum and re-enable AD tracking on the new position.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "driftpositionbyfullstep",
+            "type_signature": "(position_ad: Tensor<B, 2>, momentum_half_kicked: Tensor<B, 2>, step_size: T) -> Tensor<B, 2>",
+            "docstring": "Advance position by a full drift step using the half-kicked momentum and re-enable AD tracking on the new position.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "recomputegradienthalfkickcontribution",
+      "statement": "(position_advanced: Tensor<B, 2>, log_prob_oracle: callable, step_size: T) -> tuple[Tensor<B, 1>, Tensor<B, 2>]",
+      "informal_desc": "Evaluate target log-probability at the advanced position, backpropagate to obtain gradient, and scale it into the next half-step momentum contribution.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "recomputegradienthalfkickcontribution",
+          "type_signature": "(position_advanced: Tensor<B, 2>, log_prob_oracle: callable, step_size: T) -> tuple[Tensor<B, 1>, Tensor<B, 2>]",
+          "docstring": "Evaluate target log-probability at the advanced position, backpropagate to obtain gradient, and scale it into the next half-step momentum contribution.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "recomputegradienthalfkickcontribution",
+          "type_signature": "(position_advanced: Tensor<B, 2>, log_prob_oracle: callable, step_size: T) -> tuple[Tensor<B, 1>, Tensor<B, 2>]",
+          "docstring": "Evaluate target log-probability at the advanced position, backpropagate to obtain gradient, and scale it into the next half-step momentum contribution.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "recomputegradienthalfkickcontribution",
+            "type_signature": "(position_advanced: Tensor<B, 2>, log_prob_oracle: callable, step_size: T) -> tuple[Tensor<B, 1>, Tensor<B, 2>]",
+            "docstring": "Evaluate target log-probability at the advanced position, backpropagate to obtain gradient, and scale it into the next half-step momentum contribution.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "completemomentumkickandrefreshcarry",
+      "statement": "(position_advanced: Tensor<B, 2>, momentum_half_kicked: Tensor<B, 2>, grad_summands: Tensor<B, 2>) -> tuple[Tensor<B, 2>, Tensor<B, 2>, Tensor<B, 2>]",
+      "informal_desc": "Apply the second half-step momentum kick using the newly computed gradient summands and emit the next iteration carry state.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "completemomentumkickandrefreshcarry",
+          "type_signature": "(position_advanced: Tensor<B, 2>, momentum_half_kicked: Tensor<B, 2>, grad_summands: Tensor<B, 2>) -> tuple[Tensor<B, 2>, Tensor<B, 2>, Tensor<B, 2>]",
+          "docstring": "Apply the second half-step momentum kick using the newly computed gradient summands and emit the next iteration carry state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "completemomentumkickandrefreshcarry",
+          "type_signature": "(position_advanced: Tensor<B, 2>, momentum_half_kicked: Tensor<B, 2>, grad_summands: Tensor<B, 2>) -> tuple[Tensor<B, 2>, Tensor<B, 2>, Tensor<B, 2>]",
+          "docstring": "Apply the second half-step momentum kick using the newly computed gradient summands and emit the next iteration carry state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "completemomentumkickandrefreshcarry",
+            "type_signature": "(position_advanced: Tensor<B, 2>, momentum_half_kicked: Tensor<B, 2>, grad_summands: Tensor<B, 2>) -> tuple[Tensor<B, 2>, Tensor<B, 2>, Tensor<B, 2>]",
+            "docstring": "Apply the second half-step momentum kick using the newly computed gradient summands and emit the next iteration carry state.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "computeterminallogprobandemitproposal",
+      "statement": "(position_final: Tensor<B, 2>, momentum_final: Tensor<B, 2>, log_prob_oracle: callable) -> StateModelSpec",
+      "informal_desc": "After repeating the leapfrog transition exactly n_leapfrog times, compute final log-probability at the terminal position and return detached proposal tensors.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "computeterminallogprobandemitproposal",
+          "type_signature": "(position_final: Tensor<B, 2>, momentum_final: Tensor<B, 2>, log_prob_oracle: callable) -> StateModelSpec",
+          "docstring": "After repeating the leapfrog transition exactly n_leapfrog times, compute final log-probability at the terminal position and return detached proposal tensors.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "computeterminallogprobandemitproposal",
+          "type_signature": "(position_final: Tensor<B, 2>, momentum_final: Tensor<B, 2>, log_prob_oracle: callable) -> StateModelSpec",
+          "docstring": "After repeating the leapfrog transition exactly n_leapfrog times, compute final log-probability at the terminal position and return detached proposal tensors.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "computeterminallogprobandemitproposal",
+            "type_signature": "(position_final: Tensor<B, 2>, momentum_final: Tensor<B, 2>, log_prob_oracle: callable) -> StateModelSpec",
+            "docstring": "After repeating the leapfrog transition exactly n_leapfrog times, compute final log-probability at the terminal position and return detached proposal tensors.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "infer_chain_geometry",
+      "statement": "(chain_state_in: StateModelSpec) -> tuple[usize, usize, Tensor<B,2>]",
+      "informal_desc": "Extract chain count and latent dimension from the current position tensor shape.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "infer_chain_geometry",
+          "type_signature": "(chain_state_in: StateModelSpec) -> tuple[usize, usize, Tensor<B,2>]",
+          "docstring": "Extract chain count and latent dimension from the current position tensor shape.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "infer_chain_geometry",
+          "type_signature": "(chain_state_in: StateModelSpec) -> tuple[usize, usize, Tensor<B,2>]",
+          "docstring": "Extract chain count and latent dimension from the current position tensor shape.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "infer_chain_geometry",
+            "type_signature": "(chain_state_in: StateModelSpec) -> tuple[usize, usize, Tensor<B,2>]",
+            "docstring": "Extract chain count and latent dimension from the current position tensor shape.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "sample_initial_momenta",
+      "statement": "(n_chains: usize, dim: usize, kernel_static: object) -> Tensor<B,2>",
+      "informal_desc": "Sample fresh Gaussian momenta for each chain and dimension.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "sample_initial_momenta",
+          "type_signature": "(n_chains: usize, dim: usize, kernel_static: object) -> Tensor<B,2>",
+          "docstring": "Sample fresh Gaussian momenta for each chain and dimension.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "sample_initial_momenta",
+          "type_signature": "(n_chains: usize, dim: usize, kernel_static: object) -> Tensor<B,2>",
+          "docstring": "Sample fresh Gaussian momenta for each chain and dimension.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "sample_initial_momenta",
+            "type_signature": "(n_chains: usize, dim: usize, kernel_static: object) -> Tensor<B,2>",
+            "docstring": "Sample fresh Gaussian momenta for each chain and dimension.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "evaluate_current_logp_and_halfstep_gradient",
+      "statement": "(positions_current: Tensor<B,2>, kernel_static: object) -> tuple[Tensor<B,1>, Tensor<B,2>]",
+      "informal_desc": "Evaluate current unnormalized log-density and compute the half-step gradient summands used by leapfrog.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "evaluate_current_logp_and_halfstep_gradient",
+          "type_signature": "(positions_current: Tensor<B,2>, kernel_static: object) -> tuple[Tensor<B,1>, Tensor<B,2>]",
+          "docstring": "Evaluate current unnormalized log-density and compute the half-step gradient summands used by leapfrog.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "evaluate_current_logp_and_halfstep_gradient",
+          "type_signature": "(positions_current: Tensor<B,2>, kernel_static: object) -> tuple[Tensor<B,1>, Tensor<B,2>]",
+          "docstring": "Evaluate current unnormalized log-density and compute the half-step gradient summands used by leapfrog.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "evaluate_current_logp_and_halfstep_gradient",
+            "type_signature": "(positions_current: Tensor<B,2>, kernel_static: object) -> tuple[Tensor<B,1>, Tensor<B,2>]",
+            "docstring": "Evaluate current unnormalized log-density and compute the half-step gradient summands used by leapfrog.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "compute_current_hamiltonian",
+      "statement": "(momentum_0: Tensor<B,2>, logp_current: Tensor<B,1>) -> tuple[Tensor<B,1>, Tensor<B,1>]",
+      "informal_desc": "Compute kinetic energy from sampled momenta and form current Hamiltonian H = -logp + KE.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "compute_current_hamiltonian",
+          "type_signature": "(momentum_0: Tensor<B,2>, logp_current: Tensor<B,1>) -> tuple[Tensor<B,1>, Tensor<B,1>]",
+          "docstring": "Compute kinetic energy from sampled momenta and form current Hamiltonian H = -logp + KE.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "compute_current_hamiltonian",
+          "type_signature": "(momentum_0: Tensor<B,2>, logp_current: Tensor<B,1>) -> tuple[Tensor<B,1>, Tensor<B,1>]",
+          "docstring": "Compute kinetic energy from sampled momenta and form current Hamiltonian H = -logp + KE.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "compute_current_hamiltonian",
+            "type_signature": "(momentum_0: Tensor<B,2>, logp_current: Tensor<B,1>) -> tuple[Tensor<B,1>, Tensor<B,1>]",
+            "docstring": "Compute kinetic energy from sampled momenta and form current Hamiltonian H = -logp + KE.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "propose_state_with_leapfrog",
+      "statement": "(positions_current: Tensor<B,2>, momentum_0: Tensor<B,2>, grad_summands: Tensor<B,2>, kernel_static: object) -> tuple[Tensor<B,2>, Tensor<B,2>, Tensor<B,1>]",
+      "informal_desc": "Run leapfrog integration from current positions and sampled momenta to obtain proposed state and proposed log-density.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "propose_state_with_leapfrog",
+          "type_signature": "(positions_current: Tensor<B,2>, momentum_0: Tensor<B,2>, grad_summands: Tensor<B,2>, kernel_static: object) -> tuple[Tensor<B,2>, Tensor<B,2>, Tensor<B,1>]",
+          "docstring": "Run leapfrog integration from current positions and sampled momenta to obtain proposed state and proposed log-density.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "propose_state_with_leapfrog",
+          "type_signature": "(positions_current: Tensor<B,2>, momentum_0: Tensor<B,2>, grad_summands: Tensor<B,2>, kernel_static: object) -> tuple[Tensor<B,2>, Tensor<B,2>, Tensor<B,1>]",
+          "docstring": "Run leapfrog integration from current positions and sampled momenta to obtain proposed state and proposed log-density.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "propose_state_with_leapfrog",
+            "type_signature": "(positions_current: Tensor<B,2>, momentum_0: Tensor<B,2>, grad_summands: Tensor<B,2>, kernel_static: object) -> tuple[Tensor<B,2>, Tensor<B,2>, Tensor<B,1>]",
+            "docstring": "Run leapfrog integration from current positions and sampled momenta to obtain proposed state and proposed log-density.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "compute_proposed_hamiltonian",
+      "statement": "(proposed_momenta: Tensor<B,2>, logp_proposed: Tensor<B,1>) -> tuple[Tensor<B,1>, Tensor<B,1>]",
+      "informal_desc": "Compute proposed kinetic energy and proposed Hamiltonian for Metropolis acceptance.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "compute_proposed_hamiltonian",
+          "type_signature": "(proposed_momenta: Tensor<B,2>, logp_proposed: Tensor<B,1>) -> tuple[Tensor<B,1>, Tensor<B,1>]",
+          "docstring": "Compute proposed kinetic energy and proposed Hamiltonian for Metropolis acceptance.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "compute_proposed_hamiltonian",
+          "type_signature": "(proposed_momenta: Tensor<B,2>, logp_proposed: Tensor<B,1>) -> tuple[Tensor<B,1>, Tensor<B,1>]",
+          "docstring": "Compute proposed kinetic energy and proposed Hamiltonian for Metropolis acceptance.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "compute_proposed_hamiltonian",
+            "type_signature": "(proposed_momenta: Tensor<B,2>, logp_proposed: Tensor<B,1>) -> tuple[Tensor<B,1>, Tensor<B,1>]",
+            "docstring": "Compute proposed kinetic energy and proposed Hamiltonian for Metropolis acceptance.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "sample_log_uniform_thresholds",
+      "statement": "(n_chains: usize, kernel_static: object) -> Tensor<B,1>",
+      "informal_desc": "Draw one uniform variate per chain and convert to log-space acceptance thresholds.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "sample_log_uniform_thresholds",
+          "type_signature": "(n_chains: usize, kernel_static: object) -> Tensor<B,1>",
+          "docstring": "Draw one uniform variate per chain and convert to log-space acceptance thresholds.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "sample_log_uniform_thresholds",
+          "type_signature": "(n_chains: usize, kernel_static: object) -> Tensor<B,1>",
+          "docstring": "Draw one uniform variate per chain and convert to log-space acceptance thresholds.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "sample_log_uniform_thresholds",
+            "type_signature": "(n_chains: usize, kernel_static: object) -> Tensor<B,1>",
+            "docstring": "Draw one uniform variate per chain and convert to log-space acceptance thresholds.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "apply_metropolis_accept_reject",
+      "statement": "(h_current: Tensor<B,1>, h_proposed: Tensor<B,1>, ln_u: Tensor<B,1>, positions_current: Tensor<B,2>, proposed_positions: Tensor<B,2>) -> tuple[Tensor<B,2>, Tensor<B,1,Bool>, Tensor<B,1>]",
+      "informal_desc": "Compute acceptance log-ratio, build mask, and select accepted proposed positions against current positions.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "apply_metropolis_accept_reject",
+          "type_signature": "(h_current: Tensor<B,1>, h_proposed: Tensor<B,1>, ln_u: Tensor<B,1>, positions_current: Tensor<B,2>, proposed_positions: Tensor<B,2>) -> tuple[Tensor<B,2>, Tensor<B,1,Bool>, Tensor<B,1>]",
+          "docstring": "Compute acceptance log-ratio, build mask, and select accepted proposed positions against current positions.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "apply_metropolis_accept_reject",
+          "type_signature": "(h_current: Tensor<B,1>, h_proposed: Tensor<B,1>, ln_u: Tensor<B,1>, positions_current: Tensor<B,2>, proposed_positions: Tensor<B,2>) -> tuple[Tensor<B,2>, Tensor<B,1,Bool>, Tensor<B,1>]",
+          "docstring": "Compute acceptance log-ratio, build mask, and select accepted proposed positions against current positions.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "apply_metropolis_accept_reject",
+            "type_signature": "(h_current: Tensor<B,1>, h_proposed: Tensor<B,1>, ln_u: Tensor<B,1>, positions_current: Tensor<B,2>, proposed_positions: Tensor<B,2>) -> tuple[Tensor<B,2>, Tensor<B,1,Bool>, Tensor<B,1>]",
+            "docstring": "Compute acceptance log-ratio, build mask, and select accepted proposed positions against current positions.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "assemble_transition_result",
+      "statement": "(chain_state_in: StateModelSpec, positions_next: Tensor<B,2>, grad_summands: Tensor<B,2>, accept_mask: Tensor<B,1,Bool>, accept_logp: Tensor<B,1>, h_current: Tensor<B,1>, h_proposed: Tensor<B,1>) -> tuple[StateModelSpec, object]",
+      "informal_desc": "Return the immutable next chain state and transition diagnostics.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "assemble_transition_result",
+          "type_signature": "(chain_state_in: StateModelSpec, positions_next: Tensor<B,2>, grad_summands: Tensor<B,2>, accept_mask: Tensor<B,1,Bool>, accept_logp: Tensor<B,1>, h_current: Tensor<B,1>, h_proposed: Tensor<B,1>) -> tuple[StateModelSpec, object]",
+          "docstring": "Return the immutable next chain state and transition diagnostics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "assemble_transition_result",
+          "type_signature": "(chain_state_in: StateModelSpec, positions_next: Tensor<B,2>, grad_summands: Tensor<B,2>, accept_mask: Tensor<B,1,Bool>, accept_logp: Tensor<B,1>, h_current: Tensor<B,1>, h_proposed: Tensor<B,1>) -> tuple[StateModelSpec, object]",
+          "docstring": "Return the immutable next chain state and transition diagnostics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "assemble_transition_result",
+            "type_signature": "(chain_state_in: StateModelSpec, positions_next: Tensor<B,2>, grad_summands: Tensor<B,2>, accept_mask: Tensor<B,1,Bool>, accept_logp: Tensor<B,1>, h_current: Tensor<B,1>, h_proposed: Tensor<B,1>) -> tuple[StateModelSpec, object]",
+            "docstring": "Return the immutable next chain state and transition diagnostics.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "derivesamplingshape",
+      "statement": "(hmc_state_in: StateModelSpec) -> tuple[int, int]",
+      "informal_desc": "Read chain count and latent dimension from the incoming HMC state to define tensor geometry for collection.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "derivesamplingshape",
+          "type_signature": "(hmc_state_in: StateModelSpec) -> tuple[int, int]",
+          "docstring": "Read chain count and latent dimension from the incoming HMC state to define tensor geometry for collection.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "derivesamplingshape",
+          "type_signature": "(hmc_state_in: StateModelSpec) -> tuple[int, int]",
+          "docstring": "Read chain count and latent dimension from the incoming HMC state to define tensor geometry for collection.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "derivesamplingshape",
+            "type_signature": "(hmc_state_in: StateModelSpec) -> tuple[int, int]",
+            "docstring": "Read chain count and latent dimension from the incoming HMC state to define tensor geometry for collection.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "allocatecollectionbuffer",
+      "statement": "(n_collect: int, n_chains: int, dim: int) -> Tensor[float; n_collect, n_chains, dim]",
+      "informal_desc": "Create an empty collection tensor to hold all post-burn-in states before final layout conversion.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "allocatecollectionbuffer",
+          "type_signature": "(n_collect: int, n_chains: int, dim: int) -> Tensor[float; n_collect, n_chains, dim]",
+          "docstring": "Create an empty collection tensor to hold all post-burn-in states before final layout conversion.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "allocatecollectionbuffer",
+          "type_signature": "(n_collect: int, n_chains: int, dim: int) -> Tensor[float; n_collect, n_chains, dim]",
+          "docstring": "Create an empty collection tensor to hold all post-burn-in states before final layout conversion.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "allocatecollectionbuffer",
+            "type_signature": "(n_collect: int, n_chains: int, dim: int) -> Tensor[float; n_collect, n_chains, dim]",
+            "docstring": "Create an empty collection tensor to hold all post-burn-in states before final layout conversion.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "applyburnintransitions",
+      "statement": "(hmc_state_in: StateModelSpec, n_discard: int) -> StateModelSpec",
+      "informal_desc": "Advance the HMC kernel for discard iterations and return the post-burn-in state.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "applyburnintransitions",
+          "type_signature": "(hmc_state_in: StateModelSpec, n_discard: int) -> StateModelSpec",
+          "docstring": "Advance the HMC kernel for discard iterations and return the post-burn-in state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "applyburnintransitions",
+          "type_signature": "(hmc_state_in: StateModelSpec, n_discard: int) -> StateModelSpec",
+          "docstring": "Advance the HMC kernel for discard iterations and return the post-burn-in state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "applyburnintransitions",
+            "type_signature": "(hmc_state_in: StateModelSpec, n_discard: int) -> StateModelSpec",
+            "docstring": "Advance the HMC kernel for discard iterations and return the post-burn-in state.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "collectpostburnintrajectory",
+      "statement": "(hmc_state_burned_in: StateModelSpec, buffer_raw: Tensor[float; n_collect, n_chains, dim], n_collect: int, n_chains: int, dim: int) -> tuple[Tensor[float; n_collect, n_chains, dim], object, StateModelSpec]",
+      "informal_desc": "Run n_collect HMC transitions, write each state into the collection buffer, and accumulate per-step trace metrics.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "collectpostburnintrajectory",
+          "type_signature": "(hmc_state_burned_in: StateModelSpec, buffer_raw: Tensor[float; n_collect, n_chains, dim], n_collect: int, n_chains: int, dim: int) -> tuple[Tensor[float; n_collect, n_chains, dim], object, StateModelSpec]",
+          "docstring": "Run n_collect HMC transitions, write each state into the collection buffer, and accumulate per-step trace metrics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "collectpostburnintrajectory",
+          "type_signature": "(hmc_state_burned_in: StateModelSpec, buffer_raw: Tensor[float; n_collect, n_chains, dim], n_collect: int, n_chains: int, dim: int) -> tuple[Tensor[float; n_collect, n_chains, dim], object, StateModelSpec]",
+          "docstring": "Run n_collect HMC transitions, write each state into the collection buffer, and accumulate per-step trace metrics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "collectpostburnintrajectory",
+            "type_signature": "(hmc_state_burned_in: StateModelSpec, buffer_raw: Tensor[float; n_collect, n_chains, dim], n_collect: int, n_chains: int, dim: int) -> tuple[Tensor[float; n_collect, n_chains, dim], object, StateModelSpec]",
+            "docstring": "Run n_collect HMC transitions, write each state into the collection buffer, and accumulate per-step trace metrics.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "finalizeoutputs",
+      "statement": "(buffer_filled: Tensor[float; n_collect, n_chains, dim], trace_raw: object) -> tuple[Tensor[float; n_chains, n_collect, dim], object]",
+      "informal_desc": "Convert collected tensor to chain-major layout and derive final run trace/statistics object.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "finalizeoutputs",
+          "type_signature": "(buffer_filled: Tensor[float; n_collect, n_chains, dim], trace_raw: object) -> tuple[Tensor[float; n_chains, n_collect, dim], object]",
+          "docstring": "Convert collected tensor to chain-major layout and derive final run trace/statistics object.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "finalizeoutputs",
+          "type_signature": "(buffer_filled: Tensor[float; n_collect, n_chains, dim], trace_raw: object) -> tuple[Tensor[float; n_chains, n_collect, dim], object]",
+          "docstring": "Convert collected tensor to chain-major layout and derive final run trace/statistics object.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "finalizeoutputs",
+            "type_signature": "(buffer_filled: Tensor[float; n_collect, n_chains, dim], trace_raw: object) -> tuple[Tensor[float; n_chains, n_collect, dim], object]",
+            "docstring": "Convert collected tensor to chain-major layout and derive final run trace/statistics object.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  }
+]

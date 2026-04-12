@@ -1,0 +1,66 @@
+{
+  "nodes": [
+    {
+      "node_id": "bernoulli_root",
+      "parent_id": null,
+      "name": "ageoa.bayes_rs.bernoulli",
+      "description": "Consolidated module for ageoa.bayes_rs.bernoulli.",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "bernoulli_probabilistic_oracle"
+      ],
+      "depth": 0,
+      "type_signature": "module",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Grouped atoms sharing an upstream family or module.",
+      "critic_notes": "Auto-generated module CDG for consolidation.",
+      "decomposition_rationale": "Replaces singleton atom subpackages with a flat module layout."
+    },
+    {
+      "node_id": "bernoulli_probabilistic_oracle",
+      "parent_id": "bernoulli_root",
+      "name": "bernoulli_probabilistic_oracle",
+      "description": "Evaluate a Bernoulli distribution as a pure probabilistic oracle.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "p",
+          "type_desc": "float",
+          "constraints": "required argument"
+        },
+        {
+          "name": "x",
+          "type_desc": "np.ndarray",
+          "constraints": "required argument"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "np.ndarray",
+          "constraints": "function return value"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(p: float, x: np.ndarray) -> np.ndarray",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Direct callable atom in the consolidated module.",
+      "critic_notes": "Signature derived from the Python wrapper definition.",
+      "decomposition_rationale": "Leaf atom."
+    }
+  ],
+  "edges": []
+}

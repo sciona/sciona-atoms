@@ -1,0 +1,967 @@
+{
+  "nodes": [
+    {
+      "node_id": "transition_root",
+      "parent_id": null,
+      "name": "transition",
+      "description": "Ingested pipeline from transition",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "buildnutstree",
+        "nutstransitionkernel"
+      ],
+      "depth": 0,
+      "type_signature": "",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "buildnutstree",
+      "parent_id": "transition_root",
+      "name": "BuildNutsTree",
+      "description": "Recursively builds a binary tree of states for a Hamiltonian Monte Carlo trajectory. It explores the trajectory in both forward and backward directions, doubling the number of states at each step, and terminates when the trajectory starts to turn back on itself (the No-U-Turn criterion).",
+      "concept_type": "mcmc_proposal",
+      "inputs": [
+        {
+          "name": "rng",
+          "type_desc": "PRNGKey",
+          "constraints": "JAX-style random number generator key for stochastic operations."
+        },
+        {
+          "name": "hamiltonian",
+          "type_desc": "Hamiltonian",
+          "constraints": "An oracle that provides the energy and its gradient."
+        },
+        {
+          "name": "start_state",
+          "type_desc": "State",
+          "constraints": "The state at the beginning of the trajectory segment to be built."
+        },
+        {
+          "name": "direction",
+          "type_desc": "int",
+          "constraints": "The direction of integration (+1 for forward, -1 for backward)."
+        },
+        {
+          "name": "tree_depth",
+          "type_desc": "int",
+          "constraints": "The current recursion depth of the tree construction."
+        },
+        {
+          "name": "initial_energy",
+          "type_desc": "float",
+          "constraints": "The energy of the initial state of the entire trajectory."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "proposal_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "A binary tree containing the states of the trajectory segment."
+        }
+      ],
+      "status": "decomposed",
+      "children": [
+        "build_initial_trajectory_segment",
+        "build_expansion_trajectory_segment",
+        "orient_trajectory_segments",
+        "merge_trajectory_segments",
+        "evaluate_termination_conditions"
+      ],
+      "depth": 1,
+      "type_signature": "(rng: PRNGKey, hamiltonian: Hamiltonian, start_state: State, direction: int, tree_depth: int, initial_energy: float) -> BinaryTree",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "BalancedTrajectoryExplorer. Recursively explores a path in a high-dimensional space, starting from a given point and guided by a vector field from an oracle. The exploration length doubles at each step, building a balanced binary tree of visited states, until a geometric path-reversal condition is met. This efficiently generates a set of candidate points along a trajectory while avoiding redundant exploration of paths that loop back.. Applications: In robotics path planning, to explore a route through a potential field representing obstacles and goals, stopping when the path starts to backtrack, thus efficiently mapping a local area., In computational chemistry, to simulate molecular dynamics by exploring conformational state changes, with the oracle being the molecule's potential energy function, to find stable structures or transition pathways., In materials science, to model the propagation of a fracture through a solid, where the state is the crack tip position and the oracle is the material's stress tensor field.",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "build_initial_trajectory_segment",
+      "parent_id": "buildnutstree",
+      "name": "build_initial_trajectory_segment",
+      "description": "Recursively constructs the first half of the trajectory tree for the current depth `j`. This is the first of two recursive calls that implement the doubling mechanism.",
+      "concept_type": "divide_and_conquer",
+      "inputs": [
+        {
+          "name": "rng",
+          "type_desc": "AbstractRNG",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "trajectory_params",
+          "type_desc": "Trajectory",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "hamiltonian",
+          "type_desc": "Hamiltonian",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "start_state",
+          "type_desc": "PhasePoint",
+          "constraints": "isinstance(x, int)"
+        },
+        {
+          "name": "sampler",
+          "type_desc": "AbstractTrajectorySampler",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "direction",
+          "type_desc": "Int",
+          "constraints": "Value is -1 or 1"
+        },
+        {
+          "name": "depth",
+          "type_desc": "Int",
+          "constraints": "Represents j-1 from the original code"
+        },
+        {
+          "name": "initial_energy",
+          "type_desc": "AbstractFloat",
+          "constraints": "isinstance(x, (int, float))"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "initial_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "sampler_after_initial_build",
+          "type_desc": "AbstractTrajectorySampler",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "termination_after_initial_build",
+          "type_desc": "Termination",
+          "constraints": "x is not None"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(rng: AbstractRNG, trajectory_params: Trajectory, hamiltonian: Hamiltonian, start_state: PhasePoint, sampler: AbstractTrajectorySampler, direction: Int, depth: Int, initial_energy: AbstractFloat) -> tuple[BinaryTree, AbstractTrajectorySampler, Termination]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "build_expansion_trajectory_segment",
+      "parent_id": "buildnutstree",
+      "name": "build_expansion_trajectory_segment",
+      "description": "If the initial segment did not terminate, this recursively constructs the second half of the trajectory, starting from the edge of the first, to double the total length.",
+      "concept_type": "divide_and_conquer",
+      "inputs": [
+        {
+          "name": "rng",
+          "type_desc": "AbstractRNG",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "trajectory_params",
+          "type_desc": "Trajectory",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "hamiltonian",
+          "type_desc": "Hamiltonian",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "initial_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "Used to find the starting state for the expansion."
+        },
+        {
+          "name": "sampler_after_initial_build",
+          "type_desc": "AbstractTrajectorySampler",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "direction",
+          "type_desc": "Int",
+          "constraints": "Value is -1 or 1"
+        },
+        {
+          "name": "depth",
+          "type_desc": "Int",
+          "constraints": "Represents j-1 from the original code"
+        },
+        {
+          "name": "initial_energy",
+          "type_desc": "AbstractFloat",
+          "constraints": "isinstance(x, (int, float))"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "expansion_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "sampler_after_expansion",
+          "type_desc": "AbstractTrajectorySampler",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "termination_after_expansion",
+          "type_desc": "Termination",
+          "constraints": "x is not None"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(rng: AbstractRNG, trajectory_params: Trajectory, hamiltonian: Hamiltonian, initial_tree: BinaryTree, sampler_after_initial_build: AbstractTrajectorySampler, direction: Int, depth: Int, initial_energy: AbstractFloat) -> tuple[BinaryTree, AbstractTrajectorySampler, Termination]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "orient_trajectory_segments",
+      "parent_id": "buildnutstree",
+      "name": "orient_trajectory_segments",
+      "description": "Determines the order of the two trajectory segments (initial and expansion) based on the direction of traversal.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "initial_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "expansion_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "direction",
+          "type_desc": "Int",
+          "constraints": "Value is -1 or 1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "left_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "right_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(initial_tree: BinaryTree, expansion_tree: BinaryTree, direction: Int) -> tuple[BinaryTree, BinaryTree]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "merge_trajectory_segments",
+      "parent_id": "buildnutstree",
+      "name": "merge_trajectory_segments",
+      "description": "Combines the left and right trajectory subtrees into a single, larger binary tree and merges their corresponding samplers.",
+      "concept_type": "combinatorics",
+      "inputs": [
+        {
+          "name": "left_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "right_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "rng",
+          "type_desc": "AbstractRNG",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "sampler_after_initial_build",
+          "type_desc": "AbstractTrajectorySampler",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "sampler_after_expansion",
+          "type_desc": "AbstractTrajectorySampler",
+          "constraints": "isinstance(x, str)"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "combined_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "combined_sampler",
+          "type_desc": "AbstractTrajectorySampler",
+          "constraints": "isinstance(x, str)"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(left_tree: BinaryTree, right_tree: BinaryTree, rng: AbstractRNG, sampler_after_initial_build: AbstractTrajectorySampler, sampler_after_expansion: AbstractTrajectorySampler) -> tuple[BinaryTree, AbstractTrajectorySampler]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "evaluate_termination_conditions",
+      "parent_id": "buildnutstree",
+      "name": "evaluate_termination_conditions",
+      "description": "Checks the No-U-Turn condition across the combined tree and aggregates this with the termination statuses from the two sub-builds.",
+      "concept_type": "probabilistic_oracle",
+      "inputs": [
+        {
+          "name": "termination_after_initial_build",
+          "type_desc": "Termination",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "termination_after_expansion",
+          "type_desc": "Termination",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "trajectory_params",
+          "type_desc": "Trajectory",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "hamiltonian",
+          "type_desc": "Hamiltonian",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "combined_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "left_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "right_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "final_termination_status",
+          "type_desc": "Termination",
+          "constraints": "x is not None"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(termination_after_initial_build: Termination, termination_after_expansion: Termination, trajectory_params: Trajectory, hamiltonian: Hamiltonian, combined_tree: BinaryTree, left_tree: BinaryTree, right_tree: BinaryTree) -> Termination",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "nutstransitionkernel",
+      "parent_id": "transition_root",
+      "name": "NutsTransitionKernel",
+      "description": "Orchestrates a single No-U-Turn Sampler (NUTS) transition. It initializes a trajectory, builds a proposal tree using the BuildNutsTree atom until a termination condition is met, samples a new state from the resulting tree, and uses a Metropolis-Hastings correction to ensure detailed balance. This produces the next state in the Markov chain.",
+      "concept_type": "mcmc_kernel",
+      "inputs": [
+        {
+          "name": "rng",
+          "type_desc": "PRNGKey",
+          "constraints": "JAX-style random number generator key, split for each stochastic step."
+        },
+        {
+          "name": "hamiltonian",
+          "type_desc": "Hamiltonian",
+          "constraints": "An oracle that provides the energy and its gradient."
+        },
+        {
+          "name": "initial_state",
+          "type_desc": "State",
+          "constraints": "The current state of the Markov chain (e.g., position and momentum)."
+        },
+        {
+          "name": "trajectory_params",
+          "type_desc": "object",
+          "constraints": "Parameters governing the trajectory, such as step size."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "next_state",
+          "type_desc": "State",
+          "constraints": "The accepted next state in the Markov chain."
+        },
+        {
+          "name": "transition_stats",
+          "type_desc": "dict",
+          "constraints": "Diagnostic information about the transition, like acceptance probability and tree depth."
+        }
+      ],
+      "status": "decomposed",
+      "children": [
+        "initialize_nuts_state",
+        "iteratively_build_proposal_tree",
+        "compute_nuts_transition_stats",
+        "create_nuts_transition"
+      ],
+      "depth": 1,
+      "type_signature": "(rng: PRNGKey, hamiltonian: Hamiltonian, initial_state: State, trajectory_params: object) -> tuple[State, dict]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "AdaptivePotentialWalker. Performs a single, guided, stochastic step within an N-dimensional state space. It uses a potential function and its gradient to simulate a trajectory, adaptively building a search tree of candidate states to avoid redundant exploration. A final probabilistic check ensures the selected next state preserves the statistical properties of a target distribution, making it a valid transition in a Markov chain.. Applications: Simulating molecular conformations in computational chemistry by exploring the potential energy surface of a molecule., Finding optimal, collision-free paths for robotic manipulators by treating obstacles as high-potential regions., Inferring the posterior distribution of weights in a Bayesian neural network to quantify model uncertainty., Generating scenarios for complex financial models by sampling from a distribution representing risk and return.",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "initialize_nuts_state",
+      "parent_id": "nutstransitionkernel",
+      "name": "initialize_nuts_state",
+      "description": "Initializes the state for a NUTS transition, including the initial energy, the root of the trajectory tree, the trajectory sampler, and termination criteria.",
+      "concept_type": "prior_init",
+      "inputs": [
+        {
+          "name": "z0",
+          "type_desc": "PhasePoint",
+          "constraints": "Initial point in phase space."
+        },
+        {
+          "name": "h",
+          "type_desc": "Hamiltonian",
+          "constraints": "Defines the system's energy."
+        },
+        {
+          "name": "τ",
+          "type_desc": "Trajectory",
+          "constraints": "Contains integrator and termination criterion."
+        },
+        {
+          "name": "rng",
+          "type_desc": "AbstractRNG",
+          "constraints": "Random number generator."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "H0",
+          "type_desc": "Real",
+          "constraints": "Initial Hamiltonian energy."
+        },
+        {
+          "name": "initial_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "The initial state of the trajectory tree."
+        },
+        {
+          "name": "initial_sampler",
+          "type_desc": "AbstractTrajectorySampler",
+          "constraints": "The initial state of the trajectory sampler."
+        },
+        {
+          "name": "initial_termination",
+          "type_desc": "Termination",
+          "constraints": "Initial termination status."
+        },
+        {
+          "name": "initial_zcand",
+          "type_desc": "PhasePoint",
+          "constraints": "Initial candidate state."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(z0: PhasePoint, h: Hamiltonian, τ: Trajectory, rng: AbstractRNG) -> tuple[Real, BinaryTree, AbstractTrajectorySampler, Termination, PhasePoint]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "iteratively_build_proposal_tree",
+      "parent_id": "nutstransitionkernel",
+      "name": "iteratively_build_proposal_tree",
+      "description": "Executes the core NUTS logic by iteratively expanding a binary tree of states. It builds sub-trees in random directions and continues until a termination condition is met, updating a candidate state at each depth via a Metropolis-Hastings acceptance step.",
+      "concept_type": "mcmc_kernel",
+      "inputs": [
+        {
+          "name": "rng",
+          "type_desc": "AbstractRNG",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "h",
+          "type_desc": "Hamiltonian",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "τ",
+          "type_desc": "Trajectory",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "H0",
+          "type_desc": "Real",
+          "constraints": "Initial energy for reference."
+        },
+        {
+          "name": "initial_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "initial_sampler",
+          "type_desc": "AbstractTrajectorySampler",
+          "constraints": "isinstance(x, str)"
+        },
+        {
+          "name": "initial_termination",
+          "type_desc": "Termination",
+          "constraints": "x is not None"
+        },
+        {
+          "name": "initial_zcand",
+          "type_desc": "PhasePoint",
+          "constraints": "isinstance(x, int)"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "final_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "The fully constructed proposal tree."
+        },
+        {
+          "name": "final_zcand",
+          "type_desc": "PhasePoint",
+          "constraints": "The final accepted candidate state from the tree."
+        },
+        {
+          "name": "final_termination",
+          "type_desc": "Termination",
+          "constraints": "The final termination status, indicating why the build stopped."
+        },
+        {
+          "name": "final_depth",
+          "type_desc": "Int",
+          "constraints": "The final depth of the constructed tree."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(rng: AbstractRNG, h: Hamiltonian, τ: Trajectory, H0: Real, initial_tree: BinaryTree, initial_sampler: AbstractTrajectorySampler, initial_termination: Termination, initial_zcand: PhasePoint) -> tuple[BinaryTree, PhasePoint, Termination, Int]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "compute_nuts_transition_stats",
+      "parent_id": "nutstransitionkernel",
+      "name": "compute_nuts_transition_stats",
+      "description": "Computes the final energy of the chosen candidate state and aggregates all relevant statistics for the NUTS transition, such as acceptance rate, energy error, tree depth, and numerical errors.",
+      "concept_type": "posterior_update",
+      "inputs": [
+        {
+          "name": "final_zcand",
+          "type_desc": "PhasePoint",
+          "constraints": "The final candidate state."
+        },
+        {
+          "name": "final_tree",
+          "type_desc": "BinaryTree",
+          "constraints": "The completed proposal tree."
+        },
+        {
+          "name": "H0",
+          "type_desc": "Real",
+          "constraints": "Initial energy for calculating error."
+        },
+        {
+          "name": "final_depth",
+          "type_desc": "Int",
+          "constraints": "Final tree depth."
+        },
+        {
+          "name": "final_termination",
+          "type_desc": "Termination",
+          "constraints": "Final termination status."
+        },
+        {
+          "name": "h",
+          "type_desc": "Hamiltonian",
+          "constraints": "Used to compute final energy."
+        },
+        {
+          "name": "integrator_stats",
+          "type_desc": "dict",
+          "constraints": "Statistics from the trajectory integrator."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "transition_stats",
+          "type_desc": "dict",
+          "constraints": "Aggregated statistics for the transition."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(final_zcand: PhasePoint, final_tree: BinaryTree, H0: Real, final_depth: Int, final_termination: Termination, h: Hamiltonian, integrator_stats: dict) -> dict",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "create_nuts_transition",
+      "parent_id": "nutstransitionkernel",
+      "name": "create_nuts_transition",
+      "description": "Packages the final selected state and the computed statistics into a transition object, representing the result of one NUTS step.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "final_zcand",
+          "type_desc": "PhasePoint",
+          "constraints": "The accepted next state."
+        },
+        {
+          "name": "transition_stats",
+          "type_desc": "dict",
+          "constraints": "The statistics associated with the transition."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "next_transition",
+          "type_desc": "Transition",
+          "constraints": "The final transition object."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(final_zcand: PhasePoint, transition_stats: dict) -> Transition",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "build_initial_trajectory_segment",
+      "target_id": "build_expansion_trajectory_segment",
+      "output_name": "initial_tree",
+      "input_name": "initial_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "build_initial_trajectory_segment",
+      "target_id": "build_expansion_trajectory_segment",
+      "output_name": "sampler_after_initial_build",
+      "input_name": "sampler_after_initial_build",
+      "source_type": "AbstractTrajectorySampler",
+      "target_type": "AbstractTrajectorySampler",
+      "requires_glue": false
+    },
+    {
+      "source_id": "build_initial_trajectory_segment",
+      "target_id": "orient_trajectory_segments",
+      "output_name": "initial_tree",
+      "input_name": "initial_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "build_expansion_trajectory_segment",
+      "target_id": "orient_trajectory_segments",
+      "output_name": "expansion_tree",
+      "input_name": "expansion_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "orient_trajectory_segments",
+      "target_id": "merge_trajectory_segments",
+      "output_name": "left_tree",
+      "input_name": "left_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "orient_trajectory_segments",
+      "target_id": "merge_trajectory_segments",
+      "output_name": "right_tree",
+      "input_name": "right_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "build_initial_trajectory_segment",
+      "target_id": "merge_trajectory_segments",
+      "output_name": "sampler_after_initial_build",
+      "input_name": "sampler_after_initial_build",
+      "source_type": "AbstractTrajectorySampler",
+      "target_type": "AbstractTrajectorySampler",
+      "requires_glue": false
+    },
+    {
+      "source_id": "build_expansion_trajectory_segment",
+      "target_id": "merge_trajectory_segments",
+      "output_name": "sampler_after_expansion",
+      "input_name": "sampler_after_expansion",
+      "source_type": "AbstractTrajectorySampler",
+      "target_type": "AbstractTrajectorySampler",
+      "requires_glue": false
+    },
+    {
+      "source_id": "orient_trajectory_segments",
+      "target_id": "evaluate_termination_conditions",
+      "output_name": "left_tree",
+      "input_name": "left_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "orient_trajectory_segments",
+      "target_id": "evaluate_termination_conditions",
+      "output_name": "right_tree",
+      "input_name": "right_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "merge_trajectory_segments",
+      "target_id": "evaluate_termination_conditions",
+      "output_name": "combined_tree",
+      "input_name": "combined_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "build_initial_trajectory_segment",
+      "target_id": "evaluate_termination_conditions",
+      "output_name": "termination_after_initial_build",
+      "input_name": "termination_after_initial_build",
+      "source_type": "Termination",
+      "target_type": "Termination",
+      "requires_glue": false
+    },
+    {
+      "source_id": "build_expansion_trajectory_segment",
+      "target_id": "evaluate_termination_conditions",
+      "output_name": "termination_after_expansion",
+      "input_name": "termination_after_expansion",
+      "source_type": "Termination",
+      "target_type": "Termination",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initialize_nuts_state",
+      "target_id": "iteratively_build_proposal_tree",
+      "output_name": "H0",
+      "input_name": "H0",
+      "source_type": "Real",
+      "target_type": "Real",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initialize_nuts_state",
+      "target_id": "iteratively_build_proposal_tree",
+      "output_name": "initial_tree",
+      "input_name": "initial_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initialize_nuts_state",
+      "target_id": "iteratively_build_proposal_tree",
+      "output_name": "initial_sampler",
+      "input_name": "initial_sampler",
+      "source_type": "AbstractTrajectorySampler",
+      "target_type": "AbstractTrajectorySampler",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initialize_nuts_state",
+      "target_id": "iteratively_build_proposal_tree",
+      "output_name": "initial_termination",
+      "input_name": "initial_termination",
+      "source_type": "Termination",
+      "target_type": "Termination",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initialize_nuts_state",
+      "target_id": "iteratively_build_proposal_tree",
+      "output_name": "initial_zcand",
+      "input_name": "initial_zcand",
+      "source_type": "PhasePoint",
+      "target_type": "PhasePoint",
+      "requires_glue": false
+    },
+    {
+      "source_id": "iteratively_build_proposal_tree",
+      "target_id": "compute_nuts_transition_stats",
+      "output_name": "final_zcand",
+      "input_name": "final_zcand",
+      "source_type": "PhasePoint",
+      "target_type": "PhasePoint",
+      "requires_glue": false
+    },
+    {
+      "source_id": "iteratively_build_proposal_tree",
+      "target_id": "compute_nuts_transition_stats",
+      "output_name": "final_tree",
+      "input_name": "final_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    },
+    {
+      "source_id": "iteratively_build_proposal_tree",
+      "target_id": "compute_nuts_transition_stats",
+      "output_name": "final_depth",
+      "input_name": "final_depth",
+      "source_type": "Int",
+      "target_type": "Int",
+      "requires_glue": false
+    },
+    {
+      "source_id": "iteratively_build_proposal_tree",
+      "target_id": "compute_nuts_transition_stats",
+      "output_name": "final_termination",
+      "input_name": "final_termination",
+      "source_type": "Termination",
+      "target_type": "Termination",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initialize_nuts_state",
+      "target_id": "compute_nuts_transition_stats",
+      "output_name": "H0",
+      "input_name": "H0",
+      "source_type": "Real",
+      "target_type": "Real",
+      "requires_glue": false
+    },
+    {
+      "source_id": "compute_nuts_transition_stats",
+      "target_id": "create_nuts_transition",
+      "output_name": "transition_stats",
+      "input_name": "transition_stats",
+      "source_type": "dict",
+      "target_type": "dict",
+      "requires_glue": false
+    },
+    {
+      "source_id": "iteratively_build_proposal_tree",
+      "target_id": "create_nuts_transition",
+      "output_name": "final_zcand",
+      "input_name": "final_zcand",
+      "source_type": "PhasePoint",
+      "target_type": "PhasePoint",
+      "requires_glue": false
+    },
+    {
+      "source_id": "buildnutstree",
+      "target_id": "nutstransitionkernel",
+      "output_name": "proposal_tree",
+      "input_name": "proposal_tree",
+      "source_type": "BinaryTree",
+      "target_type": "BinaryTree",
+      "requires_glue": false
+    }
+  ],
+  "metadata": {
+    "source": "ingester",
+    "class_name": "transition"
+  }
+}

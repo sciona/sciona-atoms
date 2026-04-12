@@ -1,0 +1,184 @@
+{
+  "nodes": [
+    {
+      "node_id": "core_root",
+      "parent_id": null,
+      "name": "ageoa.advancedvi.core",
+      "description": "Consolidated module for ageoa.advancedvi.core.",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "evaluate_log_probability_density",
+        "optimizationlooporchestration",
+        "gradient_oracle_evaluation"
+      ],
+      "depth": 0,
+      "type_signature": "module",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Grouped atoms sharing an upstream family or module.",
+      "critic_notes": "Auto-generated module CDG for consolidation.",
+      "decomposition_rationale": "Replaces singleton atom subpackages with a flat module layout."
+    },
+    {
+      "node_id": "evaluate_log_probability_density",
+      "parent_id": "core_root",
+      "name": "evaluate_log_probability_density",
+      "description": "Computes the log-probability density function (logpdf) for given inputs 'q' and 'z'. This is a stateless operation, likely corresponding to a specific probability distribution.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "q",
+          "type_desc": "np.ndarray",
+          "constraints": "required argument"
+        },
+        {
+          "name": "z",
+          "type_desc": "np.ndarray",
+          "constraints": "required argument"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "float",
+          "constraints": "function return value"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(q: np.ndarray, z: np.ndarray) -> float",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Direct callable atom in the consolidated module.",
+      "critic_notes": "Signature derived from the Python wrapper definition.",
+      "decomposition_rationale": "Leaf atom."
+    },
+    {
+      "node_id": "optimizationlooporchestration",
+      "parent_id": "core_root",
+      "name": "optimizationlooporchestration",
+      "description": "Runs the selected optimization algorithm for a bounded number of iterations on the provided objective/problem using an initial state.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "algorithm",
+          "type_desc": "object",
+          "constraints": "required argument"
+        },
+        {
+          "name": "max_iter",
+          "type_desc": "int",
+          "constraints": "required argument"
+        },
+        {
+          "name": "prob",
+          "type_desc": "object",
+          "constraints": "required argument"
+        },
+        {
+          "name": "q_init",
+          "type_desc": "object",
+          "constraints": "required argument"
+        },
+        {
+          "name": "rng_state_in",
+          "type_desc": "object",
+          "constraints": "required argument"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "tuple[object, object, object]",
+          "constraints": "function return value"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(algorithm: object, max_iter: int, prob: object, q_init: object, rng_state_in: object) -> tuple[object, object, object]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Direct callable atom in the consolidated module.",
+      "critic_notes": "Signature derived from the Python wrapper definition.",
+      "decomposition_rationale": "Leaf atom."
+    },
+    {
+      "node_id": "gradient_oracle_evaluation",
+      "parent_id": "core_root",
+      "name": "gradient_oracle_evaluation",
+      "description": "Computes objective value and gradient for the current parameters using the provided AD mode, while threading random number generator (RNG) and algorithm state as explicit immutable inputs/outputs.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "rng_in",
+          "type_desc": "object",
+          "constraints": "required argument"
+        },
+        {
+          "name": "obj",
+          "type_desc": "object",
+          "constraints": "required argument"
+        },
+        {
+          "name": "adtype",
+          "type_desc": "object",
+          "constraints": "required argument"
+        },
+        {
+          "name": "out_in",
+          "type_desc": "object",
+          "constraints": "required argument"
+        },
+        {
+          "name": "state_in",
+          "type_desc": "object",
+          "constraints": "required argument"
+        },
+        {
+          "name": "params",
+          "type_desc": "object",
+          "constraints": "required argument"
+        },
+        {
+          "name": "restructure",
+          "type_desc": "object",
+          "constraints": "required argument"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "tuple[object, object, object, object]",
+          "constraints": "function return value"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(rng_in: object, obj: object, adtype: object, out_in: object, state_in: object, params: object, restructure: object) -> tuple[object, object, object, object]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Direct callable atom in the consolidated module.",
+      "critic_notes": "Signature derived from the Python wrapper definition.",
+      "decomposition_rationale": "Leaf atom."
+    }
+  ],
+  "edges": []
+}

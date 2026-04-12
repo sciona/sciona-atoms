@@ -1,0 +1,398 @@
+[
+  {
+    "pdg_node": {
+      "predicate_id": "initialize_message_passing_state",
+      "statement": "(pgm: ProbabilisticGraphModel) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+      "informal_desc": "Builds the immutable loopy-belief-propagation state object from the PGM, including message tables/buffers and iteration counter.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "initialize_message_passing_state",
+          "type_signature": "(pgm: ProbabilisticGraphModel) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+          "docstring": "Builds the immutable loopy-belief-propagation state object from the PGM, including message tables/buffers and iteration counter.",
+          "conceptual_summary": "immutable_bidirectional_edge_state_initializer. Constructs an initial immutable state container for iterative message exchange on a bipartite dependency graph. For every directed edge in both directions, it allocates/initializes aligned buffer tables with shapes derived from endpoint neighborhood structure and local compatibility tensors. It returns this fully materialized state together with an iteration index set to zero, enabling deterministic first-step updates.. Applications: Initializing flux-exchange buffers on reaction-network bipartite graphs before iterative mass-balance reconciliation in systems chemistry, Bootstrapping node-edge signal tables for iterative parity-consistency decoding in digital communication error-correction graphs, Preallocating bidirectional influence tensors for iterative constraint relaxation in multi-body robotic kinematic assemblies, Setting up directional update caches for iterative resource-flow equilibration in power-grid topology optimization",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "initialize_message_passing_state",
+          "type_signature": "(pgm: ProbabilisticGraphModel) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+          "docstring": "Builds the immutable loopy-belief-propagation state object from the PGM, including message tables/buffers and iteration counter.",
+          "conceptual_summary": "immutable_bidirectional_edge_state_initializer. Constructs an initial immutable state container for iterative message exchange on a bipartite dependency graph. For every directed edge in both directions, it allocates/initializes aligned buffer tables with shapes derived from endpoint neighborhood structure and local compatibility tensors. It returns this fully materialized state together with an iteration index set to zero, enabling deterministic first-step updates.. Applications: Initializing flux-exchange buffers on reaction-network bipartite graphs before iterative mass-balance reconciliation in systems chemistry, Bootstrapping node-edge signal tables for iterative parity-consistency decoding in digital communication error-correction graphs, Preallocating bidirectional influence tensors for iterative constraint relaxation in multi-body robotic kinematic assemblies, Setting up directional update caches for iterative resource-flow equilibration in power-grid topology optimization",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "initialize_message_passing_state",
+            "type_signature": "(pgm: ProbabilisticGraphModel) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+            "docstring": "Builds the immutable loopy-belief-propagation state object from the PGM, including message tables/buffers and iteration counter.",
+            "conceptual_summary": "immutable_bidirectional_edge_state_initializer. Constructs an initial immutable state container for iterative message exchange on a bipartite dependency graph. For every directed edge in both directions, it allocates/initializes aligned buffer tables with shapes derived from endpoint neighborhood structure and local compatibility tensors. It returns this fully materialized state together with an iteration index set to zero, enabling deterministic first-step updates.. Applications: Initializing flux-exchange buffers on reaction-network bipartite graphs before iterative mass-balance reconciliation in systems chemistry, Bootstrapping node-edge signal tables for iterative parity-consistency decoding in digital communication error-correction graphs, Preallocating bidirectional influence tensors for iterative constraint relaxation in multi-body robotic kinematic assemblies, Setting up directional update caches for iterative resource-flow equilibration in power-grid topology optimization",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "validate_iteration_request",
+      "statement": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, num_iter: int) -> int",
+      "informal_desc": "Checks that the requested iteration count is not behind the current state (`state_in.t <= num_iter`) and emits the validated target iteration.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "validate_iteration_request",
+          "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, num_iter: int) -> int",
+          "docstring": "Checks that the requested iteration count is not behind the current state (`state_in.t <= num_iter`) and emits the validated target iteration.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "validate_iteration_request",
+          "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, num_iter: int) -> int",
+          "docstring": "Checks that the requested iteration count is not behind the current state (`state_in.t <= num_iter`) and emits the validated target iteration.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "validate_iteration_request",
+            "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, num_iter: int) -> int",
+            "docstring": "Checks that the requested iteration count is not behind the current state (`state_in.t <= num_iter`) and emits the validated target iteration.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "advance_state_via_loopy_message_passing",
+      "statement": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, target_iter: int) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+      "informal_desc": "If `state_in.t < target_iter`, runs synchronous BP updates until `t == target_iter`: for each edge, computes both directed messages (variable->factor and factor->variable), normalizes each message, writes into `msg_new`, then commits `msg_new` into `msg` and increments `t`.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "advance_state_via_loopy_message_passing",
+          "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, target_iter: int) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+          "docstring": "If `state_in.t < target_iter`, runs synchronous BP updates until `t == target_iter`: for each edge, computes both directed messages (variable->factor and factor->variable), normalizes each message, writes into `msg_new`, then commits `msg_new` into `msg` and increments `t`.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "advance_state_via_loopy_message_passing",
+          "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, target_iter: int) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+          "docstring": "If `state_in.t < target_iter`, runs synchronous BP updates until `t == target_iter`: for each edge, computes both directed messages (variable->factor and factor->variable), normalizes each message, writes into `msg_new`, then commits `msg_new` into `msg` and increments `t`.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "advance_state_via_loopy_message_passing",
+            "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, target_iter: int) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+            "docstring": "If `state_in.t < target_iter`, runs synchronous BP updates until `t == target_iter`: for each edge, computes both directed messages (variable->factor and factor->variable), normalizes each message, writes into `msg_new`, then commits `msg_new` into `msg` and increments `t`.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "collect_incoming_factor_messages_for_query_variable",
+      "statement": "(state_out: BPStateModelSpec{pgm, msg, msg_new, t}, v_name: string) -> List[FactorMessage]",
+      "informal_desc": "Traverses the query variable's neighboring factors and collects each factor->variable message from the updated message table.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "collect_incoming_factor_messages_for_query_variable",
+          "type_signature": "(state_out: BPStateModelSpec{pgm, msg, msg_new, t}, v_name: string) -> List[FactorMessage]",
+          "docstring": "Traverses the query variable's neighboring factors and collects each factor->variable message from the updated message table.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "collect_incoming_factor_messages_for_query_variable",
+          "type_signature": "(state_out: BPStateModelSpec{pgm, msg, msg_new, t}, v_name: string) -> List[FactorMessage]",
+          "docstring": "Traverses the query variable's neighboring factors and collects each factor->variable message from the updated message table.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "collect_incoming_factor_messages_for_query_variable",
+            "type_signature": "(state_out: BPStateModelSpec{pgm, msg, msg_new, t}, v_name: string) -> List[FactorMessage]",
+            "docstring": "Traverses the query variable's neighboring factors and collects each factor->variable message from the updated message table.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "compose_joint_query_distribution",
+      "statement": "(incoming_messages: List[FactorMessage]) -> FactorMessage",
+      "informal_desc": "Combines all incoming factor->variable messages into a single unnormalized belief factor using joint multiplication.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "compose_joint_query_distribution",
+          "type_signature": "(incoming_messages: List[FactorMessage]) -> FactorMessage",
+          "docstring": "Combines all incoming factor->variable messages into a single unnormalized belief factor using joint multiplication.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "compose_joint_query_distribution",
+          "type_signature": "(incoming_messages: List[FactorMessage]) -> FactorMessage",
+          "docstring": "Combines all incoming factor->variable messages into a single unnormalized belief factor using joint multiplication.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "compose_joint_query_distribution",
+            "type_signature": "(incoming_messages: List[FactorMessage]) -> FactorMessage",
+            "docstring": "Combines all incoming factor->variable messages into a single unnormalized belief factor using joint multiplication.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "normalize_joint_distribution_to_belief",
+      "statement": "(joint_message: FactorMessage) -> NormalizedVector",
+      "informal_desc": "Normalizes the combined query distribution so probabilities sum to 1, yielding the queried variable belief.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "normalize_joint_distribution_to_belief",
+          "type_signature": "(joint_message: FactorMessage) -> NormalizedVector",
+          "docstring": "Normalizes the combined query distribution so probabilities sum to 1, yielding the queried variable belief.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "normalize_joint_distribution_to_belief",
+          "type_signature": "(joint_message: FactorMessage) -> NormalizedVector",
+          "docstring": "Normalizes the combined query distribution so probabilities sum to 1, yielding the queried variable belief.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "normalize_joint_distribution_to_belief",
+            "type_signature": "(joint_message: FactorMessage) -> NormalizedVector",
+            "docstring": "Normalizes the combined query distribution so probabilities sum to 1, yielding the queried variable belief.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  }
+]

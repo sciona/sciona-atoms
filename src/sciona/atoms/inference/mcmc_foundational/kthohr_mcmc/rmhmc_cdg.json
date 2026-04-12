@@ -1,0 +1,66 @@
+{
+  "nodes": [
+    {
+      "node_id": "rmhmc_root",
+      "parent_id": null,
+      "name": "ageoa.mcmc_foundational.kthohr_mcmc.rmhmc",
+      "description": "Consolidated module for ageoa.mcmc_foundational.kthohr_mcmc.rmhmc.",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "buildrmhmctransitionkernel"
+      ],
+      "depth": 0,
+      "type_signature": "module",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Grouped atoms sharing an upstream family or module.",
+      "critic_notes": "Auto-generated module CDG for consolidation.",
+      "decomposition_rationale": "Replaces singleton atom subpackages with a flat module layout."
+    },
+    {
+      "node_id": "buildrmhmctransitionkernel",
+      "parent_id": "rmhmc_root",
+      "name": "buildrmhmctransitionkernel",
+      "description": "Constructs a pure Riemannian Manifold Hamiltonian Monte Carlo (HMC) transition kernel from a target log-density oracle and metric/tensor oracle. The produced kernel is expected to thread immutable sampler state explicitly (e.g., position, momentum, mass/metric tensor, and PRNGKey) as state_in -> state_out.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "target_log_kernel",
+          "type_desc": "Callable[[np.ndarray], float]",
+          "constraints": "required argument"
+        },
+        {
+          "name": "tensor_fn",
+          "type_desc": "Callable[[np.ndarray], np.ndarray]",
+          "constraints": "required argument"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]",
+          "constraints": "function return value"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(target_log_kernel: log-density oracle, tensor_fn: metric tensor oracle) -> RMHMC transition kernel",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Direct callable atom in the consolidated module.",
+      "critic_notes": "Signature derived from the Python wrapper definition.",
+      "decomposition_rationale": "Leaf atom."
+    }
+  ],
+  "edges": []
+}

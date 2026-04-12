@@ -1,0 +1,447 @@
+{
+  "nodes": [
+    {
+      "node_id": "NUTS_root",
+      "parent_id": null,
+      "name": "NUTS",
+      "description": "Ingested pipeline from NUTS",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "initializenutsstate",
+        "runnutstransitions"
+      ],
+      "depth": 0,
+      "type_signature": "",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "initializenutsstate",
+      "parent_id": "NUTS_root",
+      "name": "InitializeNUTSState",
+      "description": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "target",
+          "type_desc": "Callable",
+          "constraints": "Pure/stateless likelihood or log-density evaluator"
+        },
+        {
+          "name": "initial_positions",
+          "type_desc": "Array[float]",
+          "constraints": "Valid support of target distribution"
+        },
+        {
+          "name": "target_accept_p",
+          "type_desc": "float",
+          "constraints": "0 < target_accept_p < 1"
+        },
+        {
+          "name": "seed",
+          "type_desc": "int",
+          "constraints": "Used to derive deterministic PRNGKey/RNG state"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nuts_state",
+          "type_desc": "object",
+          "constraints": "Immutable state object; no hidden mutation"
+        },
+        {
+          "name": "rng_key",
+          "type_desc": "PRNGKey",
+          "constraints": "Explicit stochastic state threaded across calls"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(target: Callable oracle: position -> log_prob, initial_positions: Array[float], target_accept_p: float, seed: int) -> tuple[StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Deterministic Stochastic-State Constructor. Constructs an immutable initialization record for a gradient-informed stochastic transition process from a pure scalar-field oracle, an initial coordinate vector, a control scalar, and an integer seed. The seed is transformed into an explicit pseudorandom generator state so all randomness is externally threaded and reproducible. The output bundles primary coordinates with auxiliary kinetic/metric and trace containers needed for subsequent state transitions without hidden mutation.. Applications: Initializing reproducible latent-state exploration in high-dimensional inverse problems for medical imaging reconstruction, Bootstrapping stochastic trajectory search for molecular conformation landscapes in computational chemistry, Setting up probabilistic parameter-space traversal for aerodynamic model calibration in aerospace engineering, Creating explicit random-state simulation seeds and immutable transition records for uncertainty quantification in power-grid dynamics",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "runnutstransitions",
+      "parent_id": "NUTS_root",
+      "name": "RunNUTSTransitions",
+      "description": "Apply NUTS transition kernels for warmup/discard and collection while returning new immutable chain state, diagnostics trace, and split RNG key.",
+      "concept_type": "mcmc_kernel",
+      "inputs": [
+        {
+          "name": "nuts_state_in",
+          "type_desc": "object",
+          "constraints": "Input state is immutable"
+        },
+        {
+          "name": "rng_key_in",
+          "type_desc": "PRNGKey",
+          "constraints": "Must be consumed/split and returned as new key"
+        },
+        {
+          "name": "n_collect",
+          "type_desc": "int",
+          "constraints": ">= 0"
+        },
+        {
+          "name": "n_discard",
+          "type_desc": "int",
+          "constraints": ">= 0"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "samples",
+          "type_desc": "Array[float]",
+          "constraints": "Posterior draws after discard phase"
+        },
+        {
+          "name": "trace_out",
+          "type_desc": "Array[Diagnostics]",
+          "constraints": "Per-step diagnostics/history"
+        },
+        {
+          "name": "nuts_state_out",
+          "type_desc": "object",
+          "constraints": "New immutable state object"
+        },
+        {
+          "name": "rng_key_out",
+          "type_desc": "PRNGKey",
+          "constraints": "New key after stochastic transitions"
+        }
+      ],
+      "status": "decomposed",
+      "children": [
+        "allocateperchainstatchannels",
+        "spawnprogressmonitor",
+        "runchainsinscopedparallel",
+        "stackchainsamples",
+        "joinprogressmonitor",
+        "computerunstatsfromsamples",
+        "assemblerunprogressresult"
+      ],
+      "depth": 1,
+      "type_signature": "(nuts_state_in: StateModelSpec{position, momentum, mass_matrix, trace}, rng_key_in: PRNGKey, n_collect: int, n_discard: int) -> tuple[Array[float], Array[Diagnostics], StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Adaptive Gradient-Informed Markov Transition Executor. Iteratively applies a stochastic, gradient-informed transition kernel to an immutable state in two phases: adaptation-only steps (discarded) followed by retained steps (collected). Each iteration advances latent continuous variables and auxiliary dynamics variables while appending per-step diagnostics, producing a new state object rather than mutating the input. Randomness is handled through explicit pseudo-random key splitting so execution remains reproducible and functionally pure.. Applications: Calibrating latent parameter fields in inverse problems for geophysical tomography, Sampling high-dimensional conformational states in molecular or materials simulation, Estimating latent dynamical states and hyperparameters in nonlinear control-system identification, Uncertainty-aware reconstruction of volumetric images in computational medical imaging",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "allocateperchainstatchannels",
+      "parent_id": "runnutstransitions",
+      "name": "AllocatePerChainStatChannels",
+      "description": "Create one sender/receiver channel pair per chain so each worker can stream progress snapshots independently.",
+      "concept_type": "message_passing",
+      "inputs": [
+        {
+          "name": "chain_count",
+          "type_desc": "int",
+          "constraints": ">= 1"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "stats_receivers",
+          "type_desc": "object",
+          "constraints": "length == chain_count"
+        },
+        {
+          "name": "stats_senders",
+          "type_desc": "object",
+          "constraints": "length == chain_count"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(chain_count: usize) -> tuple[Vec<Receiver<ChainStats>>, Vec<Sender<ChainStats>>]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "spawnprogressmonitor",
+      "parent_id": "runnutstransitions",
+      "name": "SpawnProgressMonitor",
+      "description": "Start a monitor task that consumes chain stats, updates per-chain/global progress state, computes acceptance and rhat summaries, and exits when all chains finish.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "stats_receivers",
+          "type_desc": "object",
+          "constraints": "all channels correspond to active chains"
+        },
+        {
+          "name": "n_collect",
+          "type_desc": "int",
+          "constraints": ">= 0"
+        },
+        {
+          "name": "n_discard",
+          "type_desc": "int",
+          "constraints": ">= 0"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "progress_handle",
+          "type_desc": "object",
+          "constraints": "joinable after worker completion"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(stats_receivers: Vec<Receiver<ChainStats>>, n_collect: usize, n_discard: usize) -> JoinHandle<()>",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "runchainsinscopedparallel",
+      "parent_id": "runnutstransitions",
+      "name": "RunChainsInScopedParallel",
+      "description": "Execute each chain in a scoped thread, forwarding progress through its sender, and collect one 2D sample tensor per chain.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "chains",
+          "type_desc": "object",
+          "constraints": "mutable access required"
+        },
+        {
+          "name": "stats_senders",
+          "type_desc": "object",
+          "constraints": "one sender per chain"
+        },
+        {
+          "name": "n_collect",
+          "type_desc": "int",
+          "constraints": ">= 0"
+        },
+        {
+          "name": "n_discard",
+          "type_desc": "int",
+          "constraints": ">= 0"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "chain_samples",
+          "type_desc": "list[Tensor]",
+          "constraints": "length == number of chains"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(chains: Vec<Chain<B>>, stats_senders: Vec<Sender<ChainStats>>, n_collect: usize, n_discard: usize) -> Vec<Tensor<B, 2>>",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "stackchainsamples",
+      "parent_id": "runnutstransitions",
+      "name": "StackChainSamples",
+      "description": "Aggregate per-chain 2D tensors into one 3D tensor along the chain axis.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "chain_samples",
+          "type_desc": "list[Tensor]",
+          "constraints": "non-empty and shape-compatible"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sample_tensor",
+          "type_desc": "Tensor",
+          "constraints": "axis 0 indexes chains"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(chain_samples: Vec<Tensor<B, 2>>) -> Tensor<B, 3>",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "joinprogressmonitor",
+      "parent_id": "runnutstransitions",
+      "name": "JoinProgressMonitor",
+      "description": "Wait for the monitor task to finish and produce a join status used for optional error reporting.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "progress_handle",
+          "type_desc": "object",
+          "constraints": "valid spawned handle"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "monitor_join_status",
+          "type_desc": "object",
+          "constraints": "Err indicates monitor panic"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(progress_handle: JoinHandle<()>) -> Result<(), Box<dyn Any + Send>>",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "computerunstatsfromsamples",
+      "parent_id": "runnutstransitions",
+      "name": "ComputeRunStatsFromSamples",
+      "description": "Materialize sample data, form a 3D ndarray view, and derive run-level diagnostics/statistics.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "sample_tensor",
+          "type_desc": "Tensor",
+          "constraints": "data convertible to contiguous f32 slice"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "run_stats",
+          "type_desc": "RunStats",
+          "constraints": "computed from full sample tensor"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(sample_tensor: Tensor<B, 3>) -> RunStats",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "assemblerunprogressresult",
+      "parent_id": "runnutstransitions",
+      "name": "AssembleRunProgressResult",
+      "description": "Construct the final success result containing stacked samples and derived run statistics.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "sample_tensor",
+          "type_desc": "Tensor",
+          "constraints": "already stacked"
+        },
+        {
+          "name": "run_stats",
+          "type_desc": "RunStats",
+          "constraints": "computed from sample_tensor"
+        },
+        {
+          "name": "monitor_join_status",
+          "type_desc": "object",
+          "constraints": "used only for optional logging; does not alter success path"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "run_result",
+          "type_desc": "object",
+          "constraints": "returns Ok(sample_tensor, run_stats)"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(sample_tensor: Tensor<B, 3>, run_stats: RunStats, monitor_join_status: Result<(), Box<dyn Any + Send>>) -> Result<(Tensor<B, 3>, RunStats), Box<dyn Error>>",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "initializenutsstate",
+      "target_id": "runnutstransitions",
+      "output_name": "nuts_state",
+      "input_name": "nuts_state_in",
+      "source_type": "StateModelSpec{position, momentum, mass_matrix, trace}",
+      "target_type": "StateModelSpec{position, momentum, mass_matrix, trace}",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initializenutsstate",
+      "target_id": "runnutstransitions",
+      "output_name": "rng_key",
+      "input_name": "rng_key_in",
+      "source_type": "PRNGKey",
+      "target_type": "PRNGKey",
+      "requires_glue": false
+    }
+  ],
+  "metadata": {
+    "source": "ingester",
+    "class_name": "NUTS"
+  }
+}

@@ -1,0 +1,442 @@
+{
+  "nodes": [
+    {
+      "node_id": "loopy_belief_propagation_root",
+      "parent_id": null,
+      "name": "loopy_belief_propagation",
+      "description": "Ingested pipeline from loopy_belief_propagation",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "initialize_message_passing_state",
+        "run_loopy_message_passing_and_belief_query"
+      ],
+      "depth": 0,
+      "type_signature": "",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "initialize_message_passing_state",
+      "parent_id": "loopy_belief_propagation_root",
+      "name": "initialize_message_passing_state",
+      "description": "Builds the immutable loopy-belief-propagation state object from the PGM, including message tables/buffers and iteration counter. Acts as a memoization cache (msg/msg_new) to prevent infinite recursive cycles during message passing on cyclic graphs by storing and reusing previously computed messages.",
+      "concept_type": "prior_init",
+      "inputs": [
+        {
+          "name": "pgm",
+          "type_desc": "ProbabilisticGraphModel",
+          "constraints": "Factor graph structure with variable/factor neighborhoods and factor tables."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "state_out",
+          "type_desc": "object",
+          "constraints": "New object; includes initialized factor->variable and variable->factor message storage plus t=0."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(pgm: ProbabilisticGraphModel) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "immutable_bidirectional_edge_state_initializer. Constructs an initial immutable state container for iterative message exchange on a bipartite dependency graph. For every directed edge in both directions, it allocates/initializes aligned buffer tables with shapes derived from endpoint neighborhood structure and local compatibility tensors. It returns this fully materialized state together with an iteration index set to zero, enabling deterministic first-step updates.. Applications: Initializing flux-exchange buffers on reaction-network bipartite graphs before iterative mass-balance reconciliation in systems chemistry, Bootstrapping node-edge signal tables for iterative parity-consistency decoding in digital communication error-correction graphs, Preallocating bidirectional influence tensors for iterative constraint relaxation in multi-body robotic kinematic assemblies, Setting up directional update caches for iterative resource-flow equilibration in power-grid topology optimization",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "run_loopy_message_passing_and_belief_query",
+      "parent_id": "loopy_belief_propagation_root",
+      "name": "run_loopy_message_passing_and_belief_query",
+      "description": "Runs pure loopy message-passing iterations (variable->factor and factor->variable updates with normalization) and returns the queried variable belief with an updated immutable state.",
+      "concept_type": "message_passing",
+      "inputs": [
+        {
+          "name": "state_in",
+          "type_desc": "object",
+          "constraints": "Immutable input snapshot; msg/msg_new/t are read and transformed into a new state."
+        },
+        {
+          "name": "v_name",
+          "type_desc": "str",
+          "constraints": "Must be a valid variable name in pgm."
+        },
+        {
+          "name": "num_iter",
+          "type_desc": "int",
+          "constraints": "num_iter >= 0."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "belief",
+          "type_desc": "NormalizedVector",
+          "constraints": "Probability vector for v_name; sums to 1."
+        },
+        {
+          "name": "state_out",
+          "type_desc": "object",
+          "constraints": "New object with updated msg and t after iterations; no hidden mutation."
+        }
+      ],
+      "status": "decomposed",
+      "children": [
+        "validate_iteration_request",
+        "compute_variable_to_factor_messages",
+        "compute_factor_to_variable_messages",
+        "commit_messages_and_advance_iteration",
+        "collect_incoming_factor_messages_for_query_variable",
+        "compose_joint_query_distribution",
+        "normalize_joint_distribution_to_belief"
+      ],
+      "depth": 1,
+      "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, v_name: string, num_iter: int) -> tuple[NormalizedVector, BPStateModelSpec{pgm, msg, msg_new, t}]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Iterative Bipartite Message Equilibration and Local Marginal Extraction. Applies repeated local update rules on a cyclic bipartite dependency graph, alternating directed messages from node set A to node set B and back. Each message is reweighted by neighboring incoming messages and then normalized so every edge-wise message lies on a simplex, driving the system toward a fixed-point approximation of global consistency. After a specified number of iterations, it extracts the queried node's normalized marginal weight vector and returns it with a newly constructed state snapshot.. Applications: Iterative decoding of sparse parity-check communication codes via constraint-variable exchanges, Multi-sensor occupancy inference on discretized spatial maps with cyclic neighborhood constraints, Distributed fault localization in infrastructure networks by propagating consistency signals between component and constraint nodes, Inference of discrete conformational states in interaction networks where pairwise and higher-order compatibility rules are known",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "validate_iteration_request",
+      "parent_id": "run_loopy_message_passing_and_belief_query",
+      "name": "validate_iteration_request",
+      "description": "Checks that the requested iteration count is not behind the current state (`state_in.t <= num_iter`) and emits the validated target iteration.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "state_in",
+          "type_desc": "object",
+          "constraints": "Must contain current iteration counter `t`."
+        },
+        {
+          "name": "num_iter",
+          "type_desc": "int",
+          "constraints": "Requested iteration index."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "target_iter",
+          "type_desc": "int",
+          "constraints": "Defined only when `state_in.t <= num_iter`; otherwise this step yields an invalid-request error."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, num_iter: int) -> int",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "compute_variable_to_factor_messages",
+      "parent_id": "run_loopy_message_passing_and_belief_query",
+      "name": "compute_variable_to_factor_messages",
+      "description": "For each edge, computes the variable-to-factor message as the product of all incoming factor messages except the target factor, then normalizes.",
+      "concept_type": "message_passing",
+      "inputs": [
+        {
+          "name": "state_in",
+          "type_desc": "object",
+          "constraints": "Graph must provide factor/variable typing, neighbors, factor tables, and variable ranks."
+        },
+        {
+          "name": "target_iter",
+          "type_desc": "int",
+          "constraints": "Must satisfy `target_iter >= state_in.t`."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "msg_new",
+          "type_desc": "MessageTable",
+          "constraints": "Contains updated variable-to-factor messages; factor-to-variable entries are unchanged."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, target_iter: int) -> MessageTable",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "compute_factor_to_variable_messages",
+      "parent_id": "run_loopy_message_passing_and_belief_query",
+      "name": "compute_factor_to_variable_messages",
+      "description": "For each edge, computes the factor-to-variable message by multiplying the factor potential with all incoming variable messages except the target variable, marginalizing out non-target variables via np.sum(axis=...), then normalizes.",
+      "concept_type": "message_passing",
+      "inputs": [
+        {
+          "name": "state_in",
+          "type_desc": "object",
+          "constraints": "Graph must provide factor/variable typing, neighbors, factor tables, and variable ranks."
+        },
+        {
+          "name": "msg_new",
+          "type_desc": "MessageTable",
+          "constraints": "Must contain the updated variable-to-factor messages from the current iteration."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "msg_new",
+          "type_desc": "MessageTable",
+          "constraints": "Contains updated variable-to-factor and factor-to-variable messages for the current iteration."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, msg_new: MessageTable) -> MessageTable",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "commit_messages_and_advance_iteration",
+      "parent_id": "run_loopy_message_passing_and_belief_query",
+      "name": "commit_messages_and_advance_iteration",
+      "description": "Copies msg_new into msg and increments the iteration counter t, producing an updated immutable state snapshot.",
+      "concept_type": "state_update",
+      "inputs": [
+        {
+          "name": "state_in",
+          "type_desc": "object",
+          "constraints": "Current state before commit."
+        },
+        {
+          "name": "msg_new",
+          "type_desc": "MessageTable",
+          "constraints": "Must contain all updated messages for the current iteration."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "state_out",
+          "type_desc": "object",
+          "constraints": "`state_out.t == state_in.t + 1`; `msg` contains latest normalized directional messages."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(state_in: BPStateModelSpec{pgm, msg, msg_new, t}, msg_new: MessageTable) -> BPStateModelSpec{pgm, msg, msg_new, t}",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "collect_incoming_factor_messages_for_query_variable",
+      "parent_id": "run_loopy_message_passing_and_belief_query",
+      "name": "collect_incoming_factor_messages_for_query_variable",
+      "description": "Traverses the query variable's neighboring factors and collects each factor->variable message from the updated message table.",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "state_out",
+          "type_desc": "object",
+          "constraints": "Must already be advanced to requested iteration."
+        },
+        {
+          "name": "v_name",
+          "type_desc": "str",
+          "constraints": "Must be a variable node in the factor graph."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "incoming_messages",
+          "type_desc": "List[FactorMessage]",
+          "constraints": "One message per neighboring factor of `v_name`."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(state_out: BPStateModelSpec{pgm, msg, msg_new, t}, v_name: string) -> List[FactorMessage]",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "compose_joint_query_distribution",
+      "parent_id": "run_loopy_message_passing_and_belief_query",
+      "name": "compose_joint_query_distribution",
+      "description": "Combines all incoming factor->variable messages into a single unnormalized belief factor using joint multiplication. Fuses incoming messages via numpy broadcasting and np.sum(axis=...) to compute the marginal distribution.",
+      "concept_type": "marginal_computation",
+      "inputs": [
+        {
+          "name": "incoming_messages",
+          "type_desc": "List[FactorMessage]",
+          "constraints": "All messages must be over the query variable domain."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "joint_message",
+          "type_desc": "FactorMessage",
+          "constraints": "Unnormalized combined distribution."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(incoming_messages: List[FactorMessage]) -> FactorMessage",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    },
+    {
+      "node_id": "normalize_joint_distribution_to_belief",
+      "parent_id": "run_loopy_message_passing_and_belief_query",
+      "name": "normalize_joint_distribution_to_belief",
+      "description": "Normalizes the combined query distribution so probabilities sum to 1, yielding the queried variable belief.",
+      "concept_type": "arithmetic",
+      "inputs": [
+        {
+          "name": "joint_message",
+          "type_desc": "FactorMessage",
+          "constraints": "Distribution sum must be positive."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "belief",
+          "type_desc": "NormalizedVector",
+          "constraints": "Probability mass sums to 1."
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 2,
+      "type_signature": "(joint_message: FactorMessage) -> NormalizedVector",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "validate_iteration_request",
+      "target_id": "compute_variable_to_factor_messages",
+      "output_name": "target_iter",
+      "input_name": "target_iter",
+      "source_type": "int",
+      "target_type": "int",
+      "requires_glue": false
+    },
+    {
+      "source_id": "compute_variable_to_factor_messages",
+      "target_id": "compute_factor_to_variable_messages",
+      "output_name": "msg_new",
+      "input_name": "msg_new",
+      "source_type": "MessageTable",
+      "target_type": "MessageTable",
+      "requires_glue": false
+    },
+    {
+      "source_id": "compute_factor_to_variable_messages",
+      "target_id": "commit_messages_and_advance_iteration",
+      "output_name": "msg_new",
+      "input_name": "msg_new",
+      "source_type": "MessageTable",
+      "target_type": "MessageTable",
+      "requires_glue": false
+    },
+    {
+      "source_id": "commit_messages_and_advance_iteration",
+      "target_id": "collect_incoming_factor_messages_for_query_variable",
+      "output_name": "state_out",
+      "input_name": "state_out",
+      "source_type": "BPStateModelSpec{pgm, msg, msg_new, t}",
+      "target_type": "BPStateModelSpec{pgm, msg, msg_new, t}",
+      "requires_glue": false
+    },
+    {
+      "source_id": "collect_incoming_factor_messages_for_query_variable",
+      "target_id": "compose_joint_query_distribution",
+      "output_name": "incoming_messages",
+      "input_name": "incoming_messages",
+      "source_type": "List[FactorMessage]",
+      "target_type": "List[FactorMessage]",
+      "requires_glue": false
+    },
+    {
+      "source_id": "compose_joint_query_distribution",
+      "target_id": "normalize_joint_distribution_to_belief",
+      "output_name": "joint_message",
+      "input_name": "joint_message",
+      "source_type": "FactorMessage",
+      "target_type": "FactorMessage",
+      "requires_glue": false
+    },
+    {
+      "source_id": "initialize_message_passing_state",
+      "target_id": "run_loopy_message_passing_and_belief_query",
+      "output_name": "state_out",
+      "input_name": "state_in",
+      "source_type": "BPStateModelSpec{pgm, msg, msg_new, t}",
+      "target_type": "BPStateModelSpec{pgm, msg, msg_new, t}",
+      "requires_glue": false
+    }
+  ],
+  "metadata": {
+    "source": "ingester",
+    "class_name": "loopy_belief_propagation"
+  }
+}

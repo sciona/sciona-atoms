@@ -1,0 +1,1 @@
+"""Mini MCMC atoms."""

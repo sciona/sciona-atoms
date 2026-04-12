@@ -1,0 +1,530 @@
+[
+  {
+    "pdg_node": {
+      "predicate_id": "initializenutsstate",
+      "statement": "(target: Callable oracle: position -> log_prob, initial_positions: Array[float], target_accept_p: float, seed: int) -> tuple[StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
+      "informal_desc": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "initializenutsstate",
+          "type_signature": "(target: Callable oracle: position -> log_prob, initial_positions: Array[float], target_accept_p: float, seed: int) -> tuple[StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
+          "docstring": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
+          "conceptual_summary": "Deterministic Stochastic-State Constructor. Constructs an immutable initialization record for a gradient-informed stochastic transition process from a pure scalar-field oracle, an initial coordinate vector, a control scalar, and an integer seed. The seed is transformed into an explicit pseudorandom generator state so all randomness is externally threaded and reproducible. The output bundles primary coordinates with auxiliary kinetic/metric and trace containers needed for subsequent state transitions without hidden mutation.. Applications: Initializing reproducible latent-state exploration in high-dimensional inverse problems for medical imaging reconstruction, Bootstrapping stochastic trajectory search for molecular conformation landscapes in computational chemistry, Setting up probabilistic parameter-space traversal for aerodynamic model calibration in aerospace engineering, Creating explicit random-state simulation seeds and immutable transition records for uncertainty quantification in power-grid dynamics",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "initializenutsstate",
+          "type_signature": "(target: Callable oracle: position -> log_prob, initial_positions: Array[float], target_accept_p: float, seed: int) -> tuple[StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
+          "docstring": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
+          "conceptual_summary": "Deterministic Stochastic-State Constructor. Constructs an immutable initialization record for a gradient-informed stochastic transition process from a pure scalar-field oracle, an initial coordinate vector, a control scalar, and an integer seed. The seed is transformed into an explicit pseudorandom generator state so all randomness is externally threaded and reproducible. The output bundles primary coordinates with auxiliary kinetic/metric and trace containers needed for subsequent state transitions without hidden mutation.. Applications: Initializing reproducible latent-state exploration in high-dimensional inverse problems for medical imaging reconstruction, Bootstrapping stochastic trajectory search for molecular conformation landscapes in computational chemistry, Setting up probabilistic parameter-space traversal for aerodynamic model calibration in aerospace engineering, Creating explicit random-state simulation seeds and immutable transition records for uncertainty quantification in power-grid dynamics",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "initializenutsstate",
+            "type_signature": "(target: Callable oracle: position -> log_prob, initial_positions: Array[float], target_accept_p: float, seed: int) -> tuple[StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
+            "docstring": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
+            "conceptual_summary": "Deterministic Stochastic-State Constructor. Constructs an immutable initialization record for a gradient-informed stochastic transition process from a pure scalar-field oracle, an initial coordinate vector, a control scalar, and an integer seed. The seed is transformed into an explicit pseudorandom generator state so all randomness is externally threaded and reproducible. The output bundles primary coordinates with auxiliary kinetic/metric and trace containers needed for subsequent state transitions without hidden mutation.. Applications: Initializing reproducible latent-state exploration in high-dimensional inverse problems for medical imaging reconstruction, Bootstrapping stochastic trajectory search for molecular conformation landscapes in computational chemistry, Setting up probabilistic parameter-space traversal for aerodynamic model calibration in aerospace engineering, Creating explicit random-state simulation seeds and immutable transition records for uncertainty quantification in power-grid dynamics",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "allocateperchainstatchannels",
+      "statement": "(chain_count: usize) -> tuple[Vec<Receiver<ChainStats>>, Vec<Sender<ChainStats>>]",
+      "informal_desc": "Create one sender/receiver channel pair per chain so each worker can stream progress snapshots independently.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "allocateperchainstatchannels",
+          "type_signature": "(chain_count: usize) -> tuple[Vec<Receiver<ChainStats>>, Vec<Sender<ChainStats>>]",
+          "docstring": "Create one sender/receiver channel pair per chain so each worker can stream progress snapshots independently.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "allocateperchainstatchannels",
+          "type_signature": "(chain_count: usize) -> tuple[Vec<Receiver<ChainStats>>, Vec<Sender<ChainStats>>]",
+          "docstring": "Create one sender/receiver channel pair per chain so each worker can stream progress snapshots independently.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "allocateperchainstatchannels",
+            "type_signature": "(chain_count: usize) -> tuple[Vec<Receiver<ChainStats>>, Vec<Sender<ChainStats>>]",
+            "docstring": "Create one sender/receiver channel pair per chain so each worker can stream progress snapshots independently.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "spawnprogressmonitor",
+      "statement": "(stats_receivers: Vec<Receiver<ChainStats>>, n_collect: usize, n_discard: usize) -> JoinHandle<()>",
+      "informal_desc": "Start a monitor task that consumes chain stats, updates per-chain/global progress state, computes acceptance and rhat summaries, and exits when all chains finish.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "spawnprogressmonitor",
+          "type_signature": "(stats_receivers: Vec<Receiver<ChainStats>>, n_collect: usize, n_discard: usize) -> JoinHandle<()>",
+          "docstring": "Start a monitor task that consumes chain stats, updates per-chain/global progress state, computes acceptance and rhat summaries, and exits when all chains finish.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "spawnprogressmonitor",
+          "type_signature": "(stats_receivers: Vec<Receiver<ChainStats>>, n_collect: usize, n_discard: usize) -> JoinHandle<()>",
+          "docstring": "Start a monitor task that consumes chain stats, updates per-chain/global progress state, computes acceptance and rhat summaries, and exits when all chains finish.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "spawnprogressmonitor",
+            "type_signature": "(stats_receivers: Vec<Receiver<ChainStats>>, n_collect: usize, n_discard: usize) -> JoinHandle<()>",
+            "docstring": "Start a monitor task that consumes chain stats, updates per-chain/global progress state, computes acceptance and rhat summaries, and exits when all chains finish.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "runchainsinscopedparallel",
+      "statement": "(chains: Vec<Chain<B>>, stats_senders: Vec<Sender<ChainStats>>, n_collect: usize, n_discard: usize) -> Vec<Tensor<B, 2>>",
+      "informal_desc": "Execute each chain in a scoped thread, forwarding progress through its sender, and collect one 2D sample tensor per chain.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "runchainsinscopedparallel",
+          "type_signature": "(chains: Vec<Chain<B>>, stats_senders: Vec<Sender<ChainStats>>, n_collect: usize, n_discard: usize) -> Vec<Tensor<B, 2>>",
+          "docstring": "Execute each chain in a scoped thread, forwarding progress through its sender, and collect one 2D sample tensor per chain.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "runchainsinscopedparallel",
+          "type_signature": "(chains: Vec<Chain<B>>, stats_senders: Vec<Sender<ChainStats>>, n_collect: usize, n_discard: usize) -> Vec<Tensor<B, 2>>",
+          "docstring": "Execute each chain in a scoped thread, forwarding progress through its sender, and collect one 2D sample tensor per chain.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "runchainsinscopedparallel",
+            "type_signature": "(chains: Vec<Chain<B>>, stats_senders: Vec<Sender<ChainStats>>, n_collect: usize, n_discard: usize) -> Vec<Tensor<B, 2>>",
+            "docstring": "Execute each chain in a scoped thread, forwarding progress through its sender, and collect one 2D sample tensor per chain.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "stackchainsamples",
+      "statement": "(chain_samples: Vec<Tensor<B, 2>>) -> Tensor<B, 3>",
+      "informal_desc": "Aggregate per-chain 2D tensors into one 3D tensor along the chain axis.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "stackchainsamples",
+          "type_signature": "(chain_samples: Vec<Tensor<B, 2>>) -> Tensor<B, 3>",
+          "docstring": "Aggregate per-chain 2D tensors into one 3D tensor along the chain axis.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "stackchainsamples",
+          "type_signature": "(chain_samples: Vec<Tensor<B, 2>>) -> Tensor<B, 3>",
+          "docstring": "Aggregate per-chain 2D tensors into one 3D tensor along the chain axis.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "stackchainsamples",
+            "type_signature": "(chain_samples: Vec<Tensor<B, 2>>) -> Tensor<B, 3>",
+            "docstring": "Aggregate per-chain 2D tensors into one 3D tensor along the chain axis.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "joinprogressmonitor",
+      "statement": "(progress_handle: JoinHandle<()>) -> Result<(), Box<dyn Any + Send>>",
+      "informal_desc": "Wait for the monitor task to finish and produce a join status used for optional error reporting.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "joinprogressmonitor",
+          "type_signature": "(progress_handle: JoinHandle<()>) -> Result<(), Box<dyn Any + Send>>",
+          "docstring": "Wait for the monitor task to finish and produce a join status used for optional error reporting.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "joinprogressmonitor",
+          "type_signature": "(progress_handle: JoinHandle<()>) -> Result<(), Box<dyn Any + Send>>",
+          "docstring": "Wait for the monitor task to finish and produce a join status used for optional error reporting.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "joinprogressmonitor",
+            "type_signature": "(progress_handle: JoinHandle<()>) -> Result<(), Box<dyn Any + Send>>",
+            "docstring": "Wait for the monitor task to finish and produce a join status used for optional error reporting.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "computerunstatsfromsamples",
+      "statement": "(sample_tensor: Tensor<B, 3>) -> RunStats",
+      "informal_desc": "Materialize sample data, form a 3D ndarray view, and derive run-level diagnostics/statistics.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "computerunstatsfromsamples",
+          "type_signature": "(sample_tensor: Tensor<B, 3>) -> RunStats",
+          "docstring": "Materialize sample data, form a 3D ndarray view, and derive run-level diagnostics/statistics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "computerunstatsfromsamples",
+          "type_signature": "(sample_tensor: Tensor<B, 3>) -> RunStats",
+          "docstring": "Materialize sample data, form a 3D ndarray view, and derive run-level diagnostics/statistics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "computerunstatsfromsamples",
+            "type_signature": "(sample_tensor: Tensor<B, 3>) -> RunStats",
+            "docstring": "Materialize sample data, form a 3D ndarray view, and derive run-level diagnostics/statistics.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "assemblerunprogressresult",
+      "statement": "(sample_tensor: Tensor<B, 3>, run_stats: RunStats, monitor_join_status: Result<(), Box<dyn Any + Send>>) -> Result<(Tensor<B, 3>, RunStats), Box<dyn Error>>",
+      "informal_desc": "Construct the final success result containing stacked samples and derived run statistics.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "assemblerunprogressresult",
+          "type_signature": "(sample_tensor: Tensor<B, 3>, run_stats: RunStats, monitor_join_status: Result<(), Box<dyn Any + Send>>) -> Result<(Tensor<B, 3>, RunStats), Box<dyn Error>>",
+          "docstring": "Construct the final success result containing stacked samples and derived run statistics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "assemblerunprogressresult",
+          "type_signature": "(sample_tensor: Tensor<B, 3>, run_stats: RunStats, monitor_join_status: Result<(), Box<dyn Any + Send>>) -> Result<(Tensor<B, 3>, RunStats), Box<dyn Error>>",
+          "docstring": "Construct the final success result containing stacked samples and derived run statistics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "assemblerunprogressresult",
+            "type_signature": "(sample_tensor: Tensor<B, 3>, run_stats: RunStats, monitor_join_status: Result<(), Box<dyn Any + Send>>) -> Result<(Tensor<B, 3>, RunStats), Box<dyn Error>>",
+            "docstring": "Construct the final success result containing stacked samples and derived run statistics.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  }
+]

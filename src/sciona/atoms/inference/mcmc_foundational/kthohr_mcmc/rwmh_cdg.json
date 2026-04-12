@@ -1,0 +1,61 @@
+{
+  "nodes": [
+    {
+      "node_id": "rwmh_root",
+      "parent_id": null,
+      "name": "ageoa.mcmc_foundational.kthohr_mcmc.rwmh",
+      "description": "Consolidated module for ageoa.mcmc_foundational.kthohr_mcmc.rwmh.",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "constructrandomwalkmetropoliskernel"
+      ],
+      "depth": 0,
+      "type_signature": "module",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Grouped atoms sharing an upstream family or module.",
+      "critic_notes": "Auto-generated module CDG for consolidation.",
+      "decomposition_rationale": "Replaces singleton atom subpackages with a flat module layout."
+    },
+    {
+      "node_id": "constructrandomwalkmetropoliskernel",
+      "parent_id": "rwmh_root",
+      "name": "constructrandomwalkmetropoliskernel",
+      "description": "Builds a pure Random-Walk Metropolis-Hastings transition kernel from a target log-density oracle, with explicit immutable state and random number generator (RNG) threading.",
+      "concept_type": "custom",
+      "inputs": [
+        {
+          "name": "target_log_kernel",
+          "type_desc": "Callable[[np.ndarray], float]",
+          "constraints": "required argument"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]",
+          "constraints": "function return value"
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(target_log_kernel: log-density oracle) -> random-walk Metropolis transition kernel",
+      "matched_primitive": null,
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Direct callable atom in the consolidated module.",
+      "critic_notes": "Signature derived from the Python wrapper definition.",
+      "decomposition_rationale": "Leaf atom."
+    }
+  ],
+  "edges": []
+}

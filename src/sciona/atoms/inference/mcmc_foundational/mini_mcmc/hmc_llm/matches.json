@@ -1,0 +1,1058 @@
+[
+  {
+    "pdg_node": {
+      "predicate_id": "initializehmckernelstate",
+      "statement": "(target: callable oracle, initial_positions: vector/tensor, step_size: float, n_leapfrog: int) -> tuple[StateModelSpec, HMCState]",
+      "informal_desc": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "initializehmckernelstate",
+          "type_signature": "(target: callable oracle, initial_positions: vector/tensor, step_size: float, n_leapfrog: int) -> tuple[StateModelSpec, HMCState]",
+          "docstring": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
+          "conceptual_summary": "Immutable Hamiltonian Transition State Initializer. Builds a fixed transition specification and an initial latent-state record for a deterministic, gradient-informed dynamical sampler. The transform maps a differentiable scalar field oracle, an initial coordinate vector, and integration hyperparameters into a normalized state object with explicit coordinates, deferred momentum storage, and cache slots for scalar-field value and first derivative. It also materializes metric assumptions as immutable metadata so downstream updates use a consistent geometry.. Applications: Initializing trajectory-based inference for inverse-parameter estimation in systems biology ODE/PDE models, Bootstrapping constrained latent-state exploration in robot dynamics calibration with differentiable simulators, Setting up gradient-driven posterior traversal for geophysical tomography parameter fields, Preparing high-dimensional probabilistic state evolution in computational materials microstructure reconstruction",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "initializehmckernelstate",
+          "type_signature": "(target: callable oracle, initial_positions: vector/tensor, step_size: float, n_leapfrog: int) -> tuple[StateModelSpec, HMCState]",
+          "docstring": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
+          "conceptual_summary": "Immutable Hamiltonian Transition State Initializer. Builds a fixed transition specification and an initial latent-state record for a deterministic, gradient-informed dynamical sampler. The transform maps a differentiable scalar field oracle, an initial coordinate vector, and integration hyperparameters into a normalized state object with explicit coordinates, deferred momentum storage, and cache slots for scalar-field value and first derivative. It also materializes metric assumptions as immutable metadata so downstream updates use a consistent geometry.. Applications: Initializing trajectory-based inference for inverse-parameter estimation in systems biology ODE/PDE models, Bootstrapping constrained latent-state exploration in robot dynamics calibration with differentiable simulators, Setting up gradient-driven posterior traversal for geophysical tomography parameter fields, Preparing high-dimensional probabilistic state evolution in computational materials microstructure reconstruction",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "initializehmckernelstate",
+            "type_signature": "(target: callable oracle, initial_positions: vector/tensor, step_size: float, n_leapfrog: int) -> tuple[StateModelSpec, HMCState]",
+            "docstring": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
+            "conceptual_summary": "Immutable Hamiltonian Transition State Initializer. Builds a fixed transition specification and an initial latent-state record for a deterministic, gradient-informed dynamical sampler. The transform maps a differentiable scalar field oracle, an initial coordinate vector, and integration hyperparameters into a normalized state object with explicit coordinates, deferred momentum storage, and cache slots for scalar-field value and first derivative. It also materializes metric assumptions as immutable metadata so downstream updates use a consistent geometry.. Applications: Initializing trajectory-based inference for inverse-parameter estimation in systems biology ODE/PDE models, Bootstrapping constrained latent-state exploration in robot dynamics calibration with differentiable simulators, Setting up gradient-driven posterior traversal for geophysical tomography parameter fields, Preparing high-dimensional probabilistic state evolution in computational materials microstructure reconstruction",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "initializesamplerrng",
+      "statement": "(seed: int) -> PRNGKey/RNG state",
+      "informal_desc": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "initializesamplerrng",
+          "type_signature": "(seed: int) -> PRNGKey/RNG state",
+          "docstring": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
+          "conceptual_summary": "Deterministic Stochastic-State Bootstrap. Maps a single integer entropy token into an immutable pseudo-random state object that can drive probabilistic transitions in a purely functional pipeline. The produced state is not mutated; instead, successor states are derived and explicitly threaded through subsequent computations. This creates reproducible stochastic behavior where identical seeds yield identical random-state trajectories.. Applications: Monte Carlo trajectory initialization in computational physics with reproducible experiment replay, Deterministic randomized augmentation pipelines in machine learning training workflows, Reproducible randomized search initialization in combinatorial optimization and metaheuristics, Procedural pattern/structure generation in graphics or digital fabrication where exact regeneration is required",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "initializesamplerrng",
+          "type_signature": "(seed: int) -> PRNGKey/RNG state",
+          "docstring": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
+          "conceptual_summary": "Deterministic Stochastic-State Bootstrap. Maps a single integer entropy token into an immutable pseudo-random state object that can drive probabilistic transitions in a purely functional pipeline. The produced state is not mutated; instead, successor states are derived and explicitly threaded through subsequent computations. This creates reproducible stochastic behavior where identical seeds yield identical random-state trajectories.. Applications: Monte Carlo trajectory initialization in computational physics with reproducible experiment replay, Deterministic randomized augmentation pipelines in machine learning training workflows, Reproducible randomized search initialization in combinatorial optimization and metaheuristics, Procedural pattern/structure generation in graphics or digital fabrication where exact regeneration is required",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "initializesamplerrng",
+            "type_signature": "(seed: int) -> PRNGKey/RNG state",
+            "docstring": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
+            "conceptual_summary": "Deterministic Stochastic-State Bootstrap. Maps a single integer entropy token into an immutable pseudo-random state object that can drive probabilistic transitions in a purely functional pipeline. The produced state is not mutated; instead, successor states are derived and explicitly threaded through subsequent computations. This creates reproducible stochastic behavior where identical seeds yield identical random-state trajectories.. Applications: Monte Carlo trajectory initialization in computational physics with reproducible experiment replay, Deterministic randomized augmentation pipelines in machine learning training workflows, Reproducible randomized search initialization in combinatorial optimization and metaheuristics, Procedural pattern/structure generation in graphics or digital fabrication where exact regeneration is required",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "infer_chain_geometry",
+      "statement": "(state_in.positions: Tensor[n_chains, dim]) -> tuple[usize, usize]",
+      "informal_desc": "Read the position tensor shape to determine batch size and latent dimension for this transition.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "infer_chain_geometry",
+          "type_signature": "(state_in.positions: Tensor[n_chains, dim]) -> tuple[usize, usize]",
+          "docstring": "Read the position tensor shape to determine batch size and latent dimension for this transition.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "infer_chain_geometry",
+          "type_signature": "(state_in.positions: Tensor[n_chains, dim]) -> tuple[usize, usize]",
+          "docstring": "Read the position tensor shape to determine batch size and latent dimension for this transition.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "infer_chain_geometry",
+            "type_signature": "(state_in.positions: Tensor[n_chains, dim]) -> tuple[usize, usize]",
+            "docstring": "Read the position tensor shape to determine batch size and latent dimension for this transition.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "sample_transition_randomness",
+      "statement": "(prng_key_in: PRNGKey, n_chains: usize, dim: usize) -> tuple[Tensor[n_chains, dim], Tensor[n_chains], PRNGKey]",
+      "informal_desc": "Consume RNG state to draw initial Gaussian momenta and per-chain uniform variates for Metropolis acceptance.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "sample_transition_randomness",
+          "type_signature": "(prng_key_in: PRNGKey, n_chains: usize, dim: usize) -> tuple[Tensor[n_chains, dim], Tensor[n_chains], PRNGKey]",
+          "docstring": "Consume RNG state to draw initial Gaussian momenta and per-chain uniform variates for Metropolis acceptance.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "sample_transition_randomness",
+          "type_signature": "(prng_key_in: PRNGKey, n_chains: usize, dim: usize) -> tuple[Tensor[n_chains, dim], Tensor[n_chains], PRNGKey]",
+          "docstring": "Consume RNG state to draw initial Gaussian momenta and per-chain uniform variates for Metropolis acceptance.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "sample_transition_randomness",
+            "type_signature": "(prng_key_in: PRNGKey, n_chains: usize, dim: usize) -> tuple[Tensor[n_chains, dim], Tensor[n_chains], PRNGKey]",
+            "docstring": "Consume RNG state to draw initial Gaussian momenta and per-chain uniform variates for Metropolis acceptance.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "evaluate_current_log_density_and_initial_half_grad",
+      "statement": "(state_in.positions: Tensor[n_chains, dim], kernel_spec.step_size: scalar, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains, dim]]",
+      "informal_desc": "Evaluate current log density and compute the initial half-step momentum increment from the position gradient.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "evaluate_current_log_density_and_initial_half_grad",
+          "type_signature": "(state_in.positions: Tensor[n_chains, dim], kernel_spec.step_size: scalar, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains, dim]]",
+          "docstring": "Evaluate current log density and compute the initial half-step momentum increment from the position gradient.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "evaluate_current_log_density_and_initial_half_grad",
+          "type_signature": "(state_in.positions: Tensor[n_chains, dim], kernel_spec.step_size: scalar, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains, dim]]",
+          "docstring": "Evaluate current log density and compute the initial half-step momentum increment from the position gradient.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "evaluate_current_log_density_and_initial_half_grad",
+            "type_signature": "(state_in.positions: Tensor[n_chains, dim], kernel_spec.step_size: scalar, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains, dim]]",
+            "docstring": "Evaluate current log density and compute the initial half-step momentum increment from the position gradient.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "compute_current_hamiltonian",
+      "statement": "(momentum_0: Tensor[n_chains, dim], logp_current: Tensor[n_chains]) -> Tensor[n_chains]",
+      "informal_desc": "Compute current kinetic energy and Hamiltonian from sampled momenta and current log density.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "compute_current_hamiltonian",
+          "type_signature": "(momentum_0: Tensor[n_chains, dim], logp_current: Tensor[n_chains]) -> Tensor[n_chains]",
+          "docstring": "Compute current kinetic energy and Hamiltonian from sampled momenta and current log density.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "compute_current_hamiltonian",
+          "type_signature": "(momentum_0: Tensor[n_chains, dim], logp_current: Tensor[n_chains]) -> Tensor[n_chains]",
+          "docstring": "Compute current kinetic energy and Hamiltonian from sampled momenta and current log density.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "compute_current_hamiltonian",
+            "type_signature": "(momentum_0: Tensor[n_chains, dim], logp_current: Tensor[n_chains]) -> Tensor[n_chains]",
+            "docstring": "Compute current kinetic energy and Hamiltonian from sampled momenta and current log density.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "integrate_leapfrog_proposal",
+      "statement": "(state_in.positions: Tensor[n_chains, dim], momentum_0: Tensor[n_chains, dim], grad_half_0: Tensor[n_chains, dim], kernel_spec.step_size: scalar, kernel_spec.n_leapfrog: usize, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains, dim], Tensor[n_chains, dim], Tensor[n_chains], Tensor[n_chains, dim]]",
+      "informal_desc": "Run n_leapfrog symplectic updates to produce proposed positions/momenta and final proposed log density.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "integrate_leapfrog_proposal",
+          "type_signature": "(state_in.positions: Tensor[n_chains, dim], momentum_0: Tensor[n_chains, dim], grad_half_0: Tensor[n_chains, dim], kernel_spec.step_size: scalar, kernel_spec.n_leapfrog: usize, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains, dim], Tensor[n_chains, dim], Tensor[n_chains], Tensor[n_chains, dim]]",
+          "docstring": "Run n_leapfrog symplectic updates to produce proposed positions/momenta and final proposed log density.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "integrate_leapfrog_proposal",
+          "type_signature": "(state_in.positions: Tensor[n_chains, dim], momentum_0: Tensor[n_chains, dim], grad_half_0: Tensor[n_chains, dim], kernel_spec.step_size: scalar, kernel_spec.n_leapfrog: usize, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains, dim], Tensor[n_chains, dim], Tensor[n_chains], Tensor[n_chains, dim]]",
+          "docstring": "Run n_leapfrog symplectic updates to produce proposed positions/momenta and final proposed log density.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "integrate_leapfrog_proposal",
+            "type_signature": "(state_in.positions: Tensor[n_chains, dim], momentum_0: Tensor[n_chains, dim], grad_half_0: Tensor[n_chains, dim], kernel_spec.step_size: scalar, kernel_spec.n_leapfrog: usize, logp_oracle: callable(position_batch) -> Tensor[n_chains]) -> tuple[Tensor[n_chains, dim], Tensor[n_chains, dim], Tensor[n_chains], Tensor[n_chains, dim]]",
+            "docstring": "Run n_leapfrog symplectic updates to produce proposed positions/momenta and final proposed log density.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "compute_acceptance_log_ratio",
+      "statement": "(h_current: Tensor[n_chains], proposed_momenta: Tensor[n_chains, dim], logp_proposed: Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains]]",
+      "informal_desc": "Compute proposed Hamiltonian and per-chain Metropolis log acceptance ratio.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "compute_acceptance_log_ratio",
+          "type_signature": "(h_current: Tensor[n_chains], proposed_momenta: Tensor[n_chains, dim], logp_proposed: Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains]]",
+          "docstring": "Compute proposed Hamiltonian and per-chain Metropolis log acceptance ratio.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "compute_acceptance_log_ratio",
+          "type_signature": "(h_current: Tensor[n_chains], proposed_momenta: Tensor[n_chains, dim], logp_proposed: Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains]]",
+          "docstring": "Compute proposed Hamiltonian and per-chain Metropolis log acceptance ratio.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "compute_acceptance_log_ratio",
+            "type_signature": "(h_current: Tensor[n_chains], proposed_momenta: Tensor[n_chains, dim], logp_proposed: Tensor[n_chains]) -> tuple[Tensor[n_chains], Tensor[n_chains]]",
+            "docstring": "Compute proposed Hamiltonian and per-chain Metropolis log acceptance ratio.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "derive_acceptance_mask",
+      "statement": "(accept_log_ratio: Tensor[n_chains], uniform_u: Tensor[n_chains]) -> Tensor[n_chains] (bool)",
+      "informal_desc": "Convert uniform draws and log acceptance ratio into a boolean accept/reject decision per chain.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "derive_acceptance_mask",
+          "type_signature": "(accept_log_ratio: Tensor[n_chains], uniform_u: Tensor[n_chains]) -> Tensor[n_chains] (bool)",
+          "docstring": "Convert uniform draws and log acceptance ratio into a boolean accept/reject decision per chain.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "derive_acceptance_mask",
+          "type_signature": "(accept_log_ratio: Tensor[n_chains], uniform_u: Tensor[n_chains]) -> Tensor[n_chains] (bool)",
+          "docstring": "Convert uniform draws and log acceptance ratio into a boolean accept/reject decision per chain.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "derive_acceptance_mask",
+            "type_signature": "(accept_log_ratio: Tensor[n_chains], uniform_u: Tensor[n_chains]) -> Tensor[n_chains] (bool)",
+            "docstring": "Convert uniform draws and log acceptance ratio into a boolean accept/reject decision per chain.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "assemble_transition_result",
+      "statement": "(state_in: HMCState, proposed_positions: Tensor[n_chains, dim], accept_mask: Tensor[n_chains] (bool), grad_half_last: Tensor[n_chains, dim], prng_key_out: PRNGKey, h_current: Tensor[n_chains], h_proposed: Tensor[n_chains], accept_log_ratio: Tensor[n_chains]) -> tuple[HMCState, PRNGKey, dict]",
+      "informal_desc": "Construct next chain state by selecting proposed vs current positions per chain and package diagnostics.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "assemble_transition_result",
+          "type_signature": "(state_in: HMCState, proposed_positions: Tensor[n_chains, dim], accept_mask: Tensor[n_chains] (bool), grad_half_last: Tensor[n_chains, dim], prng_key_out: PRNGKey, h_current: Tensor[n_chains], h_proposed: Tensor[n_chains], accept_log_ratio: Tensor[n_chains]) -> tuple[HMCState, PRNGKey, dict]",
+          "docstring": "Construct next chain state by selecting proposed vs current positions per chain and package diagnostics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "assemble_transition_result",
+          "type_signature": "(state_in: HMCState, proposed_positions: Tensor[n_chains, dim], accept_mask: Tensor[n_chains] (bool), grad_half_last: Tensor[n_chains, dim], prng_key_out: PRNGKey, h_current: Tensor[n_chains], h_proposed: Tensor[n_chains], accept_log_ratio: Tensor[n_chains]) -> tuple[HMCState, PRNGKey, dict]",
+          "docstring": "Construct next chain state by selecting proposed vs current positions per chain and package diagnostics.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "assemble_transition_result",
+            "type_signature": "(state_in: HMCState, proposed_positions: Tensor[n_chains, dim], accept_mask: Tensor[n_chains] (bool), grad_half_last: Tensor[n_chains, dim], prng_key_out: PRNGKey, h_current: Tensor[n_chains], h_proposed: Tensor[n_chains], accept_log_ratio: Tensor[n_chains]) -> tuple[HMCState, PRNGKey, dict]",
+            "docstring": "Construct next chain state by selecting proposed vs current positions per chain and package diagnostics.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "initializecollectioncontext",
+      "statement": "(n_collect: int, chain_state_0: HMCState, kernel_spec: StateModelSpec) -> tuple[array/tensor[n_collect, n_chains, dim], tuple(int n_chains, int dim), chain trace accumulator]",
+      "informal_desc": "Derive chain dimensions from the initial state, allocate the time-major sample buffer, and initialize trace/progress bookkeeping state.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "initializecollectioncontext",
+          "type_signature": "(n_collect: int, chain_state_0: HMCState, kernel_spec: StateModelSpec) -> tuple[array/tensor[n_collect, n_chains, dim], tuple(int n_chains, int dim), chain trace accumulator]",
+          "docstring": "Derive chain dimensions from the initial state, allocate the time-major sample buffer, and initialize trace/progress bookkeeping state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "initializecollectioncontext",
+          "type_signature": "(n_collect: int, chain_state_0: HMCState, kernel_spec: StateModelSpec) -> tuple[array/tensor[n_collect, n_chains, dim], tuple(int n_chains, int dim), chain trace accumulator]",
+          "docstring": "Derive chain dimensions from the initial state, allocate the time-major sample buffer, and initialize trace/progress bookkeeping state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "initializecollectioncontext",
+            "type_signature": "(n_collect: int, chain_state_0: HMCState, kernel_spec: StateModelSpec) -> tuple[array/tensor[n_collect, n_chains, dim], tuple(int n_chains, int dim), chain trace accumulator]",
+            "docstring": "Derive chain dimensions from the initial state, allocate the time-major sample buffer, and initialize trace/progress bookkeeping state.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "rundiscardphase",
+      "statement": "(n_discard: int, chain_state_0: HMCState, kernel_spec: StateModelSpec, prng_key_state: PRNGKey/RNG state) -> tuple[HMCState, PRNGKey/RNG state, array/dict]",
+      "informal_desc": "Apply the transition kernel for burn-in/discard steps while threading chain state and RNG state.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "rundiscardphase",
+          "type_signature": "(n_discard: int, chain_state_0: HMCState, kernel_spec: StateModelSpec, prng_key_state: PRNGKey/RNG state) -> tuple[HMCState, PRNGKey/RNG state, array/dict]",
+          "docstring": "Apply the transition kernel for burn-in/discard steps while threading chain state and RNG state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "rundiscardphase",
+          "type_signature": "(n_discard: int, chain_state_0: HMCState, kernel_spec: StateModelSpec, prng_key_state: PRNGKey/RNG state) -> tuple[HMCState, PRNGKey/RNG state, array/dict]",
+          "docstring": "Apply the transition kernel for burn-in/discard steps while threading chain state and RNG state.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "rundiscardphase",
+            "type_signature": "(n_discard: int, chain_state_0: HMCState, kernel_spec: StateModelSpec, prng_key_state: PRNGKey/RNG state) -> tuple[HMCState, PRNGKey/RNG state, array/dict]",
+            "docstring": "Apply the transition kernel for burn-in/discard steps while threading chain state and RNG state.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "seeddiagnosticsfromburnedstate",
+      "statement": "(chain_state_burned: HMCState, trace_state_0: chain trace accumulator) -> chain trace accumulator",
+      "informal_desc": "Register the post-burn-in state as the initial diagnostics sample and update trace state with any recoverable diagnostics warnings.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "seeddiagnosticsfromburnedstate",
+          "type_signature": "(chain_state_burned: HMCState, trace_state_0: chain trace accumulator) -> chain trace accumulator",
+          "docstring": "Register the post-burn-in state as the initial diagnostics sample and update trace state with any recoverable diagnostics warnings.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "seeddiagnosticsfromburnedstate",
+          "type_signature": "(chain_state_burned: HMCState, trace_state_0: chain trace accumulator) -> chain trace accumulator",
+          "docstring": "Register the post-burn-in state as the initial diagnostics sample and update trace state with any recoverable diagnostics warnings.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "seeddiagnosticsfromburnedstate",
+            "type_signature": "(chain_state_burned: HMCState, trace_state_0: chain trace accumulator) -> chain trace accumulator",
+            "docstring": "Register the post-burn-in state as the initial diagnostics sample and update trace state with any recoverable diagnostics warnings.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "collectposteriortransitions",
+      "statement": "(n_collect: int, chain_state_burned: HMCState, prng_key_burned: PRNGKey/RNG state, kernel_spec: StateModelSpec, collection_buffer_0: array/tensor[n_collect, n_chains, dim], chain_dims: tuple(int n_chains, int dim), trace_state_seeded: chain trace accumulator) -> tuple[array/tensor[n_collect, n_chains, dim], HMCState, PRNGKey/RNG state, chain trace accumulator]",
+      "informal_desc": "Iterate n_collect transitions; at each step advance state with kernel, write positions into buffer, and update diagnostics/progress trace.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "collectposteriortransitions",
+          "type_signature": "(n_collect: int, chain_state_burned: HMCState, prng_key_burned: PRNGKey/RNG state, kernel_spec: StateModelSpec, collection_buffer_0: array/tensor[n_collect, n_chains, dim], chain_dims: tuple(int n_chains, int dim), trace_state_seeded: chain trace accumulator) -> tuple[array/tensor[n_collect, n_chains, dim], HMCState, PRNGKey/RNG state, chain trace accumulator]",
+          "docstring": "Iterate n_collect transitions; at each step advance state with kernel, write positions into buffer, and update diagnostics/progress trace.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "collectposteriortransitions",
+          "type_signature": "(n_collect: int, chain_state_burned: HMCState, prng_key_burned: PRNGKey/RNG state, kernel_spec: StateModelSpec, collection_buffer_0: array/tensor[n_collect, n_chains, dim], chain_dims: tuple(int n_chains, int dim), trace_state_seeded: chain trace accumulator) -> tuple[array/tensor[n_collect, n_chains, dim], HMCState, PRNGKey/RNG state, chain trace accumulator]",
+          "docstring": "Iterate n_collect transitions; at each step advance state with kernel, write positions into buffer, and update diagnostics/progress trace.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "collectposteriortransitions",
+            "type_signature": "(n_collect: int, chain_state_burned: HMCState, prng_key_burned: PRNGKey/RNG state, kernel_spec: StateModelSpec, collection_buffer_0: array/tensor[n_collect, n_chains, dim], chain_dims: tuple(int n_chains, int dim), trace_state_seeded: chain trace accumulator) -> tuple[array/tensor[n_collect, n_chains, dim], HMCState, PRNGKey/RNG state, chain trace accumulator]",
+            "docstring": "Iterate n_collect transitions; at each step advance state with kernel, write positions into buffer, and update diagnostics/progress trace.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "reordersamplelayout",
+      "statement": "(collection_buffer_filled: array/tensor[n_collect, n_chains, dim]) -> array/tensor[n_chains, n_collect, dim]",
+      "informal_desc": "Convert collected samples from time-major [collect, chain, dim] layout to chain-major [chain, collect, dim] layout.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "reordersamplelayout",
+          "type_signature": "(collection_buffer_filled: array/tensor[n_collect, n_chains, dim]) -> array/tensor[n_chains, n_collect, dim]",
+          "docstring": "Convert collected samples from time-major [collect, chain, dim] layout to chain-major [chain, collect, dim] layout.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "reordersamplelayout",
+          "type_signature": "(collection_buffer_filled: array/tensor[n_collect, n_chains, dim]) -> array/tensor[n_chains, n_collect, dim]",
+          "docstring": "Convert collected samples from time-major [collect, chain, dim] layout to chain-major [chain, collect, dim] layout.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "reordersamplelayout",
+            "type_signature": "(collection_buffer_filled: array/tensor[n_collect, n_chains, dim]) -> array/tensor[n_chains, n_collect, dim]",
+            "docstring": "Convert collected samples from time-major [collect, chain, dim] layout to chain-major [chain, collect, dim] layout.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  },
+  {
+    "pdg_node": {
+      "predicate_id": "finalizechaintrace",
+      "statement": "(trace_state_final: chain trace accumulator, discard_events: array/dict, samples: array/tensor[n_chains, n_collect, dim]) -> array/dict",
+      "informal_desc": "Compute final run diagnostics/statistics from accumulated trace state and samples, producing a pure chain_trace artifact.",
+      "prover": "python",
+      "context": {}
+    },
+    "verified_match": {
+      "candidate": {
+        "declaration": {
+          "name": "finalizechaintrace",
+          "type_signature": "(trace_state_final: chain trace accumulator, discard_events: array/dict, samples: array/tensor[n_chains, n_collect, dim]) -> array/dict",
+          "docstring": "Compute final run diagnostics/statistics from accumulated trace state and samples, producing a pure chain_trace artifact.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      },
+      "verified": true,
+      "compiler_output": "",
+      "proof_term": "",
+      "error_message": "",
+      "verification_level": "type_checked"
+    },
+    "all_candidates": [
+      {
+        "declaration": {
+          "name": "finalizechaintrace",
+          "type_signature": "(trace_state_final: chain trace accumulator, discard_events: array/dict, samples: array/tensor[n_chains, n_collect, dim]) -> array/dict",
+          "docstring": "Compute final run diagnostics/statistics from accumulated trace state and samples, producing a pure chain_trace artifact.",
+          "conceptual_summary": "",
+          "source_lib": "ingester",
+          "prover": "python",
+          "raw_code": ""
+        },
+        "score": 1.0,
+        "retrieval_method": "ingester"
+      }
+    ],
+    "all_verifications": [
+      {
+        "candidate": {
+          "declaration": {
+            "name": "finalizechaintrace",
+            "type_signature": "(trace_state_final: chain trace accumulator, discard_events: array/dict, samples: array/tensor[n_chains, n_collect, dim]) -> array/dict",
+            "docstring": "Compute final run diagnostics/statistics from accumulated trace state and samples, producing a pure chain_trace artifact.",
+            "conceptual_summary": "",
+            "source_lib": "ingester",
+            "prover": "python",
+            "raw_code": ""
+          },
+          "score": 1.0,
+          "retrieval_method": "ingester"
+        },
+        "verified": true,
+        "compiler_output": "",
+        "proof_term": "",
+        "error_message": "",
+        "verification_level": "type_checked"
+      }
+    ]
+  }
+]
