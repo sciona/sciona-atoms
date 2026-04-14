@@ -12,6 +12,49 @@ quality diagnostics:
 from __future__ import annotations
 
 import numpy as np
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
+
+
+def witness_monitor_effective_sample_size(
+    log_weights: AbstractArray,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe ESS fraction and weight-health flag."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0, max_val=1.0),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_analyze_particle_diversity(
+    particles: AbstractArray,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe mean pairwise distance and diversity flag."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_track_weight_variance(
+    log_weights_history: AbstractArray,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe variance trend and stability flag."""
+    return (
+        AbstractScalar(dtype="float64"),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_check_resampling_quality(
+    parent_indices: AbstractArray,
+    n_particles: AbstractScalar,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe duplication fraction and resampling-quality flag."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0, max_val=1.0),
+        AbstractScalar(dtype="bool"),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -19,6 +62,7 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_monitor_effective_sample_size)
 def monitor_effective_sample_size(
     log_weights: np.ndarray,
 ) -> tuple[float, bool]:
@@ -57,6 +101,7 @@ def monitor_effective_sample_size(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_analyze_particle_diversity)
 def analyze_particle_diversity(
     particles: np.ndarray,
 ) -> tuple[float, bool]:
@@ -100,6 +145,7 @@ def analyze_particle_diversity(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_track_weight_variance)
 def track_weight_variance(
     log_weights_history: np.ndarray,
 ) -> tuple[float, bool]:
@@ -139,6 +185,7 @@ def track_weight_variance(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_check_resampling_quality)
 def check_resampling_quality(
     parent_indices: np.ndarray,
     n_particles: int,

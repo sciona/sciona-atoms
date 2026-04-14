@@ -12,6 +12,59 @@ quality diagnostics and structural pre-checks:
 from __future__ import annotations
 
 import numpy as np
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
+
+
+def witness_measure_split_balance(
+    left_sizes: AbstractArray,
+    right_sizes: AbstractArray,
+) -> tuple[AbstractScalar, AbstractArray]:
+    """Describe aggregate and per-level split balance ratios."""
+    n = min(
+        int(left_sizes.shape[0]) if left_sizes.shape else 0,
+        int(right_sizes.shape[0]) if right_sizes.shape else 0,
+    )
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0, max_val=1.0),
+        AbstractArray(shape=(n,), dtype="float64", min_val=0.0, max_val=1.0),
+    )
+
+
+def witness_check_recursion_depth(
+    actual_depth: AbstractScalar,
+    input_size: AbstractScalar,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe depth-ratio diagnostics for recursion depth."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_profile_merge_cost(
+    merge_times: AbstractArray,
+    total_times: AbstractArray,
+) -> tuple[AbstractScalar, AbstractArray]:
+    """Describe aggregate and per-level merge-time fractions."""
+    n = min(
+        int(merge_times.shape[0]) if merge_times.shape else 0,
+        int(total_times.shape[0]) if total_times.shape else 0,
+    )
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0),
+        AbstractArray(shape=(n,), dtype="float64", min_val=0.0),
+    )
+
+
+def witness_detect_subproblem_overlap(
+    subproblem_hashes: AbstractArray,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe overlap ratio and duplicate-count diagnostics."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0, max_val=1.0),
+        AbstractScalar(dtype="int64", min_val=0.0),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -19,6 +72,7 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_measure_split_balance)
 def measure_split_balance(
     left_sizes: np.ndarray,
     right_sizes: np.ndarray,
@@ -62,6 +116,7 @@ def measure_split_balance(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_check_recursion_depth)
 def check_recursion_depth(
     actual_depth: int,
     input_size: int,
@@ -96,6 +151,7 @@ def check_recursion_depth(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_profile_merge_cost)
 def profile_merge_cost(
     merge_times: np.ndarray,
     total_times: np.ndarray,
@@ -135,6 +191,7 @@ def profile_merge_cost(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_detect_subproblem_overlap)
 def detect_subproblem_overlap(
     subproblem_hashes: np.ndarray,
 ) -> tuple[float, int]:

@@ -12,6 +12,56 @@ quality diagnostics and adaptive corrections:
 from __future__ import annotations
 
 import numpy as np
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
+
+
+def witness_check_observability(
+    F: AbstractArray,
+    H: AbstractArray,
+    n_states: AbstractScalar,
+) -> tuple[AbstractScalar, AbstractArray]:
+    """Describe observability flag and the constructed observability matrix."""
+    n = int(n_states.min_val or 0) if n_states.min_val is not None else (int(F.shape[0]) if F.shape else 0)
+    h_rows = int(H.shape[0]) if H.shape else 0
+    f_cols = int(F.shape[1]) if len(F.shape) > 1 else (int(F.shape[0]) if F.shape else 0)
+    return (
+        AbstractScalar(dtype="bool"),
+        AbstractArray(shape=(h_rows * max(n, 0), f_cols), dtype="float64"),
+    )
+
+
+def witness_validate_innovation_whiteness(
+    innovations: AbstractArray,
+    max_lag: AbstractScalar,
+) -> tuple[AbstractArray, AbstractScalar]:
+    """Describe innovation autocorrelation diagnostics."""
+    lag_count = int(max_lag.max_val or max_lag.min_val or 10)
+    return (
+        AbstractArray(shape=(max(lag_count, 0),), dtype="float64"),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_detect_filter_divergence(
+    innovations: AbstractArray,
+    S_matrices: AbstractArray,
+) -> tuple[AbstractArray, AbstractArray]:
+    """Describe NIS values and divergence-mask diagnostics."""
+    n = int(innovations.shape[0]) if innovations.shape else 0
+    return (
+        AbstractArray(shape=(n,), dtype="float64", min_val=0.0),
+        AbstractArray(shape=(n,), dtype="bool"),
+    )
+
+
+def witness_adapt_process_noise(
+    innovations: AbstractArray,
+    K_matrices: AbstractArray,
+    Q_prior: AbstractArray,
+) -> AbstractArray:
+    """Describe an adapted process-noise covariance with Q-shaped output."""
+    return AbstractArray(shape=Q_prior.shape, dtype="float64")
 
 
 # ---------------------------------------------------------------------------
@@ -19,6 +69,7 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_check_observability)
 def check_observability(
     F: np.ndarray,
     H: np.ndarray,
@@ -52,6 +103,7 @@ def check_observability(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_validate_innovation_whiteness)
 def validate_innovation_whiteness(
     innovations: np.ndarray,
     max_lag: int = 10,
@@ -95,6 +147,7 @@ def validate_innovation_whiteness(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_detect_filter_divergence)
 def detect_filter_divergence(
     innovations: np.ndarray,
     S_matrices: np.ndarray,
@@ -159,6 +212,7 @@ def detect_filter_divergence(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_adapt_process_noise)
 def adapt_process_noise(
     innovations: np.ndarray,
     K_matrices: np.ndarray,

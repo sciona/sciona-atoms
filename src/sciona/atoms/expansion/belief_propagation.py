@@ -12,6 +12,50 @@ quality diagnostics:
 from __future__ import annotations
 
 import numpy as np
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
+
+
+def witness_monitor_message_convergence(
+    message_deltas: AbstractArray,
+    tolerance: AbstractScalar,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe the final message delta and convergence flag."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_validate_belief_normalization(
+    beliefs: AbstractArray,
+    tolerance: AbstractScalar,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe the worst normalization deviation and pass/fail flag."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_analyze_message_damping(
+    message_history: AbstractArray,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe oscillation score and whether damping is recommended."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0, max_val=1.0),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_detect_graph_cycles(
+    adjacency: AbstractArray,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe extra-edge count and whether the graph is cycle-free."""
+    return (
+        AbstractScalar(dtype="int64", min_val=0.0),
+        AbstractScalar(dtype="bool"),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -19,6 +63,7 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_monitor_message_convergence)
 def monitor_message_convergence(
     message_deltas: np.ndarray,
     tolerance: float = 1e-6,
@@ -49,6 +94,7 @@ def monitor_message_convergence(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_validate_belief_normalization)
 def validate_belief_normalization(
     beliefs: np.ndarray,
     tolerance: float = 1e-8,
@@ -84,6 +130,7 @@ def validate_belief_normalization(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_analyze_message_damping)
 def analyze_message_damping(
     message_history: np.ndarray,
 ) -> tuple[float, bool]:
@@ -126,6 +173,7 @@ def analyze_message_damping(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_detect_graph_cycles)
 def detect_graph_cycles(
     adjacency: np.ndarray,
 ) -> tuple[int, bool]:

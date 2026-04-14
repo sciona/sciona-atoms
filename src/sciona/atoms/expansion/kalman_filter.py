@@ -12,6 +12,50 @@ quality diagnostics:
 from __future__ import annotations
 
 import numpy as np
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
+
+
+def witness_check_innovation_consistency(
+    innovations: AbstractArray,
+    innovation_covariance: AbstractArray,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe mean NIS diagnostics and consistency flag."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_validate_covariance_pd(
+    covariance: AbstractArray,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe the minimum covariance eigenvalue and PD flag."""
+    return (
+        AbstractScalar(dtype="float64"),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_analyze_kalman_gain_magnitude(
+    kalman_gains: AbstractArray,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe the largest Kalman-gain norm and boundedness flag."""
+    return (
+        AbstractScalar(dtype="float64", min_val=0.0),
+        AbstractScalar(dtype="bool"),
+    )
+
+
+def witness_check_state_smoothness(
+    state_estimates: AbstractArray,
+    max_jump_ratio: AbstractScalar,
+) -> tuple[AbstractScalar, AbstractScalar]:
+    """Describe jump count and jump fraction for state estimates."""
+    return (
+        AbstractScalar(dtype="int64", min_val=0.0),
+        AbstractScalar(dtype="float64", min_val=0.0, max_val=1.0),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -19,6 +63,7 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_check_innovation_consistency)
 def check_innovation_consistency(
     innovations: np.ndarray,
     innovation_covariance: np.ndarray,
@@ -62,6 +107,7 @@ def check_innovation_consistency(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_validate_covariance_pd)
 def validate_covariance_pd(
     covariance: np.ndarray,
 ) -> tuple[float, bool]:
@@ -94,6 +140,7 @@ def validate_covariance_pd(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_analyze_kalman_gain_magnitude)
 def analyze_kalman_gain_magnitude(
     kalman_gains: np.ndarray,
 ) -> tuple[float, bool]:
@@ -130,6 +177,7 @@ def analyze_kalman_gain_magnitude(
 # ---------------------------------------------------------------------------
 
 
+@register_atom(witness_check_state_smoothness)
 def check_state_smoothness(
     state_estimates: np.ndarray,
     max_jump_ratio: float = 5.0,
