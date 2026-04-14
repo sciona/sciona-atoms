@@ -118,6 +118,40 @@ sciona ingest <source_file> --class <ClassName> \
   --output ../<your-repo>/src/sciona/atoms/<domain>/<atom_name>
 ```
 
+Note: `--class` is used for both classes and standalone functions — it takes the
+name of the symbol to ingest regardless of whether it is a class or a function.
+
+### Examples
+
+**Ingesting a standalone function:**
+
+```bash
+cd ../sciona-matcher
+sciona ingest ../scipy/scipy/signal/windows/_windows.py \
+  --class kaiser \
+  --procedural \
+  --output ../sciona-atoms/src/sciona/atoms/scipy/signal/kaiser
+```
+
+Use `--procedural` for standalone functions. This uses deterministic SSA edge
+inference with no LLM calls — the function is parsed, variable dependencies are
+tracked statically, and the atom wrapper is emitted directly.
+
+**Ingesting a stateful class:**
+
+```bash
+cd ../sciona-matcher
+sciona ingest ../scikit-learn/sklearn/decomposition/_pca.py \
+  --class PCA \
+  --output ../sciona-atoms-cs/src/sciona/atoms/decomposition/pca
+```
+
+Without `--procedural`, the matcher uses LLM-driven semantic decomposition. It
+extracts methods, state attributes, and cross-method dependencies, then
+decomposes the class into a family of atoms with a shared `state_models.py`.
+The emitted `cdg.json` captures the dependency structure between the resulting
+atoms.
+
 ### Common Options
 
 | Flag | Purpose |
