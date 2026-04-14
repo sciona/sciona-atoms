@@ -3,14 +3,14 @@ from typing import Callable, Dict, Sequence, Tuple, Union
 import numpy as np
 import scipy.optimize
 import icontract
-from ageoa.ghost.registry import register_atom
-from ageoa.scipy.witnesses import (
+from sciona.ghost.registry import register_atom
+from sciona.atoms.scipy.witnesses import (
     witness_scipy_curve_fit,
     witness_scipy_linprog,
     witness_scipy_minimize,
     witness_scipy_root,
 )
-from ageoa.scipy.optimize_v2.witnesses import (
+from sciona.atoms.scipy.witnesses import (
     witness_differentialevolutionoptimization,
     witness_shgoglobaloptimization,
 )

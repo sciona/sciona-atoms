@@ -8,19 +8,19 @@ import scipy.sparse.linalg
 import scipy.sparse.csgraph
 import icontract
 
-from ageoa.ghost.registry import register_atom
-from ageoa.ghost.witnesses import (
+from sciona.ghost.registry import register_atom
+from sciona.ghost.witnesses import (
     witness_graph_laplacian, witness_graph_fourier_transform,
     witness_inverse_graph_fourier_transform,
     witness_heat_kernel_diffusion,
 )
-from ageoa.scipy.sparse_graph_v2.witnesses import (
+from sciona.atoms.scipy.witnesses import (
     witness_allpairsshortestpath,
     witness_minimumspanningtree,
     witness_singlesourceshortestpath,
 )
 
-_SLOW_CHECKS = os.environ.get("AGEOA_SLOW_CHECKS", "0") == "1"
+_SLOW_CHECKS = os.environ.get("SCIONA_SLOW_CHECKS", "0") == "1"
 
 
 def _is_symmetric(m: scipy.sparse.spmatrix, atol: float = 1e-10) -> bool:
