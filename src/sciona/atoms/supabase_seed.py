@@ -1054,7 +1054,7 @@ def build_atom_benchmark_rows(
         "benchmark_result_rows": len(inventory.benchmark_result_rows),
         "atom_benchmark_rows": len(rows),
         "benchmark_atom_versions": len(touched_versions),
-        "benchmark_result_cdg_deferred": deferred_cdg_results,
+        "benchmark_result_cdg_seen": deferred_cdg_results,
         "benchmark_result_skipped_no_version": skipped_no_version,
     }
 

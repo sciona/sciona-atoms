@@ -498,7 +498,7 @@ def test_build_atom_benchmark_rows_resolves_versions_and_defers_cdgs(tmp_path: P
         "benchmark_result_rows": 2,
         "atom_benchmark_rows": 1,
         "benchmark_atom_versions": 1,
-        "benchmark_result_cdg_deferred": 1,
+        "benchmark_result_cdg_seen": 1,
         "benchmark_result_skipped_no_version": 0,
     }
     assert rows == [
