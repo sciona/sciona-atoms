@@ -234,6 +234,40 @@ def build_io_spec_rows(atom_id: str, node: dict[str, Any]) -> list[dict[str, Any
     return rows
 
 
+def build_manifest_io_spec_rows(atom_id: str, atom_entry: dict[str, Any]) -> list[dict[str, Any]]:
+    """Derive minimal IO-spec rows directly from one audit-manifest entry."""
+    rows: list[dict[str, Any]] = []
+    for ordinal, arg in enumerate(atom_entry.get("argument_details", [])):
+        rows.append(
+            {
+                "atom_id": atom_id,
+                "version_id": None,
+                "direction": "input",
+                "name": arg.get("name") or f"arg_{ordinal}",
+                "type_desc": arg.get("annotation") or "Any",
+                "constraints": "",
+                "required": bool(arg.get("required", True)),
+                "default_value_repr": "",
+                "ordinal": ordinal,
+            }
+        )
+    output_type = atom_entry.get("return_annotation") or "Any"
+    rows.append(
+        {
+            "atom_id": atom_id,
+            "version_id": None,
+            "direction": "output",
+            "name": "result",
+            "type_desc": output_type,
+            "constraints": "",
+            "required": True,
+            "default_value_repr": "",
+            "ordinal": 0,
+        }
+    )
+    return rows
+
+
 def input_name_mismatch(cdg_input_names: list[str], manifest_arg_names: list[str]) -> bool:
     """Return whether cross-validation should warn."""
     return bool(manifest_arg_names) and cdg_input_names != manifest_arg_names
@@ -265,7 +299,15 @@ def backfill_io_specs(
     """Populate ``atom_io_specs`` from provider CDG files."""
     atom_lookup = fetch_atom_lookup(supabase)
     manifest_args = load_manifest_argument_names(audit_manifest_path)
-    stats = {"inserted": 0, "skipped_no_atom": 0, "cdg_files": 0, "cross_val_warnings": 0}
+    manifest_entries = load_manifest_entries(audit_manifest_path)
+    stats = {
+        "inserted": 0,
+        "skipped_no_atom": 0,
+        "cdg_files": 0,
+        "cross_val_warnings": 0,
+        "manifest_fallback_atoms": 0,
+    }
+    covered_atom_ids: set[str] = set()
 
     for artifact_root, cdg_path in _iter_cdg_files(atoms_root):
         stats["cdg_files"] += 1
@@ -298,6 +340,7 @@ def backfill_io_specs(
                 continue
             if dry_run:
                 stats["inserted"] += len(rows)
+                covered_atom_ids.add(atom_id)
                 continue
 
             (
@@ -309,6 +352,34 @@ def backfill_io_specs(
             )
             supabase.table("atom_io_specs").insert(rows).execute()
             stats["inserted"] += len(rows)
+            covered_atom_ids.add(atom_id)
+
+    for atom_entry in manifest_entries:
+        atom_fqdn = str(atom_entry.get("atom_name", "") or "").strip()
+        atom_id = atom_lookup.get(atom_fqdn)
+        if not atom_id:
+            continue
+        if atom_id in covered_atom_ids:
+            continue
+        if not atom_entry.get("argument_details"):
+            continue
+
+        rows = build_manifest_io_spec_rows(atom_id, atom_entry)
+        if dry_run:
+            stats["inserted"] += len(rows)
+            stats["manifest_fallback_atoms"] += 1
+            continue
+
+        (
+            supabase.table("atom_io_specs")
+            .delete()
+            .eq("atom_id", atom_id)
+            .is_("version_id", "null")
+            .execute()
+        )
+        supabase.table("atom_io_specs").insert(rows).execute()
+        stats["inserted"] += len(rows)
+        stats["manifest_fallback_atoms"] += 1
 
     return stats
 
@@ -413,6 +484,17 @@ def choose_technical_content(atom_entry: dict[str, Any], atom_row: dict[str, Any
     return str(atom_entry.get("docstring_summary") or atom_row.get("description") or "").strip()
 
 
+def choose_dejargonized_content(atom_entry: dict[str, Any], atom_row: dict[str, Any]) -> str:
+    """Derive a plain-language description from stable manifest/provider fields."""
+    content = choose_technical_content(atom_entry, atom_row)
+    if not content:
+        return ""
+    normalized = " ".join(content.replace("_", " ").split())
+    if normalized.endswith("."):
+        return normalized
+    return f"{normalized}."
+
+
 def build_technical_description_row(atom_id: str, content: str) -> dict[str, Any]:
     """Build a technical description row."""
     return {
@@ -423,6 +505,19 @@ def build_technical_description_row(atom_id: str, content: str) -> dict[str, Any
         "generated_by": "backfill-v1",
         "reviewed": False,
         "jargon_score": 1.0,
+    }
+
+
+def build_dejargonized_description_row(atom_id: str, content: str) -> dict[str, Any]:
+    """Build a deterministic plain-language description row."""
+    return {
+        "atom_id": atom_id,
+        "kind": "dejargonized",
+        "language": DEFAULT_DEJARGON_LANGUAGE,
+        "content": content,
+        "generated_by": "backfill-v1",
+        "reviewed": False,
+        "jargon_score": 0.2,
     }
 
 
@@ -465,11 +560,15 @@ def backfill_technical_descriptions(
         if not atom_row:
             stats["skipped_no_atom"] += 1
             continue
-        content = choose_technical_content(atom_entry, atom_row)
-        if not content:
+        technical_content = choose_technical_content(atom_entry, atom_row)
+        dejargonized_content = choose_dejargonized_content(atom_entry, atom_row)
+        if not technical_content and not dejargonized_content:
             stats["skipped_no_content"] += 1
             continue
-        rows.append(build_technical_description_row(atom_row["atom_id"], content))
+        if technical_content:
+            rows.append(build_technical_description_row(atom_row["atom_id"], technical_content))
+        if dejargonized_content:
+            rows.append(build_dejargonized_description_row(atom_row["atom_id"], dejargonized_content))
     rows = dedupe_technical_description_rows(rows)
 
     for start in range(0, len(rows), 100):
@@ -603,6 +702,59 @@ def build_atom_reference_row(
     }
 
 
+def _upstream_symbol_label(module: str, function: str) -> str:
+    module = module.strip()
+    function = function.strip()
+    if not function:
+        return module
+    if function.startswith(f"{module}."):
+        return function
+    return f"{module}.{function}"
+
+
+def _upstream_reference_url(module: str, function: str) -> str:
+    symbol = _upstream_symbol_label(module, function)
+    if module.startswith("numpy"):
+        return f"https://numpy.org/doc/stable/reference/generated/{symbol}.html"
+    if module.startswith("scipy"):
+        return f"https://docs.scipy.org/doc/scipy/reference/generated/{symbol}.html"
+    if module.startswith("biosppy"):
+        return "https://biosppy.readthedocs.io/en/stable/"
+    return ""
+
+
+def build_manifest_reference_binding(
+    atom_entry: dict[str, Any],
+) -> tuple[str, dict[str, Any], dict[str, Any]] | None:
+    """Derive a deterministic registry/reference binding from audit-manifest metadata."""
+    upstream = dict(atom_entry.get("upstream_symbols") or {})
+    module = str(upstream.get("module") or "").strip()
+    function = str(upstream.get("function") or "").strip()
+    if not module:
+        return None
+
+    symbol = _upstream_symbol_label(module, function)
+    package_name = module.split(".", 1)[0]
+    url = _upstream_reference_url(module, function)
+    registry_entry = {
+        "type": "web",
+        "title": f"API reference for {symbol}",
+        "authors": [f"{package_name} developers"],
+        "year": None,
+        "venue": package_name,
+        "url": url,
+        "bibtex_key": f"upstream_{symbol.replace('.', '_')}",
+        "bibtex_raw": "",
+    }
+    match_metadata = {
+        "notes": str(upstream.get("notes") or "Derived from audit manifest upstream metadata."),
+        "confidence": "medium",
+        "matched_nodes": [atom_entry.get("atom_name", "")],
+        "match_type": "manual",
+    }
+    return (f"upstream:{symbol}", registry_entry, match_metadata)
+
+
 def iter_reference_files(atoms_root: Path | Sequence[Path] | None) -> list[Path]:
     """List ``references.json`` files from one or many artifact roots."""
     if atoms_root is None:
@@ -627,12 +779,14 @@ def backfill_references(
     *,
     atoms_root: Path | Sequence[Path] | None = None,
     registry_path: Path | None = None,
+    manifest_path: Path | None = None,
     dry_run: bool = False,
 ) -> dict[str, int]:
     """Populate ``atom_references`` from per-atom ``references.json`` files."""
     registry = load_registry(registry_path)
     atom_lookup = fetch_atom_lookup(supabase)
     stats = {"inserted": 0, "skipped_no_atom": 0, "skipped_no_registry": 0, "errors": 0}
+    explicit_ref_atoms: set[str] = set()
 
     for refs_path in iter_reference_files(atoms_root):
         data = _load_json(refs_path)
@@ -680,9 +834,53 @@ def backfill_references(
                         .execute()
                     )
                     stats["inserted"] += 1
+                    explicit_ref_atoms.add(atom_id)
                 except Exception:
                     logger.exception("Failed to upsert ref %s for atom %s", ref_id, fqdn)
                     stats["errors"] += 1
+
+    existing_ref_atoms = {
+        row["atom_id"]
+        for row in _select_all_rows(supabase, "atom_references", "atom_id")
+        if row.get("atom_id")
+    }
+    for atom_entry in load_manifest_entries(manifest_path):
+        if not atom_entry.get("has_references"):
+            continue
+        if atom_entry.get("references_status") != "pass":
+            continue
+        fqdn = str(atom_entry.get("atom_name", "")).strip()
+        atom_id = atom_lookup.get(fqdn)
+        if not atom_id:
+            continue
+        if atom_id in explicit_ref_atoms or atom_id in existing_ref_atoms:
+            continue
+
+        binding = build_manifest_reference_binding(atom_entry)
+        if binding is None:
+            continue
+
+        ref_id, registry_entry, match_metadata = binding
+        row = build_atom_reference_row(atom_id, ref_id, registry_entry, match_metadata)
+        if dry_run:
+            stats["inserted"] += 1
+            explicit_ref_atoms.add(atom_id)
+            continue
+        try:
+            supabase.table("references_registry").upsert(
+                build_registry_row(ref_id, registry_entry),
+                on_conflict="ref_id",
+            ).execute()
+            (
+                supabase.table("atom_references")
+                .upsert(row, on_conflict="atom_id,ref_key")
+                .execute()
+            )
+            stats["inserted"] += 1
+            explicit_ref_atoms.add(atom_id)
+        except Exception:
+            logger.exception("Failed to upsert manifest-derived ref for atom %s", fqdn)
+            stats["errors"] += 1
     return stats
 
 

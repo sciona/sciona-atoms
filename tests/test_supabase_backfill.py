@@ -7,14 +7,18 @@ from pathlib import Path
 from sciona.atoms.provider_inventory import discover_audit_manifest_path
 from sciona.atoms.supabase_backfill import (
     build_atom_reference_row,
+    build_dejargonized_description_row,
     build_evidence_rows,
     build_io_spec_rows,
+    build_manifest_io_spec_rows,
+    build_manifest_reference_binding,
     build_parameter_rows,
     build_ref_key,
     build_registry_row,
     build_rollup_row,
     build_uncertainty_rows,
     build_verification_match_row,
+    choose_dejargonized_content,
     choose_technical_content,
     dedupe_audit_rollup_rows,
     dedupe_technical_description_rows,
@@ -93,6 +97,26 @@ def test_build_io_spec_rows_maps_inputs_and_outputs() -> None:
     assert rows[1]["direction"] == "output"
 
 
+def test_build_manifest_io_spec_rows_derives_inputs_and_default_output() -> None:
+    rows = build_manifest_io_spec_rows(
+        "atom-1",
+        {
+            "argument_details": [
+                {"name": "x", "annotation": "ArrayLike", "required": True},
+                {"name": "dtype", "annotation": "DTypeLike", "required": False},
+            ],
+            "return_annotation": "np.ndarray",
+        },
+    )
+
+    assert [row["direction"] for row in rows] == ["input", "input", "output"]
+    assert rows[0]["name"] == "x"
+    assert rows[0]["type_desc"] == "ArrayLike"
+    assert rows[1]["required"] is False
+    assert rows[2]["name"] == "result"
+    assert rows[2]["type_desc"] == "np.ndarray"
+
+
 def test_input_name_mismatch_only_warns_when_manifest_present() -> None:
     assert not input_name_mismatch(["x"], [])
     assert input_name_mismatch(["x"], ["y"])
@@ -115,6 +139,23 @@ def test_choose_technical_content_prefers_docstring_summary() -> None:
         choose_technical_content({"docstring_summary": "Doc summary"}, {"description": "Fallback"})
         == "Doc summary"
     )
+
+
+def test_choose_dejargonized_content_normalizes_and_terminates_sentence() -> None:
+    assert (
+        choose_dejargonized_content(
+            {"docstring_summary": "Estimate_event_rate from signal"},
+            {"description": "Fallback"},
+        )
+        == "Estimate event rate from signal."
+    )
+
+
+def test_build_dejargonized_description_row_uses_plain_language_kind() -> None:
+    row = build_dejargonized_description_row("atom-1", "Estimate event rate from signal.")
+    assert row["kind"] == "dejargonized"
+    assert row["language"] == "en"
+    assert row["jargon_score"] < 0.4
 
 
 def test_dedupe_technical_description_rows_collapses_conflicting_keys() -> None:
@@ -192,6 +233,32 @@ def test_registry_and_reference_helpers_roundtrip() -> None:
     )
     assert atom_ref["source"] == "manual"
     assert atom_ref["matched_nodes"] == ["shortest_path"]
+
+
+def test_build_manifest_reference_binding_derives_upstream_docs_reference() -> None:
+    binding = build_manifest_reference_binding(
+        {
+            "atom_name": "sciona.atoms.numpy.arrays.dot",
+            "has_references": True,
+            "references_status": "pass",
+            "upstream_symbols": {
+                "module": "numpy",
+                "function": "dot",
+                "notes": "Uses the installed NumPy package as the upstream signature source.",
+            },
+        }
+    )
+
+    assert binding is not None
+    ref_id, registry_entry, match_metadata = binding
+    assert ref_id == "upstream:numpy.dot"
+    assert registry_entry["title"] == "API reference for numpy.dot"
+    assert registry_entry["url"] == "https://numpy.org/doc/stable/reference/generated/numpy.dot.html"
+    assert match_metadata["confidence"] == "medium"
+
+
+def test_build_manifest_reference_binding_returns_none_without_upstream_module() -> None:
+    assert build_manifest_reference_binding({"atom_name": "sciona.atoms.algorithms.graph.bfs"}) is None
 
 
 def test_load_registry_accepts_wrapped_and_plain_payloads(tmp_path: Path) -> None:
