@@ -19,7 +19,6 @@ def _default_workspace_root(module_root: Path) -> Path:
 _MODULE_ROOT = Path(__file__).resolve()
 _DEFAULT_WORKSPACE_ROOT = _default_workspace_root(_MODULE_ROOT)
 _ARTIFACT_ROOT_CANDIDATES: tuple[Path, ...] = (
-    Path("ageoa"),
     Path("src/sciona/atoms"),
     Path("sciona/atoms"),
 )
@@ -34,12 +33,10 @@ _PROVIDER_REPO_ORDER: tuple[str, ...] = (
     "sciona-atoms-physics",
     "sciona-atoms-robotics",
     "sciona-atoms-signal",
-    "ageo-atoms",
 )
 _NAMESPACE_ANCHORS: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
     (("src", "sciona", "atoms"), ("sciona", "atoms")),
     (("sciona", "atoms"), ("sciona", "atoms")),
-    (("ageoa",), ("ageoa",)),
 )
 
 
@@ -105,7 +102,7 @@ def discover_provider_repos(base_dir: Path | None = None) -> tuple[ProviderRepo,
     for child in sorted(parent.iterdir(), key=lambda path: _repo_order_key(path.name)):
         if not child.is_dir():
             continue
-        if child.name == "ageo-atoms" or child.name == "sciona-atoms" or child.name.startswith("sciona-atoms-"):
+        if child.name == "sciona-atoms" or child.name.startswith("sciona-atoms-"):
             repos.append(ProviderRepo(repo_name=child.name, repo_root=child.resolve()))
     return tuple(repos)
 
@@ -133,13 +130,21 @@ def discover_artifact_roots(base_dir: Path | None = None) -> tuple[Path, ...]:
     return _dedupe_paths(roots)
 
 
-def namespace_prefix_for_artifact_root(root: Path) -> tuple[str, ...]:
-    """Return the dotted import namespace implied by an artifact root."""
+def artifact_root_namespace_prefix(root: Path) -> tuple[str, ...] | None:
+    """Return the namespace prefix when ``root`` exactly matches a configured anchor."""
     parts = root.resolve().parts
     for anchor, prefix in _NAMESPACE_ANCHORS:
         index = _find_anchor(parts, anchor)
         if index is not None and index + len(anchor) == len(parts):
             return prefix
+    return None
+
+
+def namespace_prefix_for_artifact_root(root: Path) -> tuple[str, ...]:
+    """Return the dotted import namespace implied by an artifact root."""
+    prefix = artifact_root_namespace_prefix(root)
+    if prefix is not None:
+        return prefix
     return (root.name,)
 
 
@@ -181,7 +186,7 @@ def discover_shared_data_path(
     fallback_root = provider_repo_roots(base_dir)
     if fallback_root:
         return (fallback_root[-1] / relative).resolve()
-    return (_DEFAULT_WORKSPACE_ROOT / "ageo-atoms" / relative).resolve()
+    return (_DEFAULT_WORKSPACE_ROOT / "sciona-atoms" / relative).resolve()
 
 
 def discover_audit_manifest_path(base_dir: Path | None = None) -> Path:

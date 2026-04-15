@@ -644,7 +644,7 @@ def _derive_hyperparam_fqdn(repo_root: Path, entry: dict[str, Any]) -> str | Non
     atom_name = str(entry.get("atom") or "").strip()
     if not atom_name:
         return None
-    if atom_name.startswith("ageoa.") or atom_name.startswith("sciona.atoms."):
+    if atom_name.startswith("sciona.atoms."):
         return atom_name
     relative_path = str(entry.get("path") or "").strip()
     if not relative_path:
@@ -870,7 +870,7 @@ def _looks_like_workspace_root(path: Path) -> bool:
         entries = {child.name for child in path.iterdir() if child.is_dir()}
     except Exception:
         return False
-    return "ageo-atoms" in entries or any(name.startswith("sciona-atoms") for name in entries)
+    return any(name.startswith("sciona-atoms") for name in entries)
 
 
 def _resolve_workspace_root(base_dir: Path | None = None) -> Path:
@@ -1239,6 +1239,32 @@ def create_supabase_client_from_env() -> Any:
     return create_client(url, service_key)
 
 
+def _select_all_rows(
+    client: Any,
+    table: str,
+    columns: str,
+    *,
+    page_size: int = 1000,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    start = 0
+    while True:
+        response = (
+            client.table(table)
+            .select(columns)
+            .range(start, start + page_size - 1)
+            .execute()
+        )
+        batch = list(getattr(response, "data", None) or [])
+        if not batch:
+            break
+        rows.extend(batch)
+        if len(batch) < page_size:
+            break
+        start += page_size
+    return rows
+
+
 def _upsert_rows(client: Any, table: str, rows: Sequence[dict[str, Any]], *, conflict: str) -> Any:
     if not rows:
         return None
@@ -1271,10 +1297,10 @@ def _fetch_source_repo_ids(client: Any) -> dict[str, str]:
 
 
 def _fetch_atom_ids(client: Any) -> dict[str, str]:
-    response = client.table("atoms").select("fqdn,atom_id").execute()
+    rows = _select_all_rows(client, "atoms", "fqdn,atom_id")
     return {
         str(row["fqdn"]): str(row["atom_id"])
-        for row in (getattr(response, "data", None) or [])
+        for row in rows
         if row.get("fqdn") and row.get("atom_id")
     }
 

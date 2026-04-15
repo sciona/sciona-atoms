@@ -26,6 +26,46 @@ def _write(path: Path, text: str) -> None:
     path.write_text(textwrap.dedent(text).lstrip(), encoding="utf-8")
 
 
+def test_derive_seed_inventory_skips_non_provider_repo_by_default(tmp_path: Path) -> None:
+    module = load_seed_module()
+    workspace = tmp_path
+    active_repo = workspace / "sciona-atoms"
+    ignored_repo = workspace / "misc-repo"
+
+    _write(
+        active_repo / "src" / "sciona" / "atoms" / "demo" / "ops.py",
+        """
+        from sciona.ghost.registry import register_atom
+
+        def witness_scale(x):
+            return x
+
+        @register_atom(witness_scale)
+        def scale(x):
+            return x
+        """,
+    )
+    _write(
+        ignored_repo / "src" / "sciona" / "atoms" / "demo" / "ops.py",
+        """
+        from sciona.ghost.registry import register_atom
+
+        def witness_scale(x):
+            return x
+
+        @register_atom(witness_scale)
+        def scale(x):
+            return x
+        """,
+    )
+
+    inventory = module.derive_seed_inventory(base_dir=workspace)
+
+    assert inventory.summary()["provider_repos"] == 1
+    assert [row.repo_name for row in inventory.repository_rows] == ["sciona-atoms"]
+    assert [row.fqdn for row in inventory.atom_rows] == ["sciona.atoms.demo.ops.scale"]
+
+
 def test_derive_seed_inventory_scans_provider_roots_and_builds_fqdns(tmp_path: Path) -> None:
     module = load_seed_module()
     workspace = tmp_path
@@ -73,12 +113,12 @@ def test_derive_seed_inventory_scans_provider_roots_and_builds_fqdns(tmp_path: P
 def test_atoms_py_stem_is_omitted_from_module_namespace(tmp_path: Path) -> None:
     module = load_seed_module()
     workspace = tmp_path
-    repo = workspace / "ageo-atoms"
+    repo = workspace / "sciona-atoms"
 
     _write(
-        repo / "ageoa" / "rust_robotics" / "atoms.py",
+        repo / "src" / "sciona" / "atoms" / "rust_robotics" / "atoms.py",
         """
-        from ageoa.ghost.registry import register_atom
+        from sciona.ghost.registry import register_atom
 
         def witness_solver(x):
             return x
@@ -92,7 +132,7 @@ def test_atoms_py_stem_is_omitted_from_module_namespace(tmp_path: Path) -> None:
     inventory = module.derive_seed_inventory(base_dir=workspace)
 
     assert [row.fqdn for row in inventory.atom_rows] == [
-        "ageoa.rust_robotics.n_joint_arm_solver"
+        "sciona.atoms.rust_robotics.n_joint_arm_solver"
     ]
     assert inventory.atom_rows[0].namespace_path == "rust_robotics"
     assert inventory.atom_rows[0].source_module_path == "rust_robotics"
@@ -245,12 +285,12 @@ def test_derive_seed_inventory_includes_hyperparam_rows(tmp_path: Path) -> None:
 def test_build_hyperparam_rows_resolves_atom_ids(tmp_path: Path) -> None:
     module = load_seed_module()
     workspace = tmp_path
-    repo = workspace / "ageo-atoms"
+    repo = workspace / "sciona-atoms"
 
     _write(
-        repo / "ageoa" / "demo.py",
+        repo / "src" / "sciona" / "atoms" / "demo.py",
         """
-        from ageoa.ghost.registry import register_atom
+        from sciona.ghost.registry import register_atom
 
         def witness_scale(x):
             return x
@@ -266,7 +306,7 @@ def test_build_hyperparam_rows_resolves_atom_ids(tmp_path: Path) -> None:
         {
           "reviewed_atoms": [
             {
-              "atom": "ageoa.demo.scale",
+              "atom": "sciona.atoms.demo.scale",
               "status": "approved",
               "tunable_params": [
                 {
@@ -286,7 +326,7 @@ def test_build_hyperparam_rows_resolves_atom_ids(tmp_path: Path) -> None:
     inventory = module.derive_seed_inventory(base_dir=workspace)
     rows, summary = module.build_hyperparam_rows(
         inventory,
-        atom_ids={"ageoa.demo.scale": "atom-1"},
+        atom_ids={"sciona.atoms.demo.scale": "atom-1"},
     )
 
     assert summary == {
@@ -626,3 +666,51 @@ def test_build_artifact_benchmark_rows_resolves_cdg_versions(tmp_path: Path) -> 
             "measured_at": "2026-04-14T15:10:00Z",
         }
     ]
+
+
+class _FakeResponse:
+    def __init__(self, data):
+        self.data = data
+
+
+class _FakeQuery:
+    def __init__(self, pages):
+        self._pages = pages
+        self._selected = None
+        self._range = None
+
+    def select(self, columns):
+        self._selected = columns
+        return self
+
+    def range(self, start, end):
+        self._range = (start, end)
+        return self
+
+    def execute(self):
+        start = 0 if self._range is None else self._range[0]
+        page_size = len(self._pages[0]) if self._pages else 1000
+        page_index = start // page_size if page_size else 0
+        return _FakeResponse(self._pages[page_index] if page_index < len(self._pages) else [])
+
+
+class _FakeClient:
+    def __init__(self, pages):
+        self._pages = pages
+
+    def table(self, name):
+        assert name == "atoms"
+        return _FakeQuery(self._pages)
+
+
+def test_fetch_atom_ids_paginates() -> None:
+    from sciona.atoms.supabase_seed import _fetch_atom_ids
+
+    pages = [
+        [{"fqdn": f"atom.{index}", "atom_id": f"id-{index}"} for index in range(1000)],
+        [{"fqdn": "atom.1000", "atom_id": "id-1000"}],
+    ]
+    client = _FakeClient(pages)
+    rows = _fetch_atom_ids(client)
+    assert len(rows) == 1001
+    assert rows["atom.1000"] == "id-1000"

@@ -6,11 +6,62 @@ from collections.abc import Mapping
 
 import icontract
 import numpy as np
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
 
 ParticleState = Mapping[str, np.ndarray | int]
 ModelSpec = Mapping[str, object]
 ControlValue = np.ndarray | float | int
 ObservationValue = np.ndarray | float | int
+
+
+def witness_filter_step_preparation_and_dispatch(
+    up: AbstractArray,
+    b: AbstractArray,
+    a: AbstractScalar,
+    o: AbstractArray,
+) -> tuple[AbstractArray, AbstractArray, AbstractScalar, AbstractArray, AbstractArray]:
+    """Describe a prepared particle-filter step plus deterministic RNG key."""
+    rng_key = AbstractArray(shape=(1,), dtype='int64')
+    return up, b, a, o, rng_key
+
+
+def witness_hypothesis_propagation_kernel(
+    prior_state: AbstractArray,
+    model_spec: AbstractArray,
+    control_t: AbstractScalar,
+    rng_key: AbstractArray,
+) -> tuple[AbstractArray, AbstractArray, AbstractArray]:
+    """Describe propagated particle hypotheses, carried weights, and next RNG key."""
+    n_particles = prior_state.shape[0] if prior_state.shape else 0
+    proposed = AbstractArray(shape=prior_state.shape, dtype='float64')
+    carry_weights = AbstractArray(shape=(n_particles,), dtype='float64')
+    rng_key_next = AbstractArray(shape=rng_key.shape, dtype='int64')
+    return proposed, carry_weights, rng_key_next
+
+
+def witness_likelihood_reweight_kernel(
+    proposed_state_hypotheses: AbstractArray,
+    carry_weights: AbstractArray,
+    observation_t: AbstractArray,
+    model_spec: AbstractArray,
+) -> tuple[AbstractArray, AbstractScalar]:
+    """Describe normalized particle weights and scalar log likelihood."""
+    normalized = AbstractArray(shape=carry_weights.shape, dtype='float64')
+    log_likelihood = AbstractScalar(dtype='float64')
+    return normalized, log_likelihood
+
+
+def witness_resample_and_hypothesis_distribution_projection(
+    proposed_state_hypotheses: AbstractArray,
+    normalized_weights: AbstractArray,
+    rng_key_next: AbstractArray,
+    log_likelihood: AbstractScalar,
+) -> tuple[AbstractArray, AbstractArray]:
+    """Describe a resampled posterior state and scalar trace summary."""
+    posterior = AbstractArray(shape=proposed_state_hypotheses.shape, dtype='float64')
+    trace = AbstractArray(shape=(2,), dtype='float64')
+    return posterior, trace
 
 
 def _rng_key_from_state(up: ParticleState) -> np.ndarray:
@@ -22,6 +73,7 @@ def _rng_key_from_state(up: ParticleState) -> np.ndarray:
     return np.array([rng_seed], dtype=np.int64)
 
 
+@register_atom(witness_filter_step_preparation_and_dispatch)
 @icontract.require(lambda up: up is not None, "prior state up cannot be None")
 @icontract.ensure(lambda result: result is not None, "result must not be None")
 def filter_step_preparation_and_dispatch(
@@ -35,6 +87,7 @@ def filter_step_preparation_and_dispatch(
     return (up, b, a, o, rng_key)
 
 
+@register_atom(witness_hypothesis_propagation_kernel)
 @icontract.require(lambda prior_state: prior_state is not None, "prior_state cannot be None")
 @icontract.ensure(lambda result: result is not None, "result must not be None")
 def hypothesis_propagation_kernel(
@@ -69,6 +122,7 @@ def hypothesis_propagation_kernel(
     return (proposed, carry_weights, rng_key_next)
 
 
+@register_atom(witness_likelihood_reweight_kernel)
 @icontract.require(lambda proposed_state_hypotheses: proposed_state_hypotheses is not None, "proposed_state_hypotheses cannot be None")
 @icontract.ensure(lambda result: result is not None, "result must not be None")
 def likelihood_reweight_kernel(
@@ -94,6 +148,7 @@ def likelihood_reweight_kernel(
     return (normalized, log_likelihood)
 
 
+@register_atom(witness_resample_and_hypothesis_distribution_projection)
 @icontract.require(lambda log_likelihood: isinstance(log_likelihood, (float, int, np.number)), "log_likelihood must be numeric")
 @icontract.ensure(lambda result: result is not None, "result must not be None")
 def resample_and_hypothesis_distribution_projection(
@@ -112,12 +167,12 @@ def resample_and_hypothesis_distribution_projection(
     resampled = proposed_state_hypotheses[indices]
     uniform_weights = np.ones(n) / n
     posterior = {
-        "particles": resampled,
-        "weights": uniform_weights,
-        "rng_seed": int(rng_key_next[0]) + 1 if len(rng_key_next) > 0 else 1,
+        'particles': resampled,
+        'weights': uniform_weights,
+        'rng_seed': int(rng_key_next[0]) + 1 if len(rng_key_next) > 0 else 1,
     }
     trace = {
-        "log_likelihood": log_likelihood,
-        "ess": 1.0 / np.sum(normalized_weights ** 2),
+        'log_likelihood': log_likelihood,
+        'ess': 1.0 / np.sum(normalized_weights ** 2),
     }
     return (posterior, trace)

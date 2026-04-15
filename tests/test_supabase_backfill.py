@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
+from sciona.atoms.provider_inventory import discover_audit_manifest_path
 from sciona.atoms.supabase_backfill import (
     build_atom_reference_row,
     build_evidence_rows,
@@ -30,6 +32,11 @@ from sciona.atoms.supabase_backfill import (
 )
 
 
+ROOT = Path(__file__).resolve().parents[1]
+_LEGACY_PROVIDER_LABEL = "ageo" + "-atoms"
+_LEGACY_NAMESPACE_LABEL = "age" + "oa"
+
+
 def test_derive_atom_fqdn_supports_namespace_package_roots() -> None:
     atoms_root = Path("/tmp/provider/src/sciona/atoms")
     cdg_path = atoms_root / "signal_processing" / "biosppy" / "cdg.json"
@@ -39,15 +46,39 @@ def test_derive_atom_fqdn_supports_namespace_package_roots() -> None:
     )
 
 
-def test_namespace_from_path_handles_namespace_and_artifacts() -> None:
+def test_namespace_from_path_handles_namespace_and_artifact_boundaries() -> None:
     assert (
         namespace_from_path(Path("/tmp/repo/src/sciona/atoms/signal_processing/biosppy/matches.json"))
         == "sciona.atoms.signal_processing.biosppy"
     )
     assert (
-        namespace_from_path(Path("ageoa/mint/_artifacts/apc_module/uncertainty.json"))
-        == "ageoa.mint"
+        namespace_from_path(Path("/tmp/repo/src/sciona/atoms/bio/mint/_artifacts/apc_module/uncertainty.json"))
+        == "sciona.atoms.bio.mint"
     )
+
+
+def test_discover_audit_manifest_path_uses_provider_owned_manifest(tmp_path: Path) -> None:
+    workspace = tmp_path / "audit-manifest-workspace"
+    manifest_path = workspace / "sciona-atoms" / "data" / "audit_manifest.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(
+        json.dumps({"schema_version": "1.1", "atoms": [{"atom_name": "sciona.atoms.demo.scale"}]})
+    )
+
+    resolved = discover_audit_manifest_path(base_dir=workspace)
+    assert resolved == manifest_path.resolve()
+
+    text = resolved.read_text()
+    assert _LEGACY_PROVIDER_LABEL not in text
+    assert _LEGACY_NAMESPACE_LABEL not in text
+    assert "sciona.atoms.demo.scale" in text
+
+
+def test_repository_audit_manifest_has_no_legacy_references() -> None:
+    text = (ROOT / "data" / "audit_manifest.json").read_text()
+    assert _LEGACY_PROVIDER_LABEL not in text
+    assert _LEGACY_NAMESPACE_LABEL not in text
+    assert "sciona.atoms.signal_processing.biosppy.ecg_zz2018_d12.computekurtosissqi" in text
 
 
 def test_build_io_spec_rows_maps_inputs_and_outputs() -> None:
@@ -146,8 +177,8 @@ def test_dedupe_technical_description_rows_prefers_richer_content_deterministica
 
 
 def test_registry_and_reference_helpers_roundtrip() -> None:
-    assert extract_fqdn("ageoa.algorithms.graph.bellman_ford@ageoa/algorithms/graph.py:174") == (
-        "ageoa.algorithms.graph.bellman_ford"
+    assert extract_fqdn("sciona.atoms.algorithms.graph.bellman_ford@sciona/atoms/algorithms/graph.py:174") == (
+        "sciona.atoms.algorithms.graph.bellman_ford"
     )
     assert build_ref_key("almgren2000", {"doi": "10.1000/example"}) == "10.1000/example"
     assert map_source({"match_type": "ast_subgraph"}) == "llm_extracted"
@@ -170,6 +201,70 @@ def test_load_registry_accepts_wrapped_and_plain_payloads(tmp_path: Path) -> Non
     plain.write_text(json.dumps({"ref_b": {"title": "B"}}))
     assert load_registry(wrapped) == {"ref_a": {"title": "A"}}
     assert load_registry(plain) == {"ref_b": {"title": "B"}}
+
+
+def test_load_registry_merges_provider_registries(monkeypatch, tmp_path: Path) -> None:
+    repo_a = tmp_path / "sciona-atoms"
+    repo_b = tmp_path / "sciona-atoms-signal"
+    (repo_a / "data" / "references").mkdir(parents=True)
+    (repo_b / "data" / "references").mkdir(parents=True)
+    (repo_a / "data" / "references" / "registry.json").write_text(
+        json.dumps({"references": {"ref_a": {"title": "A"}}})
+    )
+    (repo_b / "data" / "references" / "registry.json").write_text(
+        json.dumps({"references": {"ref_b": {"title": "B"}}})
+    )
+    monkeypatch.setenv("SCIONA_ATOM_PROVIDER_ROOTS", os.pathsep.join([str(repo_a), str(repo_b)]))
+    assert load_registry() == {"ref_a": {"title": "A"}, "ref_b": {"title": "B"}}
+
+
+def test_load_registry_rejects_conflicting_provider_entries(monkeypatch, tmp_path: Path) -> None:
+    repo_a = tmp_path / "sciona-atoms"
+    repo_b = tmp_path / "sciona-atoms-signal"
+    (repo_a / "data" / "references").mkdir(parents=True)
+    (repo_b / "data" / "references").mkdir(parents=True)
+    (repo_a / "data" / "references" / "registry.json").write_text(
+        json.dumps({"references": {"shared": {"title": "A"}}})
+    )
+    (repo_b / "data" / "references" / "registry.json").write_text(
+        json.dumps({"references": {"shared": {"title": "B"}}})
+    )
+    monkeypatch.setenv("SCIONA_ATOM_PROVIDER_ROOTS", os.pathsep.join([str(repo_a), str(repo_b)]))
+    try:
+        load_registry()
+    except ValueError as exc:
+        assert "Conflicting registry entry" in str(exc)
+    else:
+        raise AssertionError("Expected conflicting registry entries to fail")
+
+
+def test_load_registry_uses_provider_owned_registry_without_ageo_fallback(
+    monkeypatch, tmp_path: Path
+) -> None:
+    repo = tmp_path / "sciona-atoms"
+    (repo / "data" / "references").mkdir(parents=True)
+    (repo / "data" / "references" / "registry.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "references": {
+                    "signal2026": {
+                        "ref_id": "signal2026",
+                        "type": "paper",
+                        "title": "Canonical Signal Reference",
+                    }
+                },
+            }
+        )
+    )
+    monkeypatch.setenv("SCIONA_ATOM_PROVIDER_ROOTS", str(repo))
+    assert load_registry() == {
+        "signal2026": {
+            "ref_id": "signal2026",
+            "type": "paper",
+            "title": "Canonical Signal Reference",
+        }
+    }
 
 
 def test_iter_reference_files_accepts_multiple_roots(tmp_path: Path) -> None:
@@ -304,3 +399,50 @@ def test_verification_helpers_guard_unknown_levels() -> None:
     )
     assert row["predicate_id"] == "isleapyear"
     assert row["verification_level"] == "unverified"
+
+
+
+class _FakeResponse:
+    def __init__(self, data):
+        self.data = data
+
+
+class _FakeQuery:
+    def __init__(self, pages):
+        self._pages = pages
+        self._range = None
+
+    def select(self, _columns):
+        return self
+
+    def range(self, start, end):
+        self._range = (start, end)
+        return self
+
+    def execute(self):
+        start = 0 if self._range is None else self._range[0]
+        page_size = len(self._pages[0]) if self._pages else 1000
+        page_index = start // page_size if page_size else 0
+        return _FakeResponse(self._pages[page_index] if page_index < len(self._pages) else [])
+
+
+class _FakeClient:
+    def __init__(self, pages):
+        self._pages = pages
+
+    def table(self, name):
+        assert name == "atoms"
+        return _FakeQuery(self._pages)
+
+
+def test_fetch_atom_lookup_paginates() -> None:
+    from sciona.atoms.supabase_backfill import fetch_atom_lookup
+
+    pages = [
+        [{"fqdn": f"atom.{index}", "atom_id": f"id-{index}"} for index in range(1000)],
+        [{"fqdn": "atom.1000", "atom_id": "id-1000"}],
+    ]
+    client = _FakeClient(pages)
+    rows = fetch_atom_lookup(client)
+    assert len(rows) == 1001
+    assert rows["atom.1000"] == "id-1000"

@@ -9,10 +9,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 from sciona.atoms.provider_inventory import (
+    artifact_root_namespace_prefix,
     discover_audit_manifest_path,
     discover_references_registry_path,
     iter_provider_artifact_files,
     namespace_prefix_for_artifact_root,
+    provider_repo_roots,
 )
 
 if TYPE_CHECKING:
@@ -61,6 +63,32 @@ def _load_json(path: Path) -> Any:
     return json.loads(path.read_text())
 
 
+def _select_all_rows(
+    supabase: Any,
+    table: str,
+    columns: str,
+    *,
+    page_size: int = 1000,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    start = 0
+    while True:
+        response = (
+            supabase.table(table)
+            .select(columns)
+            .range(start, start + page_size - 1)
+            .execute()
+        )
+        batch = list(getattr(response, "data", None) or [])
+        if not batch:
+            break
+        rows.extend(batch)
+        if len(batch) < page_size:
+            break
+        start += page_size
+    return rows
+
+
 def _artifact_roots(single_root: Path | None) -> tuple[Path, ...]:
     if single_root is not None:
         return (single_root.expanduser().resolve(),)
@@ -96,15 +124,16 @@ def namespace_from_path(file_path: Path) -> str:
     raw_parent = file_path.parent
     parents = raw_parent.resolve() if file_path.is_absolute() else raw_parent
     for ancestor in (parents, *parents.parents):
-        prefix = namespace_prefix_for_artifact_root(ancestor)
-        if prefix != (ancestor.name,):
-            relative = parents.relative_to(ancestor)
-            parts: list[str] = []
-            for part in relative.parts:
-                if part == "_artifacts":
-                    break
-                parts.append(part)
-            return ".".join((*prefix, *parts))
+        prefix = artifact_root_namespace_prefix(ancestor)
+        if prefix is None:
+            continue
+        relative = parents.relative_to(ancestor)
+        parts: list[str] = []
+        for part in relative.parts:
+            if part == "_artifacts":
+                break
+            parts.append(part)
+        return ".".join((*prefix, *parts))
 
     parts = []
     for part in parents.parts:
@@ -141,8 +170,8 @@ def resolve_atom_id(supabase: "Client", namespace: str, short_name: str) -> str 
 
 def fetch_atom_lookup(supabase: "Client") -> dict[str, str]:
     """Fetch the current ``fqdn -> atom_id`` lookup from Supabase."""
-    response = supabase.table("atoms").select("atom_id, fqdn").execute()
-    return {row["fqdn"]: row["atom_id"] for row in response.data or []}
+    rows = _select_all_rows(supabase, "atoms", "atom_id, fqdn")
+    return {row["fqdn"]: row["atom_id"] for row in rows if row.get("fqdn") and row.get("atom_id")}
 
 
 def load_manifest_entries(path: Path | None = None) -> list[dict[str, Any]]:
@@ -217,8 +246,7 @@ def _iter_cdg_files(single_root: Path | None = None) -> list[tuple[Path, Path]]:
         for path in iter_provider_artifact_files(filename, roots=roots):
             best_root: Path | None = None
             for parent in path.parents:
-                prefix = namespace_prefix_for_artifact_root(parent)
-                if prefix != (parent.name,):
+                if artifact_root_namespace_prefix(parent) is not None:
                     best_root = parent.resolve()
                     break
             if best_root is not None:
@@ -452,14 +480,42 @@ def backfill_technical_descriptions(
     return stats
 
 
+def _registry_paths(path: Path | None = None) -> tuple[Path, ...]:
+    if path is not None:
+        return (path.expanduser().resolve(),)
+
+    merged: list[Path] = []
+    for repo_root in provider_repo_roots():
+        candidate = (repo_root / "data" / "references" / "registry.json").resolve()
+        if candidate.exists():
+            merged.append(candidate)
+    if merged:
+        return tuple(merged)
+
+    fallback = discover_references_registry_path()
+    return (fallback.expanduser().resolve(),)
+
+
 def load_registry(path: Path | None = None) -> dict[str, dict[str, Any]]:
-    """Load the canonical bibliography keyed by ``ref_id``."""
-    registry_path = path or discover_references_registry_path()
-    data = _load_json(registry_path)
-    refs = data.get("references", data)
-    if not isinstance(refs, dict):
-        raise ValueError(f"Registry payload at {registry_path} must contain an object")
-    return {str(ref_id): dict(entry) for ref_id, entry in refs.items()}
+    """Load the provider bibliography keyed by ``ref_id``."""
+    merged: dict[str, dict[str, Any]] = {}
+    seen_from: dict[str, Path] = {}
+    for registry_path in _registry_paths(path):
+        data = _load_json(registry_path)
+        refs = data.get("references", data)
+        if not isinstance(refs, dict):
+            raise ValueError(f"Registry payload at {registry_path} must contain an object")
+        for ref_id, entry in refs.items():
+            normalized = dict(entry)
+            key = str(ref_id)
+            if key in merged and merged[key] != normalized:
+                prior = seen_from[key]
+                raise ValueError(
+                    f"Conflicting registry entry for {key} in {prior} and {registry_path}"
+                )
+            merged[key] = normalized
+            seen_from[key] = registry_path
+    return merged
 
 
 def build_registry_row(ref_id: str, entry: dict[str, Any]) -> dict[str, Any]:
