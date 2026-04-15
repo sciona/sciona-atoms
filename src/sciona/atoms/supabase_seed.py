@@ -47,7 +47,7 @@ DEFAULT_STATUS = "approved"
 DEFAULT_VISIBILITY_TIER = "general"
 DEFAULT_SOURCE_KIND = "hand_written"
 DEFAULT_STATEFUL_KIND = "none"
-DEFERRED_TABLES = ("artifact_benchmarks",)
+DEFERRED_TABLES: tuple[str, ...] = ()
 _PY_FILE_STEM_OMIT = {"__init__", "atoms"}
 
 
@@ -1059,6 +1059,30 @@ def build_atom_benchmark_rows(
     }
 
 
+def build_artifact_benchmark_rows(
+    inventory: SeedInventory,
+    *,
+    version_ids: dict[tuple[str, str], str],
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    rows: list[dict[str, Any]] = []
+    skipped_no_version = 0
+    touched_versions: set[str] = set()
+    for result in inventory.benchmark_result_rows:
+        if result.artifact_kind != "cdg":
+            continue
+        version_id = version_ids.get((result.artifact_fqdn, result.content_hash))
+        if version_id is None:
+            skipped_no_version += 1
+            continue
+        touched_versions.add(version_id)
+        rows.append(result.as_atom_benchmark_dict(version_id=version_id))
+    return rows, {
+        "artifact_benchmark_rows": len(rows),
+        "benchmark_artifact_versions": len(touched_versions),
+        "benchmark_cdg_skipped_no_version": skipped_no_version,
+    }
+
+
 def build_owner_seed(owner_login: str = DEFAULT_OWNER_LOGIN, *, email: str | None = None) -> OwnerSeed:
     normalized_login = (owner_login or DEFAULT_OWNER_LOGIN).strip() or DEFAULT_OWNER_LOGIN
     user_id = str(uuid5(NAMESPACE_URL, f"sciona-seed-owner:{normalized_login}"))
@@ -1229,6 +1253,14 @@ def _replace_atom_benchmark_rows(client: Any, rows: Sequence[dict[str, Any]]) ->
         client.table("atom_benchmarks").insert(list(rows)).execute()
 
 
+def _replace_artifact_benchmark_rows(client: Any, rows: Sequence[dict[str, Any]]) -> None:
+    touched_pairs = sorted({(str(row["version_id"]), str(row["benchmark_name"])) for row in rows})
+    for version_id, benchmark_name in touched_pairs:
+        client.table("artifact_benchmarks").delete().eq("version_id", version_id).eq("benchmark_name", benchmark_name).execute()
+    if rows:
+        client.table("artifact_benchmarks").insert(list(rows)).execute()
+
+
 def _fetch_source_repo_ids(client: Any) -> dict[str, str]:
     response = client.table("atom_source_repositories").select("repo_name,source_repo_id").execute()
     return {
@@ -1244,6 +1276,29 @@ def _fetch_atom_ids(client: Any) -> dict[str, str]:
         str(row["fqdn"]): str(row["atom_id"])
         for row in (getattr(response, "data", None) or [])
         if row.get("fqdn") and row.get("atom_id")
+    }
+
+
+def _fetch_artifact_version_ids(client: Any) -> dict[tuple[str, str], str]:
+    artifact_rows = getattr(
+        client.table("artifact_versions").select("version_id,content_hash,artifact_id").execute(),
+        "data",
+        None,
+    ) or []
+    artifact_ids = {str(row["artifact_id"]) for row in artifact_rows if row.get("artifact_id")}
+    if not artifact_ids:
+        return {}
+    fqdn_rows = getattr(
+        client.table("artifacts").select("artifact_id,fqdn").in_("artifact_id", sorted(artifact_ids)).execute(),
+        "data",
+        None,
+    ) or []
+    fqdn_by_id = {str(row["artifact_id"]): str(row["fqdn"]) for row in fqdn_rows if row.get("artifact_id") and row.get("fqdn")}
+    return {
+        (fqdn_by_id[str(row["artifact_id"])], str(row["content_hash"])): str(row["version_id"])
+        for row in artifact_rows
+        if row.get("artifact_id") and row.get("content_hash") and row.get("version_id")
+        and str(row["artifact_id"]) in fqdn_by_id
     }
 
 
@@ -1319,13 +1374,20 @@ def seed_core_supabase(
         hyperparam_rows,
         conflict="atom_id,name",
     )
-    version_ids = {(row.fqdn, row.content_hash): row.version_id for row in inventory.version_rows}
-    atom_benchmark_rows, benchmark_summary = build_atom_benchmark_rows(inventory, version_ids=version_ids)
+    atom_version_ids = {(row.fqdn, row.content_hash): row.version_id for row in inventory.version_rows}
+    atom_benchmark_rows, benchmark_summary = build_atom_benchmark_rows(inventory, version_ids=atom_version_ids)
     _replace_atom_benchmark_rows(client, atom_benchmark_rows)
+    artifact_version_ids = _fetch_artifact_version_ids(client)
+    artifact_benchmark_rows, artifact_benchmark_summary = build_artifact_benchmark_rows(
+        inventory,
+        version_ids=artifact_version_ids,
+    )
+    _replace_artifact_benchmark_rows(client, artifact_benchmark_rows)
     summary["repo_ids"] = repo_ids
     summary.update(version_summary)
     summary.update(hyperparam_summary)
     summary.update(benchmark_summary)
+    summary.update(artifact_benchmark_summary)
     summary["applied"] = True
     return summary
 

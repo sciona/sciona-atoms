@@ -188,9 +188,7 @@ def test_seed_core_supabase_dry_run_reports_deferred_tables(tmp_path: Path) -> N
     assert summary["repository_rows"] == 1
     assert summary["atom_rows"] == 1
     assert summary["version_rows"] == 1
-    assert summary["deferred_tables"] == [
-        "artifact_benchmarks",
-    ]
+    assert summary["deferred_tables"] == []
 
 
 def test_derive_seed_inventory_includes_hyperparam_rows(tmp_path: Path) -> None:
@@ -563,3 +561,68 @@ def test_derive_seed_inventory_rejects_unknown_benchmark_metric(tmp_path: Path) 
         assert "undeclared metric" in str(exc)
     else:
         raise AssertionError("expected ValueError for undeclared benchmark metric")
+
+
+def test_build_artifact_benchmark_rows_resolves_cdg_versions(tmp_path: Path) -> None:
+    module = load_seed_module()
+    workspace = tmp_path
+    repo = workspace / "sciona-atoms"
+
+    _write(
+        repo / "data" / "benchmarks" / "benchmark_suites.json",
+        """
+        [
+          {
+            "suite_id": "demo.cdg.v1",
+            "title": "Demo CDG",
+            "artifact_scope": "both",
+            "contract_summary": "Demo macro artifact benchmark.",
+            "domain_tags": ["demo"],
+            "dataset_tag": "demo_dataset",
+            "metrics": [
+              {"metric_name": "quality", "direction": "higher_is_better", "unit": "ratio", "primary": true}
+            ],
+            "status": "active"
+          }
+        ]
+        """,
+    )
+    _write(
+        repo / "data" / "benchmarks" / "benchmark_results.json",
+        """
+        [
+          {
+            "suite_id": "demo.cdg.v1",
+            "artifact_fqdn": "cdg.skeleton.demo",
+            "artifact_kind": "cdg",
+            "content_hash": "cdg-hash",
+            "metric_name": "quality",
+            "metric_value": 0.9,
+            "measured_at": "2026-04-14T15:10:00Z",
+            "status": "completed"
+          }
+        ]
+        """,
+    )
+
+    inventory = module.derive_seed_inventory(base_dir=workspace)
+    rows, summary = module.build_artifact_benchmark_rows(
+        inventory,
+        version_ids={("cdg.skeleton.demo", "cdg-hash"): "artifact-version-1"},
+    )
+
+    assert summary == {
+        "artifact_benchmark_rows": 1,
+        "benchmark_artifact_versions": 1,
+        "benchmark_cdg_skipped_no_version": 0,
+    }
+    assert rows == [
+        {
+            "version_id": "artifact-version-1",
+            "benchmark_name": "demo.cdg.v1",
+            "metric_name": "quality",
+            "metric_value": 0.9,
+            "dataset_tag": "demo_dataset",
+            "measured_at": "2026-04-14T15:10:00Z",
+        }
+    ]
