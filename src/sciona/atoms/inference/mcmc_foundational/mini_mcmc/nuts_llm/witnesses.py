@@ -1,18 +1,16 @@
 from __future__ import annotations
-from ageoa.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
 
-def witness_initializenutsstate(*args, **kwargs) -> tuple[AbstractArray, AbstractArray]:
+def witness_initializenutsstate(
+    initial_positions: AbstractArray,
+    target_accept_p: AbstractScalar,
+) -> tuple[AbstractArray, AbstractArray]:
     """Shape-and-type check for mcmc sampler: initialize nuts state. Returns output metadata without running the real computation."""
+    _ = initial_positions, target_accept_p
     target = AbstractArray(shape=(1,), dtype="float64")
     trace = AbstractArray(shape=(1,), dtype="float64")
-    if trace.param_dims != target.event_shape:
-        raise ValueError(
-            f"param_dims {trace.param_dims} vs event_shape {target.event_shape}"
-        )
-        
     rng = AbstractArray(shape=(1,), dtype="float64")
-    trace = AbstractArray(shape=(1,), dtype="float64")
-    return trace.step(accepted=True), rng.advance(n_draws=1)
+    return trace, rng
 
 def witness_runnutstransitions(nuts_state_in: AbstractArray, rng_key_in: AbstractArray, n_collect: AbstractArray, n_discard: AbstractArray) -> AbstractArray:
     """Shape-and-type check for run nuts transitions. Returns output metadata without running the real computation."""

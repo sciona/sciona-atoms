@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
 
 def witness_evaluate_log_probability_density(dist: AbstractDistribution, samples: AbstractArray) -> AbstractScalar:
     """Shape-and-type check for log-prob: evaluate log probability density. Returns output metadata without running the real computation."""
@@ -13,7 +13,7 @@ def witness_evaluate_log_probability_density(dist: AbstractDistribution, samples
             )
     return AbstractScalar(dtype="float64", max_val=0.0)
 
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
 
 
 def witness_optimizationlooporchestration(algorithm: AbstractArray, max_iter: AbstractScalar, prob: AbstractArray, q_init: AbstractArray, rng_state_in: AbstractArray) -> tuple[AbstractArray, AbstractArray, AbstractArray]:
@@ -24,7 +24,7 @@ def witness_optimizationlooporchestration(algorithm: AbstractArray, max_iter: Ab
     )
     return result
 
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
 
 
 def witness_gradient_oracle_evaluation(rng_in: AbstractArray, obj: AbstractArray, adtype: AbstractArray, out_in: AbstractArray, state_in: AbstractArray, params: AbstractArray, restructure: AbstractArray) -> tuple[AbstractArray, AbstractArray, AbstractArray, AbstractArray]:

@@ -6,8 +6,8 @@ from typing import Sequence
 
 import icontract
 import numpy as np
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
 
 
 def witness_binary_search_insertion(

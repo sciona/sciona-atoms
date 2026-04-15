@@ -6,15 +6,15 @@ import numpy as np
 import scipy.signal
 import icontract
 
-from ageoa.ghost.registry import register_atom
-from ageoa.ghost.witnesses import (
+from sciona.ghost.registry import register_atom
+from sciona.ghost.witnesses import (
     witness_butter, witness_cheby1, witness_cheby2, witness_firwin,
     witness_sosfilt, witness_lfilter, witness_freqz,
 )
 
 ArrayLike = Union[np.ndarray, list, tuple]
 
-_SLOW_CHECKS = os.environ.get("AGEOA_SLOW_CHECKS", "0") == "1"
+_SLOW_CHECKS = os.environ.get("SCIONA_SLOW_CHECKS", "0") == "1"
 
 
 def _poles_inside_unit_circle(a: np.ndarray) -> bool:

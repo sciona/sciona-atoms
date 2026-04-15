@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
 
 
 def witness_meanfieldvariationalfit(theta_shape_dict: AbstractArray, log_prior_fun: AbstractArray, log_lik_fun: AbstractArray, M: AbstractScalar, constrain_fun_dict: AbstractArray, verbose: AbstractScalar, seed: AbstractScalar, n_draws: AbstractScalar, var_param_inits: AbstractArray, opt_method: AbstractScalar) -> tuple[AbstractArray, AbstractArray, AbstractArray, AbstractScalar]:

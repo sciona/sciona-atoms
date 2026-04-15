@@ -6,7 +6,7 @@ from typing import Callable
 import numpy as np
 
 import icontract
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.registry import register_atom
 from .witnesses import witness_buildnutstree, witness_nutstransitionkernel
 
 _jl: object | None = None

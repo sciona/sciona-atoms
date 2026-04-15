@@ -6,8 +6,8 @@ import icontract
 import numpy as np
 from scipy.interpolate import CubicSpline, RBFInterpolator
 
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
 
 
 def _is_array(value: object, *, ndim: int | None = None) -> bool:

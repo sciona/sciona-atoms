@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 import icontract
-from ageoa.ghost.registry import register_atom  # type: ignore[import-untyped]
+from sciona.ghost.registry import register_atom  # type: ignore[import-untyped]
 
 from .witnesses import witness_hamiltonianphasepointtransition, witness_temperingfactorcomputation
 @register_atom(witness_temperingfactorcomputation)

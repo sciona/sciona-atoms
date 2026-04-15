@@ -1,0 +1,52 @@
+[
+  {
+    "suite_id": "state_estimation.kalman.synthetic_tracking.v1",
+    "title": "Kalman State Tracking",
+    "artifact_scope": "both",
+    "contract_id": "hidden_state_tracking_linear_gaussian",
+    "contract_summary": "Track latent state under a linear-Gaussian observation model while preserving explicit uncertainty propagation.",
+    "domain_tags": ["state_estimation", "sequential_inference"],
+    "family_tags": ["kalman_filter"],
+    "modality_tags": ["time_series", "tracking"],
+    "dataset_tag": "synthetic_linear_tracking",
+    "dataset_version": "draft.2026-04-14",
+    "protocol_version": "v1",
+    "comparability_class": "within_suite_only",
+    "metrics": [
+      {"metric_name": "rmse_state", "direction": "lower_is_better", "unit": "state_units", "primary": true, "aggregation": "mean"},
+      {"metric_name": "neg_log_likelihood", "direction": "lower_is_better", "unit": "nats", "primary": false, "aggregation": "mean"},
+      {"metric_name": "latency_ms", "direction": "lower_is_better", "unit": "ms", "primary": false, "aggregation": "p95"}
+    ],
+    "slices": ["well_conditioned", "high_noise", "abrupt_transition"],
+    "owner_repo": "sciona-atoms",
+    "status": "draft",
+    "notes": [
+      "This suite is intended for concrete Kalman-family artifacts, not the abstract sequential-filter family scaffold."
+    ]
+  },
+  {
+    "suite_id": "state_estimation.particle.synthetic_tracking.v1",
+    "title": "Particle Filter State Tracking",
+    "artifact_scope": "both",
+    "contract_id": "hidden_state_tracking_nonlinear",
+    "contract_summary": "Track latent state under nonlinear or non-Gaussian dynamics while keeping the particle and weight state explicit through the update boundary.",
+    "domain_tags": ["state_estimation", "sequential_inference", "monte_carlo"],
+    "family_tags": ["particle_filter"],
+    "modality_tags": ["time_series", "tracking"],
+    "dataset_tag": "synthetic_nonlinear_tracking",
+    "dataset_version": "draft.2026-04-14",
+    "protocol_version": "v1",
+    "comparability_class": "within_suite_only",
+    "metrics": [
+      {"metric_name": "rmse_state", "direction": "lower_is_better", "unit": "state_units", "primary": true, "aggregation": "mean"},
+      {"metric_name": "ess_fraction", "direction": "higher_is_better", "unit": "ratio", "primary": false, "aggregation": "mean"},
+      {"metric_name": "latency_ms", "direction": "lower_is_better", "unit": "ms", "primary": false, "aggregation": "p95"}
+    ],
+    "slices": ["mild_nonlinearity", "heavy_nonlinearity", "multimodal_observation"],
+    "owner_repo": "sciona-atoms",
+    "status": "draft",
+    "notes": [
+      "This suite is intended for concrete particle-filter-family artifacts, not the abstract sequential-filter family scaffold."
+    ]
+  }
+]

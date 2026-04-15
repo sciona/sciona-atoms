@@ -5,8 +5,8 @@ from __future__ import annotations
 import icontract
 import numpy as np
 import numpy.polynomial.polynomial as poly
-from ageoa.ghost.registry import register_atom
-from ageoa.numpy.witnesses import (
+from sciona.ghost.registry import register_atom
+from sciona.atoms.numpy.witnesses import (
     witness_np_polyadd,
     witness_np_polyder,
     witness_np_polyfit,

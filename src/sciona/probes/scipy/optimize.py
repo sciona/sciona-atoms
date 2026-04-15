@@ -20,11 +20,15 @@ OPTIMIZE_PROBE_TARGETS: tuple[ProbeTarget, ...] = (
     ProbeTarget(f"{_MODULE}.root", _MODULE, "root"),
     ProbeTarget(f"{_MODULE}.linprog", _MODULE, "linprog"),
     ProbeTarget(f"{_MODULE}.curve_fit", _MODULE, "curve_fit"),
-    ProbeTarget(f"{_MODULE}.shgo", _MODULE, "shgo"),
     ProbeTarget(
-        f"{_MODULE}.differential_evolution",
+        f"{_MODULE}.shgo_global_optimization",
         _MODULE,
-        "differential_evolution",
+        "shgo_global_optimization",
+    ),
+    ProbeTarget(
+        f"{_MODULE}.differential_evolution_optimization",
+        _MODULE,
+        "differential_evolution_optimization",
     ),
 )
 

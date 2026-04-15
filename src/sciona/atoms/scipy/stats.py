@@ -5,8 +5,8 @@ import scipy.stats
 import icontract
 from scipy.stats._distn_infrastructure import rv_continuous_frozen
 from scipy.stats._stats_py import DescribeResult, PearsonRResult, SignificanceResult, TtestResult
-from ageoa.ghost.registry import register_atom
-from ageoa.scipy.witnesses import (
+from sciona.ghost.registry import register_atom
+from sciona.atoms.scipy.witnesses import (
     witness_scipy_describe,
     witness_scipy_norm,
     witness_scipy_pearsonr,

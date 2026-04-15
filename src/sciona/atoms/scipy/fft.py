@@ -6,12 +6,12 @@ import numpy as np
 import scipy.fft
 import icontract
 
-from ageoa.ghost.registry import register_atom
-from ageoa.ghost.witnesses import witness_dct, witness_idct
+from sciona.ghost.registry import register_atom
+from sciona.ghost.witnesses import witness_dct, witness_idct
 
 ArrayLike = Union[np.ndarray, list, tuple]
 
-_SLOW_CHECKS = os.environ.get("AGEOA_SLOW_CHECKS", "0") == "1"
+_SLOW_CHECKS = os.environ.get("SCIONA_SLOW_CHECKS", "0") == "1"
 
 
 def _roundtrip_close(original: np.ndarray, reconstructed: np.ndarray, atol: float = 1e-10) -> bool:

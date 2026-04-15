@@ -135,7 +135,7 @@ def update_posterior_state_steady_state(
 
 
 # Backward-compatible aliases while matcher metadata and legacy assets still reference
-# the collapsed wrapper symbols from the original ageoa package layout.
+# the collapsed wrapper symbols from the original package layout.
 initializekalmanstatemodel = initialize_kalman_state_model
 predictlatentstateandcovariance = predict_latent_state_and_covariance
 predictlatentstatesteadystate = predict_latent_state_steady_state

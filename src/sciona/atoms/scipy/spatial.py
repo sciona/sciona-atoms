@@ -5,8 +5,8 @@ from __future__ import annotations
 import icontract
 import numpy as np
 import scipy.spatial
-from ageoa.ghost.abstract import AbstractArray
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.abstract import AbstractArray
+from sciona.ghost.registry import register_atom
 
 
 def witness_voronoi_tessellation(

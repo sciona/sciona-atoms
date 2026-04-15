@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import icontract
 import numpy as np
-from ageoa.ghost.registry import register_atom
-from ageoa.numpy.witnesses import (
+from sciona.ghost.registry import register_atom
+from sciona.atoms.numpy.witnesses import (
     witness_np_linalg_det,
     witness_np_linalg_inv,
     witness_np_linalg_norm,

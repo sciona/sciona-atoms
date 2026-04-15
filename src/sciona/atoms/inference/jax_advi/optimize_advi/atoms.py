@@ -1,5 +1,5 @@
 from __future__ import annotations
-"""Auto-generated atom wrappers following the ageoa pattern."""
+"""Auto-generated atom wrappers following the sciona pattern."""
 
 
 from typing import Any, Callable
@@ -7,17 +7,17 @@ from typing import Any, Callable
 import numpy as np
 
 import icontract
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.registry import register_atom
 from .witnesses import witness_meanfieldvariationalfit, witness_posteriordrawsampling
 
 ThetaShapeDict = dict[str, tuple[int, ...]]
 ParameterDict = dict[str, Any]
-ConstraintFn = Callable[[Any], tuple[Any, float]]
+ConstraintFn = Callable[[object], tuple[object, float]]
 ConstraintMap = dict[str, ConstraintFn]
-LogDensityFn = Callable[[ParameterDict], Any]
+LogDensityFn = Callable[[ParameterDict], object]
 VarParamInits = dict[str, tuple[float, float]]
-ObjectiveFn = Callable[[Any], Any]
-PosteriorTransform = Callable[[ParameterDict], Any]
+ObjectiveFn = Callable[[object], object]
+PosteriorTransform = Callable[[ParameterDict], object]
 
 DEFAULT_CONSTRAINTS: ConstraintMap = {}
 DEFAULT_VAR_PARAM_INITS: VarParamInits = {
@@ -100,7 +100,7 @@ def posteriordrawsampling(
     n_draws: int,
     fun_to_apply: PosteriorTransform | None,
     rng_state_in: int,
-) -> tuple[Any, int]:
+) -> tuple[object, int]:
     """Samples from the fitted mean-field posterior using latent mean/scale state, applies constraint transforms, and optionally applies a post-processing function.
 
 Args:
@@ -128,4 +128,3 @@ Returns:
         fun_to_apply=fun_to_apply if fun_to_apply is not None else (lambda x: x),
     )
     return (draws, rng_state_int + 1)
-

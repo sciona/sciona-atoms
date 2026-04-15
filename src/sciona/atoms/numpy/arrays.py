@@ -6,8 +6,8 @@ from typing import Sequence
 
 import icontract
 import numpy as np
-from ageoa.ghost.registry import register_atom
-from ageoa.numpy.witnesses import (
+from sciona.ghost.registry import register_atom
+from sciona.atoms.numpy.witnesses import (
     witness_np_array,
     witness_np_dot,
     witness_np_reshape,

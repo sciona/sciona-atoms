@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
 
 _MEMO_CACHE: dict = {}
 

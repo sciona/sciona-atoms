@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractScalar, AbstractDistribution, AbstractSignal
 
 
 def witness_initializelineargaussianstatemodel(initial_state: AbstractArray, initial_covariance: AbstractArray, transition_matrix: AbstractArray, process_noise: AbstractArray, observation_matrix: AbstractArray, measurement_noise: AbstractArray) -> AbstractDistribution:

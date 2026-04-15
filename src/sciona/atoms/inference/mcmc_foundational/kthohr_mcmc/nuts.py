@@ -5,13 +5,13 @@ HMCState: Any = Any
 NUTS_Trajectory: Any = Any
 Position: Any = Any
 State: Any = Any
-"""Auto-generated atom wrappers following the ageoa pattern."""
+"""Auto-generated atom wrappers following the sciona pattern."""
 
 
 import numpy as np
 
 import icontract
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.registry import register_atom
 from .nuts_witnesses import witness_nuts_recursive_tree_build
 
 import ctypes

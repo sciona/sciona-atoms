@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ageoa.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
 
 def witness_metropolishastingstransitionkernel(temper_val: AbstractScalar, target_log_kernel: AbstractArray, rng_key_in: AbstractArray) -> tuple[AbstractArray, AbstractArray]:
     """Shape-and-type check for metropolis hastings transition kernel. Returns output metadata without running the real computation."""

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ageoa.ghost.abstract import AbstractArray, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractSignal
 
 
 def witness_build_de_transition_kernel(target_log_kernel: AbstractSignal) -> AbstractArray:

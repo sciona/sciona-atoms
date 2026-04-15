@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ageoa.ghost.abstract import AbstractArray, AbstractDistribution, AbstractMCMCTrace, AbstractScalar, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractDistribution, AbstractMCMCTrace, AbstractScalar, AbstractSignal
 
 def witness_initializehmcstate(target: AbstractArray, initial_positions: AbstractArray, step_size: AbstractScalar, n_leapfrog: AbstractScalar, seed: AbstractScalar) -> tuple[AbstractMCMCTrace, AbstractArray]:
     """Shape-and-type check for initialize hmc state. Returns output metadata without running the real computation."""

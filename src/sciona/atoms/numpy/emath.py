@@ -6,8 +6,8 @@ import os
 
 import icontract
 import numpy as np
-from ageoa.ghost.registry import register_atom
-from ageoa.numpy.witnesses import (
+from sciona.ghost.registry import register_atom
+from sciona.atoms.numpy.witnesses import (
     witness_np_emath_log,
     witness_np_emath_log10,
     witness_np_emath_logn,
@@ -15,7 +15,7 @@ from ageoa.numpy.witnesses import (
     witness_np_emath_sqrt,
 )
 
-_SLOW_CHECKS = os.environ.get("AGEOA_SLOW_CHECKS", "0") == "1"
+_SLOW_CHECKS = os.environ.get("SCIONA_SLOW_CHECKS", "0") == "1"
 
 Numeric = float | int | complex | np.number
 ArrayLike = np.ndarray | list[object] | tuple[object, ...] | Numeric

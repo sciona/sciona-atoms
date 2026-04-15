@@ -1,9 +1,18 @@
 from __future__ import annotations
 
-from ageoa.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
 
-def witness_nuts_recursive_tree_build(direction_val: AbstractScalar, step_size: AbstractScalar, log_slice_variable: AbstractScalar, initial_hmc_state: AbstractArray, log_prob_oracle: AbstractArray, integrator_fn: AbstractArray, tree_depth: AbstractScalar, *args, **kwargs) -> AbstractArray:
+def witness_nuts_recursive_tree_build(
+    direction_val: AbstractScalar,
+    step_size: AbstractScalar,
+    log_slice_variable: AbstractScalar,
+    initial_hmc_state: AbstractArray,
+    log_prob_oracle: AbstractArray,
+    integrator_fn: AbstractArray,
+    tree_depth: AbstractScalar,
+) -> AbstractArray:
     """Shape-and-type check for nuts recursive tree build. Returns output metadata without running the real computation."""
+    _ = direction_val, step_size, log_slice_variable, initial_hmc_state, log_prob_oracle, integrator_fn, tree_depth
     return AbstractArray(
         shape=(1,),
         dtype="float64",)

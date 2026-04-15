@@ -6,9 +6,9 @@ from typing import Sequence
 
 import icontract
 import numpy as np
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar
-from ageoa.ghost.registry import register_atom
-from ageoa.numpy.witnesses import (
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
+from sciona.atoms.numpy.witnesses import (
     witness_np_default_rng,
     witness_np_rand,
     witness_np_uniform,

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import numpy as np
 import icontract
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
 
 ArrayLike = np.ndarray | list[object] | tuple[object, ...]
 
@@ -214,6 +214,7 @@ def fftn(
 @register_atom(witness_ifftn)  # type: ignore[untyped-decorator]
 @icontract.require(lambda a: a is not None, "Input array must not be None")
 @icontract.require(lambda a: np.asarray(a).size > 0, "Input array must not be empty")
+@icontract.ensure(lambda result: np.iscomplexobj(result), "IFFTN output must be complex-valued")
 def ifftn(
     a: ArrayLike,
     s: Sequence[int] | None = None,

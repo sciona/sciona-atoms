@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import icontract
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.registry import register_atom
 
 from .bernoulli_witnesses import witness_bernoulli_probabilistic_oracle
 

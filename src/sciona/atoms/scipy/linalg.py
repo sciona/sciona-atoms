@@ -3,8 +3,8 @@ from typing import Any, Tuple, Union
 import numpy as np
 import scipy.linalg
 import icontract
-from ageoa.ghost.registry import register_atom
-from ageoa.scipy.witnesses import (
+from sciona.ghost.registry import register_atom
+from sciona.atoms.scipy.witnesses import (
     witness_scipy_linalg_det,
     witness_scipy_linalg_inv,
     witness_scipy_linalg_solve,

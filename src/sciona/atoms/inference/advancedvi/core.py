@@ -5,7 +5,7 @@ from typing import Callable, TypeAlias
 import icontract
 import numpy as np
 
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.registry import register_atom
 
 from .core_witnesses import (
     witness_evaluate_log_probability_density,

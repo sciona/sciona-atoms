@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import icontract
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.registry import register_atom
 from .mcmc_algos_witnesses import witness_dispatch_mcmc_algorithm
 
 

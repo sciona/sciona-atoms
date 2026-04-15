@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ageoa.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
 
 def witness_temperingfactorcomputation(lf: AbstractArray, r: AbstractArray, step: AbstractScalar, n_steps: AbstractScalar) -> AbstractArray:
     """Shape-and-type check for tempering factor computation. Returns output metadata without running the real computation."""

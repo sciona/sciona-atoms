@@ -1,12 +1,12 @@
 from __future__ import annotations
-"""Auto-generated atom wrappers following the ageoa pattern."""
+"""Auto-generated atom wrappers following the sciona pattern."""
 
 from typing import TYPE_CHECKING
 
 
 import numpy as np
 import icontract
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.registry import register_atom
 from .state_models import BPState
 
 if TYPE_CHECKING:

@@ -9,8 +9,8 @@ import numpy as np
 import scipy.integrate
 from scipy.integrate._ivp.ivp import OdeResult
 
-from ageoa.ghost.abstract import AbstractArray, AbstractScalar
-from ageoa.ghost.registry import register_atom
+from sciona.ghost.abstract import AbstractArray, AbstractScalar
+from sciona.ghost.registry import register_atom
 
 ArrayLike: TypeAlias = np.ndarray | list[object] | tuple[object, ...]
 QuadInfo: TypeAlias = dict[str, object]
