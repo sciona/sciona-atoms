@@ -41,3 +41,34 @@ Suggested remediation order:
 Evidence as of 2026-04-16:
 - Direct runtime comparisons were run locally against `biosppy.biometrics` using the matcher venv.
 - The comparison established semantic mismatch for `get_id_rates` and a runtime failure for `combination` on ordinary list-valued classifier results.
+
+## Robotics
+
+### `pronto.torque_adjustment`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The family currently contains a single zero-input identity stage, `torqueadjustmentidentitystage`.
+- The callable performs no observable computation, state access, or side effects and returns `None`.
+- There is no meaningful behavior surface to validate beyond "does nothing," which is not a strong enough basis for publication as a reusable atom.
+
+What we verified:
+- The implementation is explicitly a no-op placeholder.
+- The current witness/probe path only exercises importability, not useful robotics semantics.
+- The atom is missing the full publishability bundle in Supabase because it has not been review-ratcheted and does not justify promotion as a real primitive in its current form.
+
+Proposed fixes:
+1. Decide whether this stage should exist as a first-class atom at all.
+2. If it is only a graph placeholder, remove it from the publishable catalog and keep it as internal orchestration metadata instead.
+3. If a real torque-adjustment primitive is intended, replace the identity stage with a semantically meaningful implementation and add behavior-level tests that exercise observable torque-adjustment logic.
+4. Only reenter the publishability queue after the family has concrete inputs, outputs, references, uncertainty, and review evidence tied to real behavior.
+
+Suggested remediation order:
+1. Product/design decision on whether the stage should remain a public atom candidate.
+2. Either delete/deprecate the placeholder or implement the real primitive.
+3. Add behavior tests and then revisit audit review.
+
+Evidence as of 2026-04-16:
+- Local source inspection showed `torqueadjustmentidentitystage()` returns `None` and documents itself as an identity stage with no observable computation.
+- No higher-signal behavior tests or meaningful metadata artifacts were present for publication review.
