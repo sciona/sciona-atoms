@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "metadata": {
-    "generated_at": "2026-04-16T15:41:52.238624+00:00",
+    "generated_at": "2026-04-16T16:52:27.587447+00:00",
     "repo": "sciona-atoms",
     "generator": "scripts/apply_audit_review_bundles.py",
     "phase": "phase_1_review_bundle_merge",
@@ -85151,7 +85151,7 @@
       "trust_readiness": "reviewed_with_limits",
       "review_required_actions": [],
       "review_limitations": [
-        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, leg_odometer, and yaw_lock, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
       "structural_status": "pass",
@@ -85212,7 +85212,7 @@
       "trust_readiness": "reviewed_with_limits",
       "review_required_actions": [],
       "review_limitations": [
-        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, leg_odometer, and yaw_lock, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
       "structural_status": "pass",
@@ -85280,7 +85280,7 @@
       "trust_readiness": "reviewed_with_limits",
       "review_required_actions": [],
       "review_limitations": [
-        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, leg_odometer, and yaw_lock, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
       "structural_status": "pass",
@@ -85341,7 +85341,7 @@
       "trust_readiness": "reviewed_with_limits",
       "review_required_actions": [],
       "review_limitations": [
-        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, leg_odometer, and yaw_lock, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
       "structural_status": "pass",
@@ -85409,7 +85409,7 @@
       "trust_readiness": "reviewed_with_limits",
       "review_required_actions": [],
       "review_limitations": [
-        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, leg_odometer, and yaw_lock, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
       "structural_status": "pass",
@@ -85430,6 +85430,101 @@
       "required_actions": [],
       "blocking_findings": [],
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[7]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.initialize_filter",
+      "atom_key": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.initialize_filter",
+      "atom_id": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.initialize_filter",
+      "module_import_path": "sciona.atoms.robotics.pronto.dynamic_stance_estimator",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "initialize_filter",
+      "argument_names": [
+        "initial_x",
+        "initial_P",
+        "A",
+        "H",
+        "Q",
+        "R"
+      ],
+      "argument_details": [
+        {
+          "name": "initial_x",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "initial_P",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "A",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "H",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "Q",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "R",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "tuple[StateModelSpec, ModelParamsSpec]",
+      "docstring_summary": "Initializes the state-space model with prior state, covariance, and static model parameters.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/references.json",
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/cdg.json",
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[8]"
     },
     {
       "atom_name": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.initializefilter",
@@ -85529,6 +85624,80 @@
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[8]"
     },
     {
+      "atom_name": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.predict_step",
+      "atom_key": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.predict_step",
+      "atom_id": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.predict_step",
+      "module_import_path": "sciona.atoms.robotics.pronto.dynamic_stance_estimator",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "predict_step",
+      "argument_names": [
+        "current_state",
+        "model_params",
+        "dt"
+      ],
+      "argument_details": [
+        {
+          "name": "current_state",
+          "annotation": "StateModelSpec",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "model_params",
+          "annotation": "ModelParamsSpec",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "dt",
+          "annotation": "float",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "StateModelSpec",
+      "docstring_summary": "Predicts the next state and covariance based on the state transition model (prediction step of Kalman filter).",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/references.json",
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/cdg.json",
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[9]"
+    },
+    {
       "atom_name": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.predictstep",
       "atom_key": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.predictstep",
       "atom_id": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.predictstep",
@@ -85605,6 +85774,66 @@
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[9]"
     },
     {
+      "atom_name": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.query_stance",
+      "atom_key": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.query_stance",
+      "atom_id": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.query_stance",
+      "module_import_path": "sciona.atoms.robotics.pronto.dynamic_stance_estimator",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "query_stance",
+      "argument_names": [
+        "current_state"
+      ],
+      "argument_details": [
+        {
+          "name": "current_state",
+          "annotation": "StateModelSpec",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "float",
+      "docstring_summary": "Extracts the stance (position) from the state vector.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/references.json",
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/cdg.json",
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[10]"
+    },
+    {
       "atom_name": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.querystance",
       "atom_key": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.querystance",
       "atom_id": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.querystance",
@@ -85665,6 +85894,80 @@
       "required_actions": [],
       "blocking_findings": [],
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[10]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.update_step",
+      "atom_key": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.update_step",
+      "atom_id": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.update_step",
+      "module_import_path": "sciona.atoms.robotics.pronto.dynamic_stance_estimator",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "update_step",
+      "argument_names": [
+        "predicted_state",
+        "model_params",
+        "z"
+      ],
+      "argument_details": [
+        {
+          "name": "predicted_state",
+          "annotation": "StateModelSpec",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "model_params",
+          "annotation": "ModelParamsSpec",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "z",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "StateModelSpec",
+      "docstring_summary": "Updates the state and covariance based on a new measurement (update step of Kalman filter).",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/references.json",
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/cdg.json",
+        "src/sciona/atoms/robotics/pronto/dynamic_stance_estimator/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[11]"
     },
     {
       "atom_name": "sciona.atoms.robotics.pronto.dynamic_stance_estimator.updatestep",
@@ -85918,7 +86221,7 @@
       "trust_readiness": "reviewed_with_limits",
       "review_required_actions": [],
       "review_limitations": [
-        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, leg_odometer, and yaw_lock, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
       "structural_status": "pass",
@@ -85978,7 +86281,7 @@
       "trust_readiness": "reviewed_with_limits",
       "review_required_actions": [],
       "review_limitations": [
-        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, leg_odometer, and yaw_lock, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
       "structural_status": "pass",
@@ -86116,6 +86419,94 @@
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[17]"
     },
     {
+      "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.configure_correction_and_yaw_slip_policy",
+      "atom_key": "sciona.atoms.robotics.pronto.yaw_lock.configure_correction_and_yaw_slip_policy",
+      "atom_id": "sciona.atoms.robotics.pronto.yaw_lock.configure_correction_and_yaw_slip_policy",
+      "module_import_path": "sciona.atoms.robotics.pronto.yaw_lock",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "configure_correction_and_yaw_slip_policy",
+      "argument_names": [
+        "state_in",
+        "correction_period_in",
+        "yaw_slip_detect_in",
+        "yaw_slip_threshold_degrees_in",
+        "yaw_slip_disable_period_in"
+      ],
+      "argument_details": [
+        {
+          "name": "state_in",
+          "annotation": "YawLockState",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "correction_period_in",
+          "annotation": "float",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "yaw_slip_detect_in",
+          "annotation": "bool",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "yaw_slip_threshold_degrees_in",
+          "annotation": "float",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "yaw_slip_disable_period_in",
+          "annotation": "float",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "YawLockState",
+      "docstring_summary": "Set correction cadence and yaw-slip detection policy by returning a new state with updated parameter fields.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/yaw_lock/references.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/cdg.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[18]"
+    },
+    {
       "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.configurecorrectionandyawslippolicy",
       "atom_key": "sciona.atoms.robotics.pronto.yaw_lock.configurecorrectionandyawslippolicy",
       "atom_id": "sciona.atoms.robotics.pronto.yaw_lock.configurecorrectionandyawslippolicy",
@@ -86174,22 +86565,20 @@
         "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
       ],
       "source_kind": "hand_written",
-      "review_status": "reviewed_pending",
-      "review_priority": "review_later",
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "trust_readiness": "blocked_on_uncertainty_backfill",
-      "review_required_actions": [
-        "Backfill uncertainty evidence for yaw_lock."
-      ],
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
       "review_limitations": [
-        "No uncertainty.json present for yaw_lock."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
-      "structural_status": "unknown",
-      "semantic_status": "unknown",
-      "runtime_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
       "overall_verdict": "unknown",
       "risk_tier": "low",
       "risk_score": 0,
@@ -86204,6 +86593,57 @@
       "required_actions": [],
       "blocking_findings": [],
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[18]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.initialize_yaw_lock_state",
+      "atom_key": "sciona.atoms.robotics.pronto.yaw_lock.initialize_yaw_lock_state",
+      "atom_id": "sciona.atoms.robotics.pronto.yaw_lock.initialize_yaw_lock_state",
+      "module_import_path": "sciona.atoms.robotics.pronto.yaw_lock",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "initialize_yaw_lock_state",
+      "argument_names": [],
+      "argument_details": [],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "YawLockState",
+      "docstring_summary": "Create the initial immutable YawLockState container for all persistent fields (parameters, standing flag, joint state, standing links).",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/yaw_lock/references.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/cdg.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[19]"
     },
     {
       "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.initializeyawlockstate",
@@ -86227,22 +86667,20 @@
         "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
       ],
       "source_kind": "hand_written",
-      "review_status": "reviewed_pending",
-      "review_priority": "review_later",
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "trust_readiness": "blocked_on_uncertainty_backfill",
-      "review_required_actions": [
-        "Backfill uncertainty evidence for yaw_lock."
-      ],
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
       "review_limitations": [
-        "No uncertainty.json present for yaw_lock."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
-      "structural_status": "unknown",
-      "semantic_status": "unknown",
-      "runtime_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
       "overall_verdict": "unknown",
       "risk_tier": "low",
       "risk_score": 0,
@@ -86257,6 +86695,126 @@
       "required_actions": [],
       "blocking_findings": [],
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[19]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.read_initial_joint_angles",
+      "atom_key": "sciona.atoms.robotics.pronto.yaw_lock.read_initial_joint_angles",
+      "atom_id": "sciona.atoms.robotics.pronto.yaw_lock.read_initial_joint_angles",
+      "module_import_path": "sciona.atoms.robotics.pronto.yaw_lock",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "read_initial_joint_angles",
+      "argument_names": [
+        "state_in"
+      ],
+      "argument_details": [
+        {
+          "name": "state_in",
+          "annotation": "YawLockState",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "JointValueInput | None",
+      "docstring_summary": "Read stored initial joint angles from immutable state.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/yaw_lock/references.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/cdg.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[20]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.read_robot_standing_status",
+      "atom_key": "sciona.atoms.robotics.pronto.yaw_lock.read_robot_standing_status",
+      "atom_id": "sciona.atoms.robotics.pronto.yaw_lock.read_robot_standing_status",
+      "module_import_path": "sciona.atoms.robotics.pronto.yaw_lock",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "read_robot_standing_status",
+      "argument_names": [
+        "state_in"
+      ],
+      "argument_details": [
+        {
+          "name": "state_in",
+          "annotation": "YawLockState",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "bool",
+      "docstring_summary": "Read current robot standing status from immutable state without mutation.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/yaw_lock/references.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/cdg.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[21]"
     },
     {
       "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.readinitialjointangles",
@@ -86289,22 +86847,20 @@
         "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
       ],
       "source_kind": "hand_written",
-      "review_status": "reviewed_pending",
-      "review_priority": "review_later",
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "trust_readiness": "blocked_on_uncertainty_backfill",
-      "review_required_actions": [
-        "Backfill uncertainty evidence for yaw_lock."
-      ],
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
       "review_limitations": [
-        "No uncertainty.json present for yaw_lock."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
-      "structural_status": "unknown",
-      "semantic_status": "unknown",
-      "runtime_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
       "overall_verdict": "unknown",
       "risk_tier": "low",
       "risk_score": 0,
@@ -86351,22 +86907,20 @@
         "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
       ],
       "source_kind": "hand_written",
-      "review_status": "reviewed_pending",
-      "review_priority": "review_later",
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "trust_readiness": "blocked_on_uncertainty_backfill",
-      "review_required_actions": [
-        "Backfill uncertainty evidence for yaw_lock."
-      ],
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
       "review_limitations": [
-        "No uncertainty.json present for yaw_lock."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
-      "structural_status": "unknown",
-      "semantic_status": "unknown",
-      "runtime_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
       "overall_verdict": "unknown",
       "risk_tier": "low",
       "risk_score": 0,
@@ -86381,6 +86935,228 @@
       "required_actions": [],
       "blocking_findings": [],
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[21]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.set_joint_pose_and_initial_angles",
+      "atom_key": "sciona.atoms.robotics.pronto.yaw_lock.set_joint_pose_and_initial_angles",
+      "atom_id": "sciona.atoms.robotics.pronto.yaw_lock.set_joint_pose_and_initial_angles",
+      "module_import_path": "sciona.atoms.robotics.pronto.yaw_lock",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "set_joint_pose_and_initial_angles",
+      "argument_names": [
+        "state_in",
+        "joint_name_in",
+        "joint_position_in",
+        "joint_angles_init_in"
+      ],
+      "argument_details": [
+        {
+          "name": "state_in",
+          "annotation": "YawLockState",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "joint_name_in",
+          "annotation": "JointNameInput",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "joint_position_in",
+          "annotation": "JointValueInput",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "joint_angles_init_in",
+          "annotation": "JointValueInput",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "YawLockState",
+      "docstring_summary": "Store joint identity/position inputs and corresponding initial-angle snapshot as a new immutable state.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/yaw_lock/references.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/cdg.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[22]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.set_robot_standing_status",
+      "atom_key": "sciona.atoms.robotics.pronto.yaw_lock.set_robot_standing_status",
+      "atom_id": "sciona.atoms.robotics.pronto.yaw_lock.set_robot_standing_status",
+      "module_import_path": "sciona.atoms.robotics.pronto.yaw_lock",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "set_robot_standing_status",
+      "argument_names": [
+        "state_in",
+        "is_robot_standing_in"
+      ],
+      "argument_details": [
+        {
+          "name": "state_in",
+          "annotation": "YawLockState",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "is_robot_standing_in",
+          "annotation": "bool",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "YawLockState",
+      "docstring_summary": "Write robot standing status by producing a new immutable state.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/yaw_lock/references.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/cdg.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[23]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.set_standing_link_targets",
+      "atom_key": "sciona.atoms.robotics.pronto.yaw_lock.set_standing_link_targets",
+      "atom_id": "sciona.atoms.robotics.pronto.yaw_lock.set_standing_link_targets",
+      "module_import_path": "sciona.atoms.robotics.pronto.yaw_lock",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "set_standing_link_targets",
+      "argument_names": [
+        "state_in",
+        "left_standing_link_in",
+        "right_standing_link_in"
+      ],
+      "argument_details": [
+        {
+          "name": "state_in",
+          "annotation": "YawLockState",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "left_standing_link_in",
+          "annotation": "str",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "right_standing_link_in",
+          "annotation": "str",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "YawLockState",
+      "docstring_summary": "Set left/right standing link identifiers in a newly returned immutable state.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/yaw_lock/references.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/cdg.json",
+        "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[24]"
     },
     {
       "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.setjointposeandinitialangles",
@@ -86434,22 +87210,20 @@
         "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
       ],
       "source_kind": "hand_written",
-      "review_status": "reviewed_pending",
-      "review_priority": "review_later",
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "trust_readiness": "blocked_on_uncertainty_backfill",
-      "review_required_actions": [
-        "Backfill uncertainty evidence for yaw_lock."
-      ],
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
       "review_limitations": [
-        "No uncertainty.json present for yaw_lock."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
-      "structural_status": "unknown",
-      "semantic_status": "unknown",
-      "runtime_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
       "overall_verdict": "unknown",
       "risk_tier": "low",
       "risk_score": 0,
@@ -86503,22 +87277,20 @@
         "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
       ],
       "source_kind": "hand_written",
-      "review_status": "reviewed_pending",
-      "review_priority": "review_later",
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "trust_readiness": "blocked_on_uncertainty_backfill",
-      "review_required_actions": [
-        "Backfill uncertainty evidence for yaw_lock."
-      ],
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
       "review_limitations": [
-        "No uncertainty.json present for yaw_lock."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
-      "structural_status": "unknown",
-      "semantic_status": "unknown",
-      "runtime_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
       "overall_verdict": "unknown",
       "risk_tier": "low",
       "risk_score": 0,
@@ -86579,22 +87351,20 @@
         "src/sciona/atoms/robotics/pronto/yaw_lock/matches.json"
       ],
       "source_kind": "hand_written",
-      "review_status": "reviewed_pending",
-      "review_priority": "review_later",
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "trust_readiness": "blocked_on_uncertainty_backfill",
-      "review_required_actions": [
-        "Backfill uncertainty evidence for yaw_lock."
-      ],
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
       "review_limitations": [
-        "No uncertainty.json present for yaw_lock."
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
       ],
       "trust_blockers": [],
-      "structural_status": "unknown",
-      "semantic_status": "unknown",
-      "runtime_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
       "overall_verdict": "unknown",
       "risk_tier": "low",
       "risk_score": 0,
