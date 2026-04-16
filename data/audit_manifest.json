@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "metadata": {
-    "generated_at": "2026-04-16T22:17:51.196121+00:00",
+    "generated_at": "2026-04-16T22:26:48.689362+00:00",
     "repo": "sciona-atoms",
     "generator": "scripts/apply_audit_review_bundles.py",
     "phase": "phase_1_review_bundle_merge",
@@ -95972,6 +95972,246 @@
       "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
+    },
+    {
+      "atom_name": "sciona.atoms.scipy.interpolate.cubicsplinefit",
+      "atom_key": "sciona.atoms.scipy.interpolate.cubicsplinefit",
+      "atom_id": "sciona.atoms.scipy.interpolate.cubicsplinefit",
+      "module_import_path": "sciona.atoms.scipy.interpolate",
+      "module_path": "src/sciona/atoms/scipy/interpolate.py",
+      "module_family": "scipy",
+      "domain_family": "scipy",
+      "wrapper_symbol": "cubicsplinefit",
+      "source_kind": "hand_written",
+      "upstream_symbols": {
+        "repo": null,
+        "module": "scipy.interpolate",
+        "function": "CubicSpline",
+        "language": "python",
+        "notes": "Standard library; no third_party repo"
+      },
+      "upstream_version": "1.17.1",
+      "has_references": true,
+      "references_status": "pass",
+      "argument_names": [
+        "x",
+        "y",
+        "axis",
+        "bc_type",
+        "extrapolate"
+      ],
+      "argument_details": [
+        {
+          "name": "x",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "y",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "axis",
+          "annotation": "int",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "bc_type",
+          "annotation": "str | tuple",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "extrapolate",
+          "annotation": "bool | str | None",
+          "required": false,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "CubicSpline",
+      "docstring_summary": "Construct a piecewise cubic spline interpolator.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        {
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/interpolate.py"
+        },
+        {
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/interpolate.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_interpolate_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_interpolate_probes.py"
+        }
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; interpolation behavior remains upstream SciPy behavior.",
+        "This bundle creates canonical manifest rows for the live scipy.interpolate wrapper names because the legacy audit manifest still carries stale scipy.interpolate_v2 identifiers."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "acceptable_with_limits",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "data/review_bundles/scipy_interpolate.review_bundle.json"
+    },
+    {
+      "atom_name": "sciona.atoms.scipy.interpolate.rbfinterpolatorfit",
+      "atom_key": "sciona.atoms.scipy.interpolate.rbfinterpolatorfit",
+      "atom_id": "sciona.atoms.scipy.interpolate.rbfinterpolatorfit",
+      "module_import_path": "sciona.atoms.scipy.interpolate",
+      "module_path": "src/sciona/atoms/scipy/interpolate.py",
+      "module_family": "scipy",
+      "domain_family": "scipy",
+      "wrapper_symbol": "rbfinterpolatorfit",
+      "source_kind": "hand_written",
+      "upstream_symbols": {
+        "repo": null,
+        "module": "scipy.interpolate",
+        "function": "RBFInterpolator",
+        "language": "python",
+        "notes": "Standard library; no third_party repo"
+      },
+      "upstream_version": "1.17.1",
+      "has_references": true,
+      "references_status": "pass",
+      "argument_names": [
+        "y",
+        "d",
+        "neighbors",
+        "smoothing",
+        "kernel",
+        "epsilon",
+        "degree"
+      ],
+      "argument_details": [
+        {
+          "name": "y",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "d",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "neighbors",
+          "annotation": "int | None",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "smoothing",
+          "annotation": "float | np.ndarray",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "kernel",
+          "annotation": "str",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "epsilon",
+          "annotation": "float | None",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "degree",
+          "annotation": "int | None",
+          "required": false,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "RBFInterpolator",
+      "docstring_summary": "Construct a radial basis function interpolator.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        {
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/interpolate.py"
+        },
+        {
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/interpolate.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_interpolate_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_interpolate_probes.py"
+        }
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; interpolation behavior remains upstream SciPy behavior.",
+        "This bundle creates canonical manifest rows for the live scipy.interpolate wrapper names because the legacy audit manifest still carries stale scipy.interpolate_v2 identifiers."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "acceptable_with_limits",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "data/review_bundles/scipy_interpolate.review_bundle.json"
     },
     {
       "atom_id": "sciona.atoms.scipy.interpolate_v2.cubicsplinefit@src/sciona/atoms/scipy/interpolate_v2/atoms.py:68",
