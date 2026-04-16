@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "metadata": {
-    "generated_at": "2026-04-16T21:06:43.834781+00:00",
+    "generated_at": "2026-04-16T22:17:51.196121+00:00",
     "repo": "sciona-atoms",
     "generator": "scripts/apply_audit_review_bundles.py",
     "phase": "phase_1_review_bundle_merge",
@@ -38320,6 +38320,115 @@
       "trust_readiness": "not_reviewed",
       "trust_blockers": [],
       "recommended_overall_verdict": null
+    },
+    {
+      "atom_name": "sciona.atoms.ml.datadriven.discover_equations",
+      "atom_key": "sciona.atoms.ml.datadriven.discover_equations",
+      "atom_id": "sciona.atoms.ml.datadriven.discover_equations",
+      "module_import_path": "sciona.atoms.ml.datadriven",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "ml",
+      "domain_family": "ml",
+      "wrapper_symbol": "discover_equations",
+      "argument_names": [
+        "X",
+        "Y",
+        "variable_names",
+        "max_degree",
+        "lambda_val"
+      ],
+      "argument_details": [
+        {
+          "name": "X",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "Y",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "variable_names",
+          "annotation": "List[str]",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "max_degree",
+          "annotation": "int",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "lambda_val",
+          "annotation": "float",
+          "required": false,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "EquationResult",
+      "docstring_summary": "Find sparse governing equations from data using symbolic regression.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        {
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/ml/datadriven/atoms.py"
+        },
+        {
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/ml/datadriven/witnesses.py"
+        },
+        {
+          "kind": "local_references",
+          "path": "src/sciona/atoms/ml/datadriven/references.json"
+        },
+        {
+          "kind": "local_cdg",
+          "path": "src/sciona/atoms/ml/datadriven/cdg.json"
+        },
+        {
+          "kind": "local_probe",
+          "path": "src/sciona/probes/ml/datadriven.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_ml_datadriven_import_smoke.py"
+        }
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The wrapper prefers the Julia DataDrivenDiffEq path when available and falls back to a NumPy least-squares approximation otherwise."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "acceptable_with_limits",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "data/review_bundles/ml_datadriven.review_bundle.json"
     },
     {
       "atom_id": "sciona.atoms.molecular_docking.add_quantum_link.addquantumlink@src/sciona/atoms/molecular_docking/add_quantum_link.py:24",
@@ -94562,7 +94671,7 @@
       "structural_status": "pass",
       "runtime_status": "pass",
       "semantic_status": "pass",
-      "developer_semantics_status": "unknown",
+      "developer_semantics_status": "pass",
       "parity_test_status": "pass",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -94642,13 +94751,12 @@
           "path": "src/sciona/atoms/scipy/fft.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.fft",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/fft.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_fft_import_smoke.py"
         }
       ],
       "risk_reasons": [
@@ -94692,7 +94800,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -94760,15 +94868,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "positive_and_negative",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_fft.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review and import coverage; transform correctness remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -94805,7 +94915,7 @@
       "structural_status": "pass",
       "runtime_status": "pass",
       "semantic_status": "pass",
-      "developer_semantics_status": "unknown",
+      "developer_semantics_status": "pass",
       "parity_test_status": "pass",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -94885,13 +94995,12 @@
           "path": "src/sciona/atoms/scipy/fft.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.fft",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/fft.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_fft_import_smoke.py"
         }
       ],
       "risk_reasons": [
@@ -94935,7 +95044,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -95003,15 +95112,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "positive_and_negative",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_fft.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review and import coverage; transform correctness remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -95046,9 +95157,9 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -95195,13 +95306,20 @@
           "path": "src/sciona/atoms/scipy/integrate.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.integrate",
-          "upstream_version": "1.17.1"
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/witnesses.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/integrate.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_integrate_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_integrate_probes.py"
         }
       ],
       "risk_reasons": [
@@ -95242,7 +95360,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -95307,15 +95425,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_integrate.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numeric solver behavior remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -95350,9 +95470,9 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -95420,13 +95540,20 @@
           "path": "src/sciona/atoms/scipy/integrate.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.integrate",
-          "upstream_version": "1.17.1"
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/witnesses.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/integrate.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_integrate_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_integrate_probes.py"
         }
       ],
       "risk_reasons": [
@@ -95467,7 +95594,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -95532,15 +95659,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_integrate.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numeric solver behavior remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -95574,10 +95703,10 @@
       "has_cdg": true,
       "has_references": true,
       "has_parity_tests": false,
-      "structural_status": "partial",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "structural_status": "pass",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -95690,13 +95819,20 @@
           "path": "src/sciona/atoms/scipy/integrate.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.integrate",
-          "upstream_version": "1.17.1"
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/witnesses.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/integrate.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_integrate_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_integrate_probes.py"
         }
       ],
       "risk_reasons": [
@@ -95740,7 +95876,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -95823,15 +95959,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_integrate.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numeric solver behavior remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -96356,9 +96494,9 @@
       "has_references": true,
       "has_parity_tests": true,
       "structural_status": "pass",
-      "runtime_status": "partial",
-      "semantic_status": "partial",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "pass",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -96419,13 +96557,20 @@
           "path": "src/sciona/atoms/scipy/linalg.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.linalg",
-          "upstream_version": "1.17.1"
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/witnesses.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/linalg.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_probes.py"
         }
       ],
       "risk_reasons": [
@@ -96468,7 +96613,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -96535,15 +96680,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "positive_path",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_linalg.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical linear-algebra behavior remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -96580,7 +96727,7 @@
       "structural_status": "pass",
       "runtime_status": "pass",
       "semantic_status": "pass",
-      "developer_semantics_status": "unknown",
+      "developer_semantics_status": "pass",
       "parity_test_status": "pass",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -96639,13 +96786,20 @@
           "path": "src/sciona/atoms/scipy/linalg.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.linalg",
-          "upstream_version": "1.17.1"
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/witnesses.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/linalg.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_probes.py"
         }
       ],
       "risk_reasons": [
@@ -96689,7 +96843,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -96757,15 +96911,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "positive_and_negative",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_linalg.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical linear-algebra behavior remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -96802,7 +96958,7 @@
       "structural_status": "pass",
       "runtime_status": "pass",
       "semantic_status": "pass",
-      "developer_semantics_status": "unknown",
+      "developer_semantics_status": "pass",
       "parity_test_status": "pass",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -96861,13 +97017,20 @@
           "path": "src/sciona/atoms/scipy/linalg.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.linalg",
-          "upstream_version": "1.17.1"
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/witnesses.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/linalg.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_probes.py"
         }
       ],
       "risk_reasons": [
@@ -96908,7 +97071,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -96976,15 +97139,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "positive_and_negative",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_linalg.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical linear-algebra behavior remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -97021,7 +97186,7 @@
       "structural_status": "pass",
       "runtime_status": "pass",
       "semantic_status": "pass",
-      "developer_semantics_status": "unknown",
+      "developer_semantics_status": "pass",
       "parity_test_status": "pass",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -97095,13 +97260,20 @@
           "path": "src/sciona/atoms/scipy/linalg.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.linalg",
-          "upstream_version": "1.17.1"
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/witnesses.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/linalg.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_probes.py"
         }
       ],
       "risk_reasons": [
@@ -97142,7 +97314,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -97210,15 +97382,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "positive_and_negative",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_linalg.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical linear-algebra behavior remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -97255,7 +97429,7 @@
       "structural_status": "pass",
       "runtime_status": "pass",
       "semantic_status": "pass",
-      "developer_semantics_status": "unknown",
+      "developer_semantics_status": "pass",
       "parity_test_status": "pass",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -97350,13 +97524,20 @@
           "path": "src/sciona/atoms/scipy/linalg.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.linalg",
-          "upstream_version": "1.17.1"
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/witnesses.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/linalg.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_linalg_probes.py"
         }
       ],
       "risk_reasons": [
@@ -97397,7 +97578,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -97465,15 +97646,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "positive_and_negative",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_linalg.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical linear-algebra behavior remains upstream SciPy behavior."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -97507,13 +97690,13 @@
       "has_cdg": true,
       "has_references": true,
       "has_parity_tests": true,
-      "structural_status": "partial",
+      "structural_status": "pass",
       "runtime_status": "pass",
       "semantic_status": "pass",
-      "developer_semantics_status": "unknown",
+      "developer_semantics_status": "pass",
       "parity_test_status": "pass",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 84,
       "acceptability_band": "acceptable_with_limits_candidate",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -97628,13 +97811,16 @@
           "path": "src/sciona/atoms/scipy/optimize.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.optimize",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/optimize.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_optimize_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_optimize_probes.py"
         }
       ],
       "risk_reasons": [
@@ -97679,7 +97865,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -97765,15 +97951,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "usage_equivalent",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_optimize.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; convergence behavior and numerical performance remain upstream SciPy behavior.",
+        "The scipy.optimize.shgo and scipy.optimize.differential_evolution wrappers remain excluded from this bundle because they still lack manifest rows."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -97808,12 +97997,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 82,
       "acceptability_band": "acceptable_with_limits_candidate",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -97920,13 +98109,16 @@
           "path": "src/sciona/atoms/scipy/optimize.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.optimize",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/optimize.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_optimize_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_optimize_probes.py"
         }
       ],
       "risk_reasons": [
@@ -97970,7 +98162,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -98035,15 +98227,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_optimize.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; convergence behavior and numerical performance remain upstream SciPy behavior.",
+        "The scipy.optimize.shgo and scipy.optimize.differential_evolution wrappers remain excluded from this bundle because they still lack manifest rows."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -98078,12 +98273,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 86,
       "acceptability_band": "review_ready",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -98205,13 +98400,16 @@
           "path": "src/sciona/atoms/scipy/optimize.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.optimize",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/optimize.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_optimize_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_optimize_probes.py"
         }
       ],
       "risk_reasons": [
@@ -98252,7 +98450,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -98317,15 +98515,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_optimize.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; convergence behavior and numerical performance remain upstream SciPy behavior.",
+        "The scipy.optimize.shgo and scipy.optimize.differential_evolution wrappers remain excluded from this bundle because they still lack manifest rows."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -98360,12 +98561,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 86,
       "acceptability_band": "review_ready",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -98459,13 +98660,16 @@
           "path": "src/sciona/atoms/scipy/optimize.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.optimize",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/optimize.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_optimize_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_optimize_probes.py"
         }
       ],
       "risk_reasons": [
@@ -98506,7 +98710,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -98571,15 +98775,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_optimize.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; convergence behavior and numerical performance remain upstream SciPy behavior.",
+        "The scipy.optimize.shgo and scipy.optimize.differential_evolution wrappers remain excluded from this bundle because they still lack manifest rows."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -99255,12 +99462,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 86,
       "acceptability_band": "review_ready",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -99340,13 +99547,16 @@
           "path": "src/sciona/atoms/scipy/signal.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.signal",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/signal.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_probes.py"
         }
       ],
       "risk_reasons": [
@@ -99387,7 +99597,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -99452,15 +99662,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_signal.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical filter-design and filtering behavior remains upstream SciPy behavior.",
+        "The lfilter and sosfilt wrappers publish only the filtered signal output; callers needing final filter state should use lower-level SciPy APIs directly."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -99495,12 +99708,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 86,
       "acceptability_band": "review_ready",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -99588,13 +99801,16 @@
           "path": "src/sciona/atoms/scipy/signal.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.signal",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/signal.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_probes.py"
         }
       ],
       "risk_reasons": [
@@ -99635,7 +99851,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -99700,15 +99916,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_signal.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical filter-design and filtering behavior remains upstream SciPy behavior.",
+        "The lfilter and sosfilt wrappers publish only the filtered signal output; callers needing final filter state should use lower-level SciPy APIs directly."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -99743,12 +99962,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 86,
       "acceptability_band": "review_ready",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -99836,13 +100055,16 @@
           "path": "src/sciona/atoms/scipy/signal.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.signal",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/signal.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_probes.py"
         }
       ],
       "risk_reasons": [
@@ -99883,7 +100105,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -99948,15 +100170,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_signal.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical filter-design and filtering behavior remains upstream SciPy behavior.",
+        "The lfilter and sosfilt wrappers publish only the filtered signal output; callers needing final filter state should use lower-level SciPy APIs directly."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -99991,12 +100216,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 86,
       "acceptability_band": "review_ready",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -100083,13 +100308,16 @@
           "path": "src/sciona/atoms/scipy/signal.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.signal",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/signal.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_probes.py"
         }
       ],
       "risk_reasons": [
@@ -100130,7 +100358,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -100195,15 +100423,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_signal.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical filter-design and filtering behavior remains upstream SciPy behavior.",
+        "The lfilter and sosfilt wrappers publish only the filtered signal output; callers needing final filter state should use lower-level SciPy APIs directly."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -100238,12 +100469,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 86,
       "acceptability_band": "review_ready",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -100329,13 +100560,16 @@
           "path": "src/sciona/atoms/scipy/signal.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.signal",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/signal.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_probes.py"
         }
       ],
       "risk_reasons": [
@@ -100376,7 +100610,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -100441,15 +100675,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_signal.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; numerical filter-design and filtering behavior remains upstream SciPy behavior.",
+        "The lfilter and sosfilt wrappers publish only the filtered signal output; callers needing final filter state should use lower-level SciPy APIs directly."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -100484,12 +100721,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 86,
       "acceptability_band": "review_ready",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -100563,13 +100800,16 @@
           "path": "src/sciona/atoms/scipy/signal.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.signal",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/signal.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_probes.py"
         }
       ],
       "risk_reasons": [
@@ -100610,7 +100850,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -100675,15 +100915,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_signal.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Wrapper returns only the filtered signal even when SciPy would also return final filter state for zi-driven calls."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -100718,12 +100960,12 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
-      "overall_verdict": "acceptable_with_limits",
+      "overall_verdict": "unknown",
       "acceptability_score": 86,
       "acceptability_band": "review_ready",
       "max_reviewable_verdict": "acceptable_with_limits",
@@ -100789,13 +101031,16 @@
           "path": "src/sciona/atoms/scipy/signal.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.signal",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/signal.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_signal_probes.py"
         }
       ],
       "risk_reasons": [
@@ -100836,7 +101081,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -100901,15 +101146,17 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_signal.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Wrapper returns only the filtered signal even when SciPy would also return final filter state for zi-driven calls."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -103036,9 +103283,9 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -103113,13 +103360,16 @@
           "path": "src/sciona/atoms/scipy/stats.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.stats",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/stats.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_stats_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_stats_probes.py"
         }
       ],
       "risk_reasons": [
@@ -103160,7 +103410,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -103225,15 +103475,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_stats.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; statistical correctness and numerical edge cases remain upstream SciPy behavior.",
+        "The scipy.stats.norm wrapper remains excluded from this bundle because the current audit trail marks it misleading."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -103483,9 +103736,9 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -103540,13 +103793,16 @@
           "path": "src/sciona/atoms/scipy/stats.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.stats",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/stats.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_stats_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_stats_probes.py"
         }
       ],
       "risk_reasons": [
@@ -103590,7 +103846,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -103655,15 +103911,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_stats.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; statistical correctness and numerical edge cases remain upstream SciPy behavior.",
+        "The scipy.stats.norm wrapper remains excluded from this bundle because the current audit trail marks it misleading."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -103698,9 +103957,9 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -103775,13 +104034,16 @@
           "path": "src/sciona/atoms/scipy/stats.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.stats",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/stats.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_stats_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_stats_probes.py"
         }
       ],
       "risk_reasons": [
@@ -103822,7 +104084,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -103887,15 +104149,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_stats.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; statistical correctness and numerical edge cases remain upstream SciPy behavior.",
+        "The scipy.stats.norm wrapper remains excluded from this bundle because the current audit trail marks it misleading."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },
@@ -103930,9 +104195,9 @@
       "has_references": true,
       "has_parity_tests": false,
       "structural_status": "pass",
-      "runtime_status": "not_applicable",
-      "semantic_status": "unknown",
-      "developer_semantics_status": "unknown",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
       "parity_test_status": "unknown",
       "references_status": "pass",
       "overall_verdict": "acceptable_with_limits",
@@ -104022,13 +104287,16 @@
           "path": "src/sciona/atoms/scipy/stats.py"
         },
         {
-          "kind": "installed_package",
-          "module": "scipy.stats",
-          "upstream_version": "1.17.1"
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/stats.py"
         },
         {
-          "kind": "local_references",
-          "path": "src/sciona/atoms/scipy/references.json"
+          "kind": "local_test",
+          "path": "tests/test_scipy_stats_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_stats_probes.py"
         }
       ],
       "risk_reasons": [
@@ -104072,7 +104340,7 @@
           "reasons": []
         }
       },
-      "review_priority": "review_later",
+      "review_priority": "review_now",
       "status_basis": {
         "inventory": [
           "ast_discovery",
@@ -104137,15 +104405,18 @@
       "parity_fixture_count": 0,
       "parity_case_count": 0,
       "usage_test_coverage": "none",
-      "review_status": "missing",
-      "review_record_path": null,
+      "review_status": "approved",
+      "review_record_path": "data/review_bundles/scipy_stats.review_bundle.json",
       "reviewer_type": null,
       "reviewed_at": null,
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantics_verdict": "unknown",
-      "review_limitations": [],
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; statistical correctness and numerical edge cases remain upstream SciPy behavior.",
+        "The scipy.stats.norm wrapper remains excluded from this bundle because the current audit trail marks it misleading."
+      ],
       "review_required_actions": [],
-      "trust_readiness": "not_reviewed",
+      "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
     },

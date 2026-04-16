@@ -47,3 +47,46 @@ def test_review_bundles_have_concrete_review_metadata() -> None:
                 assert (ROOT / rel).exists()
             manifest_row = next(r for r in MANIFEST["atoms"] if r["atom_key"] == row["atom_key"])
             assert manifest_row["review_status"] in {"approved", "reviewed_pending", "missing"}
+
+
+def test_scipy_review_bundles_cover_expected_rows() -> None:
+    expected = {
+        "scipy_fft.review_bundle.json": {"scipy/fft:dct", "scipy/fft:idct"},
+        "scipy_integrate.review_bundle.json": {
+            "scipy/integrate:quad",
+            "scipy/integrate:simpson",
+            "scipy/integrate:solve_ivp",
+        },
+        "scipy_linalg.review_bundle.json": {
+            "scipy/linalg:det",
+            "scipy/linalg:inv",
+            "scipy/linalg:lu_factor",
+            "scipy/linalg:lu_solve",
+            "scipy/linalg:solve",
+        },
+        "scipy_optimize.review_bundle.json": {
+            "scipy/optimize:curve_fit",
+            "scipy/optimize:linprog",
+            "scipy/optimize:minimize",
+            "scipy/optimize:root",
+        },
+        "scipy_signal.review_bundle.json": {
+            "scipy/signal:butter",
+            "scipy/signal:cheby1",
+            "scipy/signal:cheby2",
+            "scipy/signal:firwin",
+            "scipy/signal:freqz",
+            "scipy/signal:lfilter",
+            "scipy/signal:sosfilt",
+        },
+        "scipy_stats.review_bundle.json": {
+            "scipy/stats:describe",
+            "scipy/stats:pearsonr",
+            "scipy/stats:spearmanr",
+            "scipy/stats:ttest_ind",
+        },
+    }
+
+    for filename, atom_keys in expected.items():
+        bundle = _load_bundle(BUNDLE_DIR / filename)
+        assert {row["atom_key"] for row in bundle["rows"]} == atom_keys
