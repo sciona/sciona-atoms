@@ -83,6 +83,10 @@ def test_scipy_review_bundles_cover_expected_rows() -> None:
             "scipy/signal:lfilter",
             "scipy/signal:sosfilt",
         },
+        "scipy_spatial.review_bundle.json": {
+            "sciona.atoms.scipy.spatial.delaunay_triangulation",
+            "sciona.atoms.scipy.spatial.voronoi_tessellation",
+        },
         "scipy_stats.review_bundle.json": {
             "scipy/stats:describe",
             "scipy/stats:pearsonr",

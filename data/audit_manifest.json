@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "metadata": {
-    "generated_at": "2026-04-16T22:26:48.689362+00:00",
+    "generated_at": "2026-04-16T22:56:56.037849+00:00",
     "repo": "sciona-atoms",
     "generator": "scripts/apply_audit_review_bundles.py",
     "phase": "phase_1_review_bundle_merge",
@@ -96055,7 +96055,6 @@
           "path": "tests/test_scipy_interpolate_probes.py"
         }
       ],
-      "source_kind": "hand_written",
       "review_status": "approved",
       "review_priority": "review_now",
       "review_semantic_verdict": "pass",
@@ -96182,7 +96181,6 @@
           "path": "tests/test_scipy_interpolate_probes.py"
         }
       ],
-      "source_kind": "hand_written",
       "review_status": "approved",
       "review_priority": "review_now",
       "review_semantic_verdict": "pass",
@@ -103031,6 +103029,216 @@
       "trust_readiness": "not_reviewed",
       "trust_blockers": [],
       "recommended_overall_verdict": null
+    },
+    {
+      "atom_name": "sciona.atoms.scipy.spatial.delaunay_triangulation",
+      "atom_key": "sciona.atoms.scipy.spatial.delaunay_triangulation",
+      "atom_id": "sciona.atoms.scipy.spatial.delaunay_triangulation",
+      "module_import_path": "sciona.atoms.scipy.spatial",
+      "module_path": "src/sciona/atoms/scipy/spatial.py",
+      "module_family": "scipy",
+      "domain_family": "scipy",
+      "wrapper_symbol": "delaunay_triangulation",
+      "source_kind": "hand_written",
+      "upstream_symbols": {
+        "repo": null,
+        "module": "scipy.spatial",
+        "function": "Delaunay",
+        "language": "python",
+        "notes": "Standard library; no third_party repo"
+      },
+      "upstream_version": "1.17.1",
+      "has_references": true,
+      "references_status": "pass",
+      "argument_names": [
+        "points",
+        "furthest_site",
+        "incremental",
+        "qhull_options"
+      ],
+      "argument_details": [
+        {
+          "name": "points",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "furthest_site",
+          "annotation": "bool",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "incremental",
+          "annotation": "bool",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "qhull_options",
+          "annotation": "str | None",
+          "required": false,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "scipy.spatial.Delaunay",
+      "docstring_summary": "Compute the Delaunay triangulation for a set of input points.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        {
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/spatial.py"
+        },
+        {
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/spatial.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_spatial_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_spatial_probes.py"
+        }
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; triangulation and tessellation behavior remains upstream SciPy behavior."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "acceptable_with_limits",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "data/review_bundles/scipy_spatial.review_bundle.json"
+    },
+    {
+      "atom_name": "sciona.atoms.scipy.spatial.voronoi_tessellation",
+      "atom_key": "sciona.atoms.scipy.spatial.voronoi_tessellation",
+      "atom_id": "sciona.atoms.scipy.spatial.voronoi_tessellation",
+      "module_import_path": "sciona.atoms.scipy.spatial",
+      "module_path": "src/sciona/atoms/scipy/spatial.py",
+      "module_family": "scipy",
+      "domain_family": "scipy",
+      "wrapper_symbol": "voronoi_tessellation",
+      "source_kind": "hand_written",
+      "upstream_symbols": {
+        "repo": null,
+        "module": "scipy.spatial",
+        "function": "Voronoi",
+        "language": "python",
+        "notes": "Standard library; no third_party repo"
+      },
+      "upstream_version": "1.17.1",
+      "has_references": true,
+      "references_status": "pass",
+      "argument_names": [
+        "points",
+        "furthest_site",
+        "incremental",
+        "qhull_options"
+      ],
+      "argument_details": [
+        {
+          "name": "points",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "furthest_site",
+          "annotation": "bool",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "incremental",
+          "annotation": "bool",
+          "required": false,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "qhull_options",
+          "annotation": "str | None",
+          "required": false,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "scipy.spatial.Voronoi",
+      "docstring_summary": "Compute the Voronoi diagram for a set of input points.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        {
+          "kind": "local_wrapper",
+          "path": "src/sciona/atoms/scipy/spatial.py"
+        },
+        {
+          "kind": "local_probe",
+          "path": "src/sciona/probes/scipy/spatial.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_spatial_import_smoke.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_scipy_spatial_probes.py"
+        }
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "Evidence is limited to wrapper-source review plus import and probe coverage; triangulation and tessellation behavior remains upstream SciPy behavior."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "acceptable_with_limits",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "data/review_bundles/scipy_spatial.review_bundle.json"
     },
     {
       "atom_id": "sciona.atoms.scipy.spatial_v2.delaunaytriangulation@src/sciona/atoms/scipy/spatial_v2/atoms.py:44",
