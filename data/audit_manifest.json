@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "metadata": {
-    "generated_at": "2026-04-16T20:56:04.546414+00:00",
+    "generated_at": "2026-04-16T21:06:43.834781+00:00",
     "repo": "sciona-atoms",
     "generator": "scripts/apply_audit_review_bundles.py",
     "phase": "phase_1_review_bundle_merge",
@@ -105127,6 +105127,109 @@
       "recommended_overall_verdict": null
     },
     {
+      "atom_name": "sciona.atoms.signal_processing.biosppy.ecg.heart_rate_computation_median_smoothed",
+      "atom_key": "sciona.atoms.signal_processing.biosppy.ecg.heart_rate_computation_median_smoothed",
+      "atom_id": "sciona.atoms.signal_processing.biosppy.ecg.heart_rate_computation_median_smoothed",
+      "module_import_path": "sciona.atoms.signal_processing.biosppy.ecg",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "biosppy",
+      "domain_family": "signal_processing.biosppy",
+      "wrapper_symbol": "heart_rate_computation_median_smoothed",
+      "argument_names": [
+        "rpeaks",
+        "sampling_rate",
+        "smoothing_window"
+      ],
+      "argument_details": [
+        {
+          "name": "rpeaks",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "sampling_rate",
+          "annotation": "float",
+          "required": false,
+          "kind": "keyword_only"
+        },
+        {
+          "name": "smoothing_window",
+          "annotation": "int",
+          "required": false,
+          "kind": "keyword_only"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "tuple[np.ndarray, np.ndarray]",
+      "docstring_summary": "Compute instantaneous heart rate and apply robust median smoothing.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        {
+          "kind": "local_source",
+          "path": "src/sciona/atoms/signal_processing/biosppy/ecg.py"
+        },
+        {
+          "kind": "local_source",
+          "path": "src/sciona/atoms/signal_processing/biosppy/ecg_detectors/atoms.py"
+        },
+        {
+          "kind": "local_source",
+          "path": "src/sciona/atoms/signal_processing/biosppy/ecg_zz2018/atoms.py"
+        },
+        {
+          "kind": "local_source",
+          "path": "src/sciona/atoms/signal_processing/biosppy/ecg_zz2018_d12/atoms.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_biosppy_ecg_atoms.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_biosppy_ecg_detectors.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_biosppy_ecg_zz2018.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_biosppy_ecg_zz2018_d12.py"
+        }
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "This batch covers the core ECG and ECG-quality rows only; the rest of biosppy can be split into follow-up bundles."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "acceptable_with_limits",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "data/review_bundles/biosppy_ecg.review_bundle.json"
+    },
+    {
       "atom_id": "sciona.atoms.signal_processing.biosppy.ecg.peak_correction@src/sciona/atoms/signal_processing/biosppy/ecg.py:105",
       "atom_name": "sciona.atoms.signal_processing.biosppy.ecg.peak_correction",
       "atom_key": "biosppy/ecg:peak_correction",
@@ -105624,6 +105727,123 @@
       "trust_readiness": "reviewed_with_limits",
       "trust_blockers": [],
       "recommended_overall_verdict": null
+    },
+    {
+      "atom_name": "sciona.atoms.signal_processing.biosppy.ecg.reject_outlier_intervals",
+      "atom_key": "sciona.atoms.signal_processing.biosppy.ecg.reject_outlier_intervals",
+      "atom_id": "sciona.atoms.signal_processing.biosppy.ecg.reject_outlier_intervals",
+      "module_import_path": "sciona.atoms.signal_processing.biosppy.ecg",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "biosppy",
+      "domain_family": "signal_processing.biosppy",
+      "wrapper_symbol": "reject_outlier_intervals",
+      "argument_names": [
+        "rpeaks",
+        "sampling_rate",
+        "mad_scale",
+        "min_interval_s",
+        "max_interval_s"
+      ],
+      "argument_details": [
+        {
+          "name": "rpeaks",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "sampling_rate",
+          "annotation": "float",
+          "required": false,
+          "kind": "keyword_only"
+        },
+        {
+          "name": "mad_scale",
+          "annotation": "float",
+          "required": false,
+          "kind": "keyword_only"
+        },
+        {
+          "name": "min_interval_s",
+          "annotation": "float",
+          "required": false,
+          "kind": "keyword_only"
+        },
+        {
+          "name": "max_interval_s",
+          "annotation": "float",
+          "required": false,
+          "kind": "keyword_only"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "np.ndarray",
+      "docstring_summary": "Remove event markers that induce implausible adjacent intervals.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        {
+          "kind": "local_source",
+          "path": "src/sciona/atoms/signal_processing/biosppy/ecg.py"
+        },
+        {
+          "kind": "local_source",
+          "path": "src/sciona/atoms/signal_processing/biosppy/ecg_detectors/atoms.py"
+        },
+        {
+          "kind": "local_source",
+          "path": "src/sciona/atoms/signal_processing/biosppy/ecg_zz2018/atoms.py"
+        },
+        {
+          "kind": "local_source",
+          "path": "src/sciona/atoms/signal_processing/biosppy/ecg_zz2018_d12/atoms.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_biosppy_ecg_atoms.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_biosppy_ecg_detectors.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_biosppy_ecg_zz2018.py"
+        },
+        {
+          "kind": "local_test",
+          "path": "tests/test_biosppy_ecg_zz2018_d12.py"
+        }
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "This batch covers the core ECG and ECG-quality rows only; the rest of biosppy can be split into follow-up bundles."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "acceptable_with_limits",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "data/review_bundles/biosppy_ecg.review_bundle.json"
     },
     {
       "atom_id": "sciona.atoms.signal_processing.biosppy.ecg.ssf_segmenter@src/sciona/atoms/signal_processing/biosppy/ecg.py:188",
