@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "metadata": {
-    "generated_at": "2026-04-16T19:35:37.828450+00:00",
+    "generated_at": "2026-04-16T19:58:49.482137+00:00",
     "repo": "sciona-atoms",
     "generator": "scripts/apply_audit_review_bundles.py",
     "phase": "phase_1_review_bundle_merge",
@@ -86431,6 +86431,57 @@
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[15]"
     },
     {
+      "atom_name": "sciona.atoms.robotics.pronto.leg_odometer.pose_query_accessors",
+      "atom_key": "sciona.atoms.robotics.pronto.leg_odometer.pose_query_accessors",
+      "atom_id": "sciona.atoms.robotics.pronto.leg_odometer.pose_query_accessors",
+      "module_import_path": "sciona.atoms.robotics.pronto.leg_odometer",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "pose_query_accessors",
+      "argument_names": [],
+      "argument_details": [],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "dict[str, np.ndarray]",
+      "docstring_summary": "Provides stateless pose-related query endpoints and no-op/placeholder call sites with no declared state reads or writes.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/leg_odometer/references.json",
+        "src/sciona/atoms/robotics/pronto/leg_odometer/cdg.json",
+        "src/sciona/atoms/robotics/pronto/leg_odometer/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[16]"
+    },
+    {
       "atom_name": "sciona.atoms.robotics.pronto.leg_odometer.posequeryaccessors",
       "atom_key": "sciona.atoms.robotics.pronto.leg_odometer.posequeryaccessors",
       "atom_id": "sciona.atoms.robotics.pronto.leg_odometer.posequeryaccessors",
@@ -86482,6 +86533,66 @@
       "required_actions": [],
       "blocking_findings": [],
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[16]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.leg_odometer.velocity_state_readout",
+      "atom_key": "sciona.atoms.robotics.pronto.leg_odometer.velocity_state_readout",
+      "atom_id": "sciona.atoms.robotics.pronto.leg_odometer.velocity_state_readout",
+      "module_import_path": "sciona.atoms.robotics.pronto.leg_odometer",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "velocity_state_readout",
+      "argument_names": [
+        "state_in"
+      ],
+      "argument_details": [
+        {
+          "name": "state_in",
+          "annotation": "Mapping[str, np.ndarray] | _VelocityStateLike",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "tuple[np.ndarray, np.ndarray]",
+      "docstring_summary": "Reads immutable velocity state-space components (body-frame velocity and its covariance) and returns the current velocity estimate.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/leg_odometer/references.json",
+        "src/sciona/atoms/robotics/pronto/leg_odometer/cdg.json",
+        "src/sciona/atoms/robotics/pronto/leg_odometer/matches.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[17]"
     },
     {
       "atom_name": "sciona.atoms.robotics.pronto.leg_odometer.velocitystatereadout",
