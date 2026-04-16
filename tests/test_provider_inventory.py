@@ -8,7 +8,9 @@ from sciona.atoms.provider_inventory import (
     ProviderRepo,
     _default_workspace_root,
     artifact_roots_for_repo,
+    discover_license_manifest_paths,
     discover_shared_data_path,
+    discover_license_source_paths,
     discover_provider_repos,
     iter_provider_artifact_files,
     namespace_prefix_for_artifact_root,
@@ -91,6 +93,37 @@ def test_discover_shared_data_path_falls_back_to_sciona_atoms_when_no_providers(
     resolved = discover_shared_data_path(Path("data/references/registry.json"))
 
     assert resolved == (inventory._DEFAULT_WORKSPACE_ROOT / "sciona-atoms" / "data/references/registry.json").resolve()
+
+
+def test_discover_license_source_paths_prefers_provider_roots(tmp_path: Path) -> None:
+    active_repo = tmp_path / "sciona-atoms"
+    ignored_repo = tmp_path / "misc-repo"
+    active_repo.mkdir()
+    ignored_repo.mkdir()
+    (active_repo / "pyproject.toml").write_text("[project]\nlicense = 'MIT'\n", encoding="utf-8")
+    (ignored_repo / "pyproject.toml").write_text("[project]\nlicense = 'Apache-2.0'\n", encoding="utf-8")
+
+    paths = discover_license_source_paths(tmp_path)
+
+    assert paths == ((active_repo / "pyproject.toml").resolve(),)
+
+
+def test_discover_license_manifest_paths_finds_supported_locations(tmp_path: Path) -> None:
+    active_repo = tmp_path / "sciona-atoms"
+    signal_repo = tmp_path / "sciona-atoms-signal"
+    active_repo.mkdir()
+    signal_repo.mkdir()
+    (active_repo / "data" / "licenses").mkdir(parents=True)
+    (signal_repo / "docs").mkdir(parents=True)
+    (active_repo / "data" / "licenses" / "provider_license.json").write_text("{}")
+    (signal_repo / "docs" / "license-manifest.json").write_text("{}")
+
+    paths = discover_license_manifest_paths(tmp_path)
+
+    assert paths == (
+        (active_repo / "data" / "licenses" / "provider_license.json").resolve(),
+        (signal_repo / "docs" / "license-manifest.json").resolve(),
+    )
 
 
 def test_default_workspace_root_uses_repo_parent() -> None:

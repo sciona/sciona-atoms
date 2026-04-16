@@ -28,6 +28,20 @@ _AUDIT_REVIEW_BUNDLE_DIRS: tuple[Path, ...] = (
     Path("data/review_bundles"),
     Path("docs/review-bundles"),
 )
+_LICENSE_SOURCE_CANDIDATES: tuple[Path, ...] = (
+    Path("pyproject.toml"),
+    Path("LICENSE"),
+    Path("LICENSE.md"),
+    Path("COPYING"),
+    Path("COPYING.md"),
+    Path("NOTICE"),
+    Path("NOTICE.md"),
+)
+_LICENSE_MANIFEST_CANDIDATES: tuple[Path, ...] = (
+    Path("data/licenses/provider_license.json"),
+    Path("docs/license-manifest.json"),
+    Path("license_manifest.json"),
+)
 _REFERENCES_REGISTRY_RELATIVE = Path("data/references/registry.json")
 _PROVIDER_REPO_ORDER: tuple[str, ...] = (
     "sciona-atoms",
@@ -220,6 +234,28 @@ def discover_audit_review_bundle_paths(base_dir: Path | None = None) -> tuple[Pa
                 if path.is_file():
                     bundle_paths.append(path.resolve())
     return _dedupe_paths(bundle_paths)
+
+
+def discover_license_source_paths(base_dir: Path | None = None) -> tuple[Path, ...]:
+    """Return provider-owned license source files in deterministic order."""
+    source_paths: list[Path] = []
+    for repo_root in provider_repo_roots(base_dir):
+        for relative in _LICENSE_SOURCE_CANDIDATES:
+            candidate = (repo_root / relative).resolve()
+            if candidate.is_file():
+                source_paths.append(candidate)
+    return _dedupe_paths(source_paths)
+
+
+def discover_license_manifest_paths(base_dir: Path | None = None) -> tuple[Path, ...]:
+    """Return provider-owned license manifests in deterministic order."""
+    manifest_paths: list[Path] = []
+    for repo_root in provider_repo_roots(base_dir):
+        for relative in _LICENSE_MANIFEST_CANDIDATES:
+            candidate = (repo_root / relative).resolve()
+            if candidate.is_file():
+                manifest_paths.append(candidate)
+    return _dedupe_paths(manifest_paths)
 
 
 def discover_references_registry_path(base_dir: Path | None = None) -> Path:
