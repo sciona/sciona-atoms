@@ -117,6 +117,30 @@ def test_build_manifest_io_spec_rows_derives_inputs_and_default_output() -> None
     assert rows[2]["type_desc"] == "np.ndarray"
 
 
+def test_build_manifest_io_spec_rows_supports_zero_input_atoms() -> None:
+    rows = build_manifest_io_spec_rows(
+        "atom-1",
+        {
+            "argument_details": [],
+            "return_annotation": "YawLockState",
+        },
+    )
+
+    assert rows == [
+        {
+            "atom_id": "atom-1",
+            "version_id": None,
+            "direction": "output",
+            "name": "result",
+            "type_desc": "YawLockState",
+            "constraints": "",
+            "required": True,
+            "default_value_repr": "",
+            "ordinal": 0,
+        }
+    ]
+
+
 def test_input_name_mismatch_only_warns_when_manifest_present() -> None:
     assert not input_name_mismatch(["x"], [])
     assert input_name_mismatch(["x"], ["y"])

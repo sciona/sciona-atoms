@@ -361,8 +361,6 @@ def backfill_io_specs(
             continue
         if atom_id in covered_atom_ids:
             continue
-        if not atom_entry.get("argument_details"):
-            continue
 
         rows = build_manifest_io_spec_rows(atom_id, atom_entry)
         if dry_run:
