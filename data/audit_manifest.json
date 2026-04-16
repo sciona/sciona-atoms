@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "metadata": {
-    "generated_at": "2026-04-16T20:21:09.690057+00:00",
+    "generated_at": "2026-04-16T20:33:18.060936+00:00",
     "repo": "sciona-atoms",
     "generator": "scripts/apply_audit_review_bundles.py",
     "phase": "phase_1_review_bundle_merge",
@@ -86900,6 +86900,87 @@
       "required_actions": [],
       "blocking_findings": [],
       "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[17]"
+    },
+    {
+      "atom_name": "sciona.atoms.robotics.pronto.state_estimator.update_state_estimate",
+      "atom_key": "sciona.atoms.robotics.pronto.state_estimator.update_state_estimate",
+      "atom_id": "sciona.atoms.robotics.pronto.state_estimator.update_state_estimate",
+      "module_import_path": "sciona.atoms.robotics.pronto.state_estimator",
+      "module_path": "/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/icontract/_checkers.py",
+      "module_family": "pronto",
+      "domain_family": "robotics.pronto",
+      "wrapper_symbol": "update_state_estimate",
+      "argument_names": [
+        "prior_state",
+        "prior_cov",
+        "measurement",
+        "utime"
+      ],
+      "argument_details": [
+        {
+          "name": "prior_state",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "prior_cov",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "measurement",
+          "annotation": "np.ndarray",
+          "required": true,
+          "kind": "positional_or_keyword"
+        },
+        {
+          "name": "utime",
+          "annotation": "int",
+          "required": true,
+          "kind": "positional_or_keyword"
+        }
+      ],
+      "uses_varargs": false,
+      "uses_kwargs": false,
+      "return_annotation": "np.ndarray",
+      "docstring_summary": "Fuse a measurement into the RBIS state using an EKF-style linear update.",
+      "has_docstring": true,
+      "authoritative_sources": [
+        "src/sciona/atoms/robotics/pronto/state_estimator/references.json",
+        "src/sciona/atoms/robotics/pronto/state_estimator/cdg.json",
+        "src/sciona/atoms/robotics/pronto/state_estimator/uncertainty.json"
+      ],
+      "source_kind": "hand_written",
+      "review_status": "approved",
+      "review_priority": "review_now",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantics_verdict": "pass_with_limits",
+      "trust_readiness": "reviewed_with_limits",
+      "review_required_actions": [],
+      "review_limitations": [
+        "The family bundle spans mixed subfamilies; follow-up uncertainty work is still needed for backlash_filter, dynamic_stance_estimator_d12, and leg_odometer, but ready_for_manifest_merge rows in completed subfamilies should not be blocked by that debt."
+      ],
+      "trust_blockers": [],
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "overall_verdict": "unknown",
+      "risk_tier": "low",
+      "risk_score": 0,
+      "risk_dimensions": {},
+      "risk_reasons": [],
+      "acceptability_score": 70,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "unknown",
+      "parity_test_status": "unknown",
+      "parity_fixture_count": 0,
+      "parity_case_count": 0,
+      "required_actions": [],
+      "blocking_findings": [],
+      "review_record_path": "src/sciona/atoms/robotics/pronto/review_bundle.json#rows[26]"
     },
     {
       "atom_name": "sciona.atoms.robotics.pronto.yaw_lock.configure_correction_and_yaw_slip_policy",
