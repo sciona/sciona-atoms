@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.state_estimation.core.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "state_estimation",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "reviewed_with_limits",
+  "authoritative_sources": [
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/state_estimation/kalman_filters/filter_rs.py"
+    },
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/state_estimation/kalman_filters/static_kf/atoms.py"
+    },
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/state_estimation/particle_filters/basic.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_kalman_filter_rs_atoms.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_kalman_filter_rs_metadata.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_static_kf_references_metadata.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_particle_filter_basic_atoms.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_particle_filter_basic_probes.py"
+    }
+  ],
+  "limitations": [
+    "Particle-filter rows still need upstream signature evidence to leave follow-up status."
+  ],
+  "blocking_findings": [],
+  "required_actions": [
+    "add vendored or importable upstream signature evidence for the particle-filter rows"
+  ],
+  "review_record_path": "data/review_bundles/state_estimation.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "kalman_filters/filter_rs:initializekalmanstatemodel",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/state_estimation/kalman_filters/filter_rs.py",
+        "tests/test_kalman_filter_rs_atoms.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
+    },
+    {
+      "atom_key": "kalman_filters/filter_rs:updateposteriorstateandcovariance",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/state_estimation/kalman_filters/filter_rs.py",
+        "tests/test_kalman_filter_rs_atoms.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
+    },
+    {
+      "atom_key": "kalman_filters/static_kf:initializelineargaussianstatemodel",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/atoms.py",
+        "tests/test_static_kf_references_metadata.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
+    },
+    {
+      "atom_key": "kalman_filters/static_kf:predictlatentstate",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/atoms.py",
+        "tests/test_static_kf_references_metadata.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
+    },
+    {
+      "atom_key": "particle_filters/basic:particle_propagation_kernel",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "needs_followup",
+      "source_paths": [
+        "src/sciona/atoms/state_estimation/particle_filters/basic.py",
+        "tests/test_particle_filter_basic_atoms.py",
+        "tests/test_particle_filter_basic_probes.py"
+      ],
+      "limitations": [
+        "Needs vendored or importable upstream signature evidence before it can be treated as fully ready."
+      ],
+      "blocking_findings": [],
+      "required_actions": [
+        "add vendored or importable upstream signature evidence for the particle-filter rows"
+      ],
+      "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
+    },
+    {
+      "atom_key": "particle_filters/basic:resample_and_belief_projection",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "needs_followup",
+      "source_paths": [
+        "src/sciona/atoms/state_estimation/particle_filters/basic.py",
+        "tests/test_particle_filter_basic_atoms.py",
+        "tests/test_particle_filter_basic_probes.py"
+      ],
+      "limitations": [
+        "Needs vendored or importable upstream signature evidence before it can be treated as fully ready."
+      ],
+      "blocking_findings": [],
+      "required_actions": [
+        "add vendored or importable upstream signature evidence for the particle-filter rows"
+      ],
+      "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
+    }
+  ]
+}

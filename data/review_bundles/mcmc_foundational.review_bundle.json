@@ -1,0 +1,138 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.mcmc_foundational.core.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "mcmc_foundational",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "reviewed_with_limits",
+  "authoritative_sources": [
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/integrator/atoms.py"
+    },
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/trajectory/atoms.py"
+    },
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/hmc.py"
+    },
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/nuts.py"
+    },
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py"
+    },
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py"
+    }
+  ],
+  "limitations": [
+    "This bundle is scoped to the highest-evidence core MCMC rows and does not normalize the remaining legacy naming surface."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "mcmc_foundational/advancedhmc/integrator:temperingfactorcomputation",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/integrator/atoms.py",
+        "tests/test_mcmc_foundational_advancedhmc_integrator_import_smoke.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "mcmc_foundational/advancedhmc/trajectory:buildnutstree",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/trajectory/atoms.py",
+        "tests/test_mcmc_foundational_advancedhmc_trajectory_import_smoke.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "mcmc_foundational/kthohr_mcmc/hmc:buildhmckernelfromlogdensityoracle",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/hmc.py",
+        "tests/test_mcmc_foundational_kthohr_mcmc_hmc_import_smoke.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "mcmc_foundational/kthohr_mcmc/nuts:nuts_recursive_tree_build",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/nuts.py",
+        "tests/test_mcmc_foundational_kthohr_mcmc_nuts_import_smoke.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "mcmc_foundational/mini_mcmc/hmc:initializehmcstate",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py",
+        "tests/test_mcmc_foundational_mini_mcmc_import_smoke.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "mcmc_foundational/mini_mcmc/nuts_llm:initializenutsstate",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "needs_followup",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py",
+        "tests/test_mcmc_foundational_mini_mcmc_import_smoke.py"
+      ],
+      "limitations": [
+        "Needs vendored or importable upstream signature evidence before it can be treated as fully ready."
+      ],
+      "blocking_findings": [],
+      "required_actions": [
+        "add vendored or importable upstream signature evidence"
+      ],
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    }
+  ]
+}

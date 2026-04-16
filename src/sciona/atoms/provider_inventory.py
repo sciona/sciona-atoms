@@ -23,6 +23,11 @@ _ARTIFACT_ROOT_CANDIDATES: tuple[Path, ...] = (
     Path("sciona/atoms"),
 )
 _AUDIT_MANIFEST_RELATIVE = Path("data/audit_manifest.json")
+_AUDIT_REVIEW_BUNDLE_DIRS: tuple[Path, ...] = (
+    Path("data/audit_reviews"),
+    Path("data/review_bundles"),
+    Path("docs/review-bundles"),
+)
 _REFERENCES_REGISTRY_RELATIVE = Path("data/references/registry.json")
 _PROVIDER_REPO_ORDER: tuple[str, ...] = (
     "sciona-atoms",
@@ -196,6 +201,25 @@ def discover_audit_manifest_path(base_dir: Path | None = None) -> Path:
         env_var="AUDIT_MANIFEST_PATH",
         base_dir=base_dir,
     )
+
+
+def discover_audit_review_bundle_paths(base_dir: Path | None = None) -> tuple[Path, ...]:
+    """Return all provider-owned audit review bundle files in deterministic order."""
+    bundle_paths: list[Path] = []
+    for repo_root in provider_repo_roots(base_dir):
+        for relative in _AUDIT_REVIEW_BUNDLE_DIRS:
+            review_dir = (repo_root / relative).resolve()
+            if not review_dir.is_dir():
+                continue
+            for path in sorted(review_dir.rglob("*.json")):
+                if path.is_file():
+                    bundle_paths.append(path.resolve())
+        src_root = (repo_root / "src").resolve()
+        if src_root.is_dir():
+            for path in sorted(src_root.rglob("review_bundle.json")):
+                if path.is_file():
+                    bundle_paths.append(path.resolve())
+    return _dedupe_paths(bundle_paths)
 
 
 def discover_references_registry_path(base_dir: Path | None = None) -> Path:
