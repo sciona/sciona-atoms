@@ -27,6 +27,21 @@ from sciona.atoms.provider_inventory import (
 AUDIT_BUNDLE_SCHEMA_VERSION = "1.0"
 _IDENTIFIER_FIELDS = {"atom_name", "atom_id", "atom_key"}
 _TOP_LEVEL_METADATA_FIELDS = {"schema_version", "provider_repo", "bundle_name", "generated_at"}
+_ROW_CONTROL_FIELDS = {
+    "authoritative_sources",
+    "blocking_findings",
+    "developer_semantic_verdict",
+    "limitations",
+    "required_actions",
+    "review_developer_semantic_verdict",
+    "review_developer_semantics_verdict",
+    "review_record_path",
+    "review_semantic_verdict",
+    "review_status",
+    "semantic_verdict",
+    "source_paths",
+    "trust_readiness",
+}
 _READY_TRUST_STATES = {"ready", "catalog_ready", "ready_for_manifest_merge"}
 _PASS_VERDICTS = {"pass", "supported", "aligned_to_registered_atoms"}
 _REVIEW_DIR_HINTS = (
@@ -266,6 +281,12 @@ def _flatten_row_bundle_entries(
                 "developer_semantics_status": "pass",
             }
         )
+    for key, value in row.items():
+        if key in _IDENTIFIER_FIELDS or key in _ROW_CONTROL_FIELDS:
+            continue
+        if value is None:
+            continue
+        patch.setdefault(key, value)
     entries: list[ReviewBundleEntry] = []
     for identifier in identifiers:
         entries.append(

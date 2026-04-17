@@ -19,4 +19,4 @@ def test_probe_records_resolve_to_live_symbols() -> None:
 
 def test_probe_records_publish_expected_interpolate_symbols() -> None:
     wrapper_symbols = {str(record["wrapper_symbol"]) for record in probe_records()}
-    assert wrapper_symbols == {"cubicsplinefit", "rbfinterpolatorfit"}
+    assert wrapper_symbols == {"cubic_spline_fit", "rbf_interpolator_fit"}

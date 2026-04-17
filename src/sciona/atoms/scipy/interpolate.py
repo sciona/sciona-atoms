@@ -54,7 +54,7 @@ def _is_optional_float(value: object) -> bool:
     return value is None or isinstance(value, (float, int, np.number))
 
 
-def witness_cubicsplinefit(
+def witness_cubic_spline_fit(
     x: AbstractArray,
     y: AbstractArray,
     axis: AbstractScalar,
@@ -66,7 +66,7 @@ def witness_cubicsplinefit(
     return AbstractArray(shape=("callable",), dtype="object")
 
 
-def witness_rbfinterpolatorfit(
+def witness_rbf_interpolator_fit(
     y: AbstractArray,
     d: AbstractArray,
     neighbors: AbstractScalar,
@@ -80,7 +80,7 @@ def witness_rbfinterpolatorfit(
     return AbstractArray(shape=("callable",), dtype="object")
 
 
-@register_atom(witness_cubicsplinefit)  # type: ignore[untyped-decorator]
+@register_atom(witness_cubic_spline_fit)  # type: ignore[untyped-decorator]
 @icontract.require(lambda x: _is_array(x, ndim=1), "x must be a finite 1D ndarray")
 @icontract.require(lambda y: _is_array(y), "y must be a finite ndarray")
 @icontract.require(lambda axis: _is_axis_index(axis), "axis must be an integer axis index")
@@ -93,7 +93,7 @@ def witness_rbfinterpolatorfit(
     "extrapolate must be None, bool, or string",
 )
 @icontract.ensure(lambda result: result is not None, "CubicSplineFit output must not be None")
-def cubicsplinefit(
+def cubic_spline_fit(
     x: np.ndarray,
     y: np.ndarray,
     axis: int = 0,
@@ -104,7 +104,7 @@ def cubicsplinefit(
     return CubicSpline(x, y, axis=axis, bc_type=bc_type, extrapolate=extrapolate)
 
 
-@register_atom(witness_rbfinterpolatorfit)  # type: ignore[untyped-decorator]
+@register_atom(witness_rbf_interpolator_fit)  # type: ignore[untyped-decorator]
 @icontract.require(lambda y: _is_array(y, ndim=2), "y must be a finite 2D ndarray of coordinates")
 @icontract.require(lambda d: _is_array(d), "d must be a finite ndarray of values")
 @icontract.require(lambda neighbors: _is_optional_int(neighbors), "neighbors must be None or an integer")
@@ -116,7 +116,7 @@ def cubicsplinefit(
 @icontract.require(lambda epsilon: _is_optional_float(epsilon), "epsilon must be None or a numeric scalar")
 @icontract.require(lambda degree: _is_optional_int(degree), "degree must be None or an integer")
 @icontract.ensure(lambda result: result is not None, "RBFInterpolatorFit output must not be None")
-def rbfinterpolatorfit(
+def rbf_interpolator_fit(
     y: np.ndarray,
     d: np.ndarray,
     neighbors: int | None = None,
@@ -138,8 +138,8 @@ def rbfinterpolatorfit(
 
 
 __all__ = [
-    "cubicsplinefit",
-    "rbfinterpolatorfit",
-    "witness_cubicsplinefit",
-    "witness_rbfinterpolatorfit",
+    "cubic_spline_fit",
+    "rbf_interpolator_fit",
+    "witness_cubic_spline_fit",
+    "witness_rbf_interpolator_fit",
 ]

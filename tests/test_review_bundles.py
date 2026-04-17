@@ -58,8 +58,8 @@ def test_scipy_review_bundles_cover_expected_rows() -> None:
             "scipy/integrate:solve_ivp",
         },
         "scipy_interpolate.review_bundle.json": {
-            "sciona.atoms.scipy.interpolate.cubicsplinefit",
-            "sciona.atoms.scipy.interpolate.rbfinterpolatorfit",
+            "sciona.atoms.scipy.interpolate.cubic_spline_fit",
+            "sciona.atoms.scipy.interpolate.rbf_interpolator_fit",
         },
         "scipy_linalg.review_bundle.json": {
             "scipy/linalg:det",

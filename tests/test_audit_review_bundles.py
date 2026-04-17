@@ -107,6 +107,14 @@ def test_merge_audit_manifest_with_review_bundles_promotes_and_creates_entries(t
                 },
                 {
                   "atom_fqdn": "demoatoms.new_contract@src/demoatoms.py:1",
+                  "module_path": "src/demoatoms.py",
+                  "upstream_symbols": {
+                    "module": "demo",
+                    "function": "new_contract"
+                  },
+                  "upstream_version": "1.0",
+                  "has_references": true,
+                  "references_status": "pass",
                   "trust_readiness": "ready_for_manifest_merge",
                   "semantic_verdict": "supported",
                   "developer_semantic_verdict": "aligned_to_registered_atoms"
@@ -168,6 +176,11 @@ def test_merge_audit_manifest_with_review_bundles_promotes_and_creates_entries(t
     assert created["return_annotation"] == "float"
     assert created["docstring_summary"] == "Scale a value deterministically."
     assert created["review_record_path"] == "data/audit_reviews/provider.json"
+    assert created["module_path"] == "src/demoatoms.py"
+    assert created["upstream_symbols"] == {"module": "demo", "function": "new_contract"}
+    assert created["upstream_version"] == "1.0"
+    assert created["has_references"] is True
+    assert created["references_status"] == "pass"
     assert signal["review_record_path"] == "signals/review.md"
     assert signal["review_status"] == "missing"
     assert signal["review_required_actions"] == ["add stronger runtime evidence"]

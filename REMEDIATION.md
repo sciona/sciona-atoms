@@ -72,3 +72,95 @@ Suggested remediation order:
 Evidence as of 2026-04-16:
 - Local source inspection showed `torqueadjustmentidentitystage()` returns `None` and documents itself as an identity stage with no observable computation.
 - No higher-signal behavior tests or meaningful metadata artifacts were present for publication review.
+
+## SciPy
+
+### `scipy.sparse_graph`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The remaining reviewed atoms in this family are not just missing audit metadata; they are currently flagged as misleading in the audit backlog.
+- The family mixes true missing-row constructor/wrapper work with higher-risk graph-spectral helpers whose public names imply standard SciPy graph operations more cleanly than the current local semantics justify.
+- This is not a good candidate for ratcheting by bundle-only review. It needs semantic narrowing or behavior repair first.
+
+What we verified:
+- As of 2026-04-16, the backlog still marks `graph_fourier_transform`, `graph_laplacian`, `heat_kernel_diffusion`, and `inverse_graph_fourier_transform` as `misleading`.
+- The remaining `all_pairs_shortest_path`, `minimum_spanning_tree`, and `single_source_shortest_path` rows are still `missing_row`, so the family is split between naming/metadata debt and semantic review debt.
+- Because of that split, forcing the whole family through publishability review would blur together two different remediation classes.
+
+Proposed fixes:
+1. Separate the family into:
+   - faithful sparse-graph wrappers that can eventually be published once canonical rows and metadata exist
+   - graph-spectral helpers whose current names or semantics are too misleading for publication
+2. For the misleading spectral helpers, either:
+   - rename them to match the actual behavior surface, or
+   - tighten the implementation and tests until the current names are defensible.
+3. Add behavior-level tests against concrete SciPy sparse/csgraph expectations before reentering the publication queue.
+4. Only restore these atoms to the publishability lane after the misleading subset is resolved.
+
+Suggested remediation order:
+1. `graph_laplacian`
+2. `graph_fourier_transform`
+3. `inverse_graph_fourier_transform`
+4. `heat_kernel_diffusion`
+5. Reevaluate whether the path/minimum-spanning-tree rows should be treated as clean missing-row publication work in a separate wave.
+
+Evidence as of 2026-04-16:
+- Local matcher backlog refresh after the SciPy ratchet waves still shows the four spectral helpers as `misleading`.
+- The remaining path/tree atoms are still blocked as `missing_row` rather than review-approved publication candidates.
+
+### `scipy.stats.norm`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The current backlog still marks this wrapper as misleading rather than simply unaudited.
+- Publishing a distribution-constructor atom under a misleading signature or semantics surface would create a poor public contract because the returned object carries more behavior than the audit surface currently justifies.
+
+What we verified:
+- As of 2026-04-16, `sciona.atoms.scipy.stats.norm` remains non-publishable with verdict `misleading`.
+- The rest of the `scipy.stats` family was publishable without it, so there was no reason to lower the bar and force `norm` through the ratchet.
+
+Proposed fixes:
+1. Re-audit the exact public contract of `norm`, including constructor signature, returned object semantics, and whether the atom should expose a frozen distribution object at all.
+2. Add behavior-level tests that validate the intended callable/returned-object surface against upstream SciPy.
+3. If the returned frozen-distribution contract is too broad for a public atom, replace it with narrower explicit primitives instead of publishing the current wrapper as-is.
+
+Suggested remediation order:
+1. Decide whether `norm` should remain a first-class atom.
+2. If yes, tighten its contract and tests.
+3. Reenter publication review only after the misleading-status cause is resolved.
+
+Evidence as of 2026-04-16:
+- Local backlog refresh after the SciPy ratchet waves still shows `sciona.atoms.scipy.stats.norm` as `misleading`.
+
+### SciPy Naming Debt
+
+Status: rename wave started; revisit remaining naming debt deliberately.
+
+Planning note:
+- The concrete rename log and remaining touch points now live in `docs/RENAMING_ATOMS.md`.
+
+What changed:
+- The interpolate family rename wave was completed on 2026-04-16:
+  - `cubicsplinefit` -> `cubic_spline_fit`
+  - `rbfinterpolatorfit` -> `rbf_interpolator_fit`
+- Shared source, probes, review bundles, manifest rows, and local replay state were updated together for those two wrappers.
+
+What remains:
+- Several SciPy wrappers still use upstream-adjacent short names such as `det`, `inv`, `butter`, `firwin`, and `freqz`.
+- Those names are not compressed multi-word forms, so they need a policy decision before any rename wave, not ad hoc churn.
+
+Proposed fixes:
+1. Define a repo-wide policy for when legacy upstream-style names are acceptable versus when snake_case normalization is required.
+2. For unaudited or unpublished atoms, normalize names before publication instead of after.
+3. Treat future rename waves as coordinated source/probe/bundle/manifest/replay changes, not one-off wrapper edits.
+
+Suggested remediation order:
+1. Decide whether short established upstream names like `det`, `inv`, `freqz`, and `firwin` should be left as-is under the naming policy.
+2. Review stale spatial and optimize alias debt recorded in `docs/RENAMING_ATOMS.md`.
+
+Evidence as of 2026-04-16:
+- The interpolate compressed-name debt has been removed from the live catalog.
+- Remaining SciPy naming questions are now policy and alias-cleanup issues, not the obvious interpolate wrappers.

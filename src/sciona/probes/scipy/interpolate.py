@@ -16,8 +16,8 @@ class ProbeTarget:
 _MODULE = "sciona.atoms.scipy.interpolate"
 
 INTERPOLATE_PROBE_TARGETS: tuple[ProbeTarget, ...] = (
-    ProbeTarget(f"{_MODULE}.cubicsplinefit", _MODULE, "cubicsplinefit"),
-    ProbeTarget(f"{_MODULE}.rbfinterpolatorfit", _MODULE, "rbfinterpolatorfit"),
+    ProbeTarget(f"{_MODULE}.cubic_spline_fit", _MODULE, "cubic_spline_fit"),
+    ProbeTarget(f"{_MODULE}.rbf_interpolator_fit", _MODULE, "rbf_interpolator_fit"),
 )
 
 
