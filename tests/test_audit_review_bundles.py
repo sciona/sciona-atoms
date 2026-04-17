@@ -265,3 +265,79 @@ def test_merge_refreshes_existing_structural_fields_from_live_callable(tmp_path:
     assert atom["docstring_summary"] == "Initialize state using an optional sentinel input."
     assert atom["module_path"].endswith("refreshatoms.py")
     sys.path.remove(str(package_root))
+
+
+def test_merge_preserves_explicit_empty_row_lists_over_bundle_level_blockers(tmp_path: Path) -> None:
+    workspace = tmp_path
+    manifest_path = workspace / "sciona-atoms" / "data" / "audit_manifest.json"
+    review_bundle_path = (
+        workspace
+        / "sciona-atoms-bio"
+        / "src"
+        / "sciona"
+        / "atoms"
+        / "bio"
+        / "family"
+        / "review_bundle.json"
+    )
+    package_root = workspace / "pkgs"
+    package_root.mkdir(parents=True, exist_ok=True)
+    _write(
+        package_root / "partialbundleatoms.py",
+        """
+        def promoted_atom(value: int) -> int:
+            \"\"\"Return the same value.\"\"\"
+            return value
+        """,
+    )
+    sys.path.insert(0, str(package_root))
+
+    _write(
+        manifest_path,
+        """
+        {
+          "schema_version": "1.1",
+          "metadata": {},
+          "atoms": []
+        }
+        """,
+    )
+    _write(
+        review_bundle_path,
+        """
+        {
+          "schema_version": "1.0",
+          "provider_repo": "sciona-atoms-bio",
+          "review_status": "partial",
+          "trust_readiness": "blocked_on_uncertainty_backfill",
+          "limitations": ["family-level blocker"],
+          "required_actions": ["family-level action"],
+          "rows": [
+            {
+              "atom_name": "partialbundleatoms.promoted_atom",
+              "trust_readiness": "ready_for_manifest_merge",
+              "semantic_verdict": "supported",
+              "developer_semantic_verdict": "aligned_to_registered_atoms",
+              "limitations": [],
+              "required_actions": [],
+              "authoritative_sources": []
+            }
+          ]
+        }
+        """,
+    )
+
+    merge_audit_manifest_with_review_bundles(
+        manifest_path=manifest_path,
+        base_dir=workspace,
+    )
+    merged = json.loads(manifest_path.read_text(encoding="utf-8"))
+    atom = merged["atoms"][0]
+
+    assert atom["atom_name"] == "partialbundleatoms.promoted_atom"
+    assert atom["review_status"] == "approved"
+    assert atom["review_required_actions"] == []
+    assert atom["review_limitations"] == []
+    assert atom["trust_blockers"] == []
+    assert atom["authoritative_sources"] == []
+    sys.path.remove(str(package_root))

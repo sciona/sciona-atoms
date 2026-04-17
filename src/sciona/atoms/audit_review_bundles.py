@@ -196,6 +196,12 @@ def _coerce_list(value: Any) -> list[Any]:
     return [value]
 
 
+def _row_list_or_bundle_list(row: dict[str, Any], bundle: dict[str, Any], key: str) -> list[Any]:
+    if key in row:
+        return _coerce_list(row.get(key))
+    return _coerce_list(bundle.get(key))
+
+
 def _row_atom_names(row: dict[str, Any]) -> list[str]:
     names: list[str] = []
     for key in ("atom_name", "atom_fqdn", "atom_key"):
@@ -223,12 +229,8 @@ def _flatten_row_bundle_entries(
     identifiers = _row_atom_names(row)
     if not identifiers:
         raise ValueError(f"Row bundle entry in {source_path} is missing atom identifier fields")
-    bundle_required_actions = _coerce_list(bundle.get("required_actions"))
-    bundle_blockers = _coerce_list(bundle.get("blocking_findings"))
-    row_required_actions = _coerce_list(row.get("required_actions"))
-    row_blockers = _coerce_list(row.get("blocking_findings"))
-    required_actions = row_required_actions or bundle_required_actions
-    blockers = row_blockers or bundle_blockers
+    required_actions = _row_list_or_bundle_list(row, bundle, "required_actions")
+    blockers = _row_list_or_bundle_list(row, bundle, "blocking_findings")
     trust_readiness = str(row.get("trust_readiness") or bundle.get("trust_readiness") or "").strip()
     semantic_verdict = str(
         row.get("semantic_verdict")
@@ -265,10 +267,10 @@ def _flatten_row_bundle_entries(
             fallback_ready=review_status == "approved",
         ),
         "trust_readiness": normalized_trust,
-        "review_limitations": _coerce_list(row.get("limitations")) or _coerce_list(bundle.get("limitations")),
+        "review_limitations": _row_list_or_bundle_list(row, bundle, "limitations"),
         "review_required_actions": required_actions,
         "trust_blockers": blockers,
-        "authoritative_sources": row.get("authoritative_sources") or bundle.get("authoritative_sources") or [],
+        "authoritative_sources": _row_list_or_bundle_list(row, bundle, "authoritative_sources"),
         "review_record_path": str(row.get("review_record_path") or bundle.get("review_record_path") or record_path),
         "overall_verdict": _normalize_overall_verdict(normalized_trust, semantic_verdict, blockers),
     }
