@@ -317,6 +317,23 @@ def _merge_patch(target: dict[str, Any], patch: dict[str, Any], *, source_path: 
         target["review_record_path"] = record_path
 
 
+_STRUCTURAL_REFRESH_FIELDS = (
+    "module_import_path",
+    "module_path",
+    "module_family",
+    "domain_family",
+    "wrapper_symbol",
+    "argument_names",
+    "argument_details",
+    "uses_varargs",
+    "uses_kwargs",
+    "return_annotation",
+    "docstring_summary",
+    "has_docstring",
+    "source_kind",
+)
+
+
 def _annotation_to_string(annotation: Any) -> str:
     if annotation is inspect.Signature.empty:
         return "Any"
@@ -333,6 +350,7 @@ def _base_entry_from_callable(atom_name: str) -> dict[str, Any]:
         raise ValueError(f"Invalid atom name {atom_name!r}")
     module = importlib.import_module(module_name)
     target = getattr(module, symbol_name)
+    unwrapped = inspect.unwrap(target)
     signature = inspect.signature(target)
     argument_details: list[dict[str, Any]] = []
     argument_names: list[str] = []
@@ -358,9 +376,9 @@ def _base_entry_from_callable(atom_name: str) -> dict[str, Any]:
                     "kind": parameter.kind.name.lower(),
                 }
             )
-    doc = inspect.getdoc(target) or ""
-    source_file = inspect.getsourcefile(target) or ""
-    wrapper_symbol = getattr(target, "__name__", symbol_name)
+    doc = inspect.getdoc(unwrapped) or inspect.getdoc(target) or ""
+    source_file = inspect.getsourcefile(unwrapped) or inspect.getsourcefile(target) or ""
+    wrapper_symbol = getattr(unwrapped, "__name__", getattr(target, "__name__", symbol_name))
     return {
         "atom_name": atom_name,
         "atom_key": atom_name,
@@ -407,6 +425,12 @@ def _base_entry_from_callable(atom_name: str) -> dict[str, Any]:
     }
 
 
+def _refresh_structural_fields_from_callable(target: dict[str, Any], atom_name: str) -> None:
+    live_entry = _base_entry_from_callable(atom_name)
+    for field in _STRUCTURAL_REFRESH_FIELDS:
+        target[field] = live_entry[field]
+
+
 def merge_audit_manifest_entries(
     manifest_entries: Sequence[dict[str, Any]],
     review_entries: Sequence[ReviewBundleEntry],
@@ -444,6 +468,10 @@ def merge_audit_manifest_entries(
             key = str(current.get("atom_key") or entry.atom_key or "").strip()
             if key:
                 merged_by_key[key] = current
+            try:
+                _refresh_structural_fields_from_callable(current, entry.atom_name)
+            except Exception:
+                pass
         _merge_patch(current, entry.patch, source_path=entry.source_path, record_path=entry.record_path)
 
     return [merged_by_name[name] for name in sorted(dict.fromkeys(order))], sorted(dict.fromkeys(skipped))

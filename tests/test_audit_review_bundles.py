@@ -185,3 +185,83 @@ def test_merge_audit_manifest_with_review_bundles_promotes_and_creates_entries(t
     assert signal["review_status"] == "missing"
     assert signal["review_required_actions"] == ["add stronger runtime evidence"]
     sys.path.remove(str(package_root))
+
+
+def test_merge_refreshes_existing_structural_fields_from_live_callable(tmp_path: Path) -> None:
+    workspace = tmp_path
+    manifest_path = workspace / "sciona-atoms" / "data" / "audit_manifest.json"
+    review_bundle_path = workspace / "sciona-atoms-fintech" / "data" / "audit_reviews" / "provider.json"
+    package_root = workspace / "pkgs"
+    package_root.mkdir(parents=True, exist_ok=True)
+    _write(
+        package_root / "refreshatoms.py",
+        """
+        def initialize_state(_trigger: None = None) -> tuple[float, float]:
+            \"\"\"Initialize state using an optional sentinel input.\"\"\"
+            return (0.0, 0.0)
+        """,
+    )
+    sys.path.insert(0, str(package_root))
+
+    _write(
+        manifest_path,
+        """
+        {
+          "schema_version": "1.1",
+          "metadata": {},
+          "atoms": [
+            {
+              "atom_name": "refreshatoms.initialize_state",
+              "atom_key": "refreshatoms.initialize_state",
+              "module_import_path": "refreshatoms",
+              "module_path": "/tmp/icontract/_checkers.py",
+              "wrapper_symbol": "initialize_state",
+              "argument_names": [],
+              "argument_details": [],
+              "return_annotation": "tuple[float, float]",
+              "docstring_summary": "stale summary",
+              "has_docstring": false,
+              "review_status": "draft",
+              "review_priority": "review_later"
+            }
+          ]
+        }
+        """,
+    )
+    _write(
+        review_bundle_path,
+        """
+        {
+          "schema_version": "1.0",
+          "provider_repo": "sciona-atoms-fintech",
+          "rows": [
+            {
+              "atom_name": "refreshatoms.initialize_state",
+              "trust_readiness": "ready_for_manifest_merge",
+              "semantic_verdict": "supported",
+              "developer_semantic_verdict": "aligned_to_registered_atoms"
+            }
+          ]
+        }
+        """,
+    )
+
+    merge_audit_manifest_with_review_bundles(
+        manifest_path=manifest_path,
+        base_dir=workspace,
+    )
+    merged = json.loads(manifest_path.read_text(encoding="utf-8"))
+    atom = merged["atoms"][0]
+
+    assert atom["argument_names"] == ["_trigger"]
+    assert atom["argument_details"] == [
+        {
+            "name": "_trigger",
+            "annotation": "None",
+            "required": False,
+            "kind": "positional_or_keyword",
+        }
+    ]
+    assert atom["docstring_summary"] == "Initialize state using an optional sentinel input."
+    assert atom["module_path"].endswith("refreshatoms.py")
+    sys.path.remove(str(package_root))
