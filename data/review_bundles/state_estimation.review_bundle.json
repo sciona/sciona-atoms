@@ -17,6 +17,18 @@
       "path": "src/sciona/atoms/state_estimation/kalman_filters/static_kf/atoms.py"
     },
     {
+      "kind": "local_metadata",
+      "path": "src/sciona/atoms/state_estimation/kalman_filters/static_kf/references.json"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "src/sciona/atoms/state_estimation/kalman_filters/static_kf/cdg.json"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "src/sciona/atoms/state_estimation/kalman_filters/static_kf/matches.json"
+    },
+    {
       "kind": "local_wrapper",
       "path": "src/sciona/atoms/state_estimation/particle_filters/basic.py"
     },
@@ -42,12 +54,12 @@
     }
   ],
   "limitations": [
-    "Particle-filter rows still need upstream signature evidence to leave follow-up status."
+    "Particle-filter rows still need upstream signature evidence to leave follow-up status.",
+    "The static_kf publishability ratchet is metadata-only in this pass: current runtime FQDN coverage is grounded in the wrapper plus references/cdg/matches evidence without changing runtime code or witnesses.",
+    "Other state_estimation families keep their existing key shapes until they receive their own review-bundle ratchet."
   ],
   "blocking_findings": [],
-  "required_actions": [
-    "add vendored or importable upstream signature evidence for the particle-filter rows"
-  ],
+  "required_actions": [],
   "review_record_path": "data/review_bundles/state_estimation.review_bundle.json",
   "rows": [
     {
@@ -81,13 +93,16 @@
       "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
     },
     {
-      "atom_key": "kalman_filters/static_kf:initializelineargaussianstatemodel",
+      "atom_key": "sciona.atoms.state_estimation.kalman_filters.static_kf.exposecovariance",
       "review_status": "reviewed",
       "review_semantic_verdict": "pass",
       "review_developer_semantic_verdict": "pass_with_limits",
       "trust_readiness": "catalog_ready",
       "source_paths": [
         "src/sciona/atoms/state_estimation/kalman_filters/static_kf/atoms.py",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/references.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/cdg.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/matches.json",
         "tests/test_static_kf_references_metadata.py"
       ],
       "limitations": [],
@@ -96,13 +111,70 @@
       "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
     },
     {
-      "atom_key": "kalman_filters/static_kf:predictlatentstate",
+      "atom_key": "sciona.atoms.state_estimation.kalman_filters.static_kf.exposelatentmean",
       "review_status": "reviewed",
       "review_semantic_verdict": "pass",
       "review_developer_semantic_verdict": "pass_with_limits",
       "trust_readiness": "catalog_ready",
       "source_paths": [
         "src/sciona/atoms/state_estimation/kalman_filters/static_kf/atoms.py",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/references.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/cdg.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/matches.json",
+        "tests/test_static_kf_references_metadata.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.state_estimation.kalman_filters.static_kf.initializelineargaussianstatemodel",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/atoms.py",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/references.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/cdg.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/matches.json",
+        "tests/test_static_kf_references_metadata.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.state_estimation.kalman_filters.static_kf.predictlatentstate",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/atoms.py",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/references.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/cdg.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/matches.json",
+        "tests/test_static_kf_references_metadata.py"
+      ],
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/state_estimation.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.state_estimation.kalman_filters.static_kf.updatewithmeasurement",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/atoms.py",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/references.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/cdg.json",
+        "src/sciona/atoms/state_estimation/kalman_filters/static_kf/matches.json",
         "tests/test_static_kf_references_metadata.py"
       ],
       "limitations": [],
