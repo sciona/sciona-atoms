@@ -13,7 +13,9 @@ import argparse
 import importlib
 import inspect
 import json
+import sys
 from collections.abc import Iterable, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -346,11 +348,65 @@ def _annotation_to_string(annotation: Any) -> str:
     return str(annotation).replace("typing.", "")
 
 
-def _base_entry_from_callable(atom_name: str) -> dict[str, Any]:
+def _candidate_import_roots(source_path: Path) -> tuple[str, ...]:
+    resolved = source_path.resolve()
+    parts = resolved.parts
+    candidates: list[str] = []
+    for marker in ("src", "data", "docs"):
+        if marker in parts:
+            root = Path(*parts[: parts.index(marker)])
+            src_root = root / "src"
+            if src_root.is_dir():
+                candidates.append(str(src_root))
+            candidates.append(str(root))
+            break
+    return tuple(path for path in dict.fromkeys(candidates) if path)
+
+
+@contextmanager
+def _temporary_import_roots(paths: Sequence[str], *, module_name: str = ""):
+    original = list(sys.path)
+    additions = [path for path in paths if path and path not in sys.path]
+    package_path_originals: dict[str, list[str]] = {}
+    if additions:
+        sys.path[:0] = additions
+    if module_name:
+        parts = module_name.split(".")
+        for depth in range(1, len(parts)):
+            package_name = ".".join(parts[:depth])
+            package = sys.modules.get(package_name)
+            package_path = getattr(package, "__path__", None)
+            if package_path is None:
+                continue
+            original_paths = list(package_path)
+            extras: list[str] = []
+            for root in additions:
+                candidate = Path(root, *parts[:depth])
+                candidate_str = str(candidate)
+                if candidate.is_dir() and candidate_str not in package_path:
+                    extras.append(candidate_str)
+            if extras:
+                package_path_originals[package_name] = original_paths
+                package_path[:0] = extras
+    importlib.invalidate_caches()
+    try:
+        yield
+    finally:
+        for package_name, original_paths in package_path_originals.items():
+            package = sys.modules.get(package_name)
+            package_path = getattr(package, "__path__", None)
+            if package_path is not None:
+                package_path[:] = original_paths
+        sys.path[:] = original
+        importlib.invalidate_caches()
+
+
+def _base_entry_from_callable(atom_name: str, *, import_roots: Sequence[str] = ()) -> dict[str, Any]:
     module_name, _, symbol_name = atom_name.rpartition(".")
     if not module_name or not symbol_name:
         raise ValueError(f"Invalid atom name {atom_name!r}")
-    module = importlib.import_module(module_name)
+    with _temporary_import_roots(import_roots, module_name=module_name):
+        module = importlib.import_module(module_name)
     target = getattr(module, symbol_name)
     unwrapped = inspect.unwrap(target)
     signature = inspect.signature(target)
@@ -427,8 +483,8 @@ def _base_entry_from_callable(atom_name: str) -> dict[str, Any]:
     }
 
 
-def _refresh_structural_fields_from_callable(target: dict[str, Any], atom_name: str) -> None:
-    live_entry = _base_entry_from_callable(atom_name)
+def _refresh_structural_fields_from_callable(target: dict[str, Any], atom_name: str, *, import_roots: Sequence[str] = ()) -> None:
+    live_entry = _base_entry_from_callable(atom_name, import_roots=import_roots)
     for field in _STRUCTURAL_REFRESH_FIELDS:
         target[field] = live_entry[field]
 
@@ -452,12 +508,13 @@ def merge_audit_manifest_entries(
 
     skipped: list[str] = []
     for entry in review_entries:
+        import_roots = _candidate_import_roots(entry.source_path)
         current = merged_by_name.get(entry.atom_name)
         if current is None and entry.atom_key:
             current = merged_by_key.get(entry.atom_key)
         if current is None:
             try:
-                current = _base_entry_from_callable(entry.atom_name)
+                current = _base_entry_from_callable(entry.atom_name, import_roots=import_roots)
             except Exception:
                 skipped.append(entry.atom_name)
                 continue
@@ -471,7 +528,7 @@ def merge_audit_manifest_entries(
             if key:
                 merged_by_key[key] = current
             try:
-                _refresh_structural_fields_from_callable(current, entry.atom_name)
+                _refresh_structural_fields_from_callable(current, entry.atom_name, import_roots=import_roots)
             except Exception:
                 pass
         _merge_patch(current, entry.patch, source_path=entry.source_path, record_path=entry.record_path)

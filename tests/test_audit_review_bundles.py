@@ -341,3 +341,81 @@ def test_merge_preserves_explicit_empty_row_lists_over_bundle_level_blockers(tmp
     assert atom["trust_blockers"] == []
     assert atom["authoritative_sources"] == []
     sys.path.remove(str(package_root))
+
+
+def test_merge_creates_entries_from_provider_src_roots(tmp_path: Path) -> None:
+    workspace = tmp_path
+    manifest_path = workspace / "sciona-atoms" / "data" / "audit_manifest.json"
+    review_bundle_path = workspace / "sciona-atoms-signal" / "data" / "review_bundles" / "provider.json"
+    provider_module = (
+        workspace
+        / "sciona-atoms-signal"
+        / "src"
+        / "sciona"
+        / "atoms"
+        / "signal_processing"
+        / "demo_family"
+        / "atoms.py"
+    )
+
+    _write(
+        provider_module,
+        """
+        def detect_demo_events(signal: list[float], threshold: float = 0.5) -> list[float]:
+            \"\"\"Return the input signal for deterministic testing.\"\"\"
+            return signal
+        """,
+    )
+    _write(
+        provider_module.parent / "__init__.py",
+        """
+        from .atoms import detect_demo_events
+        """,
+    )
+    _write(workspace / "sciona-atoms-signal" / "src" / "sciona" / "__init__.py", "")
+    _write(workspace / "sciona-atoms-signal" / "src" / "sciona" / "atoms" / "__init__.py", "")
+    _write(
+        workspace / "sciona-atoms-signal" / "src" / "sciona" / "atoms" / "signal_processing" / "__init__.py",
+        "",
+    )
+    _write(
+        manifest_path,
+        """
+        {
+          "schema_version": "1.1",
+          "metadata": {},
+          "atoms": []
+        }
+        """,
+    )
+    _write(
+        review_bundle_path,
+        """
+        {
+          "schema_version": "1.0",
+          "provider_repo": "sciona-atoms-signal",
+          "rows": [
+            {
+              "atom_name": "sciona.atoms.signal_processing.demo_family.detect_demo_events",
+              "trust_readiness": "ready_for_manifest_merge",
+              "semantic_verdict": "supported",
+              "developer_semantic_verdict": "aligned_to_registered_atoms",
+              "required_actions": [],
+              "limitations": []
+            }
+          ]
+        }
+        """,
+    )
+
+    merge_audit_manifest_with_review_bundles(
+        manifest_path=manifest_path,
+        base_dir=workspace,
+    )
+    merged = json.loads(manifest_path.read_text(encoding="utf-8"))
+    atom = merged["atoms"][0]
+
+    assert atom["atom_name"] == "sciona.atoms.signal_processing.demo_family.detect_demo_events"
+    assert atom["review_status"] == "approved"
+    assert atom["module_path"].endswith("demo_family/atoms.py")
+    assert atom["argument_names"] == ["signal", "threshold"]
