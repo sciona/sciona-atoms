@@ -180,8 +180,10 @@ Validates:
 
 Validates:
 - `references.json` exists and has entries for all atom FQDNs
+- The repo's own `data/references/registry.json` exists (each sibling repo
+  must have its own — do not depend on the shared sciona-atoms registry)
 - Each atom has non-empty `references` list
-- Each `ref_id` exists in `data/references/registry.json`
+- Each `ref_id` exists in the **local** `data/references/registry.json`
 - Each reference has `match_metadata` with `match_type`, `confidence`, and
   non-empty `notes`
 
@@ -206,12 +208,31 @@ Follow the test style used in existing test files in the repo.
 
 ## Step 4: Merge Review Bundle into Audit Manifest
 
-After creating the bundle and tests, run:
+If `data/audit_manifest.json` does not exist in the target repo (common for
+sibling repos that haven't had atoms published before), create an empty one:
+
+```json
+{"schema_version": "1.1", "metadata": {}, "atoms": []}
+```
+
+Then run the merge script. For the base `sciona-atoms` repo:
 
 ```bash
 cd /Users/conrad/personal/sciona-atoms
 PYTHONPATH=src /Users/conrad/personal/sciona-matcher/.venv/bin/python \
   scripts/apply_audit_review_bundles.py
+```
+
+For a sibling repo, pass `--base-dir` so the script discovers all repos and
+point `--manifest` at the local manifest:
+
+```bash
+cd /Users/conrad/personal/<sibling-repo>
+PYTHONPATH=src:/Users/conrad/personal/sciona-atoms/src \
+  /Users/conrad/personal/sciona-matcher/.venv/bin/python \
+  /Users/conrad/personal/sciona-atoms/scripts/apply_audit_review_bundles.py \
+  --manifest data/audit_manifest.json \
+  --base-dir /Users/conrad/personal
 ```
 
 Then confirm:

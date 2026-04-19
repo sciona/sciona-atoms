@@ -149,13 +149,18 @@ src/sciona/atoms/<domain>/<family>/__init__.py
 Provenance is a two-part system: a global registry and per-atom reference files.
 
 **Step 1: Global registry.** Add entries to `data/references/registry.json`
-with short `ref_id` keys (author+year style), full citation metadata, and DOIs
-when available. Also add a `repo_*` entry for the upstream source repository.
+**in the repo you are ingesting into** (not the shared sciona-atoms registry).
+Each sibling repo must have its own independent registry. If
+`data/references/registry.json` doesn't exist yet, create it with
+`{"schema_version": "1.0", "references": {}}` and populate it with entries
+needed by this repo's atoms. Use short `ref_id` keys (author+year style),
+full citation metadata, and DOIs when available. Also add a `repo_*` entry
+for the upstream source repository.
 
 **Step 2: Per-atom references.** Write `references.json` in the family
 directory using schema version 1.1. Atom keys are fully-qualified:
 `<import_path>@<file_path>:<line_number>`. Each reference uses a `ref_id`
-pointing to the global registry with `match_metadata`.
+pointing to the **local** registry with `match_metadata`.
 
 Do not fabricate DOIs or citations.
 
