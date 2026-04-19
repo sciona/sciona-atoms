@@ -43,11 +43,6 @@ This is a simple source map for remediation-held atoms that should be reingested
 | `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumcircuitsampler` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:138` |
 | `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumsolutionextractor` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:241` |
 | `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumsolverorchestrator` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` |
-| `sciona.atoms.fintech.quantfin.tdma_solver_d12.cotraversevec` | `../ageo-atoms/third_party/quantfin/src/Quant/Math/Utilities.hs:48` |
-| `sciona.atoms.fintech.quantfin.tdma_solver_d12.tdmasolver` | `../ageo-atoms/third_party/quantfin/src/Quant/Math/Utilities.hs:13` |
-| `sciona.atoms.fintech.institutional_quant_engine.pin_model.pinlikelihoodevaluation` | `../ageo-atoms/third_party/Institutional-Quant-Engine/execution_hft/41_pin_informed_trading.py:7` |
-| `sciona.atoms.fintech.institutional_quant_engine.pin_model.pinlikelihoodevaluator` | `../ageo-atoms/third_party/Institutional-Quant-Engine/execution_hft/41_pin_informed_trading.py:7` |
-| `sciona.atoms.robotics.pronto.torque_adjustment.torqueadjustmentidentitystage` | `../ageo-atoms/third_party/pronto/pronto_biped_core/include/pronto_biped_core/legodo_module.hpp:8` |
 | `sciona.atoms.physics.pasqal.docking.quantum_mwis_solver` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` |
 | `sciona.atoms.scipy.sparse_graph.all_pairs_shortest_path` | `/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/scipy/sparse/csgraph/__init__.py:189` |
 | `sciona.atoms.scipy.sparse_graph.graph_fourier_transform` | `src/sciona/atoms/scipy/sparse_graph.py:105` |
