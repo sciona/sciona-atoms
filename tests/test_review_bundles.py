@@ -24,7 +24,13 @@ def _is_known_or_importable_atom_key(atom_key: str) -> bool:
     if not module_name or not symbol_name:
         return False
     module = importlib.import_module(module_name)
-    return hasattr(module, symbol_name)
+    if hasattr(module, symbol_name):
+        return True
+    try:
+        atoms_module = importlib.import_module(f"{module_name}.atoms")
+    except ModuleNotFoundError:
+        return False
+    return hasattr(atoms_module, symbol_name)
 
 
 def test_review_bundles_have_concrete_review_metadata() -> None:

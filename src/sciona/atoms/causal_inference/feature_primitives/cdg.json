@@ -1,0 +1,110 @@
+{
+  "nodes": [
+    {
+      "node_id": "causal_feature_primitives_root",
+      "name": "Causal Feature Primitives",
+      "description": "Statistical and information-theoretic feature extractors for pairwise causal direction detection",
+      "status": "decomposed",
+      "children": [
+        "igci_asymmetry_score",
+        "hsic_independence_test",
+        "knn_entropy_estimator",
+        "uniform_divergence",
+        "normalized_error_probability",
+        "discretize_and_bin",
+        "polyfit_nonlinearity_asymmetry",
+        "polyfit_residual_error"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "igci_asymmetry_score",
+      "name": "IGCI Asymmetry Score",
+      "description": "Information-Geometric Causal Inference via log-ratio of consecutive deltas",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray, tx: str, y: NDArray, ty: str) -> float",
+      "depth": 1
+    },
+    {
+      "node_id": "hsic_independence_test",
+      "name": "HSIC Independence Test",
+      "description": "Hilbert-Schmidt Independence Criterion with RBF kernels and median bandwidth",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(X: NDArray, Y: NDArray, sig: list[float], maxpnt: int) -> float",
+      "depth": 1
+    },
+    {
+      "node_id": "knn_entropy_estimator",
+      "name": "KNN Entropy Estimator",
+      "description": "Kozachenko-Leonenko differential entropy estimator with digamma corrections",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray, tx: str, m: int) -> float",
+      "depth": 1
+    },
+    {
+      "node_id": "uniform_divergence",
+      "name": "Uniform Divergence",
+      "description": "KL-divergence-like measure from empirical distribution to uniform using KNN density",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray, tx: str, m: int) -> float",
+      "depth": 1
+    },
+    {
+      "node_id": "normalized_error_probability",
+      "name": "Normalized Error Probability",
+      "description": "Bayesian MAP error rate normalized by maximum possible error for causal asymmetry",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray, tx: str, y: NDArray, ty: str, ffactor: int, maxdev: int) -> float",
+      "depth": 1,
+      "children": [],
+      "inputs": [
+        {"name": "discretize_and_bin", "type_desc": "dependency"}
+      ]
+    },
+    {
+      "node_id": "discretize_and_bin",
+      "name": "Discretize and Bin",
+      "description": "Two-pass robust normalization then integer binning for continuous variables",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray, tx: str, ffactor: int, maxdev: int, norm: bool) -> NDArray",
+      "depth": 1
+    },
+    {
+      "node_id": "polyfit_nonlinearity_asymmetry",
+      "name": "Polyfit Nonlinearity Asymmetry",
+      "description": "Quantifies how much the X->Y relationship deviates from linearity vs Y->X",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray, tx: str, y: NDArray, ty: str) -> float",
+      "depth": 1
+    },
+    {
+      "node_id": "polyfit_residual_error",
+      "name": "Polyfit Residual Error",
+      "description": "Polynomial regression residual std with type-aware categorical encoding",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray, tx: str, y: NDArray, ty: str, m: int) -> float",
+      "depth": 1
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "discretize_and_bin",
+      "target_id": "normalized_error_probability",
+      "edge_type": "data_dependency"
+    }
+  ],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/jarfo/cause-effect",
+    "source_license": "Apache-2.0",
+    "competition": "Kaggle Cause-Effect Pairs (2nd place)"
+  }
+}

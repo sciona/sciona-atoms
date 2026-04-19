@@ -419,3 +419,74 @@ def test_merge_creates_entries_from_provider_src_roots(tmp_path: Path) -> None:
     assert atom["review_status"] == "approved"
     assert atom["module_path"].endswith("demo_family/atoms.py")
     assert atom["argument_names"] == ["signal", "threshold"]
+
+
+def test_merge_creates_package_level_entries_from_atoms_module(tmp_path: Path) -> None:
+    workspace = tmp_path
+    manifest_path = workspace / "sciona-atoms" / "data" / "audit_manifest.json"
+    review_bundle_path = workspace / "sciona-atoms-physics" / "docs" / "review-bundles" / "provider.json"
+    provider_module = (
+        workspace
+        / "sciona-atoms-physics"
+        / "src"
+        / "sciona"
+        / "atoms"
+        / "physics"
+        / "demo_family"
+        / "atoms.py"
+    )
+
+    _write(
+        provider_module,
+        """
+        def package_level_atom(values: list[float]) -> list[float]:
+            \"\"\"Return values for deterministic testing.\"\"\"
+            return values
+        """,
+    )
+    _write(provider_module.parent / "__init__.py", "")
+    _write(workspace / "sciona-atoms-physics" / "src" / "sciona" / "__init__.py", "")
+    _write(workspace / "sciona-atoms-physics" / "src" / "sciona" / "atoms" / "__init__.py", "")
+    _write(workspace / "sciona-atoms-physics" / "src" / "sciona" / "atoms" / "physics" / "__init__.py", "")
+    _write(
+        manifest_path,
+        """
+        {
+          "schema_version": "1.1",
+          "metadata": {},
+          "atoms": []
+        }
+        """,
+    )
+    _write(
+        review_bundle_path,
+        """
+        {
+          "schema_version": "1.0",
+          "provider_repo": "sciona-atoms-physics",
+          "rows": [
+            {
+              "atom_name": "sciona.atoms.physics.demo_family.package_level_atom",
+              "trust_readiness": "ready_for_manifest_merge",
+              "semantic_verdict": "supported",
+              "developer_semantic_verdict": "aligned_to_registered_atoms",
+              "required_actions": [],
+              "limitations": []
+            }
+          ]
+        }
+        """,
+    )
+
+    summary = merge_audit_manifest_with_review_bundles(
+        manifest_path=manifest_path,
+        base_dir=workspace,
+    )
+    merged = json.loads(manifest_path.read_text(encoding="utf-8"))
+    atom = merged["atoms"][0]
+
+    assert summary["skipped_unresolved_atom_count"] == 0
+    assert atom["atom_name"] == "sciona.atoms.physics.demo_family.package_level_atom"
+    assert atom["module_import_path"] == "sciona.atoms.physics.demo_family.atoms"
+    assert atom["module_path"].endswith("demo_family/atoms.py")
+    assert atom["argument_names"] == ["values"]

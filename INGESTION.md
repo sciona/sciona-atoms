@@ -195,22 +195,31 @@ overwrite.
 
 ## Default Output Layout
 
-New atoms use the per-atom directory layout:
+New atoms use a per-family directory layout. A family is a logical grouping of
+related atoms that share imports, dependencies, and conceptual scope. A single
+`atoms.py` and `witnesses.py` can — and typically should — contain multiple
+atoms that belong to the same family.
 
 ```text
 src/sciona/atoms/
   <domain>/
     __init__.py
-    <atom_name>/
+    <family_name>/
       __init__.py
-      atoms.py
-      witnesses.py
+      atoms.py             # may contain multiple @register_atom functions
+      witnesses.py         # witnesses for all atoms in the family
       state_models.py      # only when state is real and durable
       cdg.json
       matches.json         # when matcher grounding exists
       references.json      # when scholarly/provenance metadata exists
       uncertainty.json     # when perturbation analysis has been run
 ```
+
+Group atoms into families when they share obvious structure: similar imports,
+common helper functions, related mathematical concepts, or decomposition from
+the same upstream source. Do not create a separate directory per atom when
+the atoms naturally cohere — this avoids module sprawl and keeps shared
+dependencies visible.
 
 This layout is the same in every sibling repo. The `src/sciona/atoms/` prefix
 is shared across all repos via PEP 420 namespacing — the `<domain>/` level is

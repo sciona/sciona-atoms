@@ -407,6 +407,9 @@ def _base_entry_from_callable(atom_name: str, *, import_roots: Sequence[str] = (
         raise ValueError(f"Invalid atom name {atom_name!r}")
     with _temporary_import_roots(import_roots, module_name=module_name):
         module = importlib.import_module(module_name)
+        if not hasattr(module, symbol_name):
+            module = importlib.import_module(f"{module_name}.atoms")
+            module_name = module.__name__
     target = getattr(module, symbol_name)
     unwrapped = inspect.unwrap(target)
     signature = inspect.signature(target)
