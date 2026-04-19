@@ -1,0 +1,61 @@
+# Remediation Reingest Source Map
+
+Generated on 2026-04-19 from `REMEDIATION.md`.
+
+This is a simple source map for remediation-held atoms that should be reingested from scratch with newer tooling. When a vendored upstream clone is present locally, the source reference points there. When no separate upstream clone/source function was found locally, the reference points at the closest local source artifact that produced or defines the current atom.
+
+| Atom | Source file + line |
+| --- | --- |
+| `sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.metropolishmctransition` | `../ageo-atoms/third_party/mini-mcmc/src/hmc.rs:296` |
+| `sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.runsamplingloop` | `../ageo-atoms/third_party/mini-mcmc/src/hmc.rs:137` |
+| `sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.collectposteriorchain` | `../ageo-atoms/third_party/mini-mcmc/src/hmc.rs:222` |
+| `sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.runnutstransitions` | `../ageo-atoms/third_party/mini-mcmc/src/nuts.rs:457` |
+| `sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts.nuts_recursive_tree_build` | `../ageo-atoms/third_party/mini-mcmc/src/nuts.rs:764` |
+| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.aees.metropolishastingstransitionkernel` | `../ageo-atoms/third_party/mcmc/src/aees.cpp:30` |
+| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.aees.targetlogkerneloracle` | `../ageo-atoms/third_party/mcmc/examples/armadillo/aees_mixture.cpp:60` |
+| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.de.build_de_transition_kernel` | `../ageo-atoms/third_party/mcmc/src/de.cpp:30` |
+| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.hmc.buildhmckernelfromlogdensityoracle` | `../ageo-atoms/third_party/mcmc/src/hmc.cpp:30` |
+| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.mala.mala_proposal_adjustment` | `../ageo-atoms/third_party/mcmc/include/mcmc/mala.ipp:32` |
+| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.mcmc_algos.dispatch_mcmc_algorithm` | `../ageo-atoms/third_party/mcmc/include/mcmc.hpp:35` |
+| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build` | `../ageo-atoms/third_party/mcmc/include/mcmc/nuts.ipp:99` |
+| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel` | `../ageo-atoms/third_party/mcmc/src/rmhmc.cpp:30` |
+| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rwmh.constructrandomwalkmetropoliskernel` | `../ageo-atoms/third_party/mcmc/src/rwmh.cpp:30` |
+| `sciona.atoms.signal_processing.e2e_ppg.kazemi_wrapper.wrapperpredictionsignalcomputation` | `../ageo-atoms/third_party/E2E-PPG/kazemi_peak_detection.py:69` |
+| `sciona.atoms.signal_processing.biosppy.svm_proc.assess_classification` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:1954` |
+| `sciona.atoms.signal_processing.biosppy.svm_proc.assess_runs` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2055` |
+| `sciona.atoms.signal_processing.biosppy.svm_proc.combination` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2181` |
+| `sciona.atoms.signal_processing.biosppy.svm_proc.cross_validation` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2304` |
+| `sciona.atoms.signal_processing.biosppy.svm_proc.get_auth_rates` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:1641` |
+| `sciona.atoms.signal_processing.biosppy.svm_proc.get_id_rates` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:1751` |
+| `sciona.atoms.signal_processing.biosppy.svm_proc.get_subject_results` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:589` |
+| `sciona.atoms.signal_processing.biosppy.svm_proc.majority_rule` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2255` |
+| `sciona.atoms.bio.mint.axial_attention.row_self_attention` | `../ageo-atoms/third_party/mint/mint/axial_attention.py:12` |
+| `sciona.atoms.bio.mint.axial_attention.rowselfattention` | `../ageo-atoms/third_party/mint/mint/axial_attention.py:12` |
+| `sciona.atoms.bio.molecular_docking.greedy_mapping_d12.construct_mapping_state_via_greedy_expansion` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/greedy_lattice_mapping.py:193` |
+| `sciona.atoms.bio.molecular_docking.greedy_mapping_d12.orchestrate_generation_and_validate` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/greedy_lattice_mapping.py:258` |
+| `sciona.atoms.bio.molecular_docking.greedy_subgraph.greedy_maximum_subgraph` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/greedy_subgraph_vv.py:556` |
+| `sciona.atoms.bio.molecular_docking.map_to_udg.graphtoudgmapping` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/utils/graph_register.py:14` |
+| `sciona.atoms.bio.molecular_docking.quantum_solver.adiabaticquantumsampler` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:138` |
+| `sciona.atoms.bio.molecular_docking.quantum_solver.quantumproblemdefinition` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` |
+| `sciona.atoms.bio.molecular_docking.quantum_solver.solutionextraction` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:241` |
+| `sciona.atoms.bio.molecular_docking.quantum_solver_d12.adiabaticpulseassembler` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:81` |
+| `sciona.atoms.bio.molecular_docking.quantum_solver_d12.interactionboundscomputer` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:48` |
+| `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumcircuitsampler` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:138` |
+| `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumsolutionextractor` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:241` |
+| `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumsolverorchestrator` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` |
+| `sciona.atoms.fintech.quantfin.tdma_solver_d12.cotraversevec` | `../ageo-atoms/third_party/quantfin/src/Quant/Math/Utilities.hs:48` |
+| `sciona.atoms.fintech.quantfin.tdma_solver_d12.tdmasolver` | `../ageo-atoms/third_party/quantfin/src/Quant/Math/Utilities.hs:13` |
+| `sciona.atoms.fintech.institutional_quant_engine.fractional_diff.fractional_differentiator` | `../ageo-atoms/third_party/Institutional-Quant-Engine/research_math/34_fractional_diff_stationarity.py:15` |
+| `sciona.atoms.fintech.institutional_quant_engine.pin_model.pinlikelihoodevaluation` | `../ageo-atoms/third_party/Institutional-Quant-Engine/execution_hft/41_pin_informed_trading.py:7` |
+| `sciona.atoms.fintech.institutional_quant_engine.pin_model.pinlikelihoodevaluator` | `../ageo-atoms/third_party/Institutional-Quant-Engine/execution_hft/41_pin_informed_trading.py:7` |
+| `sciona.atoms.fintech.institutional_quant_engine.wash_trade.detect_wash_trade_rings` | `../ageo-atoms/third_party/Institutional-Quant-Engine/ops_compliance/50_trade_surveillance_wash_graph.py:17` |
+| `sciona.atoms.robotics.pronto.torque_adjustment.torqueadjustmentidentitystage` | `../ageo-atoms/third_party/pronto/pronto_biped_core/include/pronto_biped_core/legodo_module.hpp:8` |
+| `sciona.atoms.physics.pasqal.docking.quantum_mwis_solver` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` |
+| `sciona.atoms.scipy.sparse_graph.all_pairs_shortest_path` | `/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/scipy/sparse/csgraph/__init__.py:189` |
+| `sciona.atoms.scipy.sparse_graph.graph_fourier_transform` | `src/sciona/atoms/scipy/sparse_graph.py:105` |
+| `sciona.atoms.scipy.sparse_graph.graph_laplacian` | `/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/scipy/sparse/csgraph/_laplacian.py:13` |
+| `sciona.atoms.scipy.sparse_graph.heat_kernel_diffusion` | `src/sciona/atoms/scipy/sparse_graph.py:172` |
+| `sciona.atoms.scipy.sparse_graph.inverse_graph_fourier_transform` | `src/sciona/atoms/scipy/sparse_graph.py:143` |
+| `sciona.atoms.scipy.sparse_graph.minimum_spanning_tree` | `/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/scipy/sparse/csgraph/__init__.py:196` |
+| `sciona.atoms.scipy.sparse_graph.single_source_shortest_path` | `/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/scipy/sparse/csgraph/__init__.py:189` |
+| `sciona.atoms.scipy.stats.norm` | `/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/scipy/stats/_continuous_distns.py:394` |

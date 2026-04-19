@@ -83,28 +83,6 @@ Evidence as of 2026-04-19:
 
 ## Signal Processing
 
-### `sciona.atoms.expansion.signal_event_rate` held pubrev-013 rows
-
-Status: keep the listed rows unpublished for now.
-
-Held atoms:
-- `sciona.atoms.expansion.signal_event_rate.reject_outlier_intervals`
-- `sciona.atoms.expansion.signal_event_rate.remove_signal_jumps`
-
-Why they are blocked:
-- `remove_signal_jumps` advertises step-discontinuity removal, but the current implementation returns the original waveform whenever first-difference MAD is near zero. A simple piecewise-constant waveform with one large step is therefore unchanged despite matching the public contract's main use case.
-- `reject_outlier_intervals` advertises removal of implausible event intervals, but the current implementation only drops an interior event when both adjacent intervals are outside the MAD envelope. Common single-extra-event and zero-MAD interval cases are retained unchanged.
-- Both helpers are conservative and may remain useful internally, but their current public names imply stronger correction semantics than the source establishes.
-
-Proposed fixes:
-1. For `remove_signal_jumps`, detect large absolute steps even when MAD is zero, or narrow the contract to noisy-signal jump correction only.
-2. For `reject_outlier_intervals`, define whether the atom removes spurious extra events, missed-event gaps, both, or only double-sided local anomalies.
-3. Add behavior tests for piecewise-constant steps, noisy steps, single extra events, missed-event gaps, and zero-MAD interval streams before reentering publication review.
-
-Evidence as of 2026-04-19:
-- The `pubrev-013` signal-event-rate provider wave advanced only `assess_signal_quality`, `detect_peaks_in_signal`, `compute_event_rate_smoothed`, `compute_event_rate_median_smoothed`, and `estimate_event_rate_from_signal`.
-- Focused tests demonstrate the held atoms retain common zero-MAD cases that their public names imply should be corrected.
-
 ### `e2e_ppg.kazemi_wrapper.wrapperpredictionsignalcomputation`
 
 Status: keep unpublished for now.
@@ -166,28 +144,6 @@ Evidence as of 2026-04-16:
 - The comparison established semantic mismatch for `get_id_rates` and a runtime failure for `combination` on ordinary list-valued classifier results.
 
 ## Bio
-
-### `hpdb`
-
-Status: keep the listed iterator rows unpublished for now.
-
-Held atoms:
-- `sciona.atoms.bio.hpdb.iterate_pdb_atoms`
-- `sciona.atoms.bio.hpdb.iterate_pdb_residues`
-
-Why they are blocked:
-- Both implementations are explicit deferred stubs that return `iter([])` and therefore do not traverse Protein Data Bank atoms or residues.
-- Neither atom accepts a PDB structure, file, parser, repository handle, or dataset input, even though the public names and descriptions promise PDB traversal.
-- The functions annotate `element` as `Optional[str]`, but the icontract precondition rejects `None`; this conflicts with the optional-filter description.
-
-Proposed fixes:
-1. Replace the empty iterators with source-aligned PDB atom/residue traversal over an explicit PDB source input.
-2. Define and test element-filter semantics, including whether the filter is optional.
-3. Reconcile function signatures, CDG metadata, docstrings, and behavior tests before reentering publication review.
-
-Evidence as of 2026-04-19:
-- The `pubrev-064` HPDB review held both rows after direct source review.
-- Provider tests document the current empty-iterator behavior and optional-parameter contract drift.
 
 ### `sciona.atoms.bio.mint.axial_attention` RowSelfAttention rows
 
