@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "node_id": "conditional_statistics_root",
+      "name": "conditional_statistics",
+      "description": "Conditional distribution statistics for additive noise model causal diagnostics",
+      "status": "decomposed",
+      "children": [
+        "conditional_noise_entropy_variance",
+        "conditional_noise_skewness_variance",
+        "conditional_noise_kurtosis_variance",
+        "conditional_distribution_similarity"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "conditional_noise_entropy_variance",
+      "name": "conditional_noise_entropy_variance",
+      "description": "Std of conditional entropy of Y|X=x across bins, normalized by log(n_bins_y)",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str, ffactor: int = 3, maxdev: int = 3, minc: int = 10) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "ty", "type_desc": "str", "required": true},
+        {"name": "ffactor", "type_desc": "int", "required": false},
+        {"name": "maxdev", "type_desc": "int", "required": false},
+        {"name": "minc", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
+    },
+    {
+      "node_id": "conditional_noise_skewness_variance",
+      "name": "conditional_noise_skewness_variance",
+      "description": "Std of conditional skewness of Y|X=x across bins",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str, ffactor: int = 3, maxdev: int = 3, minc: int = 8) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "ty", "type_desc": "str", "required": true},
+        {"name": "ffactor", "type_desc": "int", "required": false},
+        {"name": "maxdev", "type_desc": "int", "required": false},
+        {"name": "minc", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
+    },
+    {
+      "node_id": "conditional_noise_kurtosis_variance",
+      "name": "conditional_noise_kurtosis_variance",
+      "description": "Std of conditional kurtosis of Y|X=x across bins",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str, ffactor: int = 3, maxdev: int = 3, minc: int = 8) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "ty", "type_desc": "str", "required": true},
+        {"name": "ffactor", "type_desc": "int", "required": false},
+        {"name": "maxdev", "type_desc": "int", "required": false},
+        {"name": "minc", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
+    },
+    {
+      "node_id": "conditional_distribution_similarity",
+      "name": "conditional_distribution_similarity",
+      "description": "Shape variation of conditional distributions P(Y|X=x) via mean-centered histograms with cross-correlation alignment",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str, ffactor: int = 2, maxdev: int = 3, minc: int = 12) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "ty", "type_desc": "str", "required": true},
+        {"name": "ffactor", "type_desc": "int", "required": false},
+        {"name": "maxdev", "type_desc": "int", "required": false},
+        {"name": "minc", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/jarfo/cause-effect",
+    "source_license": "Apache-2.0",
+    "competition": "Kaggle Cause-Effect Pairs (2nd place)",
+    "dependencies": ["sciona.atoms.causal_inference.feature_primitives.discretize_and_bin"]
+  }
+}
