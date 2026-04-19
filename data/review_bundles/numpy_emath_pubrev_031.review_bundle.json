@@ -1,0 +1,343 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.numpy_emath.pubrev_031.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "numpy_emath_pubrev_031",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "catalog_ready",
+  "authoritative_sources": [
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/numpy/emath.py"
+    },
+    {
+      "kind": "local_probe",
+      "path": "src/sciona/probes/numpy/emath.py"
+    },
+    {
+      "kind": "local_witness",
+      "path": "src/sciona/atoms/numpy/witnesses.py"
+    },
+    {
+      "kind": "local_references",
+      "path": "src/sciona/atoms/numpy/references.json"
+    },
+    {
+      "kind": "local_references",
+      "path": "data/references/registry.json"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_emath_behavior.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_emath_references_metadata.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_emath_review_bundle.py"
+    },
+    {
+      "kind": "upstream_docs",
+      "path": "https://numpy.org/doc/stable/reference/routines.emath.html"
+    },
+    {
+      "kind": "upstream_source",
+      "path": "https://github.com/numpy/numpy/blob/v2.4.2/numpy/lib/_scimath_impl.py"
+    },
+    {
+      "kind": "installed_package",
+      "module": "numpy.emath",
+      "upstream_version": "2.4.2",
+      "path": "numpy.emath"
+    }
+  ],
+  "limitations": [
+    "Audit covers direct wrapper behavior against installed NumPy 2.4.2 signatures, official NumPy emath documentation, and official scimath source.",
+    "Wrappers intentionally reject None inputs with icontract violations before NumPy dispatch.",
+    "Numerical branch cuts, warnings, broadcasting, and scalar-vs-array return behavior are delegated to upstream NumPy emath/scimath."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/numpy_emath_pubrev_031.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "sciona.atoms.numpy.emath.log",
+      "atom_name": "sciona.atoms.numpy.emath.log",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/emath.py",
+        "src/sciona/probes/numpy/emath.py",
+        "src/sciona/atoms/numpy/witnesses.py",
+        "src/sciona/atoms/numpy/references.json",
+        "data/references/registry.json",
+        "tests/test_numpy_emath_behavior.py",
+        "tests/test_numpy_emath_references_metadata.py",
+        "tests/test_numpy_emath_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 6,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Previous zero-input precondition drift was remediated to match NumPy emath log semantics.",
+        "None input is rejected before NumPy dispatch."
+      ],
+      "acceptability_score": 92,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 4,
+      "parity_case_count": 4,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.emath",
+        "function": "log",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy emath log API; source applies _fix_real_lt_zero before numpy.log."
+      },
+      "limitations": [
+        "The wrapper rejects None inputs before NumPy dispatch.",
+        "Floating-point warnings and branch-cut behavior are upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_emath_pubrev_031.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.emath.log10",
+      "atom_name": "sciona.atoms.numpy.emath.log10",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/emath.py",
+        "src/sciona/probes/numpy/emath.py",
+        "src/sciona/atoms/numpy/witnesses.py",
+        "src/sciona/atoms/numpy/references.json",
+        "data/references/registry.json",
+        "tests/test_numpy_emath_behavior.py",
+        "tests/test_numpy_emath_references_metadata.py",
+        "tests/test_numpy_emath_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 6,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Previous zero-input precondition drift was remediated to match NumPy emath log10 semantics.",
+        "None input is rejected before NumPy dispatch."
+      ],
+      "acceptability_score": 92,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 4,
+      "parity_case_count": 4,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.emath",
+        "function": "log10",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy emath log10 API; source applies _fix_real_lt_zero before numpy.log10."
+      },
+      "limitations": [
+        "The wrapper rejects None inputs before NumPy dispatch.",
+        "Floating-point warnings and branch-cut behavior are upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_emath_pubrev_031.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.emath.logn",
+      "atom_name": "sciona.atoms.numpy.emath.logn",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/emath.py",
+        "src/sciona/probes/numpy/emath.py",
+        "src/sciona/atoms/numpy/witnesses.py",
+        "src/sciona/atoms/numpy/references.json",
+        "data/references/registry.json",
+        "tests/test_numpy_emath_behavior.py",
+        "tests/test_numpy_emath_references_metadata.py",
+        "tests/test_numpy_emath_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 7,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Previous base and zero-input precondition drift was remediated to match NumPy emath logn semantics.",
+        "None inputs are rejected before NumPy dispatch."
+      ],
+      "acceptability_score": 91,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 5,
+      "parity_case_count": 5,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.emath",
+        "function": "logn",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy emath logn API; source applies _fix_real_lt_zero to x and n before numpy.log(x) / numpy.log(n)."
+      },
+      "limitations": [
+        "The wrapper rejects None inputs before NumPy dispatch.",
+        "Floating-point warnings and branch-cut behavior are upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_emath_pubrev_031.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.emath.power",
+      "atom_name": "sciona.atoms.numpy.emath.power",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/emath.py",
+        "src/sciona/probes/numpy/emath.py",
+        "src/sciona/atoms/numpy/witnesses.py",
+        "src/sciona/atoms/numpy/references.json",
+        "data/references/registry.json",
+        "tests/test_numpy_emath_behavior.py",
+        "tests/test_numpy_emath_references_metadata.py",
+        "tests/test_numpy_emath_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 5,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Witness dtype metadata was remediated for negative-base complex promotion and negative-exponent float promotion.",
+        "None inputs are rejected before NumPy dispatch."
+      ],
+      "acceptability_score": 93,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 5,
+      "parity_case_count": 5,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.emath",
+        "function": "power",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy emath power API; source applies _fix_real_lt_zero to x and _fix_int_lt_zero to p before numpy.power."
+      },
+      "limitations": [
+        "The wrapper rejects None inputs before NumPy dispatch.",
+        "Broadcasting and numerical power behavior are upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_emath_pubrev_031.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.emath.sqrt",
+      "atom_name": "sciona.atoms.numpy.emath.sqrt",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/emath.py",
+        "src/sciona/probes/numpy/emath.py",
+        "src/sciona/atoms/numpy/witnesses.py",
+        "src/sciona/atoms/numpy/references.json",
+        "data/references/registry.json",
+        "tests/test_numpy_emath_behavior.py",
+        "tests/test_numpy_emath_references_metadata.py",
+        "tests/test_numpy_emath_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 5,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Witness dtype metadata was remediated for positive integer square-root float promotion.",
+        "None input is rejected before NumPy dispatch."
+      ],
+      "acceptability_score": 93,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 3,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.emath",
+        "function": "sqrt",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy emath sqrt API; source applies _fix_real_lt_zero before numpy.sqrt."
+      },
+      "limitations": [
+        "The wrapper rejects None inputs before NumPy dispatch.",
+        "Complex branch behavior is upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_emath_pubrev_031.review_bundle.json"
+    }
+  ]
+}

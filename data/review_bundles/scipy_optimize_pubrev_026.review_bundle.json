@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.scipy_optimize.pubrev_026.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "scipy_optimize_pubrev_026",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass_with_limits",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "catalog_ready",
+  "authoritative_sources": [
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/scipy/optimize.py"
+    },
+    {
+      "kind": "local_witness",
+      "path": "src/sciona/atoms/scipy/witnesses.py"
+    },
+    {
+      "kind": "local_probe",
+      "path": "src/sciona/probes/scipy/optimize.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_scipy_optimize_global_wrappers.py"
+    },
+    {
+      "kind": "upstream_docs",
+      "path": "https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.shgo.html"
+    },
+    {
+      "kind": "upstream_docs",
+      "path": "https://docs.scipy.org/doc/scipy-1.16.1/reference/generated/scipy.optimize.differential_evolution.html"
+    },
+    {
+      "kind": "upstream_source",
+      "path": "https://raw.githubusercontent.com/scipy/scipy/v1.17.0/scipy/optimize/_shgo.py"
+    },
+    {
+      "kind": "upstream_source",
+      "path": "https://raw.githubusercontent.com/scipy/scipy/v1.16.1/scipy/optimize/_differentialevolution.py"
+    },
+    {
+      "kind": "reference_registry",
+      "path": "data/references/registry.json"
+    }
+  ],
+  "limitations": [
+    "Audit covers wrapper signature and forwarding parity against installed SciPy 1.17.1 plus official SciPy documentation/source; numerical convergence, global optimality, and performance remain upstream SciPy behavior.",
+    "Witness metadata describes the optimizer result vector shape inferred from bounds; it does not model OptimizeResult scalar diagnostics such as fun, nit, nfev, success, or message."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/scipy_optimize_pubrev_026.review_bundle.json",
+  "rows": [
+    {
+      "atom_name": "sciona.atoms.scipy.optimize.shgo",
+      "atom_key": "sciona.atoms.scipy.optimize.shgo",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/scipy/optimize.py",
+        "src/sciona/atoms/scipy/witnesses.py",
+        "src/sciona/probes/scipy/optimize.py",
+        "tests/test_scipy_optimize_import_smoke.py",
+        "tests/test_scipy_optimize_probes.py",
+        "tests/test_scipy_optimize_global_wrappers.py",
+        "data/references/registry.json"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 8,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Global optimizer results are stochastic or problem-dependent for many objectives; wrapper audit verifies API forwarding rather than optimizer proof obligations."
+      ],
+      "acceptability_score": 88,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 6,
+      "has_references": true,
+      "references_status": "pass",
+      "reference_ids": [
+        "scipy2020",
+        "endres2018shgo"
+      ],
+      "upstream_symbols": {
+        "module": "scipy.optimize",
+        "function": "shgo",
+        "language": "python",
+        "installed_version": "1.17.1",
+        "notes": "Direct wrapper around scipy.optimize.shgo with constraints default and workers keyword aligned to installed SciPy and official docs."
+      },
+      "provenance_evidence": [
+        "Installed SciPy 1.17.1 signature: shgo(func, bounds, args=(), constraints=None, n=100, iters=1, callback=None, minimizer_kwargs=None, options=None, sampling_method='simplicial', *, workers=1).",
+        "Official SciPy docs/source show the same public keyword surface and OptimizeResult return contract."
+      ],
+      "uncertainty_evidence": [
+        "No local reimplementation of SHGO internals is present; correctness depends on upstream SciPy.",
+        "Global optimality guarantees depend on objective assumptions and selected sampling method."
+      ],
+      "limitations": [
+        "Wrapper exposes SciPy OptimizeResult directly; witness only summarizes result.x shape from bounds."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/scipy_optimize_pubrev_026.review_bundle.json"
+    },
+    {
+      "atom_name": "sciona.atoms.scipy.optimize.differential_evolution",
+      "atom_key": "sciona.atoms.scipy.optimize.differential_evolution",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/scipy/optimize.py",
+        "src/sciona/atoms/scipy/witnesses.py",
+        "src/sciona/probes/scipy/optimize.py",
+        "tests/test_scipy_optimize_import_smoke.py",
+        "tests/test_scipy_optimize_probes.py",
+        "tests/test_scipy_optimize_global_wrappers.py",
+        "data/references/registry.json"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 8,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Differential evolution is stochastic and convergence depends on objective, bounds, strategy, and random generator; wrapper audit verifies API forwarding rather than optimizer proof obligations."
+      ],
+      "acceptability_score": 88,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 7,
+      "has_references": true,
+      "references_status": "pass",
+      "reference_ids": [
+        "scipy2020",
+        "storn1997de"
+      ],
+      "upstream_symbols": {
+        "module": "scipy.optimize",
+        "function": "differential_evolution",
+        "language": "python",
+        "installed_version": "1.17.1",
+        "notes": "Direct wrapper around scipy.optimize.differential_evolution with rng, keyword-only integrality/vectorized, and legacy seed compatibility aligned to installed SciPy."
+      },
+      "provenance_evidence": [
+        "Installed SciPy 1.17.1 signature: differential_evolution(func, bounds, args=(), strategy='best1bin', maxiter=1000, popsize=15, tol=0.01, mutation=(0.5, 1), recombination=0.7, rng=None, callback=None, disp=False, polish=True, init='latinhypercube', atol=0, updating='immediate', workers=1, constraints=(), x0=None, *, integrality=None, vectorized=False, seed=None).",
+        "Official SciPy docs/source show the same public keyword surface and OptimizeResult return contract."
+      ],
+      "uncertainty_evidence": [
+        "No local reimplementation of differential evolution internals is present; correctness depends on upstream SciPy.",
+        "Repeatability depends on rng or seed use, and SciPy forbids specifying both simultaneously."
+      ],
+      "limitations": [
+        "Wrapper exposes SciPy OptimizeResult directly; witness only summarizes result.x shape from bounds."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/scipy_optimize_pubrev_026.review_bundle.json"
+    }
+  ]
+}

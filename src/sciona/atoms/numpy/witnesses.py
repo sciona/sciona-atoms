@@ -56,6 +56,34 @@ def _as_array_or_scalar(
     )
 
 
+def _dtype_is_complex(dtype: str) -> bool:
+    return "complex" in dtype or dtype in {"csingle", "cdouble", "clongdouble"}
+
+
+def _dtype_is_integer_like(dtype: str) -> bool:
+    return dtype.startswith("int") or dtype.startswith("uint") or dtype in {"bool", "bool_"}
+
+
+def _emath_real_dtype(dtype: str) -> str:
+    if _dtype_is_complex(dtype):
+        return dtype
+    if dtype.startswith("float"):
+        return dtype
+    return "float64"
+
+
+def _emath_complex_dtype(dtype: str) -> str:
+    if dtype in {"float16", "float32", "int8", "int16", "uint8", "uint16", "complex64", "csingle"}:
+        return "complex64"
+    return "complex128"
+
+
+def _may_contain_negative_real(arr: AbstractArray) -> bool:
+    if _dtype_is_complex(arr.dtype):
+        return False
+    return arr.min_val is None or arr.min_val < 0.0
+
+
 def witness_np_array(
     object: AbstractValue,  # noqa: A002
     dtype: Any = None,
@@ -212,9 +240,9 @@ def witness_np_reshape(
 def witness_np_emath_sqrt(x: AbstractValue) -> AbstractArray | AbstractScalar:
     """Describe elementwise square-root output, widening to complex when needed."""
     arr = _as_array_meta(x)
-    is_real_nonnegative = arr.min_val is not None and arr.min_val >= 0.0
-    out_dtype = arr.dtype if is_real_nonnegative else "complex128"
-    min_val = 0.0 if is_real_nonnegative else None
+    promotes_complex = _may_contain_negative_real(arr)
+    out_dtype = _emath_complex_dtype(arr.dtype) if promotes_complex else _emath_real_dtype(arr.dtype)
+    min_val = 0.0 if not promotes_complex and not _dtype_is_complex(arr.dtype) else None
     return _as_array_or_scalar(
         arr.shape,
         dtype=out_dtype,
@@ -226,7 +254,7 @@ def witness_np_emath_sqrt(x: AbstractValue) -> AbstractArray | AbstractScalar:
 def witness_np_emath_log(x: AbstractValue) -> AbstractArray | AbstractScalar:
     """Describe elementwise natural-log output, widening to complex when needed."""
     arr = _as_array_meta(x)
-    out_dtype = arr.dtype if (arr.min_val is not None and arr.min_val > 0.0) else "complex128"
+    out_dtype = _emath_complex_dtype(arr.dtype) if _may_contain_negative_real(arr) else _emath_real_dtype(arr.dtype)
     return _as_array_or_scalar(arr.shape, dtype=out_dtype)
 
 
@@ -237,9 +265,10 @@ def witness_np_emath_log10(x: AbstractValue) -> AbstractArray | AbstractScalar:
 
 def witness_np_emath_logn(n: AbstractValue, x: AbstractValue) -> AbstractArray | AbstractScalar:
     """Describe elementwise logarithm output under an arbitrary base."""
-    _ = _as_array_meta(n)
+    base = _as_array_meta(n)
     arr = _as_array_meta(x)
-    out_dtype = arr.dtype if (arr.min_val is not None and arr.min_val > 0.0) else "complex128"
+    promotes_complex = _may_contain_negative_real(arr) or _may_contain_negative_real(base)
+    out_dtype = _emath_complex_dtype(arr.dtype) if promotes_complex else _emath_real_dtype(arr.dtype)
     return _as_array_or_scalar(arr.shape, dtype=out_dtype)
 
 
@@ -249,7 +278,16 @@ def witness_np_emath_power(
 ) -> AbstractArray | AbstractScalar:
     """Describe elementwise power output while preserving the input shape."""
     arr = _as_array_meta(x)
-    return _as_array_or_scalar(arr.shape, dtype=arr.dtype)
+    power_arr = _as_array_meta(p) if isinstance(p, (AbstractArray, AbstractScalar)) else None
+    if _may_contain_negative_real(arr):
+        out_dtype = _emath_complex_dtype(arr.dtype)
+    elif power_arr is not None and _dtype_is_integer_like(arr.dtype) and (
+        power_arr.min_val is None or power_arr.min_val < 0.0
+    ):
+        out_dtype = "float64"
+    else:
+        out_dtype = arr.dtype
+    return _as_array_or_scalar(arr.shape, dtype=out_dtype)
 
 
 def witness_np_linalg_solve(

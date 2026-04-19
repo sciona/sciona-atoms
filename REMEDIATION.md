@@ -146,6 +146,28 @@ Evidence as of 2026-04-19:
 - The `pubrev-064` HPDB review held both rows after direct source review.
 - Provider tests document the current empty-iterator behavior and optional-parameter contract drift.
 
+### `sciona.atoms.bio.mint.axial_attention` RowSelfAttention rows
+
+Status: keep the listed axial-attention rows unpublished for now.
+
+Held atoms:
+- `sciona.atoms.bio.mint.axial_attention.row_self_attention`
+- `sciona.atoms.bio.mint.axial_attention.rowselfattention`
+
+Why they are blocked:
+- The current wrappers are generic 2D/3D scaled dot-product attention approximations, not source-aligned MINT `RowSelfAttention`.
+- Upstream MINT uses a parameterized `torch.nn.Module` over 4D MSA tensors with `q_proj`, `k_proj`, `v_proj`, `out_proj`, row aggregation, and different padding/mask semantics.
+- The NumPy row has no upstream MINT callable to substantiate a MINT RowSelfAttention claim.
+
+Proposed fixes:
+1. Replace the torch row with a source-aligned RowSelfAttention module/core API that accepts or owns projection parameters and 4D MSA tensors.
+2. Add behavior tests for upstream shape contracts, projection behavior, row aggregation, padding masks, and batched forward behavior.
+3. Either remove/re-scope the NumPy row as generic attention with independent provenance, or provide a clearly documented source-aligned NumPy replay that does not claim to be upstream MINT RowSelfAttention.
+
+Evidence as of 2026-04-19:
+- The `pubrev-019` MINT review held these rows after direct comparison with upstream `mint/axial_attention.py` at commit `79a9956b80e221066a3007bb156e8e986cba6190`.
+- Provider review tests assert both rows remain remediation-only while the safe MINT subset advances.
+
 ### `molecular_docking.greedy_mapping_d12.construct_mapping_state_via_greedy_expansion`
 
 Status: keep unpublished for now.

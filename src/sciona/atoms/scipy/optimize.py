@@ -230,13 +230,15 @@ def shgo_global_optimization(
     func: Callable[..., float],
     bounds: list[tuple[float, float]],
     args: tuple = (),
-    constraints: list[dict] | dict | tuple = (),
+    constraints: list[dict] | dict | tuple | None = None,
     n: int = 100,
     iters: int = 1,
     callback: Callable | None = None,
     minimizer_kwargs: dict | None = None,
     options: dict | None = None,
     sampling_method: str | Callable = "simplicial",
+    *,
+    workers: int | Callable = 1,
 ) -> scipy.optimize.OptimizeResult:
     """Find a global minimum using SHGO."""
     return scipy.optimize.shgo(
@@ -250,6 +252,7 @@ def shgo_global_optimization(
         minimizer_kwargs=minimizer_kwargs,
         options=options,
         sampling_method=sampling_method,
+        workers=workers,
     )
 
 @register_atom(
@@ -280,33 +283,37 @@ def differential_evolution_optimization(
     workers: int | Callable = 1,
     constraints: list[dict] | dict | tuple | None = (),
     x0: np.ndarray | None = None,
+    *,
     integrality: np.ndarray | None = None,
     vectorized: bool = False,
+    seed: int | np.random.RandomState | np.random.Generator | None = None,
 ) -> scipy.optimize.OptimizeResult:
     """Find a global minimum using differential evolution."""
-    return scipy.optimize.differential_evolution(
-        func,
-        bounds,
-        args=args,
-        strategy=strategy,
-        maxiter=maxiter,
-        popsize=popsize,
-        tol=tol,
-        mutation=mutation,
-        recombination=recombination,
-        rng=rng,
-        callback=callback,
-        disp=disp,
-        polish=polish,
-        init=init,
-        atol=atol,
-        updating=updating,
-        workers=workers,
-        constraints=constraints,
-        x0=x0,
-        integrality=integrality,
-        vectorized=vectorized,
-    )
+    kwargs = {
+        "args": args,
+        "strategy": strategy,
+        "maxiter": maxiter,
+        "popsize": popsize,
+        "tol": tol,
+        "mutation": mutation,
+        "recombination": recombination,
+        "rng": rng,
+        "callback": callback,
+        "disp": disp,
+        "polish": polish,
+        "init": init,
+        "atol": atol,
+        "updating": updating,
+        "workers": workers,
+        "constraints": constraints,
+        "x0": x0,
+        "integrality": integrality,
+        "vectorized": vectorized,
+    }
+    if seed is not None:
+        kwargs.pop("rng")
+        kwargs["seed"] = seed
+    return scipy.optimize.differential_evolution(func, bounds, **kwargs)
 
 shgoglobaloptimization = shgo_global_optimization
 differentialevolutionoptimization = differential_evolution_optimization

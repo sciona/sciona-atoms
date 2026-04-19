@@ -35,6 +35,12 @@ def _leading_len(x: AbstractArray) -> int:
     return x.shape[0] if x.shape else 1
 
 
+def _bounds_len(bounds: AbstractArray | Sequence[Any]) -> int:
+    if isinstance(bounds, AbstractArray):
+        return bounds.shape[0] if bounds.shape else 1
+    return len(bounds)
+
+
 def witness_scipy_quad(
     func: Any,
     a: float,
@@ -344,26 +350,74 @@ def witness_scipy_norm(
 # ---------------------------------------------------------------------------
 
 def witness_shgoglobaloptimization(
-    func: AbstractArray, bounds: AbstractArray, args: AbstractArray,
-    constraints: AbstractArray, n: AbstractArray, iters: AbstractArray,
-    callback: AbstractArray, minimizer_kwargs: AbstractArray,
-    options: AbstractArray, sampling_method: AbstractArray,
+    func: Any,
+    bounds: AbstractArray | Sequence[Any],
+    args: tuple = (),
+    constraints: Any = None,
+    n: int = 100,
+    iters: int = 1,
+    callback: Any = None,
+    minimizer_kwargs: dict | None = None,
+    options: dict | None = None,
+    sampling_method: str | Any = "simplicial",
+    *,
+    workers: int | Any = 1,
 ) -> AbstractArray:
-    """Shape-and-type check for shgo global optimization."""
-    return AbstractArray(shape=func.shape, dtype="float64")
+    """Describe the SHGO minimizer vector."""
+    _ = (func, args, constraints, n, iters, callback, minimizer_kwargs, options, sampling_method, workers)
+    return AbstractArray(shape=(_bounds_len(bounds),), dtype="float64")
 
 
 def witness_differentialevolutionoptimization(
-    func: AbstractArray, bounds: AbstractArray, args: AbstractArray,
-    strategy: AbstractArray, maxiter: AbstractArray, popsize: AbstractArray,
-    tol: AbstractArray, mutation: AbstractArray, recombination: AbstractArray,
-    seed: AbstractArray, callback: AbstractArray, disp: AbstractArray,
-    polish: AbstractArray, init: AbstractArray, atol: AbstractArray,
-    updating: AbstractArray, workers: AbstractArray,
-    constraints: AbstractArray, x0: AbstractArray,
+    func: Any,
+    bounds: AbstractArray | Sequence[Any],
+    args: tuple = (),
+    strategy: str | Any = "best1bin",
+    maxiter: int = 1000,
+    popsize: int = 15,
+    tol: float = 0.01,
+    mutation: float | tuple[float, float] = (0.5, 1.0),
+    recombination: float = 0.7,
+    rng: Any = None,
+    callback: Any = None,
+    disp: bool = False,
+    polish: bool = True,
+    init: str | AbstractArray = "latinhypercube",
+    atol: float = 0.0,
+    updating: str = "immediate",
+    workers: int | Any = 1,
+    constraints: Any = (),
+    x0: AbstractArray | None = None,
+    *,
+    integrality: AbstractArray | None = None,
+    vectorized: bool = False,
+    seed: Any = None,
 ) -> AbstractArray:
-    """Shape-and-type check for differential evolution optimization."""
-    return AbstractArray(shape=func.shape, dtype="float64")
+    """Describe the differential-evolution minimizer vector."""
+    _ = (
+        func,
+        args,
+        strategy,
+        maxiter,
+        popsize,
+        tol,
+        mutation,
+        recombination,
+        rng,
+        callback,
+        disp,
+        polish,
+        init,
+        atol,
+        updating,
+        workers,
+        constraints,
+        x0,
+        integrality,
+        vectorized,
+        seed,
+    )
+    return AbstractArray(shape=(_bounds_len(bounds),), dtype="float64")
 
 
 # ---------------------------------------------------------------------------
