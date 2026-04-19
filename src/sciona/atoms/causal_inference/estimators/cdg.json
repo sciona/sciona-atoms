@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    {
+      "node_id": "estimators_root",
+      "name": "estimators",
+      "description": "Classifier-agnostic prediction patterns for pairwise causal direction estimation",
+      "status": "decomposed",
+      "children": [
+        "symmetrized_prediction_fusion",
+        "two_stage_independence_direction",
+        "left_right_decomposed_prediction",
+        "weighted_ensemble_combination"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "symmetrized_prediction_fusion",
+      "name": "symmetrized_prediction_fusion",
+      "description": "Enforce antisymmetry on paired causal predictions: score(A,B) = -score(B,A)",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(predictions: NDArray[np.float64]) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "predictions", "type_desc": "NDArray[np.float64]", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "two_stage_independence_direction",
+      "name": "two_stage_independence_direction",
+      "description": "Multiplicative gating: P(dependent) * direction_score for causal scoring",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(independence_scores: NDArray[np.float64], direction_scores: NDArray[np.float64], symmetrize: bool = True) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "independence_scores", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "direction_scores", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "symmetrize", "type_desc": "bool", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "left_right_decomposed_prediction",
+      "name": "left_right_decomposed_prediction",
+      "description": "Difference of P(X->Y) and P(Y->X) from two separate classifiers",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(left_scores: NDArray[np.float64], right_scores: NDArray[np.float64], symmetrize: bool = True) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "left_scores", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "right_scores", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "symmetrize", "type_desc": "bool", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "weighted_ensemble_combination",
+      "name": "weighted_ensemble_combination",
+      "description": "Weighted linear combination of multiple estimator predictions",
+      "concept_type": "custom",
+      "status": "atomic",
+      "type_signature": "(prediction_arrays: list[NDArray[np.float64]], weights: NDArray[np.float64] | None = None) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "prediction_arrays", "type_desc": "list[NDArray[np.float64]]", "required": true},
+        {"name": "weights", "type_desc": "NDArray[np.float64] | None", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/jarfo/cause-effect",
+    "source_license": "Apache-2.0",
+    "competition": "Kaggle Cause-Effect Pairs (2nd place)"
+  }
+}
