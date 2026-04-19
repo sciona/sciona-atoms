@@ -1,0 +1,438 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.inference.small_families.pubrev_058_066_067_075.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "inference_small_families_pubrev_058_066_067_075",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "catalog_ready",
+  "authoritative_sources": [
+    {
+      "kind": "local_source",
+      "path": "src/sciona/atoms/inference/advancedvi/core.py"
+    },
+    {
+      "kind": "local_source",
+      "path": "src/sciona/atoms/inference/conjugate_priors/beta_binom/atoms.py"
+    },
+    {
+      "kind": "local_source",
+      "path": "src/sciona/atoms/inference/jax_advi/optimize_advi/atoms.py"
+    },
+    {
+      "kind": "local_source",
+      "path": "src/sciona/atoms/inference/bayes_rs/bernoulli.py"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "data/references/registry.json"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_inference_small_families_pubrev_058_066_067_075.py"
+    }
+  ],
+  "limitations": [
+    "AdvancedVI and JAX ADVI rows are catalog-ready as deterministic, NumPy-backed educational variational-inference kernels, not full replacements for upstream Julia or JAX packages.",
+    "The conjugate-prior rows cover binary Bernoulli observations with Beta hyperparameters and optional non-negative observation weights.",
+    "The Bernoulli oracle returns numerically clipped finite log likelihoods at boundary probabilities."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/inference_small_families_pubrev_058_066_067_075.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "sciona.atoms.inference.advancedvi.core.evaluate_log_probability_density",
+      "atom_name": "sciona.atoms.inference.advancedvi.core.evaluate_log_probability_density",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/advancedvi/core.py",
+        "src/sciona/atoms/inference/advancedvi/references.json",
+        "data/references/registry.json",
+        "tests/test_inference_small_families_pubrev_058_066_067_075.py"
+      ],
+      "limitations": [
+        "Scores a diagonal Gaussian parameterized by concatenated [mu, log_sigma]; it is not a generic distribution-dispatch logpdf."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/inference_small_families_pubrev_058_066_067_075.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 24,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "The atom is a narrow diagonal-Gaussian log-density utility with explicit shape validation.",
+        "Focused tests cover numeric parity and invalid variational parameter shape."
+      ],
+      "acceptability_score": 82,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 10,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Scores a diagonal Gaussian parameterized by concatenated [mu, log_sigma]; it is not a generic distribution-dispatch logpdf."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.advancedvi.core.gradient_oracle_evaluation",
+      "atom_name": "sciona.atoms.inference.advancedvi.core.gradient_oracle_evaluation",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/advancedvi/core.py",
+        "src/sciona/atoms/inference/advancedvi/references.json",
+        "data/references/registry.json",
+        "tests/test_inference_small_families_pubrev_058_066_067_075.py"
+      ],
+      "limitations": [
+        "Uses central finite differences over NumPy arrays; adtype is accepted for API compatibility but does not select an AD backend."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/inference_small_families_pubrev_058_066_067_075.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 28,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "The atom preserves explicit objective/state/RNG threading while using a local finite-difference gradient implementation.",
+        "Focused tests cover matrix-shaped parameters, restructuring, objective value, and state preservation."
+      ],
+      "acceptability_score": 80,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 10,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Uses central finite differences over NumPy arrays; adtype is accepted for API compatibility but does not select an AD backend."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.advancedvi.core.optimizationlooporchestration",
+      "atom_name": "sciona.atoms.inference.advancedvi.core.optimizationlooporchestration",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/advancedvi/core.py",
+        "src/sciona/atoms/inference/advancedvi/references.json",
+        "data/references/registry.json",
+        "tests/test_inference_small_families_pubrev_058_066_067_075.py"
+      ],
+      "limitations": [
+        "Runs a caller-provided step loop or an L-BFGS-B minimization fallback; it does not implement the full AdvancedVI optimizer stack."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/inference_small_families_pubrev_058_066_067_075.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 28,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "The atom is scoped to bounded optimizer orchestration with explicit RNG state threading.",
+        "Focused tests cover SciPy fallback convergence and output state consistency."
+      ],
+      "acceptability_score": 80,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 10,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Runs a caller-provided step loop or an L-BFGS-B minimization fallback; it does not implement the full AdvancedVI optimizer stack."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.conjugate_priors.beta_binom.posterior_randmodel",
+      "atom_name": "sciona.atoms.inference.conjugate_priors.beta_binom.posterior_randmodel",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/conjugate_priors/beta_binom/atoms.py",
+        "src/sciona/atoms/inference/conjugate_priors/beta_binom/references.json",
+        "data/references/registry.json",
+        "tests/test_inference_small_families_pubrev_058_066_067_075.py"
+      ],
+      "limitations": [
+        "Treats G as upstream API context and performs the Beta-Bernoulli sufficient-statistic update over data only."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/inference_small_families_pubrev_058_066_067_075.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 20,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "The atom implements the closed-form Beta posterior update using binary sufficient statistics.",
+        "Focused tests cover posterior counts and invalid non-binary observations."
+      ],
+      "acceptability_score": 88,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 10,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Treats G as upstream API context and performs the Beta-Bernoulli sufficient-statistic update over data only."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.conjugate_priors.beta_binom.posterior_randmodel_weighted",
+      "atom_name": "sciona.atoms.inference.conjugate_priors.beta_binom.posterior_randmodel_weighted",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/conjugate_priors/beta_binom/atoms.py",
+        "src/sciona/atoms/inference/conjugate_priors/beta_binom/references.json",
+        "data/references/registry.json",
+        "tests/test_inference_small_families_pubrev_058_066_067_075.py"
+      ],
+      "limitations": [
+        "Implements a weighted pseudo-count update and requires one finite non-negative weight per binary observation."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/inference_small_families_pubrev_058_066_067_075.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 22,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "The atom implements the weighted closed-form Beta posterior pseudo-count update.",
+        "Focused tests cover weighted counts and weight/data shape validation."
+      ],
+      "acceptability_score": 86,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 10,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Implements a weighted pseudo-count update and requires one finite non-negative weight per binary observation."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.jax_advi.optimize_advi.meanfieldvariationalfit",
+      "atom_name": "sciona.atoms.inference.jax_advi.optimize_advi.meanfieldvariationalfit",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/jax_advi/optimize_advi/atoms.py",
+        "src/sciona/atoms/inference/jax_advi/optimize_advi/references.json",
+        "data/references/registry.json",
+        "tests/test_inference_small_families_pubrev_058_066_067_075.py"
+      ],
+      "limitations": [
+        "Uses a fixed-seed Monte Carlo ELBO estimate and SciPy optimizer rather than the unavailable upstream jax_advi package."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/inference_small_families_pubrev_058_066_067_075.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "medium",
+      "risk_score": 34,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "The atom now runs without a missing external jax_advi dependency and preserves mean-field ADVI shape, ELBO, and RNG semantics.",
+        "Focused tests cover optimization movement toward a simple posterior, positive scales, objective finiteness, and RNG state."
+      ],
+      "acceptability_score": 78,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 10,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Uses a fixed-seed Monte Carlo ELBO estimate and SciPy optimizer rather than the unavailable upstream jax_advi package."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.jax_advi.optimize_advi.posteriordrawsampling",
+      "atom_name": "sciona.atoms.inference.jax_advi.optimize_advi.posteriordrawsampling",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/jax_advi/optimize_advi/atoms.py",
+        "src/sciona/atoms/inference/jax_advi/optimize_advi/references.json",
+        "data/references/registry.json",
+        "tests/test_inference_small_families_pubrev_058_066_067_075.py"
+      ],
+      "limitations": [
+        "Samples independently from diagonal mean-field factors and applies optional per-draw transforms; correlated posterior structure is outside scope."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/inference_small_families_pubrev_058_066_067_075.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "medium",
+      "risk_score": 32,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "The atom provides deterministic seed-threaded posterior draws from positive mean-field scales.",
+        "Focused tests cover reproducibility, output shape, transform application, and RNG advancement."
+      ],
+      "acceptability_score": 80,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 10,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Samples independently from diagonal mean-field factors and applies optional per-draw transforms; correlated posterior structure is outside scope."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.bayes_rs.bernoulli.bernoulli_probabilistic_oracle",
+      "atom_name": "sciona.atoms.inference.bayes_rs.bernoulli.bernoulli_probabilistic_oracle",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/bayes_rs/bernoulli.py",
+        "src/sciona/atoms/inference/bayes_rs/references.json",
+        "data/references/registry.json",
+        "tests/test_inference_small_families_pubrev_058_066_067_075.py"
+      ],
+      "limitations": [
+        "Computes elementwise Bernoulli log likelihoods only; distribution sampling and posterior updates are outside scope."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/inference_small_families_pubrev_058_066_067_075.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 18,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "The atom is a direct vectorized Bernoulli log-likelihood oracle with explicit domain validation.",
+        "Focused tests cover numeric likelihood values and invalid observations."
+      ],
+      "acceptability_score": 90,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 10,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Computes elementwise Bernoulli log likelihoods only; distribution sampling and posterior updates are outside scope."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    }
+  ]
+}

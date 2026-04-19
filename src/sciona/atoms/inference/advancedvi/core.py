@@ -33,11 +33,17 @@ def evaluate_log_probability_density(q: np.ndarray, z: np.ndarray) -> float:
     Returns:
         Scalar log-density value.
     """
-    d = len(q) // 2
-    mu = q[:d]
-    log_sigma = q[d:]
+    q_arr = np.asarray(q, dtype=np.float64).ravel()
+    z_arr = np.asarray(z, dtype=np.float64).ravel()
+    if q_arr.size == 0 or q_arr.size % 2 != 0:
+        raise ValueError("q must contain [mu, log_sigma] with equal non-empty halves")
+    d = q_arr.size // 2
+    if z_arr.size != d:
+        raise ValueError("z dimensionality must match the variational mean vector")
+    mu = q_arr[:d]
+    log_sigma = q_arr[d:]
     sigma = np.exp(log_sigma)
-    return float(-0.5 * d * np.log(2 * np.pi) - np.sum(log_sigma) - 0.5 * np.sum(((z - mu) / sigma) ** 2))
+    return float(-0.5 * d * np.log(2 * np.pi) - np.sum(log_sigma) - 0.5 * np.sum(((z_arr - mu) / sigma) ** 2))
 
 
 @register_atom(witness_optimizationlooporchestration)
@@ -117,7 +123,7 @@ def gradient_oracle_evaluation(
     grad = np.zeros_like(params_arr)
     value = float(obj(params_arr))
 
-    for i in range(len(params_arr)):
+    for i in np.ndindex(params_arr.shape):
         params_plus = params_arr.copy()
         params_minus = params_arr.copy()
         params_plus[i] += eps

@@ -1,16 +1,32 @@
 {
   "schema_version": "1.1",
   "atoms": {
-    "sciona.atoms.mcmc_foundational.advancedhmc.trajectory.buildnutstree@sciona/atoms/mcmc_foundational/advancedhmc/trajectory/atoms.py:20": {
+    "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.buildnutstree": {
       "references": [
+        {
+          "ref_id": "hoffman2014nuts",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "build_tree",
+              "buildnutstree"
+            ],
+            "confidence": "high",
+            "notes": "Canonical NUTS reference for doubling trajectory trees and No-U-Turn termination."
+          }
+        },
         {
           "ref_id": "advancedhmc2020",
           "match_metadata": {
             "similarity_score": null,
             "match_type": "manual",
-            "matched_nodes": [],
+            "matched_nodes": [
+              "build_tree",
+              "buildnutstree"
+            ],
             "confidence": "high",
-            "notes": "Upstream AdvancedHMC.jl package paper."
+            "notes": "Package paper for AdvancedHMC.jl trajectory construction."
           }
         },
         {
@@ -18,24 +34,56 @@
           "match_metadata": {
             "similarity_score": null,
             "match_type": "manual",
-            "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored AdvancedHMC.jl repository."
+            "matched_nodes": [
+              "build_tree",
+              "buildnutstree"
+            ],
+            "confidence": "medium",
+            "notes": "Repository-family attribution; this wrapper returns compact NumPy leaves rather than Julia BinaryTree objects."
           }
         }
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.mcmc_foundational.advancedhmc.trajectory.nutstransitionkernel@sciona/atoms/mcmc_foundational/advancedhmc/trajectory/atoms.py:64": {
+    "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.nutstransitionkernel": {
       "references": [
+        {
+          "ref_id": "hoffman2014nuts",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "transition",
+              "nutstransitionkernel"
+            ],
+            "confidence": "high",
+            "notes": "Canonical NUTS transition reference for momentum refresh, tree expansion, candidate selection, and diagnostics."
+          }
+        },
+        {
+          "ref_id": "neal2011hmc",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "transition",
+              "nutstransitionkernel"
+            ],
+            "confidence": "high",
+            "notes": "Canonical HMC reference for Hamiltonian dynamics and Metropolis-style energy diagnostics used by NUTS."
+          }
+        },
         {
           "ref_id": "advancedhmc2020",
           "match_metadata": {
             "similarity_score": null,
             "match_type": "manual",
-            "matched_nodes": [],
+            "matched_nodes": [
+              "transition",
+              "nutstransitionkernel"
+            ],
             "confidence": "high",
-            "notes": "Upstream AdvancedHMC.jl package paper."
+            "notes": "Package paper for AdvancedHMC.jl trajectory transitions."
           }
         },
         {
@@ -43,9 +91,12 @@
           "match_metadata": {
             "similarity_score": null,
             "match_type": "manual",
-            "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored AdvancedHMC.jl repository."
+            "matched_nodes": [
+              "transition",
+              "nutstransitionkernel"
+            ],
+            "confidence": "medium",
+            "notes": "Repository-family attribution; this wrapper is a compact local identity-mass NumPy transition, not a full Julia Trajectory object."
           }
         }
       ],

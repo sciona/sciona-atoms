@@ -9,6 +9,8 @@ from .bernoulli_witnesses import witness_bernoulli_probabilistic_oracle
 
 @register_atom(witness_bernoulli_probabilistic_oracle)
 @icontract.require(lambda p: isinstance(p, (float, int, np.number)), "p must be numeric")
+@icontract.require(lambda p: 0.0 <= float(p) <= 1.0, "p must satisfy 0 <= p <= 1")
+@icontract.require(lambda x: x is not None, "x cannot be None")
 @icontract.ensure(lambda result: result is not None, "result must not be None")
 def bernoulli_probabilistic_oracle(p: float, x: np.ndarray) -> np.ndarray:
     """Evaluate a Bernoulli distribution as a pure probabilistic oracle.
@@ -20,6 +22,8 @@ def bernoulli_probabilistic_oracle(p: float, x: np.ndarray) -> np.ndarray:
     Returns:
         Elementwise Bernoulli log-likelihood values.
     """
-    # Bernoulli log-likelihood: x*log(p) + (1-x)*log(1-p)
+    observations = np.asarray(x, dtype=np.float64)
+    if np.any(~np.isfinite(observations)) or np.any((observations != 0.0) & (observations != 1.0)):
+        raise ValueError("x must contain Bernoulli observations in {0, 1}")
     p_clamped = np.clip(float(p), 1e-15, 1.0 - 1e-15)
-    return x * np.log(p_clamped) + (1.0 - x) * np.log(1.0 - p_clamped)
+    return observations * np.log(p_clamped) + (1.0 - observations) * np.log(1.0 - p_clamped)

@@ -1,0 +1,246 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.mcmc_foundational.advancedhmc.pubrev_049.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "advancedhmc_pubrev_049",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass_with_limits",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "reviewed_with_limits",
+  "authoritative_sources": [
+    {
+      "kind": "local_source",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/integrator/atoms.py"
+    },
+    {
+      "kind": "local_source",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/trajectory/atoms.py"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/integrator/references.json"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/trajectory/references.json"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "data/references/registry.json"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_mcmc_foundational_advancedhmc_pubrev049.py"
+    },
+    {
+      "kind": "upstream_repository",
+      "repo": "https://github.com/TuringLang/AdvancedHMC.jl"
+    }
+  ],
+  "limitations": [
+    "Catalog readiness is scoped to compact pure-Python/NumPy identity-mass HMC and NUTS primitives.",
+    "The wrappers do not expose AdvancedHMC.jl PhasePoint, Hamiltonian, Trajectory, BinaryTree, sampler, or dynamic termination object types.",
+    "Gradients are finite-difference estimates over callable potential-energy oracles; dense mass matrices, adaptation, and JuliaCall parity are outside this review."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/advancedhmc_pubrev_049.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator.hamiltonianphasepointtransition",
+      "atom_name": "sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator.hamiltonianphasepointtransition",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/integrator/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/integrator/references.json",
+        "data/references/registry.json",
+        "tests/test_mcmc_foundational_advancedhmc_pubrev049.py"
+      ],
+      "limitations": [
+        "Implements one compact identity-mass leapfrog phase-point update over NumPy arrays; it is not a full AdvancedHMC.jl phase-point object transition."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/advancedhmc_pubrev_049.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "medium",
+      "risk_score": 34,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime_coverage": "medium"
+      },
+      "risk_reasons": [
+        "The update follows the expected half-kick/full-drift/half-kick structure with explicit tempering.",
+        "The local representation is intentionally narrower than AdvancedHMC.jl's typed Hamiltonian and PhasePoint objects."
+      ],
+      "acceptability_score": 78,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 3,
+      "parity_case_count": 8,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Implements one compact identity-mass leapfrog phase-point update over NumPy arrays; it is not a full AdvancedHMC.jl phase-point object transition."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator.temperingfactorcomputation",
+      "atom_name": "sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator.temperingfactorcomputation",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/integrator/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/integrator/references.json",
+        "data/references/registry.json",
+        "tests/test_mcmc_foundational_advancedhmc_pubrev049.py"
+      ],
+      "limitations": [
+        "Returns the scalar AdvancedHMC-style momentum multiplier only; it does not mutate or return momentum."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/advancedhmc_pubrev_049.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 18,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "The schedule exactly matches the upstream half-step multiplier pattern for compact inputs.",
+        "Focused tests cover early and late half-steps plus bounds rejection."
+      ],
+      "acceptability_score": 88,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 2,
+      "parity_case_count": 7,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Returns the scalar AdvancedHMC-style momentum multiplier only; it does not mutate or return momentum."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.buildnutstree",
+      "atom_name": "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.buildnutstree",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/trajectory/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/trajectory/references.json",
+        "data/references/registry.json",
+        "tests/test_mcmc_foundational_advancedhmc_pubrev049.py"
+      ],
+      "limitations": [
+        "Returns stacked compact phase-point leaves rather than AdvancedHMC.jl BinaryTree, sampler, and termination objects."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/advancedhmc_pubrev_049.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "medium",
+      "risk_score": 36,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime_coverage": "medium"
+      },
+      "risk_reasons": [
+        "The atom now builds finite leapfrog leaves in a requested direction and stops on energy divergence or a U-turn.",
+        "The return type is intentionally compact and narrower than AdvancedHMC.jl's BinaryTree."
+      ],
+      "acceptability_score": 76,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 2,
+      "parity_case_count": 5,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Returns stacked compact phase-point leaves rather than AdvancedHMC.jl BinaryTree, sampler, and termination objects."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.nutstransitionkernel",
+      "atom_name": "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.nutstransitionkernel",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/trajectory/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/advancedhmc/trajectory/references.json",
+        "data/references/registry.json",
+        "tests/test_mcmc_foundational_advancedhmc_pubrev049.py"
+      ],
+      "limitations": [
+        "Implements a compact identity-mass NUTS-shaped transition with finite-difference gradients; no adaptation, dense metrics, or AdvancedHMC.jl typed transition object is exposed."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/advancedhmc_pubrev_049.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "medium",
+      "risk_score": 40,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime_coverage": "medium"
+      },
+      "risk_reasons": [
+        "The transition samples momentum, expands a doubling tree, applies U-turn/divergence termination, and returns finite diagnostics.",
+        "The implementation is a local usage-equivalent educational primitive rather than full AdvancedHMC.jl runtime parity."
+      ],
+      "acceptability_score": 74,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 3,
+      "parity_case_count": 7,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Implements a compact identity-mass NUTS-shaped transition with finite-difference gradients; no adaptation, dense metrics, or AdvancedHMC.jl typed transition object is exposed."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    }
+  ]
+}
