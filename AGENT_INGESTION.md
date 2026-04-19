@@ -199,8 +199,12 @@ cannot capture.
 Follow the pattern in existing atoms. Every public atom must:
 
 - Use `@register_atom(witness_fn)` as the outermost decorator
-- Include `@icontract.require` preconditions (meaningful, not tautological)
-- Include `@icontract.ensure` postconditions
+- Include at least one `@icontract.require` precondition (meaningful, not tautological)
+- **Include at least one `@icontract.ensure` postcondition** — this is
+  enforced by `verify_contribution_rules.py` and will fail the validation
+  gate if missing. Every `@register_atom` function needs both `require` and
+  `ensure`. Common postconditions: `np.isfinite(result)`, `result >= 0`,
+  `len(result) > 0`, `0 <= result <= 1`.
 - Be fully type-annotated — no `Any` in public interfaces unless justified
 - Have an honest docstring describing what it computes, not boilerplate
 
@@ -222,6 +226,41 @@ without executing it.
 The CDG captures dependency structure between atoms in a family. Nodes
 represent atoms; edges represent data and state dependencies.
 
+**Every atomic node must have concrete `inputs` and `outputs`.** Without
+these, the IO backfill pipeline cannot generate `atom_io_specs` rows and the
+atom will not be publishable. This is the most common omission — do not skip
+it.
+
+For each atomic node:
+
+```json
+{
+  "node_id": "igci_asymmetry_score",
+  "name": "IGCI Asymmetry Score",
+  "status": "atomic",
+  "concept_type": "custom",
+  "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str) -> float",
+  "depth": 1,
+  "inputs": [
+    {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+    {"name": "tx", "type_desc": "str", "required": true},
+    {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+    {"name": "ty", "type_desc": "str", "required": true}
+  ],
+  "outputs": [
+    {"name": "result", "type_desc": "float"}
+  ]
+}
+```
+
+Rules:
+- Parameter names must match the real function parameters exactly
+- Use concrete `type_desc`: `NDArray[np.float64]`, `str`, `int`, `bool`,
+  `float`, `list[float] | None`
+- Required params: `"required": true`. Params with defaults: `"required": false`
+- Every node gets one output named `result` with the correct return type
+
+Additional checks:
 - Use `detect_cycles` to verify acyclicity
 - Use `validate_cdg_ir` if you have a full IR plan
 
@@ -491,14 +530,27 @@ def witness_igci_asymmetry_score(
 
 ### 6. Write cdg.json
 
+Every atomic node must have concrete `inputs` and `outputs` — without them the
+atom cannot be published:
+
 ```json
 {
   "nodes": [
     {"node_id": "causal_feature_primitives_root", "name": "Causal Feature Primitives",
-     "status": "decomposed", "children": ["igci_asymmetry_score"]},
+     "status": "decomposed", "children": ["igci_asymmetry_score"], "depth": 0},
     {"node_id": "igci_asymmetry_score", "name": "IGCI Asymmetry Score",
      "status": "atomic", "concept_type": "custom",
-     "type_signature": "(x: NDArray, tx: str, y: NDArray, ty: str) -> float"}
+     "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str) -> float",
+     "depth": 1,
+     "inputs": [
+       {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+       {"name": "tx", "type_desc": "str", "required": true},
+       {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+       {"name": "ty", "type_desc": "str", "required": true}
+     ],
+     "outputs": [
+       {"name": "result", "type_desc": "float"}
+     ]}
   ],
   "edges": [],
   "metadata": {"source": "agent_ingestion", "source_license": "Apache-2.0"}
