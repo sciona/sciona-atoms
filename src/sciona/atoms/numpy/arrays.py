@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from numbers import Integral
 from typing import Sequence
 
 import icontract
@@ -16,9 +17,15 @@ from sciona.atoms.numpy.witnesses import (
 )
 
 DTypeLike = np.dtype | type | str | None
-ShapeLike = int | Sequence[int]
+ShapeLike = Integral | Sequence[Integral]
 ScalarLike = float | int | complex | bool | np.number
 ArrayLike = np.ndarray | Sequence[ScalarLike] | ScalarLike
+
+
+def _shape_tuple(shape: ShapeLike) -> tuple[int, ...]:
+    if isinstance(shape, Integral):
+        return (int(shape),)
+    return tuple(int(dim) for dim in shape)
 
 
 def _check_dot_dims(a: ArrayLike, b: ArrayLike) -> bool:
@@ -28,13 +35,9 @@ def _check_dot_dims(a: ArrayLike, b: ArrayLike) -> bool:
         return True
     if a_arr.ndim == 1 and b_arr.ndim == 1:
         return a_arr.shape[0] == b_arr.shape[0]
-    if a_arr.ndim == 2 and b_arr.ndim == 2:
-        return a_arr.shape[1] == b_arr.shape[0]
-    if a_arr.ndim == 2 and b_arr.ndim == 1:
-        return a_arr.shape[1] == b_arr.shape[0]
-    if a_arr.ndim == 1 and b_arr.ndim == 2:
-        return a_arr.shape[0] == b_arr.shape[0]
-    return False
+    if b_arr.ndim == 1:
+        return a_arr.shape[-1] == b_arr.shape[0]
+    return a_arr.shape[-1] == b_arr.shape[-2]
 
 
 @register_atom(witness_np_array)  # type: ignore[untyped-decorator]
@@ -43,10 +46,13 @@ def _check_dot_dims(a: ArrayLike, b: ArrayLike) -> bool:
 def array(
     object: ArrayLike,  # noqa: A002
     dtype: DTypeLike = None,
-    copy: bool = True,
+    *,
+    copy: bool | None = True,
     order: str = "K",
     subok: bool = False,
     ndmin: int = 0,
+    ndmax: int = 0,
+    like: ArrayLike | None = None,
 ) -> np.ndarray:
     """Create a NumPy array."""
     return np.array(
@@ -56,22 +62,30 @@ def array(
         order=order,
         subok=subok,
         ndmin=ndmin,
+        ndmax=ndmax,
+        like=like,
     )
 
 
 @register_atom(witness_np_zeros)  # type: ignore[untyped-decorator]
 @icontract.require(
-    lambda shape: isinstance(shape, (int, tuple, list)),
+    lambda shape: isinstance(shape, (Integral, tuple, list)),
     "Shape must be an int or a sequence of ints",
 )
 @icontract.ensure(
-    lambda result, shape: result.shape
-    == (shape if isinstance(shape, tuple) else (shape,) if isinstance(shape, int) else tuple(shape)),
+    lambda result, shape: result.shape == _shape_tuple(shape),
     "Result shape must match requested shape",
 )
-def zeros(shape: ShapeLike, dtype: DTypeLike = float, order: str = "C") -> np.ndarray:
+def zeros(
+    shape: ShapeLike,
+    dtype: DTypeLike = None,
+    order: str = "C",
+    *,
+    device: str | None = None,
+    like: ArrayLike | None = None,
+) -> np.ndarray:
     """Return a new array of given shape and type, filled with zeros."""
-    return np.zeros(shape, dtype=dtype, order=order)
+    return np.zeros(shape, dtype=dtype, order=order, device=device, like=like)
 
 
 @register_atom(witness_np_dot)  # type: ignore[untyped-decorator]
@@ -104,10 +118,17 @@ def vstack(
 
 @register_atom(witness_np_reshape)  # type: ignore[untyped-decorator]
 @icontract.require(lambda a: a is not None, "Array must not be None")
-@icontract.ensure(lambda result, a: result.size == a.size, "Result size must match original array size")
-def reshape(a: np.ndarray, newshape: ShapeLike, order: str = "C") -> np.ndarray:
+@icontract.ensure(lambda result, a: result.size == np.asarray(a).size, "Result size must match original array size")
+def reshape(
+    a: ArrayLike,
+    /,
+    shape: ShapeLike,
+    order: str = "C",
+    *,
+    copy: bool | None = None,
+) -> np.ndarray:
     """Give an array a new shape without changing its data."""
-    return np.reshape(a, newshape, order=order)
+    return np.reshape(a, shape, order=order, copy=copy)
 
 
 __all__ = ["array", "zeros", "dot", "vstack", "reshape"]

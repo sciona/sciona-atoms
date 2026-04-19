@@ -319,9 +319,11 @@ def _flatten_row_bundle_entries(
         "review_limitations": _row_list_or_bundle_list(row, bundle, "limitations"),
         "review_required_actions": required_actions,
         "trust_blockers": blockers,
+        "blocking_findings": blockers,
         "authoritative_sources": _row_list_or_bundle_list(row, bundle, "authoritative_sources"),
         "review_record_path": str(row.get("review_record_path") or bundle.get("review_record_path") or record_path),
         "overall_verdict": _normalize_overall_verdict(normalized_trust, semantic_verdict, blockers),
+        "required_actions": required_actions,
     }
     if review_status == "approved":
         patch.update(

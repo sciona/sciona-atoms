@@ -59,10 +59,13 @@ def _as_array_or_scalar(
 def witness_np_array(
     object: AbstractValue,  # noqa: A002
     dtype: Any = None,
-    copy: bool = True,
+    *,
+    copy: bool | None = True,
     order: str = "K",
     subok: bool = False,
     ndmin: int = 0,
+    ndmax: int = 0,
+    like: AbstractValue | None = None,
 ) -> AbstractArray:
     """Describe `numpy.array` output metadata after optional rank promotion."""
     arr = _as_array_meta(object)
@@ -80,8 +83,11 @@ def witness_np_array(
 
 def witness_np_zeros(
     shape: ShapeLike,
-    dtype: Any = float,
+    dtype: Any = None,
     order: str = "C",
+    *,
+    device: str | None = None,
+    like: AbstractValue | None = None,
 ) -> AbstractArray:
     """Describe a zero-filled array with the requested shape and dtype."""
     return AbstractArray(
@@ -164,17 +170,19 @@ def witness_np_vstack(
 
 def witness_np_reshape(
     a: AbstractArray,
-    newshape: ShapeLike,
+    shape: ShapeLike,
     order: str = "C",
+    *,
+    copy: bool | None = None,
 ) -> AbstractArray:
     """Describe the reshaped array while preserving dtype and value bounds."""
     src_shape = a.shape
     src_total = _numel(src_shape)
-    tgt = list(_normalize_shape(newshape))
+    tgt = list(_normalize_shape(shape))
 
     unknown_count = tgt.count(-1)
     if unknown_count > 1:
-        raise ValueError("newshape can have at most one -1")
+        raise ValueError("shape can have at most one -1")
 
     if unknown_count == 1:
         known_prod = 1
@@ -185,12 +193,12 @@ def witness_np_reshape(
             inferred = 0
         else:
             if src_total % known_prod != 0:
-                raise ValueError("newshape is incompatible with input size")
+                raise ValueError("shape is incompatible with input size")
             inferred = src_total // known_prod
         tgt[tgt.index(-1)] = inferred
     else:
         if src_total != _numel(tuple(tgt)):
-            raise ValueError("newshape is incompatible with input size")
+            raise ValueError("shape is incompatible with input size")
 
     return AbstractArray(
         shape=tuple(tgt),

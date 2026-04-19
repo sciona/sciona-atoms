@@ -1,0 +1,312 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.numpy_arrays.pubrev_030.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "numpy_arrays_pubrev_030",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "catalog_ready",
+  "authoritative_sources": [
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/numpy/arrays.py"
+    },
+    {
+      "kind": "local_probe",
+      "path": "src/sciona/probes/numpy/arrays.py"
+    },
+    {
+      "kind": "local_references",
+      "path": "src/sciona/atoms/numpy/references.json"
+    },
+    {
+      "kind": "local_references",
+      "path": "data/references/registry.json"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_arrays_behavior.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_arrays_references_metadata.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_arrays_review_bundle.py"
+    },
+    {
+      "kind": "upstream_docs",
+      "path": "https://numpy.org/doc/stable/reference/routines.html"
+    }
+  ],
+  "limitations": [
+    "Audit covers direct wrapper behavior against installed NumPy 2.4.2 signatures and official NumPy routine documentation.",
+    "The array wrapper intentionally rejects None inputs before NumPy object-array conversion.",
+    "The array and zeros wrappers are reviewed for NumPy ndarray outputs; non-NumPy __array_function__ dispatch through like remains outside this publication scope.",
+    "Wrapper contracts may raise icontract violations before NumPy raises its own exception type for documented invalid inputs."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/numpy_arrays_pubrev_030.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "sciona.atoms.numpy.arrays.array",
+      "atom_name": "sciona.atoms.numpy.arrays.array",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/arrays.py",
+        "src/sciona/probes/numpy/arrays.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_arrays_behavior.py",
+        "tests/test_numpy_arrays_references_metadata.py",
+        "tests/test_numpy_arrays_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 8,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Wrapper intentionally rejects None inputs.",
+        "Non-NumPy like dispatch is outside reviewed scope."
+      ],
+      "acceptability_score": 90,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 3,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy",
+        "function": "array",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy array API with documented contract limits."
+      },
+      "limitations": [
+        "The wrapper rejects None inputs, while numpy.array(None) creates a zero-dimensional object array.",
+        "Non-NumPy __array_function__ dispatch through like is outside reviewed scope."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_arrays_pubrev_030.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.arrays.dot",
+      "atom_name": "sciona.atoms.numpy.arrays.dot",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/arrays.py",
+        "src/sciona/probes/numpy/arrays.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_arrays_behavior.py",
+        "tests/test_numpy_arrays_references_metadata.py",
+        "tests/test_numpy_arrays_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 4,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [],
+      "acceptability_score": 94,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 5,
+      "parity_case_count": 5,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy",
+        "function": "dot",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy dot API."
+      },
+      "limitations": [
+        "Numerical algorithm correctness is upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_arrays_pubrev_030.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.arrays.reshape",
+      "atom_name": "sciona.atoms.numpy.arrays.reshape",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/arrays.py",
+        "src/sciona/probes/numpy/arrays.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_arrays_behavior.py",
+        "tests/test_numpy_arrays_references_metadata.py",
+        "tests/test_numpy_arrays_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 5,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Previous newshape signature drift was remediated to the installed NumPy shape/copy signature."
+      ],
+      "acceptability_score": 93,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 3,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy",
+        "function": "reshape",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy reshape API using shape and copy parameters."
+      },
+      "limitations": [
+        "Numerical array reshaping behavior is upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_arrays_pubrev_030.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.arrays.vstack",
+      "atom_name": "sciona.atoms.numpy.arrays.vstack",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/arrays.py",
+        "src/sciona/probes/numpy/arrays.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_arrays_behavior.py",
+        "tests/test_numpy_arrays_references_metadata.py",
+        "tests/test_numpy_arrays_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 6,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Empty input is rejected by wrapper contract before NumPy dispatch."
+      ],
+      "acceptability_score": 92,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 2,
+      "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy",
+        "function": "vstack",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy vstack API."
+      },
+      "limitations": [
+        "Empty input raises an icontract violation before NumPy's own error path."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_arrays_pubrev_030.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.arrays.zeros",
+      "atom_name": "sciona.atoms.numpy.arrays.zeros",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/arrays.py",
+        "src/sciona/probes/numpy/arrays.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_arrays_behavior.py",
+        "tests/test_numpy_arrays_references_metadata.py",
+        "tests/test_numpy_arrays_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 7,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Non-NumPy like dispatch is outside reviewed scope.",
+        "Wrapper shape contract covers Python and NumPy integer shapes plus list/tuple shapes."
+      ],
+      "acceptability_score": 91,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 2,
+      "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy",
+        "function": "zeros",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy zeros API with documented contract limits."
+      },
+      "limitations": [
+        "Non-NumPy __array_function__ dispatch through like is outside reviewed scope.",
+        "Shape inputs outside Python and NumPy integers plus list/tuple sequences remain outside reviewed scope."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_arrays_pubrev_030.review_bundle.json"
+    }
+  ]
+}
