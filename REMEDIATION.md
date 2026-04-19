@@ -40,7 +40,7 @@ Evidence as of 2026-04-19:
 
 ## Signal Processing
 
-### `expansion.signal_event_rate` held pubrev-013 rows
+### `sciona.atoms.expansion.signal_event_rate` held pubrev-013 rows
 
 Status: keep the listed rows unpublished for now.
 
