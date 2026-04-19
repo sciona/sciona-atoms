@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "atoms": {
-    "sciona.atoms.mcmc_foundational.mini_mcmc.nuts_llm.initializenutsstate@sciona/atoms/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py:22": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.initializenutsstate@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py:22": {
       "references": [
         {
           "ref_id": "hoffman2014nuts",
@@ -10,7 +10,7 @@
             "match_type": "manual",
             "matched_nodes": [],
             "confidence": "high",
-            "notes": "Exact NUTS attribution."
+            "notes": "Canonical NUTS reference for initializing target log-density state, gradient information, acceptance target, and explicit stochastic state before transition building."
           }
         },
         {
@@ -19,14 +19,14 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
+            "confidence": "medium",
+            "notes": "Repository-family attribution; this wrapper is a local state initializer and not a full NUTS transition implementation."
           }
         }
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.mcmc_foundational.mini_mcmc.nuts_llm.runnutstransitions@sciona/atoms/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py:56": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.runnutstransitions@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py:56": {
       "references": [
         {
           "ref_id": "hoffman2014nuts",
@@ -34,8 +34,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Exact NUTS attribution."
+            "confidence": "low",
+            "notes": "Conceptual NUTS transition reference only; this atom is held because the current implementation performs a random walk and does not build no-u-turn trajectories."
           }
         },
         {
@@ -44,8 +44,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
+            "confidence": "low",
+            "notes": "Repository-family attribution only; publication requires replacing the placeholder transition loop with actual NUTS transitions."
           }
         }
       ],

@@ -16,8 +16,9 @@ from pathlib import Path
 from .witnesses import witness_initializenutsstate, witness_runnutstransitions
 
 @register_atom(witness_initializenutsstate)
-@icontract.require(lambda initial_positions: isinstance(initial_positions, (float, int, np.number)), "initial_positions must be numeric")
+@icontract.require(lambda initial_positions: initial_positions is not None, "initial_positions cannot be None")
 @icontract.require(lambda target_accept_p: isinstance(target_accept_p, (float, int, np.number)), "target_accept_p must be numeric")
+@icontract.require(lambda target_accept_p: 0.0 < float(target_accept_p) < 1.0, "target_accept_p must be in (0, 1)")
 @icontract.ensure(lambda result: all(r is not None for r in result), "InitializeNUTSState all outputs must not be None")
 def initializenutsstate(target: Callable[[np.ndarray], float], initial_positions: np.ndarray, target_accept_p: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
     """Build immutable No-U-Turn Sampler (NUTS) state from the target log-density, initial position, acceptance target, and explicit random number generator (RNG) key state.

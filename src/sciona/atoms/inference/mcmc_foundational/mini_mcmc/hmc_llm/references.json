@@ -1,22 +1,7 @@
 {
   "schema_version": "1.1",
   "atoms": {
-    "sciona.atoms.mcmc_foundational.mini_mcmc.hmc_llm.collectposteriorchain@sciona/atoms/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py:148": {
-      "references": [
-        {
-          "ref_id": "repo_mini_mcmc",
-          "match_metadata": {
-            "similarity_score": null,
-            "match_type": "manual",
-            "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
-          }
-        }
-      ],
-      "auto_attribution_runs": []
-    },
-    "sciona.atoms.mcmc_foundational.mini_mcmc.hmc_llm.hamiltoniantransitionkernel@sciona/atoms/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py:72": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.collectposteriorchain@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py:148": {
       "references": [
         {
           "ref_id": "neal2011hmc",
@@ -24,8 +9,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Exact HMC attribution."
+            "confidence": "low",
+            "notes": "Conceptual HMC chain-collection reference only; this atom is held because the current implementation records repeated state without applying a transition kernel."
           }
         },
         {
@@ -34,38 +19,83 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
+            "confidence": "low",
+            "notes": "Repository-family attribution only; publication requires replacing the placeholder collection loop with real transition calls."
           }
         }
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.mcmc_foundational.mini_mcmc.hmc_llm.initializehmckernelstate@sciona/atoms/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py:26": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.hamiltoniantransitionkernel@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py:72": {
       "references": [
+        {
+          "ref_id": "neal2011hmc",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [],
+            "confidence": "high",
+            "notes": "Canonical HMC reference for momentum refresh, leapfrog trajectory integration, Hamiltonian accept/reject, and RNG-state threading."
+          }
+        },
         {
           "ref_id": "repo_mini_mcmc",
           "match_metadata": {
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
+            "confidence": "medium",
+            "notes": "Repository-family attribution; this is a local minimal NumPy transition implementation with finite-difference gradients."
           }
         }
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.mcmc_foundational.mini_mcmc.hmc_llm.initializesamplerrng@sciona/atoms/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py:56": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.initializehmckernelstate@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py:26": {
       "references": [
+        {
+          "ref_id": "neal2011hmc",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [],
+            "confidence": "high",
+            "notes": "Canonical HMC reference for initializing chain state, kernel step size, leapfrog count, log-density, and gradient cache."
+          }
+        },
         {
           "ref_id": "repo_mini_mcmc",
           "match_metadata": {
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
+            "confidence": "medium",
+            "notes": "Repository-family attribution; this wrapper is a compact local initialization primitive."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.initializesamplerrng@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py:56": {
+      "references": [
+        {
+          "ref_id": "neal2011hmc",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [],
+            "confidence": "medium",
+            "notes": "HMC transition reproducibility requires explicit random-state handling; this atom provides the local seed-key representation used by the companion transition kernel."
+          }
+        },
+        {
+          "ref_id": "repo_mini_mcmc",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [],
+            "confidence": "medium",
+            "notes": "Repository-family attribution for explicit sampler RNG state."
           }
         }
       ],

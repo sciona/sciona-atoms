@@ -2,6 +2,42 @@
 
 This file tracks heavier-lift catalog debt that should not be papered over with relaxed publishability rules. These items need real semantic repair, better tests, or clearer scope before they should be promoted into the public catalog.
 
+## Inference
+
+### `mcmc_foundational.mini_mcmc` sampling and NUTS transition rows
+
+Status: keep the listed loop/tree transition rows unpublished for now.
+
+Held atoms:
+- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.metropolishmctransition`
+- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.runsamplingloop`
+- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.collectposteriorchain`
+- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.runnutstransitions`
+- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts.nuts_recursive_tree_build`
+
+Why they are blocked:
+- `metropolishmctransition` advertises a full HMC transition that samples momentum, invokes leapfrog, accepts/rejects, and returns an updated state. The implementation only consumes a precomputed proposal, samples an original momentum through hidden seed coupling, and preserves the previous gradient even after accepted moves.
+- `runsamplingloop` advertises repeated HMC transitions, but the current loop never calls a transition kernel and does not update the chain position.
+- `collectposteriorchain` advertises transition-kernel collection, but the current loop records the unchanged chain state and only advances an RNG seed.
+- `runnutstransitions` advertises NUTS transitions, but the current implementation performs a simple random-walk position update with no log-probability, leapfrog tree building, slice variable, U-turn criterion, divergence logic, or Metropolis correction.
+- `nuts_recursive_tree_build` advertises a NUTS trajectory object, but it returns only a rightmost position array and drops the trajectory metadata required for a semantically valid NUTS tree builder.
+
+What we verified:
+- The defensible mini-MCMC subset is limited to initialization helpers, the pure leapfrog proposal kernel, and the combined `hmc_llm.hamiltoniantransitionkernel`.
+- References were corrected to current `sciona.atoms.inference...` runtime FQDNs, with low-confidence conceptual-only attribution for held rows.
+- Focused pubrev-008 tests cover the safe subset and assert that held rows are absent from the catalog-ready review bundle.
+
+Proposed fixes:
+1. Replace `metropolishmctransition` with a contract that either accepts both original and proposed momenta explicitly, or make it a complete transition that samples momentum, invokes leapfrog internally, recomputes the accepted gradient, and returns consistent diagnostics.
+2. Replace `runsamplingloop` and `collectposteriorchain` with loops that accept a transition callable or log-probability oracle and actually thread state through repeated transitions before collecting samples.
+3. Replace `runnutstransitions` with a real NUTS transition implementation using slice variables, recursive tree expansion, no-u-turn checks, divergence checks, and acceptance-statistic accumulation.
+4. Replace `nuts_recursive_tree_build` with a structured trajectory return type containing left/right states, candidate proposal, valid count, stop/divergence flags, and acceptance statistics.
+5. Add behavior-level tests on a small Gaussian target before reentering publication review.
+
+Evidence as of 2026-04-19:
+- The pubrev-008 review held these rows instead of forcing publication through family-level MCMC metadata.
+- Local source inspection showed placeholder or semantically incomplete loop/tree behavior for the held atoms.
+
 ## Signal Processing
 
 ### `e2e_ppg.kazemi_wrapper.wrapperpredictionsignalcomputation`
@@ -63,6 +99,120 @@ Suggested remediation order:
 Evidence as of 2026-04-16:
 - Direct runtime comparisons were run locally against `biosppy.biometrics` using the matcher venv.
 - The comparison established semantic mismatch for `get_id_rates` and a runtime failure for `combination` on ordinary list-valued classifier results.
+
+## Bio
+
+### `molecular_docking.greedy_mapping_d12.construct_mapping_state_via_greedy_expansion`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The current implementation uses a simplified first-free-site placement path rather than the advertised D12/lattice placement semantics.
+- Publication should wait for explicit feasibility checks, deterministic seed handling, and preservation of the immutable mapping-state contract.
+
+### `molecular_docking.greedy_mapping_d12.orchestrate_generation_and_validate`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The current wrapper validates a supplied mapping state but does not drive iterative generation from `starting_node` or invoke the expansion stages implied by its public contract.
+
+### `molecular_docking.greedy_subgraph.greedy_maximum_subgraph`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The implementation greedily selects a high-score independent set by treating adjacency as conflicts.
+- The public name and metadata imply a connected maximum-weight subgraph selection contract that the current behavior does not establish.
+
+### `molecular_docking.map_to_udg.graphtoudgmapping`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The current spectral-layout heuristic can add edges and does not prove faithful mapping of the input graph into a unit-disk graph representation.
+- Publication needs either a semantically explicit UDG embedding contract or implementation changes that prove edge preservation.
+
+### `molecular_docking.quantum_solver.adiabaticquantumsampler`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The current path is a classical placeholder/approximation rather than the advertised quantum or adiabatic solver behavior.
+
+### `molecular_docking.quantum_solver.quantumproblemdefinition`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The implementation does not build the advertised Hamiltonian, pulse, or backend-specific simulation objects implied by the quantum-problem contract.
+
+### `molecular_docking.quantum_solver.solutionextraction`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The current extraction logic is tied to the placeholder classical solver path and should be re-reviewed only after the quantum-solver contract is repaired or renamed.
+
+Evidence as of 2026-04-19:
+- The `pubrev-005` molecular-docking wave advanced only the directly audited safe rows and held these seven atoms.
+- Focused behavior review found placeholder, over-broad classical stand-in, or semantic-drift behavior for the held rows.
+
+## Fintech
+
+### `institutional_quant_engine.fractional_diff.fractional_differentiator`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The current implementation is not identity-preserving for `d=0`.
+- With one retained weight, the loop assigns `series[i - 1]` to output index `i`, so the result is shifted rather than matching the input series.
+- Publishing under the current name would imply standard fractional-differentiation semantics that the implementation does not yet satisfy.
+
+Proposed fixes:
+1. Rework the fixed-width fractional-differentiation window so the current observation is included with the correct weight.
+2. Add behavior tests covering `d=0` identity behavior, deterministic low-order examples, and threshold truncation.
+3. Reenter review only after the corrected source path, references, uncertainty notes, and bundle row all agree.
+
+### `institutional_quant_engine.pin_model.pinlikelihoodevaluation`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The implementation returns a summed squared-error score against expected buy and sell counts.
+- The public name and docstring claim likelihood evaluation for the Probability of Informed Trading model.
+- A squared-error objective is not a PIN likelihood or log-likelihood and should not be published as one.
+
+### `institutional_quant_engine.pin_model.pinlikelihoodevaluator`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- This callable has the same semantic issue as `pinlikelihoodevaluation`.
+- It accepts a dictionary parameterization but still returns squared error rather than likelihood or log-likelihood.
+
+Proposed fixes:
+1. Implement the Easley-style PIN likelihood or log-likelihood with explicit parameter-domain validation.
+2. Add tests for scalar and vector buy/sell counts, invalid parameters, and finite likelihood behavior.
+3. If squared-error scoring is the intended primitive, rename the atom and rewrite its metadata instead of publishing it as PIN likelihood.
+
+### `institutional_quant_engine.wash_trade.detect_wash_trade_rings`
+
+Status: keep unpublished for now.
+
+Why it is blocked:
+- The current implementation checks adjacency-matrix powers only up to cycle length 5.
+- Larger directed wash-trading rings are silently missed despite the general detector name.
+- The return type is a float mask even though the docstring describes a Boolean participant mask.
+
+Proposed fixes:
+1. Replace bounded power scanning with complete directed-cycle detection, or narrow the public contract to explicitly detect only bounded-size rings.
+2. Return a Boolean mask if that is the intended public interface, or document and test numeric scores if a float output is intended.
+3. Add tests for cycles of length 2, 3, 5, and greater than 5 before reentering publication review.
+
+Evidence as of 2026-04-19:
+- The `pubrev-001` institutional-quant wave advanced the semantically defensible rows and held these four atoms.
+- Focused review found semantic drift in the fractional-differentiation, PIN, and wash-trade detection contracts.
 
 ## Robotics
 

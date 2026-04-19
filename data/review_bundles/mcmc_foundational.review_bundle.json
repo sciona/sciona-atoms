@@ -30,11 +30,24 @@
     },
     {
       "kind": "local_wrapper",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py"
+    },
+    {
+      "kind": "local_wrapper",
       "path": "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+    },
+    {
+      "kind": "remediation_notes",
+      "path": "REMEDIATION.md"
     }
   ],
   "limitations": [
-    "This bundle is scoped to the highest-evidence core MCMC rows and does not normalize the remaining legacy naming surface."
+    "This bundle is scoped to the highest-evidence core MCMC rows and deliberately excludes mini-MCMC loop/tree rows whose implementations are placeholder or semantically narrower than their advertised sampler contracts.",
+    "The approved mini-MCMC rows are lightweight NumPy implementations with finite-difference gradients and identity mass-matrix assumptions; they are catalog-ready as minimal educational primitives, not production-grade adaptive samplers."
   ],
   "blocking_findings": [],
   "required_actions": [],
@@ -101,37 +114,219 @@
       "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
     },
     {
-      "atom_key": "mcmc_foundational/mini_mcmc/hmc:initializehmcstate",
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.initializehmcstate",
       "review_status": "reviewed",
       "review_semantic_verdict": "pass",
       "review_developer_semantic_verdict": "pass_with_limits",
       "trust_readiness": "catalog_ready",
       "source_paths": [
         "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py",
-        "tests/test_mcmc_foundational_mini_mcmc_import_smoke.py"
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
       ],
-      "limitations": [],
+      "limitations": [
+        "Uses finite-difference gradients and an implicit identity mass matrix."
+      ],
       "blocking_findings": [],
       "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 22,
+      "risk_reasons": [
+        "Minimal local NumPy implementation rather than a direct upstream runtime dependency.",
+        "Focused tests cover shape, finite log-probability, finite gradient, and deterministic seed threading."
+      ],
+      "acceptability_score": 84,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
       "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
     },
     {
-      "atom_key": "mcmc_foundational/mini_mcmc/nuts_llm:initializenutsstate",
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.leapfrogproposalkernel",
       "review_status": "reviewed",
       "review_semantic_verdict": "pass",
       "review_developer_semantic_verdict": "pass_with_limits",
-      "trust_readiness": "needs_followup",
+      "trust_readiness": "catalog_ready",
       "source_paths": [
-        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py",
-        "tests/test_mcmc_foundational_mini_mcmc_import_smoke.py"
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
       ],
       "limitations": [
-        "Needs vendored or importable upstream signature evidence before it can be treated as fully ready."
+        "Pure proposal kernel only; caller is responsible for supplying the input momentum and downstream Metropolis acceptance.",
+        "Uses finite-difference gradients and an implicit identity mass matrix."
       ],
       "blocking_findings": [],
-      "required_actions": [
-        "add vendored or importable upstream signature evidence"
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 24,
+      "risk_reasons": [
+        "The implementation performs the expected half-kick/full-drift/half-kick leapfrog update for supplied position and momentum.",
+        "Focused tests cover finite Gaussian proposals and output layout."
       ],
+      "acceptability_score": 83,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.hamiltoniantransitionkernel",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+      ],
+      "limitations": [
+        "Single-chain, identity-mass, finite-difference HMC transition; no adaptive tuning or dense mass matrix support."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 26,
+      "risk_reasons": [
+        "The implementation samples momentum from explicit RNG state, integrates a Hamiltonian proposal, applies Metropolis acceptance, and returns a new RNG key.",
+        "Focused tests cover deterministic replay under identical seed and finite transition diagnostics."
+      ],
+      "acceptability_score": 82,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.initializehmckernelstate",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+      ],
+      "limitations": [
+        "Uses finite-difference gradients and encodes kernel metadata as a compact NumPy array."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 22,
+      "risk_reasons": [
+        "The implementation initializes position, cached log probability, finite-difference gradient, step size, leapfrog count, and dimensionality."
+      ],
+      "acceptability_score": 84,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.initializesamplerrng",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+      ],
+      "limitations": [
+        "Represents RNG state as a one-element NumPy integer array; this is sufficient for the local pure-state transition helpers but not a general PRNG abstraction."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "low"
+      },
+      "risk_score": 12,
+      "risk_reasons": [
+        "The behavior is intentionally small and deterministic: seed in, explicit RNG key array out."
+      ],
+      "acceptability_score": 90,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.initializenutsstate",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+      ],
+      "limitations": [
+        "Initializes NUTS-shaped state and explicit RNG key only; it does not by itself implement a NUTS transition.",
+        "Uses finite-difference gradients and a fixed initial step-size slot."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 24,
+      "risk_reasons": [
+        "The implementation evaluates target log probability, finite-difference gradient, acceptance target, initial step-size slot, and explicit seed-derived key.",
+        "The vector input contract was corrected during pubrev-008 so the runtime contract matches the implementation and docstring."
+      ],
+      "acceptability_score": 83,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
       "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
     }
   ]

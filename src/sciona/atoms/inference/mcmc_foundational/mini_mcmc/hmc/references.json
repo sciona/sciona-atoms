@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "atoms": {
-    "sciona.atoms.mcmc_foundational.mini_mcmc.hmc.initializehmcstate@sciona/atoms/mcmc_foundational/mini_mcmc/hmc/atoms.py:26": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.initializehmcstate@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:26": {
       "references": [
         {
           "ref_id": "neal2011hmc",
@@ -10,7 +10,7 @@
             "match_type": "manual",
             "matched_nodes": [],
             "confidence": "high",
-            "notes": "Exact HMC attribution."
+            "notes": "Canonical HMC reference for state initialization, cached log-density, gradient, integrator settings, and explicit random-state threading."
           }
         },
         {
@@ -19,14 +19,14 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
+            "confidence": "medium",
+            "notes": "Repository-family attribution; this wrapper is a lightweight local NumPy implementation rather than a direct upstream runtime call."
           }
         }
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.mcmc_foundational.mini_mcmc.hmc.leapfrogproposalkernel@sciona/atoms/mcmc_foundational/mini_mcmc/hmc/atoms.py:62": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.leapfrogproposalkernel@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:62": {
       "references": [
         {
           "ref_id": "neal2011hmc",
@@ -35,7 +35,7 @@
             "match_type": "manual",
             "matched_nodes": [],
             "confidence": "high",
-            "notes": "Exact HMC attribution."
+            "notes": "Canonical HMC reference for leapfrog half-kick/full-drift/half-kick trajectory integration."
           }
         },
         {
@@ -44,14 +44,14 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
+            "confidence": "medium",
+            "notes": "Repository-family attribution; the local implementation is usage-equivalent for a minimal finite-difference proposal kernel."
           }
         }
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.mcmc_foundational.mini_mcmc.hmc.metropolishmctransition@sciona/atoms/mcmc_foundational/mini_mcmc/hmc/atoms.py:110": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.metropolishmctransition@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:110": {
       "references": [
         {
           "ref_id": "neal2011hmc",
@@ -59,8 +59,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Exact HMC attribution."
+            "confidence": "low",
+            "notes": "Conceptual HMC accept/reject reference only; this atom is held because the implementation does not invoke the proposal kernel as its advertised contract states."
           }
         },
         {
@@ -69,14 +69,14 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
+            "confidence": "low",
+            "notes": "Repository-family attribution only; the current callable needs semantic repair before publication."
           }
         }
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.mcmc_foundational.mini_mcmc.hmc.runsamplingloop@sciona/atoms/mcmc_foundational/mini_mcmc/hmc/atoms.py:164": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.runsamplingloop@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:164": {
       "references": [
         {
           "ref_id": "neal2011hmc",
@@ -84,8 +84,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Exact HMC attribution."
+            "confidence": "low",
+            "notes": "Conceptual HMC sampling-loop reference only; this atom is held because the current loop does not call a transition kernel or update posterior state."
           }
         },
         {
@@ -94,8 +94,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "high",
-            "notes": "Upstream implementation is mapped to the vendored mini-mcmc repository."
+            "confidence": "low",
+            "notes": "Repository-family attribution only; the current callable is remediation-only until the loop applies real transitions."
           }
         }
       ],
