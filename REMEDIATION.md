@@ -38,6 +38,49 @@ Evidence as of 2026-04-19:
 - The pubrev-008 review held these rows instead of forcing publication through family-level MCMC metadata.
 - Local source inspection showed placeholder or semantically incomplete loop/tree behavior for the held atoms.
 
+### `mcmc_foundational.kthohr_mcmc` auto-generated MCMC wrapper rows
+
+Status: keep the listed KTHOHR MCMC rows unpublished for now.
+
+Held atoms:
+- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.aees.metropolishastingstransitionkernel`
+- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.aees.targetlogkerneloracle`
+- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.de.build_de_transition_kernel`
+- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.hmc.buildhmckernelfromlogdensityoracle`
+- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.mala.mala_proposal_adjustment`
+- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.mcmc_algos.dispatch_mcmc_algorithm`
+- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build`
+- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel`
+- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rwmh.constructrandomwalkmetropoliskernel`
+
+Why they are blocked:
+- The wrappers are explicitly marked “Auto-generated” and several expose placeholder or semantically drifted behavior relative to their public names and docstrings.
+- `aees.targetlogkerneloracle` is a hard-coded toy scoring function (`temper_val * sum(state_candidate)`) and does not accept or bind to a real target distribution/log-density oracle.
+- `aees.metropolishastingstransitionkernel` conflates “RNG key” with the sampler state: the only array input (`rng_key_in`) is treated as the current state vector and also used to seed randomness, so there is no explicit state-in input for an MH transition.
+- `mcmc_algos.dispatch_mcmc_algorithm` treats `log_target_density` as a flat numeric array and uses a proxy log-probability update (mean density signal times proposal delta) rather than evaluating an actual log-density oracle; this is not a defensible “dispatch” primitive.
+- `nuts.nuts_recursive_tree_build` returns only a position-like array while the docstring advertises a structured NUTS trajectory; it also contains explicit placeholder kinetic energy.
+- The witness modules do not substantiate the callable surfaces (several witnesses model oracles as `AbstractArray`/extra args rather than `AbstractSignal`/callables), so the witness system is not currently validating the advertised contracts.
+- File-backed publishability metadata is currently non-canonical for this family, compounding the semantic risk:
+  - `references.json` keys omit the `inference` namespace segment (and use stale `@sciona/atoms/...` paths), so reference backfill does not bind to the catalog FQDNs.
+  - The existing `data/review_bundles/mcmc_foundational.review_bundle.json` rows for `kthohr_mcmc` use non-FQDN `atom_key` values (path-like identifiers), which the manifest merge tool skips as “unresolved atoms”.
+  - The per-module `*_cdg.json` files sit next to `de.py`, `hmc.py`, etc., so the IO backfill’s `derive_atom_fqdn` logic cannot infer module-qualified FQDNs like `...kthohr_mcmc.de.build_de_transition_kernel` from these CDG file paths.
+
+Proposed fixes:
+1. Decide and document intended semantics:
+   - either real bindings to `kthohr/mcmc` (and ship/locate the compiled library + stable FFI), or
+   - explicitly scoped educational/minimal NumPy samplers with names/docstrings that do not claim full upstream parity.
+2. Repair the AEES row interfaces so state and RNG are explicit and separable (e.g., `(state_in, rng_in) -> (state_out, rng_out)`), and replace/remove `targetlogkerneloracle` unless it can bind to a real target oracle.
+3. Replace `dispatch_mcmc_algorithm` with an honest API: accept a log-density oracle (callable) and select among concrete kernel builders, or rename it to reflect the actual implemented behavior.
+4. Either implement a real NUTS tree builder returning a structured trajectory record (left/right states, candidate, stop/divergence flags, acceptance stats), or rename and re-document the atom to match the current “rightmost-state recursion” semantics.
+5. Canonicalize metadata and make it ingestible:
+   - Update `references.json` keys to the catalog FQDNs under `sciona.atoms.inference...` and ensure all referenced `ref_id`s exist in `data/references/registry.json`.
+   - Update review bundle rows to use canonical `atom_name`/`atom_key` FQDNs and add focused family tests (bundle mergeability, references registry, and minimal behavior smoke).
+   - Fix IO-spec generation for module-scoped CDGs (either relocate CDG files under per-module subdirectories, or update the backfill naming scheme for `*_cdg.json` in a controlled way and add regression tests).
+
+Evidence as of 2026-04-19:
+- Local wrapper inspection shows explicit placeholder logic and contract drift in the AEES, dispatch, and NUTS rows.
+- The current publishability backlog marks all nine atoms as missing rollups, IO specs, parameters, descriptions, and references, consistent with the non-canonical bundle/sidecar metadata shapes described above.
+
 ## Signal Processing
 
 ### `sciona.atoms.expansion.signal_event_rate` held pubrev-013 rows
