@@ -259,7 +259,13 @@ def discover_license_manifest_paths(base_dir: Path | None = None) -> tuple[Path,
 
 
 def discover_references_registry_path(base_dir: Path | None = None) -> Path:
-    """Return the canonical references registry path."""
+    """Return a single references registry path (first found across repos).
+
+    Note: Each sibling repo should have its own ``data/references/registry.json``.
+    Callers that need to load references from ALL repos should pass ``None``
+    to ``load_registry()`` or ``_registry_paths()`` instead of using this
+    function, so the multi-repo discovery path runs.
+    """
     return discover_shared_data_path(
         _REFERENCES_REGISTRY_RELATIVE,
         env_var="REFERENCES_REGISTRY_PATH",
