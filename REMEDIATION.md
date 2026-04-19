@@ -40,6 +40,28 @@ Evidence as of 2026-04-19:
 
 ## Signal Processing
 
+### `expansion.signal_event_rate` held pubrev-013 rows
+
+Status: keep the listed rows unpublished for now.
+
+Held atoms:
+- `sciona.atoms.expansion.signal_event_rate.reject_outlier_intervals`
+- `sciona.atoms.expansion.signal_event_rate.remove_signal_jumps`
+
+Why they are blocked:
+- `remove_signal_jumps` advertises step-discontinuity removal, but the current implementation returns the original waveform whenever first-difference MAD is near zero. A simple piecewise-constant waveform with one large step is therefore unchanged despite matching the public contract's main use case.
+- `reject_outlier_intervals` advertises removal of implausible event intervals, but the current implementation only drops an interior event when both adjacent intervals are outside the MAD envelope. Common single-extra-event and zero-MAD interval cases are retained unchanged.
+- Both helpers are conservative and may remain useful internally, but their current public names imply stronger correction semantics than the source establishes.
+
+Proposed fixes:
+1. For `remove_signal_jumps`, detect large absolute steps even when MAD is zero, or narrow the contract to noisy-signal jump correction only.
+2. For `reject_outlier_intervals`, define whether the atom removes spurious extra events, missed-event gaps, both, or only double-sided local anomalies.
+3. Add behavior tests for piecewise-constant steps, noisy steps, single extra events, missed-event gaps, and zero-MAD interval streams before reentering publication review.
+
+Evidence as of 2026-04-19:
+- The `pubrev-013` signal-event-rate provider wave advanced only `assess_signal_quality`, `detect_peaks_in_signal`, `compute_event_rate_smoothed`, `compute_event_rate_median_smoothed`, and `estimate_event_rate_from_signal`.
+- Focused tests demonstrate the held atoms retain common zero-MAD cases that their public names imply should be corrected.
+
 ### `e2e_ppg.kazemi_wrapper.wrapperpredictionsignalcomputation`
 
 Status: keep unpublished for now.
@@ -158,7 +180,57 @@ Evidence as of 2026-04-19:
 - The `pubrev-005` molecular-docking wave advanced only the directly audited safe rows and held these seven atoms.
 - Focused behavior review found placeholder, over-broad classical stand-in, or semantic-drift behavior for the held rows.
 
+### `molecular_docking.quantum_solver_d12`
+
+Status: keep the listed rows unpublished for now.
+
+Held atoms:
+- `sciona.atoms.bio.molecular_docking.quantum_solver_d12.adiabaticpulseassembler`
+- `sciona.atoms.bio.molecular_docking.quantum_solver_d12.interactionboundscomputer`
+- `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumcircuitsampler`
+- `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumsolutionextractor`
+- `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumsolverorchestrator`
+
+Why they are blocked:
+- `adiabaticpulseassembler` returns a plain dict stand-in instead of constructing Pulser waveforms, DMM detuning map, channel declarations, pulse objects, and a locked sequence.
+- `interactionboundscomputer` returns raw `u_min` and `u_max` values rather than deriving the pulse parameter bounds described by the source evidence.
+- `quantumcircuitsampler` runs deterministic classical greedy/simulated-annealing logic instead of executing the advertised qutip, tensor-network/MPS, or state-vector backend path.
+- `quantumsolutionextractor` decodes bitstrings into lists, but the source evidence describes node-set solution objects tied to Pulser register mapping.
+- `quantumsolverorchestrator` bypasses register assembly, bandwidth optimization, pulse packaging, backend sampling, and solution extraction; it directly runs a classical greedy/SA loop.
+
+Proposed fixes:
+1. Implement the end-to-end neutral-atom MWIS pipeline described by the matches/CDG evidence.
+2. Add focused behavior tests for pulse assembly, interaction-bound derivation, backend sampling, and register-aware solution extraction.
+3. If the current classical helpers are intentional, rename and re-document them as classical approximations before reentering publication review.
+
+Evidence as of 2026-04-19:
+- The `pubrev-028` molecular-docking wave held all five `quantum_solver_d12` rows after direct source review.
+- The blocker is semantic drift, not just missing uncertainty metadata.
+
 ## Fintech
+
+### `quantfin.tdma_solver_d12`
+
+Status: keep the listed rows unpublished for now.
+
+Held atoms:
+- `sciona.atoms.fintech.quantfin.tdma_solver_d12.cotraversevec`
+- `sciona.atoms.fintech.quantfin.tdma_solver_d12.tdmasolver`
+
+Why they are blocked:
+- Upstream `Quant.Math.Utilities.tdmaSolver` accepts four vectors: sub-diagonal, main diagonal, super-diagonal, and right-hand side.
+- Upstream `Quant.Math.Utilities.cotraverseVec` accepts an aggregation function, output length, and functor-wrapped vectors.
+- The generated Python atoms expose translation-internal helper/workspace arguments such as `forM_`, `fromList`, `read`, `write`, `enumFromN`, `fmap`, and `map`.
+- The implementations can emulate parts of the algorithms when callers provide those internals, but the public call surfaces do not match the source contracts.
+
+Proposed fixes:
+1. Add source-aligned wrappers for the compact upstream APIs.
+2. Add deterministic tests for a known tridiagonal linear system, singular-pivot rejection, and index-wise vector co-traversal.
+3. Reenter publication review only after references, review bundle rows, uncertainty notes if needed, and tests describe the same public API.
+
+Evidence as of 2026-04-19:
+- The `pubrev-010` quantfin wave advanced the Monte Carlo row but held `tdma_solver_d12`.
+- Direct source review against Hackage quantfin found public API drift in the generated wrappers.
 
 ### `institutional_quant_engine.fractional_diff.fractional_differentiator`
 
