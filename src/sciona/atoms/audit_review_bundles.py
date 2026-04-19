@@ -46,6 +46,29 @@ _ROW_CONTROL_FIELDS = {
 }
 _READY_TRUST_STATES = {"ready", "catalog_ready", "ready_for_manifest_merge"}
 _PASS_VERDICTS = {"pass", "supported", "aligned_to_registered_atoms"}
+
+# DB-compatible enum values for fields with INTEGER or ENUM column constraints.
+# These are validated during bundle loading so invalid values are caught before
+# they reach the manifest or the backfill pipeline.
+VALID_PARITY_COVERAGE_LEVELS = frozenset({
+    "unknown",
+    "none",
+    "not_applicable",
+    "positive_path",
+    "positive_and_negative",
+    "parity_or_usage_equivalent",
+})
+VALID_ACCEPTABILITY_BANDS = frozenset({
+    "unknown",
+    "none",
+    "not_applicable",
+    "acceptable_with_limits_candidate",
+    "review_ready",
+    "limited_acceptability",
+    "broken_candidate",
+    "misleading_candidate",
+})
+
 _REVIEW_DIR_HINTS = (
     Path("data/audit_reviews"),
     Path("data/review_bundles"),
@@ -221,6 +244,30 @@ def _canonical_atom_name(value: str) -> str:
     return value.split("@", 1)[0].strip()
 
 
+def _validate_db_constrained_fields(patch: dict[str, Any], source_path: Path) -> None:
+    """Validate fields that must conform to DB column types or enum constraints."""
+    for field in ("risk_score", "acceptability_score"):
+        if field in patch and not isinstance(patch[field], int):
+            raise ValueError(
+                f"{field} must be an integer (0-100), got {type(patch[field]).__name__}: "
+                f"{patch[field]} in {source_path}"
+            )
+    if "acceptability_band" in patch:
+        band = patch["acceptability_band"]
+        if band not in VALID_ACCEPTABILITY_BANDS:
+            raise ValueError(
+                f"acceptability_band '{band}' not in DB taxonomy "
+                f"{sorted(VALID_ACCEPTABILITY_BANDS)} in {source_path}"
+            )
+    if "parity_coverage_level" in patch:
+        level = patch["parity_coverage_level"]
+        if level not in VALID_PARITY_COVERAGE_LEVELS:
+            raise ValueError(
+                f"parity_coverage_level '{level}' not in DB enum "
+                f"{sorted(VALID_PARITY_COVERAGE_LEVELS)} in {source_path}"
+            )
+
+
 def _flatten_row_bundle_entries(
     bundle: dict[str, Any],
     row: dict[str, Any],
@@ -291,6 +338,7 @@ def _flatten_row_bundle_entries(
         if value is None:
             continue
         patch.setdefault(key, value)
+    _validate_db_constrained_fields(patch, source_path)
     entries: list[ReviewBundleEntry] = []
     for identifier in identifiers:
         entries.append(

@@ -3,6 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from sciona.atoms.audit_review_bundles import (
+    VALID_ACCEPTABILITY_BANDS,
+    VALID_PARITY_COVERAGE_LEVELS,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE_PATH = ROOT / "data" / "review_bundles" / "causal_inference_feature_primitives.review_bundle.json"
@@ -18,25 +23,6 @@ EXPECTED_ATOM_NAMES = {
     "sciona.atoms.causal_inference.feature_primitives.discretize_and_bin",
     "sciona.atoms.causal_inference.feature_primitives.polyfit_nonlinearity_asymmetry",
     "sciona.atoms.causal_inference.feature_primitives.polyfit_residual_error",
-}
-
-# DB-compatible acceptability bands (from existing manifest taxonomy)
-VALID_ACCEPTABILITY_BANDS = {
-    "acceptable_with_limits_candidate",
-    "review_ready",
-    "limited_acceptability",
-    "broken_candidate",
-    "misleading_candidate",
-}
-
-# DB enum for parity_coverage_level
-VALID_PARITY_LEVELS = {
-    "unknown",
-    "none",
-    "not_applicable",
-    "positive_path",
-    "positive_and_negative",
-    "parity_or_usage_equivalent",
 }
 
 
@@ -105,8 +91,8 @@ def test_parity_coverage_level_in_db_enum() -> None:
     bundle = json.loads(BUNDLE_PATH.read_text(encoding="utf-8"))
     for row in bundle["rows"]:
         level = row["parity_coverage_level"]
-        assert level in VALID_PARITY_LEVELS, (
-            f"parity_coverage_level '{level}' not in DB enum: {VALID_PARITY_LEVELS}"
+        assert level in VALID_PARITY_COVERAGE_LEVELS, (
+            f"parity_coverage_level '{level}' not in DB enum: {VALID_PARITY_COVERAGE_LEVELS}"
         )
 
 
