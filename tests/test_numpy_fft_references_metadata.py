@@ -25,10 +25,11 @@ def test_numpy_fft_references_are_canonical_registered_and_manual() -> None:
     refs = json.loads(REFERENCES_PATH.read_text(encoding="utf-8"))
     registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))["references"]
 
-    assert set(refs["atoms"]) == EXPECTED_ATOM_KEYS
+    assert EXPECTED_ATOM_KEYS <= set(refs["atoms"])
     assert registry["numpy_fft_api"]["url"] == "https://numpy.org/doc/stable/reference/routines.fft.html"
 
-    for atom_key, atom_refs in refs["atoms"].items():
+    for atom_key in EXPECTED_ATOM_KEYS:
+        atom_refs = refs["atoms"][atom_key]
         assert atom_key.startswith("sciona.atoms.numpy.fft.")
         assert atom_refs["references"]
         for binding in atom_refs["references"]:

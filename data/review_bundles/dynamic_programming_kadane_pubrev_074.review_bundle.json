@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.dynamic_programming.kadane.pubrev_074.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "dynamic_programming_kadane_pubrev_074",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "catalog_ready",
+  "authoritative_sources": [
+    {
+      "kind": "provider_source",
+      "repo": "sciona-atoms-cs",
+      "path": "src/sciona/atoms/dynamic_programming/kadane/atoms.py"
+    },
+    {
+      "kind": "provider_source",
+      "repo": "sciona-atoms-cs",
+      "path": "third_party/keon_algorithms/algorithms/dynamic_programming/max_subarray.py"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "src/sciona/atoms/dynamic_programming/kadane/cdg.json"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "src/sciona/atoms/dynamic_programming/kadane/references.json"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_dynamic_programming_kadane_pubrev074.py"
+    }
+  ],
+  "limitations": [
+    "Catalog readiness is scoped to integer lists and the classic non-empty maximum contiguous subarray sum contract.",
+    "The runtime delegates to the vendored Keon implementation in sciona-atoms-cs; this bundle supplies central publishability metadata for the shared audit manifest."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/dynamic_programming_kadane_pubrev_074.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "sciona.atoms.dynamic_programming.kadane.max_subarray",
+      "atom_name": "sciona.atoms.dynamic_programming.kadane.max_subarray",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/dynamic_programming/kadane/cdg.json",
+        "src/sciona/atoms/dynamic_programming/kadane/references.json",
+        "tests/test_dynamic_programming_kadane_pubrev074.py"
+      ],
+      "limitations": [
+        "Requires a non-empty list; empty input is rejected by contract.",
+        "Intended for integer maximum subarray sums and returns only the sum, not subarray indices."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/dynamic_programming_kadane_pubrev_074.review_bundle.json",
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 18,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "low"
+      },
+      "risk_reasons": [
+        "Wrapper delegates directly to the vendored Keon Kadane implementation and preserves the documented non-empty list contract.",
+        "Focused tests cover positive-only, mixed-sign, all-negative, singleton, and empty-input contract behavior."
+      ],
+      "acceptability_score": 88,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 5,
+      "parity_case_count": 6,
+      "has_references": true,
+      "references_status": "pass",
+      "review_limitations": [
+        "Requires a non-empty list; empty input is rejected by contract.",
+        "Intended for integer maximum subarray sums and returns only the sum, not subarray indices."
+      ],
+      "review_required_actions": [],
+      "trust_blockers": []
+    }
+  ]
+}

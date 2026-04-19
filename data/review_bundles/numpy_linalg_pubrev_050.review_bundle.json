@@ -1,0 +1,251 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.numpy_linalg.pubrev_050.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "numpy_linalg_pubrev_050",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "catalog_ready",
+  "authoritative_sources": [
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/numpy/linalg.py"
+    },
+    {
+      "kind": "local_probe",
+      "path": "src/sciona/probes/numpy/linalg.py"
+    },
+    {
+      "kind": "local_references",
+      "path": "src/sciona/atoms/numpy/references.json"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_linalg_behavior.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_linalg_references_metadata.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_linalg_review_bundle.py"
+    },
+    {
+      "kind": "upstream_docs",
+      "path": "https://numpy.org/doc/stable/reference/routines.linalg.html"
+    }
+  ],
+  "limitations": [
+    "Audit covers direct wrapper behavior against installed NumPy 2.4.2 and official NumPy linear algebra documentation.",
+    "The solve and inv wrappers intentionally restrict input to a single 2D square matrix; NumPy stacked-matrix inputs remain outside this publication scope."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/numpy_linalg_pubrev_050.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "sciona.atoms.numpy.linalg.det",
+      "atom_name": "sciona.atoms.numpy.linalg.det",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/linalg.py",
+        "src/sciona/probes/numpy/linalg.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_linalg_behavior.py",
+        "tests/test_numpy_linalg_references_metadata.py",
+        "tests/test_numpy_linalg_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 5,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [],
+      "acceptability_score": 92,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 2,
+      "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.linalg",
+        "function": "det",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy determinant API."
+      },
+      "limitations": [
+        "Numerical algorithm correctness is upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_linalg_pubrev_050.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.linalg.inv",
+      "atom_name": "sciona.atoms.numpy.linalg.inv",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/linalg.py",
+        "src/sciona/probes/numpy/linalg.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_linalg_behavior.py",
+        "tests/test_numpy_linalg_references_metadata.py",
+        "tests/test_numpy_linalg_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 7,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Wrapper intentionally excludes NumPy stacked-matrix inversion."
+      ],
+      "acceptability_score": 90,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 2,
+      "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.linalg",
+        "function": "inv",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy inverse API for 2D square matrices."
+      },
+      "limitations": [
+        "The wrapper accepts only square 2D matrices and rejects NumPy's stacked-matrix inverse inputs.",
+        "Numerical algorithm correctness is upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_linalg_pubrev_050.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.linalg.norm",
+      "atom_name": "sciona.atoms.numpy.linalg.norm",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/linalg.py",
+        "src/sciona/probes/numpy/linalg.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_linalg_behavior.py",
+        "tests/test_numpy_linalg_references_metadata.py",
+        "tests/test_numpy_linalg_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 5,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [],
+      "acceptability_score": 92,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 3,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.linalg",
+        "function": "norm",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy norm API."
+      },
+      "limitations": [
+        "Numerical algorithm correctness is upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_linalg_pubrev_050.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.linalg.solve",
+      "atom_name": "sciona.atoms.numpy.linalg.solve",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/linalg.py",
+        "src/sciona/probes/numpy/linalg.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_linalg_behavior.py",
+        "tests/test_numpy_linalg_references_metadata.py",
+        "tests/test_numpy_linalg_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 7,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Wrapper intentionally excludes NumPy stacked-matrix solve."
+      ],
+      "acceptability_score": 90,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 3,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.linalg",
+        "function": "solve",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy solve API for a single 2D square coefficient matrix."
+      },
+      "limitations": [
+        "The wrapper accepts only a square 2D coefficient matrix and rejects NumPy's stacked-matrix solve inputs.",
+        "Numerical algorithm correctness is upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_linalg_pubrev_050.review_bundle.json"
+    }
+  ]
+}

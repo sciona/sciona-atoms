@@ -124,6 +124,28 @@ Evidence as of 2026-04-16:
 
 ## Bio
 
+### `hpdb`
+
+Status: keep the listed iterator rows unpublished for now.
+
+Held atoms:
+- `sciona.atoms.bio.hpdb.iterate_pdb_atoms`
+- `sciona.atoms.bio.hpdb.iterate_pdb_residues`
+
+Why they are blocked:
+- Both implementations are explicit deferred stubs that return `iter([])` and therefore do not traverse Protein Data Bank atoms or residues.
+- Neither atom accepts a PDB structure, file, parser, repository handle, or dataset input, even though the public names and descriptions promise PDB traversal.
+- The functions annotate `element` as `Optional[str]`, but the icontract precondition rejects `None`; this conflicts with the optional-filter description.
+
+Proposed fixes:
+1. Replace the empty iterators with source-aligned PDB atom/residue traversal over an explicit PDB source input.
+2. Define and test element-filter semantics, including whether the filter is optional.
+3. Reconcile function signatures, CDG metadata, docstrings, and behavior tests before reentering publication review.
+
+Evidence as of 2026-04-19:
+- The `pubrev-064` HPDB review held both rows after direct source review.
+- Provider tests document the current empty-iterator behavior and optional-parameter contract drift.
+
 ### `molecular_docking.greedy_mapping_d12.construct_mapping_state_via_greedy_expansion`
 
 Status: keep unpublished for now.

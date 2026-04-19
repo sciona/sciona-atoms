@@ -1,0 +1,94 @@
+{
+  "nodes": [
+    {
+      "node_id": "max_subarray_root",
+      "parent_id": null,
+      "name": "max_subarray",
+      "description": "Ingested pipeline from max_subarray",
+      "concept_type": "custom",
+      "inputs": [],
+      "outputs": [],
+      "status": "decomposed",
+      "children": [
+        "max_subarray"
+      ],
+      "depth": 0,
+      "type_signature": "",
+      "matched_primitive": null,
+      "primitive_binding_confidence": 0.0,
+      "primitive_binding_source": "",
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "",
+      "critic_notes": "",
+      "decomposition_rationale": "",
+      "fixed_point_max_iterations": 0,
+      "fixed_point_convergence_field": "",
+      "map_window_size": 0,
+      "map_hop_size": 0,
+      "boundary_kind": "none",
+      "boundary_port_name": ""
+    },
+    {
+      "node_id": "max_subarray",
+      "parent_id": "max_subarray_root",
+      "name": "max_subarray",
+      "description": "Find the maximum sum of a contiguous subarray using Kadane's algorithm. The input array must be non-empty, and the result is the largest sum over all contiguous slices, including the least-negative singleton for all-negative inputs.",
+      "concept_type": "dynamic_programming",
+      "inputs": [
+        {
+          "name": "array",
+          "type_desc": "list[int]",
+          "constraints": "non-empty",
+          "data_kind": "",
+          "time_basis": "",
+          "provenance": "",
+          "required": true,
+          "default_value_repr": ""
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "int",
+          "constraints": "maximum contiguous subarray sum",
+          "data_kind": "",
+          "time_basis": "",
+          "provenance": "",
+          "required": true,
+          "default_value_repr": ""
+        }
+      ],
+      "status": "atomic",
+      "children": [],
+      "depth": 1,
+      "type_signature": "(array: list[int]) -> int",
+      "matched_primitive": null,
+      "primitive_binding_confidence": 0.0,
+      "primitive_binding_source": "",
+      "is_optional": false,
+      "is_opaque": false,
+      "is_external": false,
+      "parallelizable": false,
+      "conceptual_summary": "Single-pass Kadane maximum contiguous subarray sum.",
+      "critic_notes": "",
+      "decomposition_rationale": "canonical_ir",
+      "fixed_point_max_iterations": 0,
+      "fixed_point_convergence_field": "",
+      "map_window_size": 0,
+      "map_hop_size": 0,
+      "boundary_kind": "none",
+      "boundary_port_name": ""
+    }
+  ],
+  "edges": [],
+  "planning_artifact": null,
+  "metadata": {
+    "source": "pubrev-074 metadata ratchet",
+    "class_name": "max_subarray",
+    "source_language": "python",
+    "canonical_semantics": true
+  }
+}
