@@ -51,6 +51,10 @@ For each atomic node, add:
 ```
 
 Rules:
+- The `name` field on each atomic node must be the snake_case function name
+  (e.g., `"igci_asymmetry_score"`), NOT a human-readable title. The IO
+  backfill derives the atom FQDN from `node["name"]`, so human-readable
+  names produce invalid FQDNs and skip IO row generation.
 - Parameter names must match the real function parameters exactly.
 - Use concrete `type_desc` values: `NDArray[np.float64]`, `str`, `int`,
   `bool`, `float`, `list[float] | None`.
@@ -124,11 +128,11 @@ Required per-row fields:
 | `runtime_status` | `"pass_with_limits"` |
 | `developer_semantics_status` | `"pass_with_limits"` |
 | `risk_tier` | `"low"`, `"medium"`, or `"high"` |
-| `risk_score` | 0.0 – 1.0 |
+| `risk_score` | Integer 0–100 (DB column is INTEGER) |
 | `risk_dimensions` | `{"provenance": "low", "semantic_drift": "low", ...}` |
 | `risk_reasons` | `[]` |
-| `acceptability_score` | 0.0 – 1.0 |
-| `acceptability_band` | `"acceptable"` |
+| `acceptability_score` | Integer 0–100 (DB column is INTEGER) |
+| `acceptability_band` | One of: `"review_ready"`, `"acceptable_with_limits_candidate"`, `"limited_acceptability"`, `"broken_candidate"`, `"misleading_candidate"` |
 | `parity_coverage_level` | `"basic"`, `"moderate"`, or `"full"` |
 | `parity_test_status` | `"pass"` |
 | `parity_fixture_count` | Integer |
@@ -144,6 +148,13 @@ Required per-row fields:
 
 Use `"pass_with_limits"` and add concrete limitations when there are
 important semantic caveats. Do not force `"pass"` to satisfy the ratchet.
+
+**Common mistakes:**
+- `risk_score` and `acceptability_score` must be integers (0–100), not floats.
+  The DB schema defines both columns as INTEGER.
+- `acceptability_band` must use a value from the DB taxonomy listed above.
+  Invalid values get normalized to `"unknown"` during backfill, weakening
+  the audit rollup.
 
 ## Step 3: Write Focused Tests
 

@@ -254,6 +254,10 @@ For each atomic node:
 ```
 
 Rules:
+- The `name` field on each atomic node must be the snake_case function name
+  (e.g., `"igci_asymmetry_score"`), NOT a human-readable title like
+  `"IGCI Asymmetry Score"`. The IO backfill derives the atom FQDN from
+  `node["name"]`, so human-readable names produce invalid FQDNs.
 - Parameter names must match the real function parameters exactly
 - Use concrete `type_desc`: `NDArray[np.float64]`, `str`, `int`, `bool`,
   `float`, `list[float] | None`
