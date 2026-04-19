@@ -828,6 +828,54 @@ def scan_references(repo_root: Path):
                     message=f"`{atom_key}` reference record must be an object",
                 )
                 continue
+            # Validate that the atom key's file path and line number point to the
+            # correct function definition. Keys have the format:
+            #   fqdn@relative/path/to/atoms.py:line_number
+            if "@" in atom_key and ":" in atom_key.split("@", 1)[1]:
+                fqdn_part, location_part = atom_key.rsplit("@", 1)
+                func_name = fqdn_part.rsplit(".", 1)[-1] if "." in fqdn_part else fqdn_part
+                if ":" in location_part:
+                    file_rel, line_str = location_part.rsplit(":", 1)
+                    source_file = repo_root / "src" / file_rel
+                    if source_file.exists() and line_str.isdigit():
+                        line_no = int(line_str)
+                        try:
+                            lines = source_file.read_text(encoding="utf-8").splitlines()
+                            if line_no < 1 or line_no > len(lines):
+                                add_finding(
+                                    findings,
+                                    category="references",
+                                    severity="error",
+                                    path=path,
+                                    repo_root=repo_root,
+                                    message=f"`{atom_key}` references line {line_no} but file has {len(lines)} lines",
+                                )
+                            else:
+                                target_line = lines[line_no - 1]
+                                if f"def {func_name}" not in target_line:
+                                    add_finding(
+                                        findings,
+                                        category="references",
+                                        severity="error",
+                                        path=path,
+                                        repo_root=repo_root,
+                                        message=(
+                                            f"`{atom_key}` references line {line_no} but that line does not "
+                                            f"contain `def {func_name}`. Line content: {target_line.strip()!r}"
+                                        ),
+                                    )
+                        except OSError:
+                            pass
+                    elif not source_file.exists():
+                        add_finding(
+                            findings,
+                            category="references",
+                            severity="error",
+                            path=path,
+                            repo_root=repo_root,
+                            message=f"`{atom_key}` references non-existent file `src/{file_rel}`",
+                        )
+
             refs = record.get("references")
             if not isinstance(refs, list) or not refs:
                 add_finding(
