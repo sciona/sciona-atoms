@@ -14,6 +14,15 @@ EXPECTED_TRACKER_SOURCE_PATHS = {
     "tests/test_tracking_contract_wrappers.py",
     "tests/test_kalman_filter_contract_references_metadata.py",
 }
+EXPECTED_PARTICLE_TRACKER_KEY = "sciona.atoms.state_estimation.particle_filters.track_particle_hidden_state"
+EXPECTED_PARTICLE_TRACKER_SOURCE_PATHS = {
+    "src/sciona/atoms/state_estimation/particle_filters/atoms.py",
+    "src/sciona/atoms/state_estimation/particle_filters/basic.py",
+    "src/sciona/atoms/state_estimation/particle_filters/references.json",
+    "tests/test_tracking_contract_wrappers.py",
+    "tests/test_particle_filter_contract_references_metadata.py",
+    "tests/test_particle_filter_basic_atoms.py",
+}
 
 
 def test_state_estimation_bundle_covers_kalman_tracker_contract_atom() -> None:
@@ -30,4 +39,21 @@ def test_state_estimation_bundle_covers_kalman_tracker_contract_atom() -> None:
     assert row["review_record_path"] == "data/review_bundles/state_estimation.review_bundle.json"
 
     for rel in EXPECTED_TRACKER_SOURCE_PATHS:
+        assert (ROOT / rel).exists()
+
+
+def test_state_estimation_bundle_covers_particle_tracker_contract_atom() -> None:
+    bundle = json.loads(BUNDLE_PATH.read_text(encoding="utf-8"))
+    rows = [row for row in bundle["rows"] if row["atom_key"] == EXPECTED_PARTICLE_TRACKER_KEY]
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["review_status"] == "reviewed"
+    assert row["review_semantic_verdict"] == "pass"
+    assert row["review_developer_semantic_verdict"] == "pass_with_limits"
+    assert row["trust_readiness"] == "catalog_ready"
+    assert set(row["source_paths"]) == EXPECTED_PARTICLE_TRACKER_SOURCE_PATHS
+    assert row["review_record_path"] == "data/review_bundles/state_estimation.review_bundle.json"
+
+    for rel in EXPECTED_PARTICLE_TRACKER_SOURCE_PATHS:
         assert (ROOT / rel).exists()
