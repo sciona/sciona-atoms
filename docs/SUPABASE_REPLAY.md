@@ -114,12 +114,13 @@ PY
 For a publishable family, every row should have `is_publishable = true` and
 non-zero counts for references, parameters, descriptions, IO specs, and rollups.
 
-## 6. Refresh Matcher Audit Docs
+## 6. Refresh Publishability Audit Docs
 
-After a successful replay, refresh the matcher backlog docs:
+After a successful replay, refresh the publishability backlog docs owned by
+`sciona-atoms`:
 
 ```bash
-cd /Users/conrad/personal/sciona-matcher
+cd /Users/conrad/personal/sciona-atoms
 /Users/conrad/personal/sciona-matcher/.venv/bin/python \
   scripts/refresh_publishability_review_docs.py
 ```

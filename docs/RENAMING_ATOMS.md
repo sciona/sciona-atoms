@@ -124,7 +124,7 @@ Files:
 Required changes:
 - After the rename lands, update any prose that cites the old interpolate names as examples of naming debt.
 
-## Matcher Touch Points
+## Publishability Audit Touch Points
 
 Current state:
 - No matcher code references were found for `cubicsplinefit` or `rbfinterpolatorfit`.
@@ -137,7 +137,7 @@ Files affected by refresh:
 - `docs/audit/publishability_review_batch_queue.json`
 
 Required action:
-- Refresh matcher docs after replay so the renamed FQDNs are reflected anywhere the backlog or publishability state surfaces them.
+- Refresh publishability docs after replay so the renamed FQDNs are reflected anywhere the backlog or publishability state surfaces them.
 
 ## Replay / Validation Steps
 
@@ -153,7 +153,7 @@ After a rename is implemented in shared-atoms:
    - `scripts/supabase_seed.py --apply --ensure-owner`
 5. Backfill
    - `scripts/supabase_backfill.py all-file-backed`
-6. Refresh matcher docs
+6. Refresh publishability docs
    - `scripts/refresh_publishability_review_docs.py`
 7. Verify in DB
    - check the new interpolate FQDNs are present and publishable
