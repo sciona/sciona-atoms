@@ -275,20 +275,6 @@ Evidence as of 2026-04-19:
 - The `pubrev-010` quantfin wave advanced the Monte Carlo row but held `tdma_solver_d12`.
 - Direct source review against Hackage quantfin found public API drift in the generated wrappers.
 
-### `institutional_quant_engine.fractional_diff.fractional_differentiator`
-
-Status: keep unpublished for now.
-
-Why it is blocked:
-- The current implementation is not identity-preserving for `d=0`.
-- With one retained weight, the loop assigns `series[i - 1]` to output index `i`, so the result is shifted rather than matching the input series.
-- Publishing under the current name would imply standard fractional-differentiation semantics that the implementation does not yet satisfy.
-
-Proposed fixes:
-1. Rework the fixed-width fractional-differentiation window so the current observation is included with the correct weight.
-2. Add behavior tests covering `d=0` identity behavior, deterministic low-order examples, and threshold truncation.
-3. Reenter review only after the corrected source path, references, uncertainty notes, and bundle row all agree.
-
 ### `institutional_quant_engine.pin_model.pinlikelihoodevaluation`
 
 Status: keep unpublished for now.
@@ -310,24 +296,6 @@ Proposed fixes:
 1. Implement the Easley-style PIN likelihood or log-likelihood with explicit parameter-domain validation.
 2. Add tests for scalar and vector buy/sell counts, invalid parameters, and finite likelihood behavior.
 3. If squared-error scoring is the intended primitive, rename the atom and rewrite its metadata instead of publishing it as PIN likelihood.
-
-### `institutional_quant_engine.wash_trade.detect_wash_trade_rings`
-
-Status: keep unpublished for now.
-
-Why it is blocked:
-- The current implementation checks adjacency-matrix powers only up to cycle length 5.
-- Larger directed wash-trading rings are silently missed despite the general detector name.
-- The return type is a float mask even though the docstring describes a Boolean participant mask.
-
-Proposed fixes:
-1. Replace bounded power scanning with complete directed-cycle detection, or narrow the public contract to explicitly detect only bounded-size rings.
-2. Return a Boolean mask if that is the intended public interface, or document and test numeric scores if a float output is intended.
-3. Add tests for cycles of length 2, 3, 5, and greater than 5 before reentering publication review.
-
-Evidence as of 2026-04-19:
-- The `pubrev-001` institutional-quant wave advanced the semantically defensible rows and held these four atoms.
-- Focused review found semantic drift in the fractional-differentiation, PIN, and wash-trade detection contracts.
 
 ## Robotics
 

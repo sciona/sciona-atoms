@@ -45,10 +45,8 @@ This is a simple source map for remediation-held atoms that should be reingested
 | `sciona.atoms.bio.molecular_docking.quantum_solver_d12.quantumsolverorchestrator` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` |
 | `sciona.atoms.fintech.quantfin.tdma_solver_d12.cotraversevec` | `../ageo-atoms/third_party/quantfin/src/Quant/Math/Utilities.hs:48` |
 | `sciona.atoms.fintech.quantfin.tdma_solver_d12.tdmasolver` | `../ageo-atoms/third_party/quantfin/src/Quant/Math/Utilities.hs:13` |
-| `sciona.atoms.fintech.institutional_quant_engine.fractional_diff.fractional_differentiator` | `../ageo-atoms/third_party/Institutional-Quant-Engine/research_math/34_fractional_diff_stationarity.py:15` |
 | `sciona.atoms.fintech.institutional_quant_engine.pin_model.pinlikelihoodevaluation` | `../ageo-atoms/third_party/Institutional-Quant-Engine/execution_hft/41_pin_informed_trading.py:7` |
 | `sciona.atoms.fintech.institutional_quant_engine.pin_model.pinlikelihoodevaluator` | `../ageo-atoms/third_party/Institutional-Quant-Engine/execution_hft/41_pin_informed_trading.py:7` |
-| `sciona.atoms.fintech.institutional_quant_engine.wash_trade.detect_wash_trade_rings` | `../ageo-atoms/third_party/Institutional-Quant-Engine/ops_compliance/50_trade_surveillance_wash_graph.py:17` |
 | `sciona.atoms.robotics.pronto.torque_adjustment.torqueadjustmentidentitystage` | `../ageo-atoms/third_party/pronto/pronto_biped_core/include/pronto_biped_core/legodo_module.hpp:8` |
 | `sciona.atoms.physics.pasqal.docking.quantum_mwis_solver` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` |
 | `sciona.atoms.scipy.sparse_graph.all_pairs_shortest_path` | `/Users/conrad/personal/sciona-matcher/.venv/lib/python3.13/site-packages/scipy/sparse/csgraph/__init__.py:189` |
