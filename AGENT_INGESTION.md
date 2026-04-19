@@ -591,11 +591,32 @@ fully-qualified atom keys (`<import_path>@<file_path>:<line_number>`):
 Re-run `verify_contribution_rules.py` one last time to confirm the references
 pass validation. The atom is now publishable.
 
+## Post-Ingest Publishing
+
+After all verification passes and provenance is added, the atoms are
+structurally correct but not yet publishable. The catalog requires additional
+metadata for the five publishability pillars.
+
+**Follow [PUBLISHING.md](PUBLISHING.md) to complete publication.** The steps
+are:
+
+1. Ensure `cdg.json` has concrete `inputs`/`outputs` on every atomic node
+2. Create a review bundle in `data/review_bundles/`
+3. Write focused tests (review bundle, references metadata, behavior)
+4. Merge the review bundle into `data/audit_manifest.json`
+5. Run all tests until clean
+
+These steps should be completed in the same session as the ingestion. The
+atom is not done until the audit manifest contains it and the publishability
+checklist in PUBLISHING.md is satisfied.
+
 ## Relationship to Other Contracts
 
 - **INGESTION.md**: Defines the `sciona ingest` CLI pipeline. The CLI is still
   valid for `--procedural` extraction of pure functions. This guide is for
   complex ingestion that benefits from agent judgment.
+- **PUBLISHING.md**: Defines the post-ingest steps to make atoms publishable
+  in the catalog. Must be completed after this guide's workflow.
 - **CONTRIBUTION.md**: Defines the quality bar. This guide references it but
   expresses the bar as agent-actionable checks.
 - **AGENTS.md**: Environment setup. This guide extends it with tool-specific

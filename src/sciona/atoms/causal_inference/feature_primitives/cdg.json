@@ -23,8 +23,17 @@
       "description": "Information-Geometric Causal Inference via log-ratio of consecutive deltas",
       "concept_type": "custom",
       "status": "atomic",
-      "type_signature": "(x: NDArray, tx: str, y: NDArray, ty: str) -> float",
-      "depth": 1
+      "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "ty", "type_desc": "str", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
     },
     {
       "node_id": "hsic_independence_test",
@@ -32,8 +41,17 @@
       "description": "Hilbert-Schmidt Independence Criterion with RBF kernels and median bandwidth",
       "concept_type": "custom",
       "status": "atomic",
-      "type_signature": "(X: NDArray, Y: NDArray, sig: list[float], maxpnt: int) -> float",
-      "depth": 1
+      "type_signature": "(X: NDArray[np.float64], Y: NDArray[np.float64], sig: list[float] | None = None, maxpnt: int = 200) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "X", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "Y", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "sig", "type_desc": "list[float] | None", "required": false},
+        {"name": "maxpnt", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
     },
     {
       "node_id": "knn_entropy_estimator",
@@ -41,8 +59,16 @@
       "description": "Kozachenko-Leonenko differential entropy estimator with digamma corrections",
       "concept_type": "custom",
       "status": "atomic",
-      "type_signature": "(x: NDArray, tx: str, m: int) -> float",
-      "depth": 1
+      "type_signature": "(x: NDArray[np.float64], tx: str, m: int = 2) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "m", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
     },
     {
       "node_id": "uniform_divergence",
@@ -50,8 +76,16 @@
       "description": "KL-divergence-like measure from empirical distribution to uniform using KNN density",
       "concept_type": "custom",
       "status": "atomic",
-      "type_signature": "(x: NDArray, tx: str, m: int) -> float",
-      "depth": 1
+      "type_signature": "(x: NDArray[np.float64], tx: str, m: int = 2) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "m", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
     },
     {
       "node_id": "normalized_error_probability",
@@ -59,11 +93,19 @@
       "description": "Bayesian MAP error rate normalized by maximum possible error for causal asymmetry",
       "concept_type": "custom",
       "status": "atomic",
-      "type_signature": "(x: NDArray, tx: str, y: NDArray, ty: str, ffactor: int, maxdev: int) -> float",
+      "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str, ffactor: int = 3, maxdev: int = 3) -> float",
       "depth": 1,
       "children": [],
       "inputs": [
-        {"name": "discretize_and_bin", "type_desc": "dependency"}
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "ty", "type_desc": "str", "required": true},
+        {"name": "ffactor", "type_desc": "int", "required": false},
+        {"name": "maxdev", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
       ]
     },
     {
@@ -72,8 +114,18 @@
       "description": "Two-pass robust normalization then integer binning for continuous variables",
       "concept_type": "custom",
       "status": "atomic",
-      "type_signature": "(x: NDArray, tx: str, ffactor: int, maxdev: int, norm: bool) -> NDArray",
-      "depth": 1
+      "type_signature": "(x: NDArray[np.float64], tx: str, ffactor: int = 3, maxdev: int = 3, norm: bool = True) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "ffactor", "type_desc": "int", "required": false},
+        {"name": "maxdev", "type_desc": "int", "required": false},
+        {"name": "norm", "type_desc": "bool", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
     },
     {
       "node_id": "polyfit_nonlinearity_asymmetry",
@@ -81,8 +133,17 @@
       "description": "Quantifies how much the X->Y relationship deviates from linearity vs Y->X",
       "concept_type": "custom",
       "status": "atomic",
-      "type_signature": "(x: NDArray, tx: str, y: NDArray, ty: str) -> float",
-      "depth": 1
+      "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "ty", "type_desc": "str", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
     },
     {
       "node_id": "polyfit_residual_error",
@@ -90,8 +151,18 @@
       "description": "Polynomial regression residual std with type-aware categorical encoding",
       "concept_type": "custom",
       "status": "atomic",
-      "type_signature": "(x: NDArray, tx: str, y: NDArray, ty: str, m: int) -> float",
-      "depth": 1
+      "type_signature": "(x: NDArray[np.float64], tx: str, y: NDArray[np.float64], ty: str, m: int = 2) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "tx", "type_desc": "str", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "ty", "type_desc": "str", "required": true},
+        {"name": "m", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ]
     }
   ],
   "edges": [
