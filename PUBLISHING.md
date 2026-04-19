@@ -185,6 +185,13 @@ Validates:
 - Each reference has `match_metadata` with `match_type`, `confidence`, and
   non-empty `notes`
 
+To extract leaf function names from the fully-qualified reference keys
+(which contain `@<filepath>:<line>`), use:
+
+```python
+leaf_names = {k.split("@")[0].rsplit(".", 1)[-1] for k in refs["atoms"]}
+```
+
 ### Behavioral test
 
 `tests/test_<family>_behavior.py`
