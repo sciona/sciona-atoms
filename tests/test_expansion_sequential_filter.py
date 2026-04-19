@@ -99,6 +99,7 @@ class TestCheckObservability:
         is_obs, O = check_observability(F, H, 2)
         assert is_obs
         assert O.shape == (2, 2)
+        np.testing.assert_allclose(O, np.array([[1.0, 0.0], [1.0, 1.0]]))
 
     def test_unobservable_system(self):
         F = np.array([[1, 0], [0, 1]], dtype=np.float64)
@@ -163,6 +164,15 @@ class TestDetectFilterDivergence:
         S = np.array([[1.0]])
         nis, mask = detect_filter_divergence(innovations, S)
         assert len(nis) == 5
+        np.testing.assert_allclose(nis, innovations**2)
+        assert not np.any(mask)
+
+    def test_singular_covariance_flags_infinite_nis(self):
+        innovations = np.array([[1.0]])
+        S = np.array([[[0.0]]])
+        nis, mask = detect_filter_divergence(innovations, S)
+        assert np.isinf(nis[0])
+        assert mask[0]
 
 
 class TestAdaptProcessNoise:
@@ -182,6 +192,18 @@ class TestAdaptProcessNoise:
         Q = np.eye(2)
         result = adapt_process_noise(np.array([]), np.array([]), Q)
         np.testing.assert_array_equal(result, Q)
+
+    def test_single_step_matches_projected_innovation_energy_update(self):
+        innovations = np.array([[2.0, -1.0]])
+        K = np.array([[0.5, 0.0], [0.0, 0.25]])
+        Q_prior = np.eye(2)
+        alpha = 0.2
+        result = adapt_process_noise(innovations, K, Q_prior, alpha=alpha)
+
+        y = innovations[0].reshape(-1, 1)
+        correction = K @ y @ y.T @ K.T
+        expected = (1.0 - alpha) * Q_prior + alpha * correction
+        np.testing.assert_allclose(result, expected)
 
 
 # ---------------------------------------------------------------------------

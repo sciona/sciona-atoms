@@ -14,6 +14,8 @@ ModelSpec = Mapping[str, object]
 ControlValue = np.ndarray | float | int
 ObservationValue = np.ndarray | float | int
 
+_MIN_SCALE = 1e-12
+
 
 def witness_filter_step_preparation_and_dispatch(
     up: AbstractArray,
@@ -73,6 +75,62 @@ def _rng_key_from_state(up: ParticleState) -> np.ndarray:
     return np.array([rng_seed], dtype=np.int64)
 
 
+def _particles_from_state(prior_state: ParticleState | np.ndarray) -> np.ndarray:
+    particles = (
+        prior_state.get("particles", prior_state)
+        if isinstance(prior_state, Mapping)
+        else prior_state
+    )
+    particles_array = np.asarray(particles, dtype=np.float64)
+    if particles_array.size == 0:
+        raise ValueError("particle array must not be empty")
+    if particles_array.ndim == 0:
+        particles_array = particles_array.reshape(1)
+    return particles_array
+
+
+def _n_particles(particles: np.ndarray) -> int:
+    return int(particles.shape[0])
+
+
+def _normalized_prior_weights(
+    prior_state: ParticleState | np.ndarray,
+    n_particles: int,
+) -> np.ndarray:
+    if isinstance(prior_state, Mapping) and "weights" in prior_state:
+        weights = np.asarray(prior_state["weights"], dtype=np.float64)
+    else:
+        weights = np.ones(n_particles, dtype=np.float64)
+    if weights.shape != (n_particles,):
+        raise ValueError("weights must have one entry per particle")
+    total = float(np.sum(weights))
+    if not np.isfinite(total) or total <= 0.0:
+        raise ValueError("weights must have positive finite total mass")
+    normalized = weights / total
+    if not np.all(np.isfinite(normalized)) or np.any(normalized < 0.0):
+        raise ValueError("weights must be finite and non-negative")
+    return normalized
+
+
+def _positive_model_scale(
+    model_spec: ModelSpec,
+    key: str,
+    default: float,
+) -> float:
+    value = model_spec.get(key, default) if isinstance(model_spec, Mapping) else default
+    scale = float(value)
+    if not np.isfinite(scale) or scale <= 0.0:
+        raise ValueError(f"{key} must be a positive finite scale")
+    return max(scale, _MIN_SCALE)
+
+
+def _broadcast_control(control_t: ControlValue, particles: np.ndarray) -> np.ndarray:
+    control = np.asarray(control_t, dtype=np.float64)
+    if control.ndim == 0:
+        return np.full_like(particles, float(control))
+    return np.broadcast_to(control, particles.shape).astype(np.float64, copy=False)
+
+
 @register_atom(witness_filter_step_preparation_and_dispatch)
 @icontract.require(lambda up: up is not None, "prior state up cannot be None")
 @icontract.ensure(lambda result: result is not None, "result must not be None")
@@ -97,24 +155,15 @@ def hypothesis_propagation_kernel(
     rng_key: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Propagate particle hypotheses under a noisy transition."""
-    particles = (
-        prior_state.get("particles", prior_state)
-        if isinstance(prior_state, dict)
-        else prior_state
-    )
+    particles = _particles_from_state(prior_state)
     rng = np.random.RandomState(int(rng_key[0]) if len(rng_key) > 0 else 0)
-    n_particles = len(particles) if hasattr(particles, "__len__") else 1
-    noise = (
-        rng.randn(n_particles)
-        if isinstance(particles, np.ndarray)
-        else rng.randn(1)
+    noise = rng.normal(
+        loc=0.0,
+        scale=_positive_model_scale(model_spec, "process_scale", 1.0),
+        size=particles.shape,
     )
-    proposed = np.asarray(particles) + noise
-    carry_weights = (
-        prior_state.get("weights", np.ones(n_particles) / n_particles)
-        if isinstance(prior_state, dict)
-        else np.ones(n_particles) / n_particles
-    )
+    proposed = particles + _broadcast_control(control_t, particles) + noise
+    carry_weights = _normalized_prior_weights(prior_state, _n_particles(particles))
     rng_key_next = np.array(
         [int(rng_key[0]) + 1 if len(rng_key) > 0 else 1],
         dtype=np.int64,
@@ -132,19 +181,46 @@ def likelihood_reweight_kernel(
     model_spec: ModelSpec,
 ) -> tuple[np.ndarray, float]:
     """Reweight particle hypotheses against the current observation."""
-    obs = np.asarray(observation_t)
-    particles = np.asarray(proposed_state_hypotheses)
-    log_lik = (
-        -0.5 * np.sum((particles - obs) ** 2, axis=-1)
-        if particles.ndim > 1
-        else -0.5 * (particles - obs.ravel()[0]) ** 2
+    particles = np.asarray(proposed_state_hypotheses, dtype=np.float64)
+    if particles.size == 0:
+        raise ValueError("proposed_state_hypotheses must not be empty")
+    if particles.ndim == 0:
+        particles = particles.reshape(1)
+    n_particles = _n_particles(particles)
+    weights = np.asarray(carry_weights, dtype=np.float64)
+    if weights.shape != (n_particles,):
+        raise ValueError("carry_weights must have one entry per particle")
+    weight_total = float(np.sum(weights))
+    if not np.isfinite(weight_total) or weight_total <= 0.0:
+        raise ValueError("carry_weights must have positive finite total mass")
+    weights = weights / weight_total
+    if not np.all(np.isfinite(weights)) or np.any(weights < 0.0):
+        raise ValueError("carry_weights must be finite and non-negative")
+
+    obs = np.asarray(observation_t, dtype=np.float64)
+    obs = obs.ravel()[0] if particles.ndim == 1 and obs.size == 1 else obs
+    residual = particles - obs
+    if particles.ndim > 1:
+        residual = residual.reshape(n_particles, -1)
+        dimensions = residual.shape[1]
+        squared_error = np.sum(residual ** 2, axis=1)
+    else:
+        dimensions = 1
+        squared_error = residual ** 2
+    observation_scale = _positive_model_scale(model_spec, "observation_scale", 1.0)
+    variance = observation_scale ** 2
+    log_lik = -0.5 * (
+        squared_error / variance
+        + dimensions * np.log(2.0 * np.pi * variance)
     )
-    log_weights = np.log(carry_weights + 1e-300) + log_lik
+    log_weights = np.log(weights + 1e-300) + log_lik
     max_lw = np.max(log_weights)
     weights_exp = np.exp(log_weights - max_lw)
-    total = weights_exp.sum()
+    total = float(weights_exp.sum())
+    if not np.isfinite(total) or total <= 0.0:
+        raise ValueError("likelihood weights underflowed or are not finite")
     normalized = weights_exp / total
-    log_likelihood = float(max_lw + np.log(total) - np.log(len(particles)))
+    log_likelihood = float(max_lw + np.log(total))
     return (normalized, log_likelihood)
 
 
@@ -158,13 +234,26 @@ def resample_and_hypothesis_distribution_projection(
     log_likelihood: float,
 ) -> tuple[object, object]:
     """Resample weighted hypotheses into a posterior particle state and trace."""
-    n = len(normalized_weights)
+    proposed = np.asarray(proposed_state_hypotheses, dtype=np.float64)
+    weights = np.asarray(normalized_weights, dtype=np.float64)
+    n = len(weights)
+    if n == 0:
+        raise ValueError("normalized_weights must not be empty")
+    if proposed.shape[0] != n:
+        raise ValueError("proposed_state_hypotheses and normalized_weights disagree")
+    total = float(np.sum(weights))
+    if not np.isfinite(total) or total <= 0.0:
+        raise ValueError("normalized_weights must have positive finite total mass")
+    weights = weights / total
+    if not np.all(np.isfinite(weights)) or np.any(weights < 0.0):
+        raise ValueError("normalized_weights must be finite and non-negative")
     rng = np.random.RandomState(int(rng_key_next[0]) if len(rng_key_next) > 0 else 0)
     positions = (rng.uniform() + np.arange(n)) / n
-    cumsum = np.cumsum(normalized_weights)
+    cumsum = np.cumsum(weights)
+    cumsum[-1] = 1.0
     indices = np.searchsorted(cumsum, positions)
     indices = np.clip(indices, 0, n - 1)
-    resampled = proposed_state_hypotheses[indices]
+    resampled = proposed[indices]
     uniform_weights = np.ones(n) / n
     posterior = {
         'particles': resampled,
@@ -173,6 +262,6 @@ def resample_and_hypothesis_distribution_projection(
     }
     trace = {
         'log_likelihood': log_likelihood,
-        'ess': 1.0 / np.sum(normalized_weights ** 2),
+        'ess': 1.0 / np.sum(weights ** 2),
     }
     return (posterior, trace)

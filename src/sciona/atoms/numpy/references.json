@@ -451,6 +451,277 @@
         }
       ],
       "auto_attribution_runs": []
+    },
+    "sciona.atoms.numpy.random.combinatorics_sampler": {
+      "references": [
+        {
+          "ref_id": "numpy_random_api",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.permutation",
+              "numpy.random.choice"
+            ],
+            "confidence": "high",
+            "notes": "Composite wrapper returns numpy.random.permutation(x) and numpy.random.choice(a, size, replace, p) with the documented legacy RandomState semantics."
+          }
+        },
+        {
+          "ref_id": "numpy_random_source",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.mtrand.RandomState.permutation",
+              "numpy.random.mtrand.RandomState.choice"
+            ],
+            "confidence": "high",
+            "notes": "Official NumPy source tree anchors the legacy permutation and choice dispatch used by the wrapper."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.numpy.random.continuous_multivariate_sampler": {
+      "references": [
+        {
+          "ref_id": "numpy_random_api",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.multivariate_normal",
+              "numpy.random.dirichlet"
+            ],
+            "confidence": "high",
+            "notes": "Composite wrapper delegates to NumPy's documented multivariate-normal and Dirichlet samplers and returns both sample arrays."
+          }
+        },
+        {
+          "ref_id": "numpy_random_source",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.mtrand.RandomState.multivariate_normal",
+              "numpy.random.mtrand.RandomState.dirichlet"
+            ],
+            "confidence": "high",
+            "notes": "Official NumPy source tree anchors the legacy multivariate-normal and Dirichlet dispatch used by the wrapper."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.numpy.random.default_rng": {
+      "references": [
+        {
+          "ref_id": "numpy_random_api",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.default_rng"
+            ],
+            "confidence": "high",
+            "notes": "Wrapper delegates directly to numpy.random.default_rng with the installed NumPy seed semantics."
+          }
+        },
+        {
+          "ref_id": "numpy_random_source",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.default_rng"
+            ],
+            "confidence": "high",
+            "notes": "Official NumPy source tree anchors the Generator constructor used by default_rng."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.numpy.random.discrete_event_sampler": {
+      "references": [
+        {
+          "ref_id": "numpy_random_api",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.multinomial"
+            ],
+            "confidence": "high",
+            "notes": "Wrapper delegates directly to numpy.random.multinomial for count-vector draws from a multinomial distribution."
+          }
+        },
+        {
+          "ref_id": "numpy_random_source",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.mtrand.RandomState.multinomial"
+            ],
+            "confidence": "high",
+            "notes": "Official NumPy source tree anchors the legacy multinomial dispatch used by the wrapper."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.numpy.random.rand": {
+      "references": [
+        {
+          "ref_id": "numpy_random_api",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.rand",
+              "numpy.random.Generator.random"
+            ],
+            "confidence": "high",
+            "notes": "Wrapper supports NumPy-style dimension arguments for numpy.random.rand and uses Generator.random when seed or rng is supplied as a Sciona deterministic extension."
+          }
+        },
+        {
+          "ref_id": "numpy_random_source",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.mtrand.RandomState.rand",
+              "numpy.random.Generator.random"
+            ],
+            "confidence": "high",
+            "notes": "Official NumPy source tree anchors legacy rand and Generator.random behavior."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.numpy.random.uniform": {
+      "references": [
+        {
+          "ref_id": "numpy_random_api",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.uniform",
+              "numpy.random.Generator.uniform"
+            ],
+            "confidence": "high",
+            "notes": "Wrapper delegates to numpy.random.uniform for legacy global RNG calls and Generator.uniform when seed or rng is supplied as a deterministic extension."
+          }
+        },
+        {
+          "ref_id": "numpy_random_source",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.random.mtrand.RandomState.uniform",
+              "numpy.random.Generator.uniform"
+            ],
+            "confidence": "high",
+            "notes": "Official NumPy source tree anchors legacy uniform and Generator.uniform behavior."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.numpy.search_sort.binary_search_insertion": {
+      "references": [
+        {
+          "ref_id": "numpy_search_sort_api",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.searchsorted"
+            ],
+            "confidence": "high",
+            "notes": "Wrapper delegates directly to numpy.searchsorted with a descriptive atom name for binary-search insertion points."
+          }
+        },
+        {
+          "ref_id": "numpy_search_sort_source",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.searchsorted"
+            ],
+            "confidence": "high",
+            "notes": "Official NumPy source tree anchors the searchsorted dispatcher and implementation."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.numpy.search_sort.lexicographic_indirect_sort": {
+      "references": [
+        {
+          "ref_id": "numpy_search_sort_api",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.lexsort"
+            ],
+            "confidence": "high",
+            "notes": "Wrapper delegates directly to numpy.lexsort, including axis forwarding."
+          }
+        },
+        {
+          "ref_id": "numpy_search_sort_source",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.lexsort"
+            ],
+            "confidence": "high",
+            "notes": "Official NumPy source tree anchors the lexsort dispatcher and implementation."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.numpy.search_sort.partial_sort_partition": {
+      "references": [
+        {
+          "ref_id": "numpy_search_sort_api",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.partition",
+              "numpy.argpartition"
+            ],
+            "confidence": "high",
+            "notes": "Composite wrapper returns NumPy's partitioned array together with argpartition indices for the same kth, axis, kind, and order parameters."
+          }
+        },
+        {
+          "ref_id": "numpy_search_sort_source",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": [
+              "numpy.partition",
+              "numpy.argpartition"
+            ],
+            "confidence": "high",
+            "notes": "Official NumPy source tree anchors the partition and argpartition dispatchers used by the wrapper."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
     }
   }
 }

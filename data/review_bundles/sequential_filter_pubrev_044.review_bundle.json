@@ -1,0 +1,269 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.sequential_filter.pubrev_044.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "sequential_filter_pubrev_044",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "catalog_ready",
+  "authoritative_sources": [
+    {
+      "kind": "local_source",
+      "path": "src/sciona/atoms/expansion/sequential_filter.py"
+    },
+    {
+      "kind": "local_probe",
+      "path": "src/sciona/probes/expansion/sequential_filter.py"
+    },
+    {
+      "kind": "local_references",
+      "path": "src/sciona/atoms/expansion/sequential_filter/references.json"
+    },
+    {
+      "kind": "local_references",
+      "path": "data/references/registry.json"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_expansion_sequential_filter.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_expansion_sequential_filter_references_metadata.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_expansion_sequential_filter_review_bundle.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_expansion_registration_import_smoke.py"
+    }
+  ],
+  "limitations": [
+    "Review covers deterministic linear Kalman-style diagnostic helpers in the sequential_filter expansion lane.",
+    "Innovation whiteness uses a simple autocorrelation confidence bound and collapses vector innovations to per-step norms.",
+    "Process-noise adaptation is a smoothed projected-innovation covariance proxy, not a full noise-covariance identification algorithm."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/sequential_filter_pubrev_044.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "sciona.atoms.expansion.sequential_filter.adapt_process_noise",
+      "atom_name": "sciona.atoms.expansion.sequential_filter.adapt_process_noise",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/expansion/sequential_filter.py",
+        "src/sciona/probes/expansion/sequential_filter.py",
+        "src/sciona/atoms/expansion/sequential_filter/references.json",
+        "data/references/registry.json",
+        "tests/test_expansion_sequential_filter.py",
+        "tests/test_expansion_sequential_filter_references_metadata.py",
+        "tests/test_expansion_sequential_filter_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 12,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Docstring and declaration were narrowed from full Robbins-Monro covariance estimation to a bounded innovation-energy proxy.",
+        "Behavior is deterministic and covered by focused covariance-shape, symmetry, and formula tests."
+      ],
+      "acceptability_score": 86,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 5,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "sciona.atoms.expansion.sequential_filter",
+        "function": "adapt_process_noise",
+        "language": "python",
+        "notes": "Provider-owned innovation-energy process-noise tuning helper; no direct upstream wrapper."
+      },
+      "limitations": [
+        "Requires compatible innovation and gain dimensions.",
+        "Returns a covariance proxy based on K y y^T K^T smoothing, not a statistically complete process-noise estimator."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/sequential_filter_pubrev_044.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.expansion.sequential_filter.check_observability",
+      "atom_name": "sciona.atoms.expansion.sequential_filter.check_observability",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/expansion/sequential_filter.py",
+        "src/sciona/probes/expansion/sequential_filter.py",
+        "src/sciona/atoms/expansion/sequential_filter/references.json",
+        "data/references/registry.json",
+        "tests/test_expansion_sequential_filter.py",
+        "tests/test_expansion_sequential_filter_references_metadata.py",
+        "tests/test_expansion_sequential_filter_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 8,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Constructs the standard finite-horizon observability matrix and checks matrix rank.",
+        "Behavior is covered for observable, unobservable, and exact-matrix cases."
+      ],
+      "acceptability_score": 91,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 3,
+      "parity_case_count": 5,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "sciona.atoms.expansion.sequential_filter",
+        "function": "check_observability",
+        "language": "python",
+        "notes": "Provider-owned linear-system observability rank helper; no direct upstream wrapper."
+      },
+      "limitations": [
+        "Assumes caller supplies compatible linear state-transition and observation matrices."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/sequential_filter_pubrev_044.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.expansion.sequential_filter.detect_filter_divergence",
+      "atom_name": "sciona.atoms.expansion.sequential_filter.detect_filter_divergence",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/expansion/sequential_filter.py",
+        "src/sciona/probes/expansion/sequential_filter.py",
+        "src/sciona/atoms/expansion/sequential_filter/references.json",
+        "data/references/registry.json",
+        "tests/test_expansion_sequential_filter.py",
+        "tests/test_expansion_sequential_filter_references_metadata.py",
+        "tests/test_expansion_sequential_filter_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 10,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Computes normalized innovation squared values with a documented chi-squared 95% threshold approximation.",
+        "Behavior is covered for well-tuned, divergent, scalar, and singular-covariance cases."
+      ],
+      "acceptability_score": 89,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 4,
+      "parity_case_count": 6,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "sciona.atoms.expansion.sequential_filter",
+        "function": "detect_filter_divergence",
+        "language": "python",
+        "notes": "Provider-owned normalized-innovation-squared diagnostic helper; no direct upstream wrapper."
+      },
+      "limitations": [
+        "Flags per-step exceedances rather than performing a batch consistency test.",
+        "Uses hard-coded exact chi-squared thresholds for dimensions 1-3 and Wilson-Hilferty approximation for larger dimensions."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/sequential_filter_pubrev_044.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.expansion.sequential_filter.validate_innovation_whiteness",
+      "atom_name": "sciona.atoms.expansion.sequential_filter.validate_innovation_whiteness",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/expansion/sequential_filter.py",
+        "src/sciona/probes/expansion/sequential_filter.py",
+        "src/sciona/atoms/expansion/sequential_filter/references.json",
+        "data/references/registry.json",
+        "tests/test_expansion_sequential_filter.py",
+        "tests/test_expansion_sequential_filter_references_metadata.py",
+        "tests/test_expansion_sequential_filter_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 12,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Implements a bounded ACF screening helper rather than a full portmanteau or multivariate whiteness test.",
+        "Vector innovations are intentionally reduced to per-step norms before ACF calculation."
+      ],
+      "acceptability_score": 87,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 4,
+      "parity_case_count": 6,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "sciona.atoms.expansion.sequential_filter",
+        "function": "validate_innovation_whiteness",
+        "language": "python",
+        "notes": "Provider-owned innovation autocorrelation screening helper; no direct upstream wrapper."
+      },
+      "limitations": [
+        "Uses a simple approximate 95% bound and does not implement Ljung-Box or multivariate residual-whiteness testing.",
+        "Short and near-constant sequences are treated as non-rejecting diagnostics."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/sequential_filter_pubrev_044.review_bundle.json"
+    }
+  ]
+}

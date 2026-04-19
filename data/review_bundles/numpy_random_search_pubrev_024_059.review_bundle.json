@@ -1,0 +1,540 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.numpy_random_search.pubrev_024_059.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "numpy_random_search_pubrev_024_059",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass_with_limits",
+  "review_developer_semantic_verdict": "pass_with_limits",
+  "trust_readiness": "catalog_ready",
+  "authoritative_sources": [
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/numpy/random.py"
+    },
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/numpy/search_sort.py"
+    },
+    {
+      "kind": "local_probe",
+      "path": "src/sciona/probes/numpy/random.py"
+    },
+    {
+      "kind": "local_probe",
+      "path": "src/sciona/probes/numpy/search_sort.py"
+    },
+    {
+      "kind": "local_references",
+      "path": "src/sciona/atoms/numpy/references.json"
+    },
+    {
+      "kind": "local_references",
+      "path": "data/references/registry.json"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_random_pubrev_024_059_behavior.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_search_sort_pubrev_024_059_behavior.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py"
+    },
+    {
+      "kind": "local_test",
+      "path": "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+    },
+    {
+      "kind": "upstream_docs",
+      "path": "https://numpy.org/doc/stable/reference/random/index.html"
+    },
+    {
+      "kind": "upstream_docs",
+      "path": "https://numpy.org/doc/stable/reference/routines.sort.html"
+    },
+    {
+      "kind": "upstream_source",
+      "path": "https://github.com/numpy/numpy/tree/v2.4.2/numpy/random"
+    },
+    {
+      "kind": "upstream_source",
+      "path": "https://github.com/numpy/numpy/tree/v2.4.2/numpy/_core"
+    }
+  ],
+  "limitations": [
+    "Audit covers wrapper behavior against installed NumPy 2.4.2 signatures and official NumPy documentation/source references.",
+    "Random sampler tests verify deterministic seeding and parameter forwarding, not statistical distribution guarantees.",
+    "The rand and uniform wrappers include Sciona deterministic seed/rng extensions; unseeded calls delegate to the legacy numpy.random global RNG.",
+    "Composite sampler atoms return grouped NumPy outputs and are reviewed as convenience composites, not one-to-one NumPy API aliases.",
+    "Wrapper contracts may raise icontract violations before NumPy's own exception type for documented invalid inputs."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "sciona.atoms.numpy.random.combinatorics_sampler",
+      "atom_name": "sciona.atoms.numpy.random.combinatorics_sampler",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/random.py",
+        "src/sciona/probes/numpy/random.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_random_pubrev_024_059_behavior.py",
+        "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py",
+        "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 12,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Convenience composite returns permutation and choice outputs rather than a single upstream symbol."
+      ],
+      "acceptability_score": 86,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.random",
+        "function": "permutation + choice",
+        "language": "python",
+        "notes": "Composite wrapper around legacy global-RNG NumPy permutation and choice calls."
+      },
+      "limitations": [
+        "Composite output groups two NumPy calls and therefore is not a one-to-one NumPy API alias.",
+        "Stochastic correctness is inherited from NumPy; tests verify deterministic forwarding under a fixed global seed."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.random.continuous_multivariate_sampler",
+      "atom_name": "sciona.atoms.numpy.random.continuous_multivariate_sampler",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/random.py",
+        "src/sciona/probes/numpy/random.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_random_pubrev_024_059_behavior.py",
+        "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py",
+        "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 12,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Convenience composite returns multivariate-normal and Dirichlet outputs rather than a single upstream symbol."
+      ],
+      "acceptability_score": 86,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.random",
+        "function": "multivariate_normal + dirichlet",
+        "language": "python",
+        "notes": "Composite wrapper around legacy global-RNG NumPy continuous multivariate samplers."
+      },
+      "limitations": [
+        "Composite output groups two NumPy calls and therefore is not a one-to-one NumPy API alias.",
+        "Stochastic correctness is inherited from NumPy; tests verify deterministic forwarding under a fixed global seed."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.random.default_rng",
+      "atom_name": "sciona.atoms.numpy.random.default_rng",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/random.py",
+        "src/sciona/probes/numpy/random.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_random_pubrev_024_059_behavior.py",
+        "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py",
+        "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 4,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [],
+      "acceptability_score": 94,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.random",
+        "function": "default_rng",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy default_rng API."
+      },
+      "limitations": [
+        "Generator bit streams are NumPy implementation behavior and may change across NumPy versions."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.random.discrete_event_sampler",
+      "atom_name": "sciona.atoms.numpy.random.discrete_event_sampler",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/random.py",
+        "src/sciona/probes/numpy/random.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_random_pubrev_024_059_behavior.py",
+        "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py",
+        "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 6,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [],
+      "acceptability_score": 92,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.random",
+        "function": "multinomial",
+        "language": "python",
+        "notes": "Direct wrapper around legacy global-RNG NumPy multinomial API."
+      },
+      "limitations": [
+        "Stochastic correctness is inherited from NumPy; tests verify deterministic forwarding under a fixed global seed."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.random.rand",
+      "atom_name": "sciona.atoms.numpy.random.rand",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/random.py",
+        "src/sciona/atoms/numpy/witnesses.py",
+        "src/sciona/probes/numpy/random.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_random_pubrev_024_059_behavior.py",
+        "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py",
+        "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "medium",
+      "risk_score": 18,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Wrapper keeps Sciona seed/rng and size keyword extensions in addition to NumPy-style dimension arguments."
+      ],
+      "acceptability_score": 82,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 2,
+      "parity_case_count": 4,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.random",
+        "function": "rand",
+        "language": "python",
+        "notes": "Unseeded calls follow legacy numpy.random.rand dimension semantics; seeded calls use Generator.random as a deterministic extension."
+      },
+      "limitations": [
+        "The size keyword is a Sciona compatibility extension and is not part of numpy.random.rand.",
+        "The seed and rng parameters are Sciona deterministic extensions and switch sampling to numpy.random.Generator.random."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.random.uniform",
+      "atom_name": "sciona.atoms.numpy.random.uniform",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/random.py",
+        "src/sciona/atoms/numpy/witnesses.py",
+        "src/sciona/probes/numpy/random.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_random_pubrev_024_059_behavior.py",
+        "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py",
+        "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "medium",
+      "risk_score": 16,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Wrapper keeps Sciona seed/rng extensions and rejects low > high before NumPy dispatch."
+      ],
+      "acceptability_score": 84,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "positive_and_negative",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 2,
+      "parity_case_count": 3,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy.random",
+        "function": "uniform",
+        "language": "python",
+        "notes": "Unseeded calls delegate to legacy numpy.random.uniform; seeded calls use Generator.uniform as a deterministic extension."
+      },
+      "limitations": [
+        "The seed and rng parameters are Sciona deterministic extensions and switch sampling to numpy.random.Generator.uniform.",
+        "The wrapper rejects low > high explicitly, while NumPy documents this case as unsupported/undefined."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.search_sort.binary_search_insertion",
+      "atom_name": "sciona.atoms.numpy.search_sort.binary_search_insertion",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/search_sort.py",
+        "src/sciona/probes/numpy/search_sort.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_search_sort_pubrev_024_059_behavior.py",
+        "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py",
+        "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 5,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [],
+      "acceptability_score": 93,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy",
+        "function": "searchsorted",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy searchsorted API."
+      },
+      "limitations": [
+        "Input array sortedness is a NumPy precondition and is not independently proven by the wrapper."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.search_sort.lexicographic_indirect_sort",
+      "atom_name": "sciona.atoms.numpy.search_sort.lexicographic_indirect_sort",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/search_sort.py",
+        "src/sciona/probes/numpy/search_sort.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_search_sort_pubrev_024_059_behavior.py",
+        "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py",
+        "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 5,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Previous wrapper drift omitted axis forwarding; current review covers the remediated signature."
+      ],
+      "acceptability_score": 92,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy",
+        "function": "lexsort",
+        "language": "python",
+        "notes": "Direct wrapper around installed NumPy lexsort API with axis forwarding."
+      },
+      "limitations": [
+        "Sort stability and ordering semantics are upstream NumPy behavior."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.numpy.search_sort.partial_sort_partition",
+      "atom_name": "sciona.atoms.numpy.search_sort.partial_sort_partition",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass_with_limits",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numpy/search_sort.py",
+        "src/sciona/probes/numpy/search_sort.py",
+        "src/sciona/atoms/numpy/references.json",
+        "tests/test_numpy_search_sort_pubrev_024_059_behavior.py",
+        "tests/test_numpy_random_search_pubrev_024_059_references_metadata.py",
+        "tests/test_numpy_random_search_pubrev_024_059_review_bundle.py"
+      ],
+      "overall_verdict": "acceptable_with_limits",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass_with_limits",
+      "risk_tier": "low",
+      "risk_score": 10,
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime": "low"
+      },
+      "risk_reasons": [
+        "Convenience composite returns both partition and argpartition outputs rather than a single upstream symbol."
+      ],
+      "acceptability_score": 88,
+      "acceptability_band": "acceptable_with_limits_candidate",
+      "parity_coverage_level": "parity_or_usage_equivalent",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 2,
+      "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
+      "upstream_symbols": {
+        "module": "numpy",
+        "function": "partition + argpartition",
+        "language": "python",
+        "notes": "Composite wrapper around installed NumPy partition and argpartition APIs."
+      },
+      "limitations": [
+        "Composite output groups two NumPy calls and therefore is not a one-to-one NumPy API alias.",
+        "Ordering inside each partition is undefined by NumPy and not strengthened by the wrapper."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "review_record_path": "data/review_bundles/numpy_random_search_pubrev_024_059.review_bundle.json"
+    }
+  ]
+}

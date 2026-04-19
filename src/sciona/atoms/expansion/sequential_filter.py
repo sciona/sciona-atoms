@@ -220,15 +220,16 @@ def adapt_process_noise(
     *,
     alpha: float = 0.1,
 ) -> np.ndarray:
-    """Adaptively estimate process noise Q from innovation sequence.
+    """Adapt process-noise covariance using an innovation-energy proxy.
 
-    Uses exponential smoothing (Robbins-Monro style):
+    Uses exponential smoothing of the projected innovation outer product:
         Q_{k+1} = (1 - alpha) * Q_k + alpha * (K_k @ y_k @ y_k^T @ K_k^T)
 
-    This converges to the innovation-based Q estimate under stationarity.
+    This is a bounded diagnostic/tuning helper, not a full covariance
+    identification routine.
 
     Returns:
-        Q_adapted — the adapted process noise covariance.
+        Q_adapted: the symmetrized adapted process-noise covariance proxy.
     """
     innovations = np.asarray(innovations, dtype=np.float64)
     K_matrices = np.asarray(K_matrices, dtype=np.float64)
@@ -278,6 +279,6 @@ SEQUENTIAL_FILTER_DECLARATIONS = {
     "adapt_process_noise": (
         "sciona.atoms.expansion.sequential_filter.adapt_process_noise",
         "np.ndarray, np.ndarray, np.ndarray -> np.ndarray",
-        "Adaptively estimate process noise Q from innovations via Robbins-Monro.",
+        "Adapt process-noise covariance using smoothed projected innovation energy.",
     ),
 }

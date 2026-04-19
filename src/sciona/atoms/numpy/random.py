@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Any, Sequence
 
 import icontract
 import numpy as np
@@ -16,6 +16,43 @@ from sciona.atoms.numpy.witnesses import (
 
 ShapeLike = int | Sequence[int]
 SeedLike = int | np.random.SeedSequence | np.random.BitGenerator | np.random.Generator | None
+ArrayLikeFloat = float | Sequence[float] | np.ndarray
+
+
+def _normalize_size(size: ShapeLike | None) -> tuple[int, ...] | None:
+    if size is None:
+        return None
+    if isinstance(size, int):
+        return (size,)
+    return tuple(int(dim) for dim in size)
+
+
+def _resolve_rand_size(dims: tuple[Any, ...], size: ShapeLike | None) -> tuple[int, ...] | int | None:
+    if dims and size is not None:
+        raise ValueError("Provide either NumPy-style dimension arguments or size, not both")
+    if size is not None:
+        return size
+    if not dims:
+        return None
+    if len(dims) == 1:
+        dim = dims[0]
+        if isinstance(dim, int):
+            return dim
+        return tuple(int(part) for part in dim)
+    return tuple(int(dim) for dim in dims)
+
+
+def _uniform_result_shape(
+    low: ArrayLikeFloat,
+    high: ArrayLikeFloat,
+    size: ShapeLike | None,
+) -> tuple[int, ...] | None:
+    if size is not None:
+        return _normalize_size(size)
+    broadcast = np.broadcast(np.asarray(low), np.asarray(high))
+    if broadcast.shape == ():
+        return None
+    return broadcast.shape
 
 
 def _resolve_generator(
@@ -73,55 +110,46 @@ def witness_combinatorics_sampler(
 
 
 @register_atom(witness_np_rand)  # type: ignore[untyped-decorator]
-@icontract.require(
-    lambda size: size is None or isinstance(size, (int, tuple, list)),
-    "Size must be None, an int, or a sequence of ints",
-)
-@icontract.require(
-    lambda seed, rng: seed is None or rng is None or (isinstance(seed, np.random.Generator) and seed is rng),
-    "Provide at most one of seed/rng unless they refer to the same Generator",
-)
-@icontract.ensure(
-    lambda result, size: (
-        result.shape == (size if isinstance(size, tuple) else (size,) if isinstance(size, int) else tuple(size))
-    )
-    if size is not None
-    else isinstance(result, float),
-    "Result shape must match requested size",
-)
 def rand(
+    *dims: int | Sequence[int],
     size: ShapeLike | None = None,
     seed: SeedLike = None,
     rng: np.random.Generator | None = None,
 ) -> float | np.ndarray:
     """Return random values in a given shape over [0, 1)."""
+    if len(dims) > 1 and not all(isinstance(dim, int) for dim in dims):
+        raise TypeError("Multiple dimension arguments must all be ints")
+    resolved_size = _resolve_rand_size(dims, size)
     gen = _resolve_generator(seed=seed, rng=rng)
     if gen is None:
-        if size is None:
+        if resolved_size is None:
             return np.random.rand()
-        if isinstance(size, int):
-            return np.random.rand(size)
-        return np.random.rand(*size)
-    return gen.random(size)
+        if isinstance(resolved_size, int):
+            return np.random.rand(resolved_size)
+        return np.random.rand(*resolved_size)
+    return gen.random(resolved_size)
 
 
 @register_atom(witness_np_uniform)  # type: ignore[untyped-decorator]
-@icontract.require(lambda low, high: low <= high, "low must be less than or equal to high")
+@icontract.require(
+    lambda low, high: bool(np.all(np.asarray(low) <= np.asarray(high))),
+    "low must be less than or equal to high",
+)
 @icontract.require(
     lambda seed, rng: seed is None or rng is None or (isinstance(seed, np.random.Generator) and seed is rng),
     "Provide at most one of seed/rng unless they refer to the same Generator",
 )
 @icontract.ensure(
-    lambda result, size: (
-        result.shape == (size if isinstance(size, tuple) else (size,) if isinstance(size, int) else tuple(size))
-    )
-    if size is not None
-    else isinstance(result, (float, np.floating)),
+    lambda result, low, high, size: (
+        isinstance(result, np.ndarray) and result.shape == expected_shape
+        if (expected_shape := _uniform_result_shape(low, high, size)) is not None
+        else isinstance(result, (float, np.floating))
+    ),
     "Result shape must match requested size",
 )
 def uniform(
-    low: float = 0.0,
-    high: float = 1.0,
+    low: ArrayLikeFloat = 0.0,
+    high: ArrayLikeFloat = 1.0,
     size: ShapeLike | None = None,
     seed: SeedLike = None,
     rng: np.random.Generator | None = None,

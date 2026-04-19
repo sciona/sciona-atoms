@@ -410,13 +410,23 @@ def witness_np_polyroots(c: AbstractArray) -> AbstractArray:
 
 
 def witness_np_rand(
+    *dims: int | Sequence[int],
     size: ShapeLike = None,
     seed: Any = None,
     rng: AbstractRNGState | None = None,
 ) -> AbstractArray | AbstractScalar:
     """Describe uniform random samples in the half-open interval [0, 1)."""
     _ = seed, rng
-    out_shape = _normalize_shape(size)
+    if dims and size is not None:
+        raise ValueError("Provide either NumPy-style dimension arguments or size, not both")
+    if size is not None:
+        out_shape = _normalize_shape(size)
+    elif not dims:
+        out_shape = ()
+    elif len(dims) == 1 and not isinstance(dims[0], int):
+        out_shape = _normalize_shape(dims[0])
+    else:
+        out_shape = tuple(int(dim) for dim in dims)
     return _as_array_or_scalar(
         out_shape,
         dtype="float64",
@@ -426,20 +436,41 @@ def witness_np_rand(
 
 
 def witness_np_uniform(
-    low: float = 0.0,
-    high: float = 1.0,
+    low: Any = 0.0,
+    high: Any = 1.0,
     size: ShapeLike = None,
     seed: Any = None,
     rng: AbstractRNGState | None = None,
 ) -> AbstractArray | AbstractScalar:
     """Describe uniformly distributed samples over the requested interval."""
     _ = seed, rng
-    out_shape = _normalize_shape(size)
+    if size is None:
+        try:
+            import numpy as _np
+
+            broadcast_shape = _np.broadcast(_np.asarray(low), _np.asarray(high)).shape
+            out_shape = () if broadcast_shape == () else tuple(int(dim) for dim in broadcast_shape)
+            min_val = float(_np.min(low))
+            max_val = float(_np.max(high))
+        except Exception:
+            out_shape = ()
+            min_val = None
+            max_val = None
+    else:
+        out_shape = _normalize_shape(size)
+        try:
+            import numpy as _np
+
+            min_val = float(_np.min(low))
+            max_val = float(_np.max(high))
+        except Exception:
+            min_val = None
+            max_val = None
     return _as_array_or_scalar(
         out_shape,
         dtype="float64",
-        min_val=low,
-        max_val=high,
+        min_val=min_val,
+        max_val=max_val,
     )
 
 

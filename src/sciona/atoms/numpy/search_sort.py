@@ -34,8 +34,11 @@ def witness_partial_sort_partition(
     axis: AbstractScalar | None = None,
     kind: AbstractScalar | None = None,
     order: AbstractScalar | AbstractArray | None = None,
-) -> AbstractArray:
-    return AbstractArray(shape=a.shape, dtype=a.dtype)
+) -> tuple[AbstractArray, AbstractArray]:
+    return (
+        AbstractArray(shape=a.shape, dtype=a.dtype),
+        AbstractArray(shape=a.shape, dtype="int64", min_val=0.0),
+    )
 
 
 @register_atom(witness_binary_search_insertion)  # type: ignore[untyped-decorator]
@@ -56,9 +59,9 @@ def binary_search_insertion(
 @register_atom(witness_lexicographic_indirect_sort)  # type: ignore[untyped-decorator]
 @icontract.require(lambda keys: keys is not None, "keys cannot be None")
 @icontract.ensure(lambda result: result is not None, "Lexicographic indirect sort output must not be None")
-def lexicographic_indirect_sort(keys: Sequence[np.ndarray]) -> np.ndarray:
+def lexicographic_indirect_sort(keys: Sequence[np.ndarray], axis: int = -1) -> np.ndarray:
     """Return an indirect lexicographic sort permutation for the given keys."""
-    return np.lexsort(keys)
+    return np.lexsort(keys, axis=axis)
 
 
 @register_atom(witness_partial_sort_partition)  # type: ignore[untyped-decorator]
