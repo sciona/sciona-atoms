@@ -29,6 +29,16 @@ VALID_ACCEPTABILITY_BANDS = {
     "misleading_candidate",
 }
 
+# DB enum for parity_coverage_level
+VALID_PARITY_LEVELS = {
+    "unknown",
+    "none",
+    "not_applicable",
+    "positive_path",
+    "positive_and_negative",
+    "parity_or_usage_equivalent",
+}
+
 
 def test_bundle_exists_and_has_eight_atoms() -> None:
     assert BUNDLE_PATH.exists()
@@ -87,6 +97,16 @@ def test_acceptability_band_in_db_taxonomy() -> None:
         band = row["acceptability_band"]
         assert band in VALID_ACCEPTABILITY_BANDS, (
             f"acceptability_band '{band}' not in DB taxonomy: {VALID_ACCEPTABILITY_BANDS}"
+        )
+
+
+def test_parity_coverage_level_in_db_enum() -> None:
+    """parity_coverage_level must use a DB-recognized enum value."""
+    bundle = json.loads(BUNDLE_PATH.read_text(encoding="utf-8"))
+    for row in bundle["rows"]:
+        level = row["parity_coverage_level"]
+        assert level in VALID_PARITY_LEVELS, (
+            f"parity_coverage_level '{level}' not in DB enum: {VALID_PARITY_LEVELS}"
         )
 
 

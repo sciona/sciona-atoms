@@ -133,7 +133,7 @@ Required per-row fields:
 | `risk_reasons` | `[]` |
 | `acceptability_score` | Integer 0–100 (DB column is INTEGER) |
 | `acceptability_band` | One of: `"review_ready"`, `"acceptable_with_limits_candidate"`, `"limited_acceptability"`, `"broken_candidate"`, `"misleading_candidate"` |
-| `parity_coverage_level` | `"basic"`, `"moderate"`, or `"full"` |
+| `parity_coverage_level` | One of: `"unknown"`, `"none"`, `"not_applicable"`, `"positive_path"`, `"positive_and_negative"`, `"parity_or_usage_equivalent"` |
 | `parity_test_status` | `"pass"` |
 | `parity_fixture_count` | Integer |
 | `parity_case_count` | Integer |
