@@ -15,14 +15,6 @@ This is a simple source map for remediation-held atoms that should be reingested
 | `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build` | `../ageo-atoms/third_party/mcmc/include/mcmc/nuts.ipp:99` |
 | `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel` | `../ageo-atoms/third_party/mcmc/src/rmhmc.cpp:30` |
 | `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rwmh.constructrandomwalkmetropoliskernel` | `../ageo-atoms/third_party/mcmc/src/rwmh.cpp:30` |
-| `sciona.atoms.signal_processing.biosppy.svm_proc.assess_classification` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:1954` |
-| `sciona.atoms.signal_processing.biosppy.svm_proc.assess_runs` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2055` |
-| `sciona.atoms.signal_processing.biosppy.svm_proc.combination` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2181` |
-| `sciona.atoms.signal_processing.biosppy.svm_proc.cross_validation` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2304` |
-| `sciona.atoms.signal_processing.biosppy.svm_proc.get_auth_rates` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:1641` |
-| `sciona.atoms.signal_processing.biosppy.svm_proc.get_id_rates` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:1751` |
-| `sciona.atoms.signal_processing.biosppy.svm_proc.get_subject_results` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:589` |
-| `sciona.atoms.signal_processing.biosppy.svm_proc.majority_rule` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2255` |
 | `sciona.atoms.bio.molecular_docking.quantum_solver.adiabaticquantumsampler` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:138` |
 | `sciona.atoms.bio.molecular_docking.quantum_solver.quantumproblemdefinition` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` |
 | `sciona.atoms.bio.molecular_docking.quantum_solver.solutionextraction` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:241` |
