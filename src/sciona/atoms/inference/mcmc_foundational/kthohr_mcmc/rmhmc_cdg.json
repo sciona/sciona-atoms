@@ -27,7 +27,7 @@
       "node_id": "buildrmhmctransitionkernel",
       "parent_id": "rmhmc_root",
       "name": "buildrmhmctransitionkernel",
-      "description": "Constructs a pure Riemannian Manifold Hamiltonian Monte Carlo (HMC) transition kernel from a target log-density oracle and metric/tensor oracle. The produced kernel is expected to thread immutable sampler state explicitly (e.g., position, momentum, mass/metric tensor, and PRNGKey) as state_in -> state_out.",
+      "description": "Build a NumPy Riemannian Manifold Hamiltonian Monte Carlo transition kernel using metric derivatives and implicit generalized leapfrog steps.",
       "concept_type": "custom",
       "inputs": [
         {
@@ -37,8 +37,28 @@
         },
         {
           "name": "tensor_fn",
-          "type_desc": "Callable[[np.ndarray], np.ndarray]",
+          "type_desc": "Callable returning metric or (metric, metric_derivative)",
           "constraints": "required argument"
+        },
+        {
+          "name": "step_size",
+          "type_desc": "float",
+          "constraints": "optional positive argument"
+        },
+        {
+          "name": "n_leapfrog",
+          "type_desc": "int",
+          "constraints": "optional positive argument"
+        },
+        {
+          "name": "n_fixed_point",
+          "type_desc": "int",
+          "constraints": "optional positive argument"
+        },
+        {
+          "name": "finite_diff_eps",
+          "type_desc": "float",
+          "constraints": "optional positive finite-difference step"
         }
       ],
       "outputs": [
@@ -51,7 +71,7 @@
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(target_log_kernel: log-density oracle, tensor_fn: metric tensor oracle) -> RMHMC transition kernel",
+      "type_signature": "(target_log_kernel: log-density oracle, tensor_fn: metric tensor oracle, step_size: float = 0.1, n_leapfrog: int = 10, n_fixed_point: int = 5, finite_diff_eps: float = 1e-5) -> RMHMC transition kernel",
       "matched_primitive": null,
       "is_optional": false,
       "is_opaque": false,

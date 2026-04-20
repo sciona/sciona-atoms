@@ -51,7 +51,8 @@
   ],
   "limitations": [
     "This bundle is scoped to high-evidence core MCMC rows, including repaired mini-MCMC loop and tree rows that now have focused Gaussian behavior tests.",
-    "The approved mini-MCMC rows are lightweight NumPy implementations with finite-difference gradients and identity mass-matrix assumptions; they are catalog-ready as minimal educational primitives, not production-grade adaptive samplers."
+    "The approved mini-MCMC rows are lightweight NumPy implementations with finite-difference gradients and identity mass-matrix assumptions; they are catalog-ready as minimal educational primitives, not production-grade adaptive samplers.",
+    "The repaired KTHOHR NUTS and RMHMC rows are source-shaped NumPy educational adaptations with explicit limitations; they do not expose compiled KTHOHR C++ bindings or production sampler settings."
   ],
   "blocking_findings": [],
   "required_actions": [],
@@ -197,40 +198,42 @@
     },
     {
       "atom_key": "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build",
-      "review_status": "reviewed_pending",
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantic_verdict": "unknown",
-      "trust_readiness": "remediation_hold",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
       "source_paths": [
         "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/nuts.py",
+        "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/nuts_cdg.json",
+        "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/references.json",
+        "tests/test_mcmc_foundational_kthohr_mcmc_remediation.py",
         "tests/test_mcmc_foundational_kthohr_mcmc_nuts_import_smoke.py"
       ],
-      "limitations": [],
-      "blocking_findings": [
-        "Current implementation returns only a rightmost position-like array, while the source NUTS tree builder returns left/right states, candidate, stop flag, divergence/valid counts, and acceptance statistics."
+      "limitations": [
+        "Source-shaped NumPy NUTS tree builder returning structured trajectory bookkeeping; identity inverse preconditioner is the default and C++ rand-engine/settings bindings are not exposed."
       ],
-      "required_actions": [
-        "Rebuild with a structured NUTS trajectory result and focused tree-bookkeeping tests before publication."
-      ],
+      "blocking_findings": [],
+      "required_actions": [],
       "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
     },
     {
       "atom_key": "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel",
-      "review_status": "reviewed_pending",
-      "review_semantic_verdict": "unknown",
-      "review_developer_semantic_verdict": "unknown",
-      "trust_readiness": "remediation_hold",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
       "source_paths": [
         "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/rmhmc.py",
+        "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/rmhmc_cdg.json",
+        "src/sciona/atoms/inference/mcmc_foundational/kthohr_mcmc/references.json",
+        "tests/test_mcmc_foundational_kthohr_mcmc_remediation.py",
         "tests/test_mcmc_foundational_kthohr_mcmc_rmhmc_import_smoke.py"
       ],
-      "limitations": [],
-      "blocking_findings": [
-        "Current implementation does not expose the source RMHMC tensor-derivative callback or implicit generalized leapfrog machinery."
+      "limitations": [
+        "Educational unbounded RMHMC transition builder using NumPy generalized leapfrog fixed-point updates; richer callbacks can provide gradients and metric derivatives, while finite differences are a fallback."
       ],
-      "required_actions": [
-        "Implement an optional compiled/FFI lane or a clearly renamed educational approximation with metric-derivative tests."
-      ],
+      "blocking_findings": [],
+      "required_actions": [],
       "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
     },
     {

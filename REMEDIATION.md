@@ -2,30 +2,6 @@
 
 This file tracks heavier-lift catalog debt that should not be papered over with relaxed publishability rules. These items need real semantic repair, better tests, or clearer scope before they should be promoted into the public catalog.
 
-## Inference
-
-### `mcmc_foundational.kthohr_mcmc` remaining advanced MCMC rows
-
-Status: keep the listed KTHOHR MCMC rows unpublished for now.
-
-Held atoms:
-- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build`
-- `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel`
-
-Why they are blocked:
-- `nuts.nuts_recursive_tree_build` still lacks source-shaped structured trajectory bookkeeping such as left/right states, candidate, stop flag, valid/divergence counts, and acceptance statistics.
-- `rmhmc.buildrmhmctransitionkernel` still lacks the source RMHMC tensor-derivative callback and implicit generalized leapfrog machinery.
-- These rows need either optional compiled KTHOHR bindings or a deliberately renamed/narrowed educational lane with focused behavior tests.
-
-Proposed fixes:
-1. Rebuild NUTS with a structured trajectory result and tests that validate tree bookkeeping.
-2. Implement an optional compiled/FFI lane for RMHMC, or rename it as a limited educational approximation with metric-derivative tests.
-3. Reenter publication review only after implementation, metadata, references, and behavior tests align.
-
-Evidence as of 2026-04-20:
-- The KTHOHR remediation wave repaired AEES, DE, HMC, MALA, dispatcher, and RWMH rows as explicit local NumPy/educational kernels with limitations.
-- The same wave kept NUTS and RMHMC in remediation because the remaining source contracts are materially broader than the current local implementations.
-
 ## SciPy
 
 ### SciPy Naming Debt

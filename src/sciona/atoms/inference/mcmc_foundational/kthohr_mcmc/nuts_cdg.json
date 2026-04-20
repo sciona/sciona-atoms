@@ -27,7 +27,7 @@
       "node_id": "nuts_recursive_tree_build",
       "parent_id": "nuts_root",
       "name": "nuts_recursive_tree_build",
-      "description": "Recursively builds a binary tree for a No-U-Turn Sampler (NUTS) step.",
+      "description": "Recursively build a No-U-Turn Sampler (NUTS) binary tree with structured trajectory bookkeeping.",
       "concept_type": "custom",
       "inputs": [
         {
@@ -64,19 +64,29 @@
           "name": "tree_depth",
           "type_desc": "int",
           "constraints": "required argument"
+        },
+        {
+          "name": "rng_key",
+          "type_desc": "np.ndarray | int | None",
+          "constraints": "optional keyword-only deterministic seed"
+        },
+        {
+          "name": "inv_precond_matrix",
+          "type_desc": "np.ndarray | None",
+          "constraints": "optional keyword-only inverse mass/preconditioner matrix"
         }
       ],
       "outputs": [
         {
           "name": "result",
-          "type_desc": "NUTS_Trajectory",
+          "type_desc": "dict[str, np.ndarray]",
           "constraints": "function return value"
         }
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(direction_val: int, step_size: float, log_slice_variable: float, initial_hmc_state: HMCState, log_prob_oracle: log-prob oracle, integrator_fn: integrator oracle, tree_depth: int) -> NUTS_Trajectory",
+      "type_signature": "(direction_val: int, step_size: float, log_slice_variable: float, initial_hmc_state: HMCState, log_prob_oracle: log-prob oracle, integrator_fn: integrator oracle, tree_depth: int, *, rng_key: np.ndarray | int | None = None, inv_precond_matrix: np.ndarray | None = None) -> dict[str, np.ndarray]",
       "matched_primitive": null,
       "is_optional": false,
       "is_opaque": false,
