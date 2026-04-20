@@ -8,7 +8,6 @@ import json
 import logging
 from pathlib import Path
 
-from sciona.atoms.provider_inventory import discover_audit_manifest_path
 from sciona.atoms.supabase_backfill import DEFAULT_RUNNER_VERSION, run_backfill_command
 
 
@@ -31,7 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--atoms-root", type=Path, default=None)
-    parser.add_argument("--audit-manifest", type=Path, default=discover_audit_manifest_path())
+    parser.add_argument("--audit-manifest", type=Path, default=None)
     parser.add_argument("--registry-path", type=Path, default=None)
     parser.add_argument("--batch-size", type=int, default=50)
     parser.add_argument("--runner-version", default=DEFAULT_RUNNER_VERSION)

@@ -217,6 +217,20 @@ def discover_audit_manifest_path(base_dir: Path | None = None) -> Path:
     )
 
 
+def discover_audit_manifest_paths(base_dir: Path | None = None) -> tuple[Path, ...]:
+    """Return all provider-owned audit manifests in deterministic repo order."""
+    configured = str(os.environ.get("AUDIT_MANIFEST_PATH", "") or "").strip()
+    if configured:
+        return (Path(configured).expanduser().resolve(),)
+
+    paths: list[Path] = []
+    for repo_root in provider_repo_roots(base_dir):
+        candidate = (repo_root / _AUDIT_MANIFEST_RELATIVE).resolve()
+        if candidate.exists():
+            paths.append(candidate)
+    return _dedupe_paths(paths)
+
+
 def discover_audit_review_bundle_paths(base_dir: Path | None = None) -> tuple[Path, ...]:
     """Return all provider-owned audit review bundle files in deterministic order."""
     bundle_paths: list[Path] = []

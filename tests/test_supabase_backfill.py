@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 
-from sciona.atoms.provider_inventory import discover_audit_manifest_path
+from sciona.atoms.provider_inventory import discover_audit_manifest_path, discover_audit_manifest_paths
 from sciona.atoms.supabase_backfill import (
     build_atom_reference_row,
     build_dejargonized_description_row,
@@ -28,10 +28,13 @@ from sciona.atoms.supabase_backfill import (
     extract_fqdn,
     input_name_mismatch,
     iter_reference_files,
+    load_manifest_entries,
     load_registry,
     map_source,
     namespace_from_path,
     normalize_acceptability_band,
+    normalize_reference_type,
+    normalize_uncertainty_mode,
     normalize_verification_level,
 )
 
@@ -76,6 +79,86 @@ def test_discover_audit_manifest_path_uses_provider_owned_manifest(tmp_path: Pat
     assert _LEGACY_PROVIDER_LABEL not in text
     assert _LEGACY_NAMESPACE_LABEL not in text
     assert "sciona.atoms.demo.scale" in text
+
+
+def test_load_manifest_entries_merges_provider_owned_manifests(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    workspace = tmp_path / "audit-manifest-workspace"
+    base_manifest_path = workspace / "sciona-atoms" / "data" / "audit_manifest.json"
+    bio_manifest_path = workspace / "sciona-atoms-bio" / "data" / "audit_manifest.json"
+    physics_manifest_path = workspace / "sciona-atoms-physics" / "data" / "audit_manifest.json"
+    base_manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    bio_manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    physics_manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    (workspace / "sciona-atoms-bio" / "src" / "sciona" / "atoms" / "bio").mkdir(parents=True)
+    (workspace / "sciona-atoms-physics" / "src" / "sciona" / "atoms" / "physics").mkdir(parents=True)
+    base_manifest_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.1",
+                "atoms": [
+                    {
+                        "atom_name": "sciona.atoms.bio.demo.scale",
+                        "review_status": "reviewed_pending",
+                    },
+                    {
+                        "atom_name": "sciona.atoms.demo.identity",
+                        "review_status": "reviewed",
+                    },
+                ],
+            }
+        )
+    )
+    bio_manifest_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.1",
+                "atoms": [
+                    {
+                        "atom_name": "sciona.atoms.bio.demo.scale",
+                        "review_status": "reviewed",
+                    },
+                    {
+                        "atom_name": "sciona.atoms.bio.demo.offset",
+                        "review_status": "reviewed",
+                    },
+                ],
+            }
+        )
+    )
+    physics_manifest_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.1",
+                "atoms": [
+                    {
+                        "atom_name": "sciona.atoms.bio.demo.scale",
+                        "review_status": "stale_cross_repo_copy",
+                    },
+                    {
+                        "atom_name": "sciona.atoms.physics.demo.energy",
+                        "review_status": "reviewed",
+                    },
+                ],
+            }
+        )
+    )
+
+    monkeypatch.setenv("SCIONA_PROVIDER_WORKSPACE_ROOT", str(workspace))
+
+    assert discover_audit_manifest_paths() == (
+        base_manifest_path.resolve(),
+        bio_manifest_path.resolve(),
+        physics_manifest_path.resolve(),
+    )
+    entries = load_manifest_entries()
+    by_name = {entry["atom_name"]: entry for entry in entries}
+    assert by_name["sciona.atoms.bio.demo.scale"]["review_status"] == "reviewed"
+    assert by_name["sciona.atoms.demo.identity"]["review_status"] == "reviewed"
+    assert by_name["sciona.atoms.bio.demo.offset"]["review_status"] == "reviewed"
+    assert by_name["sciona.atoms.physics.demo.energy"]["review_status"] == "reviewed"
 
 
 def test_repository_audit_manifest_has_no_legacy_references() -> None:
@@ -249,6 +332,9 @@ def test_registry_and_reference_helpers_roundtrip() -> None:
     assert map_source({"match_type": "ast_subgraph"}) == "llm_extracted"
     row = build_registry_row("clrs2009", {"type": "book", "title": "CLRS"})
     assert row["bibtex_key"] == "clrs2009"
+    assert normalize_reference_type("software") == "repository"
+    assert normalize_reference_type("technical-report") == "paper"
+    assert build_registry_row("repo_scipy", {"type": "software"})["ref_type"] == "repository"
     atom_ref = build_atom_reference_row(
         "atom-1",
         "clrs2009",
@@ -472,10 +558,15 @@ def test_dedupe_verification_match_rows_collapses_exact_duplicates() -> None:
 def test_build_uncertainty_rows_maps_optional_fields() -> None:
     rows = build_uncertainty_rows(
         "atom-1",
-        [{"scalar_factor": 0.7, "confidence": 0.9, "input_regime": "shape=(256,)"}],
+        [
+            {"scalar_factor": 0.7, "confidence": 0.9, "input_regime": "shape=(256,)"},
+            {"mode": "source_review", "scalar_factor": 0.8, "confidence": 0.85},
+        ],
     )
     assert rows[0]["mode"] == "empirical"
     assert rows[0]["input_regime"] == "shape=(256,)"
+    assert normalize_uncertainty_mode("source-review") == "empirical"
+    assert rows[1]["mode"] == "empirical"
 
 
 def test_verification_helpers_guard_unknown_levels() -> None:

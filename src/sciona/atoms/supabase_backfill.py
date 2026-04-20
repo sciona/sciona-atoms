@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 from sciona.atoms.provider_inventory import (
     artifact_root_namespace_prefix,
-    discover_audit_manifest_path,
+    discover_audit_manifest_paths,
     discover_references_registry_path,
     iter_provider_artifact_files,
     namespace_prefix_for_artifact_root,
@@ -42,6 +42,28 @@ VALID_ACCEPTABILITY_BANDS = {
     "acceptable_with_limits",
     "acceptable_with_limits_candidate",
     "limited_acceptability",
+}
+VALID_REFERENCE_TYPES = {
+    "paper",
+    "repository",
+    "web",
+    "book",
+    "thesis",
+    "standard",
+}
+REFERENCE_TYPE_ALIASES = {
+    "software": "repository",
+    "technical_report": "paper",
+    "report": "paper",
+}
+VALID_UNCERTAINTY_MODES = {
+    "empirical",
+    "analytical",
+    "propagated",
+}
+UNCERTAINTY_MODE_ALIASES = {
+    "source_review": "empirical",
+    "manual_review": "empirical",
 }
 
 
@@ -174,14 +196,62 @@ def fetch_atom_lookup(supabase: "Client") -> dict[str, str]:
     return {row["fqdn"]: row["atom_id"] for row in rows if row.get("fqdn") and row.get("atom_id")}
 
 
+def _manifest_repo_root(manifest_path: Path) -> Path:
+    """Return the provider repo root for ``data/audit_manifest.json``."""
+    return manifest_path.parents[1]
+
+
+def _manifest_namespace_prefixes(manifest_path: Path) -> tuple[str, ...]:
+    """Return namespace prefixes owned by the manifest's provider repo."""
+    repo_root = _manifest_repo_root(manifest_path)
+    atoms_root = repo_root / "src" / "sciona" / "atoms"
+    if not atoms_root.is_dir():
+        atoms_root = repo_root / "sciona" / "atoms"
+    if not atoms_root.is_dir():
+        return tuple()
+    prefixes: list[str] = []
+    for child in sorted(atoms_root.iterdir()):
+        if not child.is_dir() or child.name.startswith("_"):
+            continue
+        prefixes.append(f"sciona.atoms.{child.name}.")
+    return tuple(prefixes)
+
+
+def _manifest_owns_atom(manifest_path: Path, atom_name: str) -> bool:
+    """Return whether a provider manifest should contribute ``atom_name``."""
+    if _manifest_repo_root(manifest_path).name == "sciona-atoms":
+        return True
+    prefixes = _manifest_namespace_prefixes(manifest_path)
+    if not prefixes:
+        return True
+    return atom_name.startswith(prefixes)
+
+
 def load_manifest_entries(path: Path | None = None) -> list[dict[str, Any]]:
-    """Load audit manifest entries."""
-    manifest_path = path or discover_audit_manifest_path()
-    payload = _load_json(manifest_path)
-    atoms = payload.get("atoms", [])
-    if not isinstance(atoms, list):
-        raise ValueError(f"Expected manifest atoms list in {manifest_path}")
-    return atoms
+    """Load audit manifest entries.
+
+    When no explicit path is supplied, merge provider-owned manifests in repo
+    order so sibling repos can publish independently of the base manifest.
+    """
+    manifest_paths = (path.resolve(),) if path is not None else discover_audit_manifest_paths()
+    merged: dict[str, dict[str, Any]] = {}
+    unkeyed: list[dict[str, Any]] = []
+    for manifest_path in manifest_paths:
+        payload = _load_json(manifest_path)
+        atoms = payload.get("atoms", [])
+        if not isinstance(atoms, list):
+            raise ValueError(f"Expected manifest atoms list in {manifest_path}")
+        for entry in atoms:
+            if not isinstance(entry, dict):
+                continue
+            atom_name = entry.get("atom_name")
+            if not atom_name:
+                unkeyed.append(entry)
+                continue
+            if path is None and not _manifest_owns_atom(manifest_path, str(atom_name)):
+                continue
+            merged[str(atom_name)] = entry
+    return [*unkeyed, *merged.values()]
 
 
 def load_manifest_argument_names(path: Path | None = None) -> dict[str, list[str]]:
@@ -622,7 +692,7 @@ def build_registry_row(ref_id: str, entry: dict[str, Any]) -> dict[str, Any]:
     """Map a registry JSON entry to ``references_registry`` columns."""
     return {
         "ref_id": ref_id,
-        "ref_type": entry.get("type", "paper"),
+        "ref_type": normalize_reference_type(entry.get("type")),
         "title": entry.get("title", ""),
         "authors": entry.get("authors", []),
         "year": entry.get("year"),
@@ -954,6 +1024,28 @@ def normalize_acceptability_band(
     return "unknown"
 
 
+def normalize_reference_type(ref_type: str | None) -> str:
+    """Return a ``references_registry.ref_type`` value accepted by the DB enum."""
+    if ref_type is None:
+        return "paper"
+    normalized = str(ref_type).strip().lower().replace("-", "_")
+    normalized = REFERENCE_TYPE_ALIASES.get(normalized, normalized)
+    if normalized in VALID_REFERENCE_TYPES:
+        return normalized
+    return "paper"
+
+
+def normalize_uncertainty_mode(mode: str | None) -> str:
+    """Return an ``atom_uncertainty_estimates.mode`` value accepted by the DB enum."""
+    if mode is None:
+        return "empirical"
+    normalized = str(mode).strip().lower().replace("-", "_")
+    normalized = UNCERTAINTY_MODE_ALIASES.get(normalized, normalized)
+    if normalized in VALID_UNCERTAINTY_MODES:
+        return normalized
+    return "empirical"
+
+
 def _technical_description_rank(row: dict[str, Any]) -> tuple[int, int, str]:
     content = str(row.get("content") or "").strip()
     return (1 if content else 0, len(content), content)
@@ -1220,7 +1312,7 @@ def build_uncertainty_rows(atom_id: str, estimates: list[dict[str, Any]]) -> lis
             {
                 "atom_id": atom_id,
                 "version_id": None,
-                "mode": estimate.get("mode", "empirical"),
+                "mode": normalize_uncertainty_mode(estimate.get("mode")),
                 "scalar_factor": estimate["scalar_factor"],
                 "confidence": estimate["confidence"],
                 "n_trials": estimate.get("n_trials", 0),

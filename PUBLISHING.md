@@ -278,10 +278,13 @@ PYTHONPATH=src /Users/conrad/personal/sciona-matcher/.venv/bin/python \
   scripts/supabase_backfill.py all-file-backed
 ```
 
-The backfill automatically discovers `data/references/registry.json` in all
-sibling repos. Each repo's ref_ids are merged into a single lookup table.
-No `--registry-path` flag is needed unless you want to override to a
-specific registry.
+The backfill automatically discovers `data/audit_manifest.json` and
+`data/references/registry.json` in all sibling repos. Provider-owned audit
+manifests override stale shared rows only for namespaces actually present in
+that provider repo, so sibling repos can publish independently without the
+base `sciona-atoms` manifest becoming a gate. No `--audit-manifest` or
+`--registry-path` flag is needed unless you want to override to a specific
+file.
 
 Then verify with SQL:
 
