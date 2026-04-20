@@ -28,16 +28,13 @@ MANIFEST_PATH = ROOT / "data" / "audit_manifest.json"
 
 PROMOTED_ATOMS = {
     "sciona.atoms.scipy.sparse_graph.graph_laplacian",
+    "sciona.atoms.scipy.sparse_graph.graph_fourier_transform",
+    "sciona.atoms.scipy.sparse_graph.inverse_graph_fourier_transform",
+    "sciona.atoms.scipy.sparse_graph.heat_kernel_diffusion",
     "sciona.atoms.scipy.sparse_graph.single_source_shortest_path",
     "sciona.atoms.scipy.sparse_graph.all_pairs_shortest_path",
     "sciona.atoms.scipy.sparse_graph.minimum_spanning_tree",
     "sciona.atoms.scipy.stats.norm",
-}
-
-HELD_ATOMS = {
-    "sciona.atoms.scipy.sparse_graph.graph_fourier_transform",
-    "sciona.atoms.scipy.sparse_graph.inverse_graph_fourier_transform",
-    "sciona.atoms.scipy.sparse_graph.heat_kernel_diffusion",
 }
 
 
@@ -108,6 +105,67 @@ def test_sparse_graph_wrappers_cover_predecessor_and_sparse_cases() -> None:
     np.testing.assert_array_equal(predecessors, expected_predecessors)
 
 
+def test_graph_fourier_transform_reconstructs_path_graph_signal() -> None:
+    graph = scipy.sparse.csr_matrix(
+        np.array(
+            [
+                [0.0, 1.0, 0.0],
+                [1.0, 0.0, 1.0],
+                [0.0, 1.0, 0.0],
+            ]
+        )
+    )
+    laplacian = sparse_graph.graph_laplacian(graph)
+    signal = np.array([1.0, -2.0, 3.0])
+
+    coeffs, eigenvalues, eigenvectors = sparse_graph.graph_fourier_transform(laplacian, signal)
+    expected_eigenvalues, expected_eigenvectors = np.linalg.eigh(laplacian.toarray())
+
+    np.testing.assert_allclose(eigenvalues, expected_eigenvalues, atol=1e-12)
+    np.testing.assert_allclose(np.abs(eigenvectors), np.abs(expected_eigenvectors), atol=1e-12)
+    np.testing.assert_allclose(eigenvectors @ coeffs, signal, atol=1e-12)
+    np.testing.assert_allclose(
+        sparse_graph.inverse_graph_fourier_transform(coeffs, eigenvectors),
+        signal,
+        atol=1e-12,
+    )
+
+
+def test_graph_fourier_transform_truncated_basis_and_invalid_k() -> None:
+    laplacian = scipy.sparse.diags([0.0, 1.0, 2.0, 3.0], format="csr")
+    signal = np.array([1.0, 2.0, 3.0, 4.0])
+
+    coeffs, eigenvalues, eigenvectors = sparse_graph.graph_fourier_transform(laplacian, signal, k=2)
+
+    assert coeffs.shape == (2,)
+    assert eigenvalues.shape == (2,)
+    assert eigenvectors.shape == (4, 2)
+    np.testing.assert_allclose(eigenvalues, [0.0, 1.0], atol=1e-12)
+    with pytest.raises(ValueError, match="k must be between"):
+        sparse_graph.graph_fourier_transform(laplacian, signal, k=0)
+
+
+def test_heat_kernel_diffusion_matches_full_spectral_filter_and_smooths() -> None:
+    graph = np.array(
+        [
+            [0.0, 1.0, 0.0, 0.0],
+            [1.0, 0.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0, 1.0],
+            [0.0, 0.0, 1.0, 0.0],
+        ]
+    )
+    laplacian = sparse_graph.graph_laplacian(scipy.sparse.csr_matrix(graph))
+    signal = np.array([1.0, -1.0, 2.0, -2.0])
+    t = 0.75
+
+    eigenvalues, eigenvectors = np.linalg.eigh(laplacian.toarray())
+    expected = eigenvectors @ (np.exp(-t * eigenvalues) * (eigenvectors.T @ signal))
+    result = sparse_graph.heat_kernel_diffusion(laplacian, signal, t=t)
+
+    np.testing.assert_allclose(result, expected, atol=1e-12)
+    assert float(result @ laplacian.dot(result)) < float(signal @ laplacian.dot(signal))
+
+
 def test_norm_wrapper_matches_frozen_scipy_normal_distribution() -> None:
     frozen = norm(loc=2.0, scale=3.0)
     expected = scipy.stats.norm(loc=2.0, scale=3.0)
@@ -138,7 +196,6 @@ def test_pubrev077_review_bundle_promotes_only_source_aligned_remediation_subset
     rows = bundle["rows"]
     row_keys = {row["atom_key"] for row in rows}
     assert row_keys == PROMOTED_ATOMS
-    assert row_keys.isdisjoint(HELD_ATOMS)
 
     for row in rows:
         assert row["atom_name"] == row["atom_key"]
@@ -172,7 +229,8 @@ def test_pubrev077_cdg_has_io_specs_for_promoted_atoms_only() -> None:
         assert node["outputs"] == [{"name": "result", "type_desc": node["outputs"][0]["type_desc"]}]
         assert all("required" in item for item in node["inputs"])
 
-    assert set(cdg["metadata"]["held_atoms"]) == HELD_ATOMS
+    assert "held_atoms" not in cdg["metadata"]
+    assert "graph signal processing helpers" in cdg["metadata"]["scope_note"]
 
 
 def test_pubrev077_references_bind_promoted_atoms_to_local_registry() -> None:
@@ -182,7 +240,7 @@ def test_pubrev077_references_bind_promoted_atoms_to_local_registry() -> None:
     reference_fqdns = {key.split("@", 1)[0] for key in references["atoms"]}
 
     assert reference_fqdns == PROMOTED_ATOMS
-    assert {"repo_scipy", "scipy2020"}.issubset(registry_ids)
+    assert {"repo_scipy", "scipy2020", "shuman2013gsp"}.issubset(registry_ids)
 
     for atom_key, record in references["atoms"].items():
         assert "@" in atom_key

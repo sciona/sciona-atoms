@@ -65,6 +65,30 @@ def _total_variation(L: scipy.sparse.spmatrix, x: np.ndarray) -> float:
     return float(x.dot(Lx))
 
 
+def _dense_symmetric_laplacian(L: SparseGraphInput) -> np.ndarray:
+    """Return a dense symmetric Laplacian matrix for spectral graph-signal helpers."""
+    L_dense = L.toarray() if scipy.sparse.issparse(L) else np.asarray(L, dtype=float)
+    return 0.5 * (L_dense + L_dense.T)
+
+
+def _laplacian_eigendecomposition(L: SparseGraphInput, k: int | None) -> tuple[np.ndarray, np.ndarray]:
+    n = L.shape[0]
+    if k is not None and (k <= 0 or k > n):
+        raise ValueError("k must be between 1 and the graph size")
+    if k is None or k >= n - 1:
+        eigenvalues, eigenvectors = np.linalg.eigh(_dense_symmetric_laplacian(L))
+    else:
+        eigenvalues, eigenvectors = scipy.sparse.linalg.eigsh(
+            scipy.sparse.csr_matrix(L),
+            k=k,
+            which="SM",
+        )
+        idx = np.argsort(eigenvalues)
+        eigenvalues = eigenvalues[idx]
+        eigenvectors = eigenvectors[:, idx]
+    return eigenvalues, eigenvectors
+
+
 @register_atom(witness_graph_laplacian)
 @icontract.require(lambda W: _is_symmetric(W), "Weight matrix W must be symmetric")
 @icontract.require(lambda W: _is_square_graph(W), "Weight matrix W must be square")
@@ -114,23 +138,24 @@ def graph_laplacian(
     "Must return (x_hat, eigenvalues, eigenvectors)",
 )
 @icontract.ensure(
-    lambda result, L: result[0].shape[0] == min(result[0].shape[0], L.shape[0]),
+    lambda result, L: result[0].shape[0] <= L.shape[0],
     "Coefficient count must be consistent with graph size",
 )
 def graph_fourier_transform(
-    L: scipy.sparse.spmatrix,
+    L: SparseGraphInput,
     x: np.ndarray,
     k: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Compute the Graph Fourier Transform of a signal on a graph.
+    """Compute graph Fourier coefficients from a Laplacian eigenbasis.
 
     Projects the signal x onto the eigenvectors of the graph Laplacian L.
-    The Graph Fourier Transform (GFT) generalizes the classical DFT to irregular graph domains.
+    This is a graph signal processing helper implemented with NumPy/SciPy
+    sparse eigensolvers, not a direct scipy.sparse.csgraph API wrapper.
 
     Args:
-        L: Graph Laplacian, sparse matrix of shape (n, n).
+        L: Symmetric graph Laplacian of shape (n, n).
         x: Graph signal of length n.
-        k: Number of eigenvectors to use. If None, uses all n.
+        k: Number of lowest-frequency eigenvectors to use. If None, uses all n.
 
     Returns:
         Tuple of (x_hat, eigenvalues, eigenvectors) where x_hat are the
@@ -138,16 +163,7 @@ def graph_fourier_transform(
         eigenvectors are the GFT basis vectors.
 
     """
-    n = L.shape[0]
-    if k is None or k >= n - 1:
-        L_dense = L.toarray()
-        eigenvalues, eigenvectors = np.linalg.eigh(L_dense)
-    else:
-        eigenvalues, eigenvectors = scipy.sparse.linalg.eigsh(L, k=k, which="SM")
-        idx = np.argsort(eigenvalues)
-        eigenvalues = eigenvalues[idx]
-        eigenvectors = eigenvectors[:, idx]
-
+    eigenvalues, eigenvectors = _laplacian_eigendecomposition(L, k)
     x_hat = eigenvectors.T @ x
     return x_hat, eigenvalues, eigenvectors
 
@@ -159,9 +175,11 @@ def inverse_graph_fourier_transform(
     x_hat: np.ndarray,
     eigenvectors: np.ndarray,
 ) -> np.ndarray:
-    """Compute the Inverse Graph Fourier Transform.
+    """Reconstruct a graph signal from graph Fourier coefficients.
 
     Reconstructs the graph signal from GFT coefficients and eigenvectors.
+    Full reconstruction requires a complete eigenbasis; truncated bases return
+    the least-squares projection onto the retained low-frequency subspace.
 
     Args:
         x_hat: GFT coefficients of length k.
@@ -185,18 +203,19 @@ def inverse_graph_fourier_transform(
     enabled=_SLOW_CHECKS,
 )
 def heat_kernel_diffusion(
-    L: scipy.sparse.spmatrix,
+    L: SparseGraphInput,
     x: np.ndarray,
     t: float,
     k: int | None = None,
 ) -> np.ndarray:
-    """Apply heat kernel diffusion to a graph signal.
+    """Apply spectral heat-kernel diffusion to a graph signal.
 
     Computes exp(-t*L) @ x, which smooths the signal x over the graph
-    topology. The diffusion reduces the total variation of the signal.
+    topology. This helper uses the graph Fourier basis from the Laplacian and
+    is not a direct scipy.sparse.csgraph routine.
 
     Args:
-        L: Graph Laplacian, sparse matrix of shape (n, n).
+        L: Symmetric graph Laplacian of shape (n, n).
         x: Graph signal of length n.
         t: Diffusion time parameter. Must be >= 0. Larger values
             produce smoother outputs.
@@ -207,16 +226,7 @@ def heat_kernel_diffusion(
         The diffused graph signal of length n.
 
     """
-    n = L.shape[0]
-    if k is None or k >= n - 1:
-        L_dense = L.toarray()
-        eigenvalues, eigenvectors = np.linalg.eigh(L_dense)
-    else:
-        eigenvalues, eigenvectors = scipy.sparse.linalg.eigsh(L, k=k, which="SM")
-        idx = np.argsort(eigenvalues)
-        eigenvalues = eigenvalues[idx]
-        eigenvectors = eigenvectors[:, idx]
-
+    eigenvalues, eigenvectors = _laplacian_eigendecomposition(L, k)
     x_hat = eigenvectors.T @ x
     heat_filter = np.exp(-t * eigenvalues)
     x_hat_filtered = heat_filter * x_hat

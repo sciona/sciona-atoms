@@ -26,58 +26,7 @@ Evidence as of 2026-04-20:
 - The KTHOHR remediation wave repaired AEES, DE, HMC, MALA, dispatcher, and RWMH rows as explicit local NumPy/educational kernels with limitations.
 - The same wave kept NUTS and RMHMC in remediation because the remaining source contracts are materially broader than the current local implementations.
 
-## Robotics
-
-### `pronto.torque_adjustment`
-
-Status: keep the torque-adjustment identity stage unpublished.
-
-Held atom:
-- `sciona.atoms.robotics.pronto.torque_adjustment.apply_torque_adjustment`
-
-Why it is blocked:
-- The current implementation is effectively a no-op identity transform over the torque input.
-- The public name implies a meaningful PRONTO torque-adjustment stage, but the local behavior does not implement a source-aligned adjustment, correction, or estimator update.
-- Publishing it would make the catalog look more complete while exposing a misleading robotic-control primitive.
-
-Proposed fixes:
-1. Reingest or reimplement from source with the actual torque-adjustment semantics and focused behavior tests.
-2. If the intended scope is only an identity passthrough helper, rename it narrowly and document that limited behavior before review.
-3. Reenter publication review only after the implementation, metadata, references, and tests support the public name.
-
-Evidence as of 2026-04-20:
-- Prior publishability review rejected this atom as a no-op identity stage rather than a source-aligned PRONTO torque adjustment.
-
 ## SciPy
-
-### `scipy.sparse_graph`
-
-Status: keep the graph-spectral helpers unpublished for now.
-
-Why it is blocked:
-- `graph_fourier_transform`, `inverse_graph_fourier_transform`, and `heat_kernel_diffusion` are local graph-signal helpers rather than direct SciPy sparse-graph APIs.
-- Their public names still imply a broader SciPy sparse-graph contract than the current provenance and review evidence justify.
-
-What we verified:
-- In the 2026-04-20 remediation pass, `graph_laplacian` was narrowed to a Laplacian-return wrapper over `scipy.sparse.csgraph.laplacian`, and the shortest-path wrappers were aligned to `scipy.sparse.csgraph.shortest_path`.
-- `minimum_spanning_tree` was verified against `scipy.sparse.csgraph.minimum_spanning_tree`.
-- `graph_fourier_transform`, `inverse_graph_fourier_transform`, and `heat_kernel_diffusion` remain held because they are local graph-signal helpers rather than direct SciPy sparse-graph APIs.
-- The `scipy.stats.norm` remediation row was narrowed to the frozen-distribution call path `scipy.stats.norm(loc=loc, scale=scale)` and removed from remediation.
-
-Proposed fixes:
-1. For the misleading spectral helpers, either:
-   - rename them to match the actual behavior surface, or
-   - tighten the implementation and tests until the current names are defensible.
-2. Add behavior-level tests against concrete graph-signal expectations before reentering the publication queue.
-3. Only restore these atoms to the publishability lane after the misleading subset is resolved.
-
-Suggested remediation order:
-1. `graph_fourier_transform`
-2. `inverse_graph_fourier_transform`
-3. `heat_kernel_diffusion`
-
-Evidence as of 2026-04-20:
-- The `pubrev-077` remediation wave promoted only source-aligned SciPy wrappers and left the graph-spectral helpers held.
 
 ### SciPy Naming Debt
 

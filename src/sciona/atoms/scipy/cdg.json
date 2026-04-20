@@ -90,6 +90,57 @@
       ]
     },
     {
+      "node_id": "graph_fourier_transform",
+      "name": "graph_fourier_transform",
+      "description": "Project a graph signal onto a Laplacian eigenbasis.",
+      "concept_type": "graph_signal_processing",
+      "status": "atomic",
+      "type_signature": "(L: SparseGraphInput, x: NDArray[np.float64], k: int | None = None) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]",
+      "depth": 1,
+      "inputs": [
+        {"name": "L", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "k", "type_desc": "int | None", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]"}
+      ]
+    },
+    {
+      "node_id": "inverse_graph_fourier_transform",
+      "name": "inverse_graph_fourier_transform",
+      "description": "Reconstruct a graph signal from graph Fourier coefficients and a supplied eigenbasis.",
+      "concept_type": "graph_signal_processing",
+      "status": "atomic",
+      "type_signature": "(x_hat: NDArray[np.float64], eigenvectors: NDArray[np.float64]) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "x_hat", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "eigenvectors", "type_desc": "NDArray[np.float64]", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "heat_kernel_diffusion",
+      "name": "heat_kernel_diffusion",
+      "description": "Smooth a graph signal by applying exp(-tL) in the Laplacian spectral basis.",
+      "concept_type": "graph_signal_processing",
+      "status": "atomic",
+      "type_signature": "(L: SparseGraphInput, x: NDArray[np.float64], t: float, k: int | None = None) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "L", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
+        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "t", "type_desc": "float", "required": true},
+        {"name": "k", "type_desc": "int | None", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
       "node_id": "norm",
       "name": "norm",
       "description": "Freeze SciPy's normal distribution for a finite location and positive scale.",
@@ -111,10 +162,6 @@
     "source": "manual_remediation",
     "source_repo": "https://github.com/scipy/scipy",
     "source_license": "BSD-3-Clause",
-    "held_atoms": [
-      "sciona.atoms.scipy.sparse_graph.graph_fourier_transform",
-      "sciona.atoms.scipy.sparse_graph.inverse_graph_fourier_transform",
-      "sciona.atoms.scipy.sparse_graph.heat_kernel_diffusion"
-    ]
+    "scope_note": "The sparse_graph family contains direct scipy.sparse.csgraph wrappers and SciPy-backed graph signal processing helpers. Graph Fourier and heat-kernel rows are not direct csgraph parity APIs."
   }
 }
