@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-20T14:32:28.757169+00:00",
+  "generated_at": "2026-04-20T14:34:42.898788+00:00",
   "source": "local_supabase_remediation_filtered",
   "totals": {
     "atoms": 660,
@@ -7,12 +7,12 @@
     "non_publishable_atoms": 8
   },
   "backlog_totals": {
-    "review_backlog_non_publishable_atoms": 3,
-    "remediation_excluded_non_publishable_atoms": 5
+    "review_backlog_non_publishable_atoms": 2,
+    "remediation_excluded_non_publishable_atoms": 6
   },
   "remediation_exclusions": {
     "path": "/Users/conrad/personal/sciona-atoms/REMEDIATION.md",
-    "matched_target_count": 2,
+    "matched_target_count": 3,
     "matched_targets": [
       {
         "label": "mcmc_foundational.kthohr_mcmc",
@@ -30,6 +30,16 @@
           "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build",
           "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel",
           "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rwmh.constructrandomwalkmetropoliskernel"
+        ]
+      },
+      {
+        "label": "pronto.torque_adjustment",
+        "candidate": "sciona.atoms.robotics.pronto.torque_adjustment",
+        "match_type": "prefix",
+        "matched_atom_count": 1,
+        "matched_unpublished_atom_count": 1,
+        "matched_atoms": [
+          "sciona.atoms.robotics.pronto.torque_adjustment.apply_torque_adjustment"
         ]
       },
       {
@@ -59,6 +69,7 @@
       "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build",
       "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel",
       "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rwmh.constructrandomwalkmetropoliskernel",
+      "sciona.atoms.robotics.pronto.torque_adjustment.apply_torque_adjustment",
       "sciona.atoms.scipy.sparse_graph.all_pairs_shortest_path",
       "sciona.atoms.scipy.sparse_graph.graph_fourier_transform",
       "sciona.atoms.scipy.sparse_graph.graph_laplacian",
@@ -70,18 +81,19 @@
     "excluded_unpublished_fqdns": [
       "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build",
       "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel",
+      "sciona.atoms.robotics.pronto.torque_adjustment.apply_torque_adjustment",
       "sciona.atoms.scipy.sparse_graph.graph_fourier_transform",
       "sciona.atoms.scipy.sparse_graph.heat_kernel_diffusion",
       "sciona.atoms.scipy.sparse_graph.inverse_graph_fourier_transform"
     ],
-    "excluded_atom_count": 16,
-    "excluded_unpublished_atom_count": 5
+    "excluded_atom_count": 17,
+    "excluded_unpublished_atom_count": 6
   },
   "blocker_counts": {
-    "description": 3,
+    "description": 2,
     "io_specs": 2,
-    "parameters": 3,
-    "publishable_rollup": 3,
+    "parameters": 2,
+    "publishable_rollup": 2,
     "references": 2
   },
   "top_blocker_combinations": [
@@ -94,21 +106,13 @@
         "references"
       ],
       "atom_count": 2
-    },
-    {
-      "blockers": [
-        "publishable_rollup",
-        "parameters",
-        "description"
-      ],
-      "atom_count": 1
     }
   ],
   "top_review_statuses": [
     {
       "review_status": "missing_row",
       "trust_readiness": "missing_row",
-      "atom_count": 3
+      "atom_count": 2
     }
   ],
   "domains": [
@@ -154,41 +158,12 @@
           ]
         }
       ]
-    },
-    {
-      "domain": "robotics",
-      "atom_count": 1,
-      "missing_publishable_rollup": 1,
-      "missing_io_specs": 0,
-      "missing_parameters": 1,
-      "missing_description": 1,
-      "missing_references": 0,
-      "atoms": [
-        {
-          "fqdn": "sciona.atoms.robotics.pronto.torque_adjustment.apply_torque_adjustment",
-          "domain": "robotics",
-          "review_status": "missing_row",
-          "trust_readiness": "missing_row",
-          "semantic_verdict": "missing_row",
-          "developer_semantic_verdict": "missing_row",
-          "overall_verdict": "missing_row",
-          "blockers": [
-            "publishable_rollup",
-            "parameters",
-            "description"
-          ]
-        }
-      ]
     }
   ],
   "largest_non_publishable_domains": [
     {
       "domain": "medical_imaging_3d",
       "atom_count": 2
-    },
-    {
-      "domain": "robotics",
-      "atom_count": 1
     }
   ]
 }

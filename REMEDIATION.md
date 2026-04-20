@@ -26,6 +26,28 @@ Evidence as of 2026-04-20:
 - The KTHOHR remediation wave repaired AEES, DE, HMC, MALA, dispatcher, and RWMH rows as explicit local NumPy/educational kernels with limitations.
 - The same wave kept NUTS and RMHMC in remediation because the remaining source contracts are materially broader than the current local implementations.
 
+## Robotics
+
+### `pronto.torque_adjustment`
+
+Status: keep the torque-adjustment identity stage unpublished.
+
+Held atom:
+- `sciona.atoms.robotics.pronto.torque_adjustment.apply_torque_adjustment`
+
+Why it is blocked:
+- The current implementation is effectively a no-op identity transform over the torque input.
+- The public name implies a meaningful PRONTO torque-adjustment stage, but the local behavior does not implement a source-aligned adjustment, correction, or estimator update.
+- Publishing it would make the catalog look more complete while exposing a misleading robotic-control primitive.
+
+Proposed fixes:
+1. Reingest or reimplement from source with the actual torque-adjustment semantics and focused behavior tests.
+2. If the intended scope is only an identity passthrough helper, rename it narrowly and document that limited behavior before review.
+3. Reenter publication review only after the implementation, metadata, references, and tests support the public name.
+
+Evidence as of 2026-04-20:
+- Prior publishability review rejected this atom as a no-op identity stage rather than a source-aligned PRONTO torque adjustment.
+
 ## SciPy
 
 ### `scipy.sparse_graph`
