@@ -250,7 +250,7 @@ def load_manifest_entries(path: Path | None = None) -> list[dict[str, Any]]:
                 continue
             if path is None and not _manifest_owns_atom(manifest_path, str(atom_name)):
                 continue
-            merged[str(atom_name)] = entry
+            merged[str(atom_name)] = {**merged.get(str(atom_name), {}), **entry}
     return [*unkeyed, *merged.values()]
 
 

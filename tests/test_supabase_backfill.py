@@ -102,6 +102,9 @@ def test_load_manifest_entries_merges_provider_owned_manifests(
                     {
                         "atom_name": "sciona.atoms.bio.demo.scale",
                         "review_status": "reviewed_pending",
+                        "has_references": True,
+                        "references_status": "pass",
+                        "upstream_symbols": {"module": "bio.demo", "function": "scale"},
                     },
                     {
                         "atom_name": "sciona.atoms.demo.identity",
@@ -156,6 +159,12 @@ def test_load_manifest_entries_merges_provider_owned_manifests(
     entries = load_manifest_entries()
     by_name = {entry["atom_name"]: entry for entry in entries}
     assert by_name["sciona.atoms.bio.demo.scale"]["review_status"] == "reviewed"
+    assert by_name["sciona.atoms.bio.demo.scale"]["has_references"] is True
+    assert by_name["sciona.atoms.bio.demo.scale"]["references_status"] == "pass"
+    assert by_name["sciona.atoms.bio.demo.scale"]["upstream_symbols"] == {
+        "module": "bio.demo",
+        "function": "scale",
+    }
     assert by_name["sciona.atoms.demo.identity"]["review_status"] == "reviewed"
     assert by_name["sciona.atoms.bio.demo.offset"]["review_status"] == "reviewed"
     assert by_name["sciona.atoms.physics.demo.energy"]["review_status"] == "reviewed"

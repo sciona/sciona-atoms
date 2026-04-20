@@ -1,8 +1,8 @@
 # Publishability Review Batch Queue
 
-Generated from `docs/audit/unpublished_atom_audit_status.json` on 2026-04-20T14:34:42.898788+00:00.
+Generated from `docs/audit/unpublished_atom_audit_status.json` on 2026-04-20T15:03:55.936330+00:00.
 
-- Remaining unpublished atoms: `2`
+- Remaining unpublished atoms: `6`
 - Remediation-excluded atoms: `6`
 - Remaining worker batches: `0`
 
