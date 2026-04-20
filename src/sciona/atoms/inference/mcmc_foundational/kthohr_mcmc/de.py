@@ -1,75 +1,62 @@
 from __future__ import annotations
 
 from typing import Callable
-"""Auto-generated atom wrappers following the sciona pattern."""
-
-
-import numpy as np
 
 import icontract
-from sciona.ghost.registry import register_atom  # type: ignore[import-untyped]
-
-import ctypes
-import ctypes.util
-from pathlib import Path
-
+import numpy as np
+from sciona.ghost.registry import register_atom
 
 from .de_witnesses import witness_build_de_transition_kernel
 
+
+def _seed_from_key(rng_key: np.ndarray) -> int:
+    key = np.asarray(rng_key, dtype=np.int64).ravel()
+    if key.size == 0:
+        raise ValueError("rng must contain at least one integer seed value")
+    return int(np.abs(key).sum()) % (2**31 - 1)
+
+
 @register_atom(witness_build_de_transition_kernel)
-@icontract.require(lambda target_log_kernel: target_log_kernel is not None, "target_log_kernel cannot be None")
-@icontract.ensure(lambda result: result is not None, "build_de_transition_kernel output must not be None")
-def build_de_transition_kernel(target_log_kernel: Callable[[np.ndarray], float]) -> Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
-    """Creates a pure Differential Evolution transition kernel from the provided target log-density oracle.
+@icontract.require(lambda target_log_kernel: callable(target_log_kernel), "target_log_kernel must be callable")
+@icontract.require(lambda gamma_scale: float(gamma_scale) > 0.0, "gamma_scale must be positive")
+@icontract.ensure(lambda result: callable(result), "result must be a transition kernel")
+def build_de_transition_kernel(
+    target_log_kernel: Callable[[np.ndarray], float],
+    gamma_scale: float = 2.38,
+) -> Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
+    """Build a minimal differential-evolution Metropolis transition kernel.
 
-Args:
-    target_log_kernel: Stateless log-density oracle; no persistent state mutation.
+    The state is a population matrix of shape ``(n_chains, n_dimensions)``.
+    Each row proposes from two other population members and accepts using the
+    supplied target log-density. This is a source-shaped NumPy subset, not a
+    binding to the full KTHOHR settings object or burn-in loop.
+    """
 
-Returns:
-    Pure transition function; any stochastic state (e.g., random number generator (RNG)/PRNGKey) must be explicit input/output."""
     def _de_kernel(state: np.ndarray, rng: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        # state is the population matrix: (n_members, dim)
-        rng_int = int(np.sum(np.abs(rng))) % (2**31)
-        local_rng = np.random.RandomState(rng_int)
+        population = np.asarray(state, dtype=np.float64)
+        if population.ndim != 2:
+            raise ValueError("DE state must be a two-dimensional population matrix")
+        n_members, dim = population.shape
+        if n_members < 3:
+            raise ValueError("DE transition requires at least three population members")
 
-        if state.ndim == 1:
-            # Single member: just do RW-MH
-            proposal = state + local_rng.randn(*state.shape)
-            log_ratio = target_log_kernel(proposal) - target_log_kernel(state)
-            if np.log(local_rng.rand()) < log_ratio:
-                new_state = proposal
-            else:
-                new_state = state.copy()
-        else:
-            n_members = state.shape[0]
-            new_state = state.copy()
-            F = 2.38 / np.sqrt(2.0 * state.shape[1]) if state.shape[1] > 0 else 1.0
-            for k in range(n_members):
-                idxs = [j for j in range(n_members) if j != k]
-                a, b = local_rng.choice(idxs, size=2, replace=False)
-                proposal = state[k] + F * (state[a] - state[b])
-                log_ratio = target_log_kernel(proposal) - target_log_kernel(state[k])
-                if np.log(local_rng.rand()) < log_ratio:
-                    new_state[k] = proposal
+        local_rng = np.random.RandomState(_seed_from_key(rng))
+        next_population = population.copy()
+        gamma = float(gamma_scale) / np.sqrt(2.0 * float(dim))
 
-        new_rng = np.array(local_rng.randint(0, 2**31, size=rng.shape), dtype=rng.dtype)
-        return (new_state, new_rng)
+        for chain_index in range(n_members):
+            choices = [idx for idx in range(n_members) if idx != chain_index]
+            first, second = local_rng.choice(choices, size=2, replace=False)
+            proposal = population[chain_index] + gamma * (population[first] - population[second])
+            current_logp = float(target_log_kernel(population[chain_index]))
+            proposal_logp = float(target_log_kernel(proposal))
+            if not np.isfinite(proposal_logp):
+                proposal_logp = -np.inf
+            log_accept = min(0.0, proposal_logp - current_logp)
+            if np.log(local_rng.uniform()) < log_accept:
+                next_population[chain_index] = proposal
+
+        rng_out = np.asarray(local_rng.randint(0, 2**31 - 1, size=np.asarray(rng).shape), dtype=np.int64)
+        return next_population, rng_out
 
     return _de_kernel
-
-
-"""Auto-generated FFI bindings for cpp implementations."""
-
-
-import ctypes
-import ctypes.util
-from pathlib import Path
-
-def _build_de_transition_kernel_ffi(target_log_kernel: Callable[[np.ndarray], float]) -> Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
-    """Wrapper that calls the C++ version of build de transition kernel. Passes arguments through and returns the result."""
-    _func_name = 'build_de_transition_kernel'
-    _func_name = 'build_de_transition_kernel'
-    _func = ctypes.CDLL(None)[_func_name]
-    _func.argtypes = [ctypes.c_void_p]
-    _func.restype = ctypes.c_void_p
-    return _func(target_log_kernel)

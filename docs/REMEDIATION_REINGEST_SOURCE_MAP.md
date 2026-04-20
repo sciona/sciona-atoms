@@ -6,15 +6,8 @@ This is a simple source map for remediation-held atoms that should be reingested
 
 | Atom | Source file + line |
 | --- | --- |
-| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.aees.metropolishastingstransitionkernel` | `../ageo-atoms/third_party/mcmc/src/aees.cpp:30` |
-| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.aees.targetlogkerneloracle` | `../ageo-atoms/third_party/mcmc/examples/armadillo/aees_mixture.cpp:60` |
-| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.de.build_de_transition_kernel` | `../ageo-atoms/third_party/mcmc/src/de.cpp:30` |
-| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.hmc.buildhmckernelfromlogdensityoracle` | `../ageo-atoms/third_party/mcmc/src/hmc.cpp:30` |
-| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.mala.mala_proposal_adjustment` | `../ageo-atoms/third_party/mcmc/include/mcmc/mala.ipp:32` |
-| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.mcmc_algos.dispatch_mcmc_algorithm` | `../ageo-atoms/third_party/mcmc/include/mcmc.hpp:35` |
 | `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build` | `../ageo-atoms/third_party/mcmc/include/mcmc/nuts.ipp:99` |
 | `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel` | `../ageo-atoms/third_party/mcmc/src/rmhmc.cpp:30` |
-| `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rwmh.constructrandomwalkmetropoliskernel` | `../ageo-atoms/third_party/mcmc/src/rwmh.cpp:30` |
 | `sciona.atoms.bio.molecular_docking.quantum_solver.adiabaticquantumsampler` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:138` |
 | `sciona.atoms.bio.molecular_docking.quantum_solver.quantumproblemdefinition` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` |
 | `sciona.atoms.bio.molecular_docking.quantum_solver.solutionextraction` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:241` |

@@ -1,46 +1,55 @@
 from __future__ import annotations
 
-import numpy as np
+from typing import Callable, Literal
+
 import icontract
+import numpy as np
 from sciona.ghost.registry import register_atom
+
+from .de import build_de_transition_kernel
+from .hmc import buildhmckernelfromlogdensityoracle
 from .mcmc_algos_witnesses import witness_dispatch_mcmc_algorithm
+from .rwmh import constructrandomwalkmetropoliskernel
+
+
+AlgorithmName = Literal["rwmh", "hmc", "de"]
 
 
 @register_atom(witness_dispatch_mcmc_algorithm)
-@icontract.require(lambda log_target_density: log_target_density.ndim >= 1, "log_target_density must have at least one dimension")
-@icontract.require(lambda initial_state: initial_state.ndim >= 1, "initial_state must have at least one dimension")
-@icontract.require(lambda log_target_density: log_target_density is not None, "log_target_density cannot be None")
-@icontract.require(lambda log_target_density: isinstance(log_target_density, np.ndarray), "log_target_density must be np.ndarray")
-@icontract.require(lambda initial_state: initial_state is not None, "initial_state cannot be None")
-@icontract.require(lambda initial_state: isinstance(initial_state, np.ndarray), "initial_state must be np.ndarray")
-@icontract.require(lambda n_draws: n_draws is not None, "n_draws cannot be None")
-@icontract.ensure(lambda result: isinstance(result, np.ndarray), "result must be np.ndarray")
-@icontract.ensure(lambda result: result is not None, "result must not be None")
-def dispatch_mcmc_algorithm(log_target_density: np.ndarray, initial_state: np.ndarray, n_draws: int) -> np.ndarray:
-    """Routes to the chosen sampling algorithm for drawing random samples from a target distribution. Supports seven sampling methods including random-walk, gradient-based, and population-based approaches.
+@icontract.require(lambda algorithm: algorithm in {"rwmh", "hmc", "de"}, "algorithm must be rwmh, hmc, or de")
+@icontract.require(lambda target_log_kernel: callable(target_log_kernel), "target_log_kernel must be callable")
+@icontract.require(lambda initial_state: isinstance(initial_state, np.ndarray), "initial_state must be a numpy array")
+@icontract.require(lambda n_draws: int(n_draws) >= 1, "n_draws must be at least one")
+@icontract.ensure(lambda result: isinstance(result, np.ndarray), "result must be a numpy array")
+def dispatch_mcmc_algorithm(
+    algorithm: AlgorithmName,
+    target_log_kernel: Callable[[np.ndarray], float],
+    initial_state: np.ndarray,
+    n_draws: int,
+    rng_key: np.ndarray | None = None,
+) -> np.ndarray:
+    """Run a small explicit MCMC dispatcher over repaired local kernels.
 
-Args:
-    log_target_density: Flattened evaluation of the log-target density at current chain positions
-    initial_state: Initial parameter vector for the Markov chain, shape (n_params,)
-    n_draws: Number of posterior samples to collect after warmup
+    The dispatcher accepts a real target log-density oracle, chooses one of the
+    repaired NumPy transition kernels, threads the RNG key through every draw,
+    and returns the sampled states. It deliberately does not mimic the upstream
+    C++ overload table or settings object.
+    """
+    if rng_key is None:
+        key = np.array([42], dtype=np.int64)
+    else:
+        key = np.asarray(rng_key, dtype=np.int64)
 
-Returns:
-    Posterior samples array, shape (n_draws, n_params)"""
-    dim = initial_state.shape[0]
-    samples = np.zeros((n_draws, dim))
-    current = initial_state.copy()
-    current_logp = np.sum(log_target_density)  # use flattened evaluation
-    rng = np.random.RandomState(42)
+    if algorithm == "rwmh":
+        kernel = constructrandomwalkmetropoliskernel(target_log_kernel)
+    elif algorithm == "hmc":
+        kernel = buildhmckernelfromlogdensityoracle(target_log_kernel)
+    else:
+        kernel = build_de_transition_kernel(target_log_kernel)
 
-    for i in range(n_draws):
-        proposal = current + rng.randn(dim)
-        # Evaluate log-target at proposal by simple proxy: sum of proposal elements
-        # scaled by the mean density signal
-        proposal_logp = current_logp + np.sum(proposal - current) * np.mean(log_target_density)
-        log_alpha = proposal_logp - current_logp
-        if np.log(rng.rand()) < log_alpha:
-            current = proposal
-            current_logp = proposal_logp
-        samples[i] = current
-
+    state = np.asarray(initial_state, dtype=np.float64)
+    samples = np.zeros((int(n_draws),) + state.shape, dtype=np.float64)
+    for draw_index in range(int(n_draws)):
+        state, key = kernel(state, key)
+        samples[draw_index] = state
     return samples

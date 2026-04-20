@@ -197,6 +197,9 @@ def derive_atom_fqdn(cdg_path: Path, atoms_root: Path, node_name: str) -> str:
     """Derive a fully qualified atom name from a CDG file path."""
     rel_parts = cdg_path.parent.relative_to(atoms_root).parts
     namespace_prefix = namespace_prefix_for_artifact_root(atoms_root)
+    if cdg_path.name.endswith("_cdg.json"):
+        module_part = cdg_path.name[: -len("_cdg.json")]
+        return ".".join((*namespace_prefix, *rel_parts, module_part, node_name))
     return ".".join((*namespace_prefix, *rel_parts, node_name))
 
 

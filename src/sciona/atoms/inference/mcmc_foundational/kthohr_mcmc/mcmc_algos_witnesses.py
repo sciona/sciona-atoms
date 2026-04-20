@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from sciona.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
+from sciona.ghost.abstract import AbstractArray, AbstractScalar, AbstractSignal
+
 
 def witness_dispatch_mcmc_algorithm(
-    log_target_density: AbstractArray,
+    algorithm: AbstractScalar,
+    target_log_kernel: AbstractSignal,
     initial_state: AbstractArray,
     n_draws: AbstractScalar,
+    rng_key: AbstractArray,
 ) -> AbstractArray:
-    """Return trajectory metadata for a dispatched MCMC algorithm run."""
-    _ = initial_state, n_draws
-    result = AbstractArray(
-        shape=log_target_density.shape,
-        dtype="float64",)
-    
-    return result
+    """Return trajectory metadata for a repaired local MCMC dispatch run."""
+    _ = algorithm, target_log_kernel, n_draws, rng_key
+    return AbstractArray(shape=initial_state.shape, dtype="float64")

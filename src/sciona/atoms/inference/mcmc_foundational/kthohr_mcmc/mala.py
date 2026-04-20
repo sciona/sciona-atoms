@@ -1,52 +1,58 @@
 from __future__ import annotations
 
 from typing import Callable
-"""Auto-generated atom wrappers following the sciona pattern."""
-
-
-import numpy as np
 
 import icontract
+import numpy as np
 from sciona.ghost.registry import register_atom
+
 from .mala_witnesses import witness_mala_proposal_adjustment
 
-import ctypes
-import ctypes.util
-from pathlib import Path
 
+def _log_mvn_density(value: np.ndarray, mean: np.ndarray, covariance: np.ndarray) -> float:
+    diff = np.asarray(value, dtype=np.float64) - np.asarray(mean, dtype=np.float64)
+    cov = np.asarray(covariance, dtype=np.float64)
+    sign, log_det = np.linalg.slogdet(cov)
+    if sign <= 0:
+        raise ValueError("proposal covariance must be positive definite")
+    solve = np.linalg.solve(cov, diff)
+    dim = float(diff.size)
+    return float(-0.5 * (dim * np.log(2.0 * np.pi) + log_det + diff @ solve))
 
-# Witness functions should be imported from the generated witnesses module
 
 @register_atom(witness_mala_proposal_adjustment)
-@icontract.require(lambda step_size: isinstance(step_size, (float, int, np.number)), "step_size must be numeric")
-@icontract.ensure(lambda result: result is not None, "mala_proposal_adjustment output must not be None")
-def mala_proposal_adjustment(step_size: float, vals_bound: np.ndarray, mala_mean_fn: Callable[[np.ndarray], np.ndarray]) -> np.ndarray:
-    """Calculates the adjustment term for a Metropolis-Adjusted Langevin Algorithm (MALA) proposal. This typically involves the gradient of the log-posterior (via mala_mean_fn), which guides the proposal distribution.
+@icontract.require(lambda prop_vals: isinstance(prop_vals, np.ndarray), "prop_vals must be a numpy array")
+@icontract.require(lambda prev_vals: isinstance(prev_vals, np.ndarray), "prev_vals must be a numpy array")
+@icontract.require(lambda step_size: float(step_size) > 0.0, "step_size must be positive")
+@icontract.require(lambda precond_mat: isinstance(precond_mat, np.ndarray), "precond_mat must be a numpy array")
+@icontract.require(lambda mala_mean_fn: callable(mala_mean_fn), "mala_mean_fn must be callable")
+@icontract.ensure(lambda result: np.isfinite(result), "adjustment must be finite")
+def mala_proposal_adjustment(
+    prop_vals: np.ndarray,
+    prev_vals: np.ndarray,
+    step_size: float,
+    precond_mat: np.ndarray,
+    mala_mean_fn: Callable[[np.ndarray, float], np.ndarray],
+) -> float:
+    """Compute the unbounded-source MALA proposal log-ratio adjustment.
 
-    Args:
-        step_size: Controls the magnitude of the Langevin dynamics step.
-        vals_bound: Boundary conditions or constraints on the proposal values.
-        mala_mean_fn: A function (oracle) that computes the mean of the proposal distribution, typically based on the gradient of the target log-probability.
-
-    Returns:
-        The calculated adjustment to be used in the MALA proposal.
+    This implements the upstream unbounded branch:
+    ``log q(prev | prop) - log q(prop | prev)`` using the caller's MALA mean
+    function and ``step_size**2 * precond_mat`` as the Gaussian proposal
+    covariance.
     """
-    return vals_bound + (step_size**2 / 2.0) * mala_mean_fn(vals_bound)
+    proposal = np.asarray(prop_vals, dtype=np.float64).ravel()
+    previous = np.asarray(prev_vals, dtype=np.float64).ravel()
+    if proposal.shape != previous.shape:
+        raise ValueError("prop_vals and prev_vals must have the same shape")
+    precond = np.asarray(precond_mat, dtype=np.float64)
+    if precond.shape != (proposal.size, proposal.size):
+        raise ValueError("precond_mat must have shape (n_dimensions, n_dimensions)")
 
+    covariance = float(step_size) ** 2 * precond
+    prop_mean = np.asarray(mala_mean_fn(proposal, float(step_size)), dtype=np.float64).ravel()
+    prev_mean = np.asarray(mala_mean_fn(previous, float(step_size)), dtype=np.float64).ravel()
+    if prop_mean.shape != proposal.shape or prev_mean.shape != previous.shape:
+        raise ValueError("mala_mean_fn must return vectors matching the input shape")
 
-"""Auto-generated FFI bindings for cpp implementations."""
-
-
-import ctypes
-import ctypes.util
-from pathlib import Path
-
-
-def _mala_proposal_adjustment_ffi(step_size, vals_bound, mala_mean_fn):
-    """Wrapper that calls the C++ version of mala proposal adjustment. Passes arguments through and returns the result."""
-    _lib = ctypes.CDLL("./mala_proposal_adjustment.so")
-    _func_name = 'mala_proposal_adjustment'
-    _func = _lib[_func_name]
-    _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
-    _func.restype = ctypes.c_void_p
-    return _func(step_size, vals_bound, mala_mean_fn)
+    return _log_mvn_density(previous, prop_mean, covariance) - _log_mvn_density(proposal, prev_mean, covariance)

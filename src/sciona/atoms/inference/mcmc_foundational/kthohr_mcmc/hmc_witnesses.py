@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from sciona.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
+from sciona.ghost.abstract import AbstractScalar, AbstractSignal
 
-def witness_buildhmckernelfromlogdensityoracle(target_log_kernel: AbstractArray, extra_arg: AbstractArray) -> AbstractArray:
-    """Shape-and-type check for build hmc kernel from log density oracle. Returns output metadata without running the real computation."""
-    result = AbstractArray(
-        shape=target_log_kernel.shape,
-        dtype="float64",)
-    
-    return result
+
+def witness_buildhmckernelfromlogdensityoracle(
+    target_log_kernel: AbstractSignal,
+    step_size: AbstractScalar,
+    n_leapfrog: AbstractScalar,
+) -> AbstractSignal:
+    """Return callable metadata for a minimal HMC transition kernel."""
+    _ = target_log_kernel, step_size, n_leapfrog
+    return AbstractSignal(shape=(1,), dtype="callable", sampling_rate=1.0, domain="index")

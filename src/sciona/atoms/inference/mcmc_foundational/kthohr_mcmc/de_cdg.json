@@ -3,58 +3,33 @@
     {
       "node_id": "de_root",
       "parent_id": null,
-      "name": "sciona.mcmc_foundational.kthohr_mcmc.de",
-      "description": "Consolidated module for sciona.mcmc_foundational.kthohr_mcmc.de.",
+      "name": "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.de",
+      "description": "Minimal differential-evolution MCMC helper module.",
       "concept_type": "custom",
       "inputs": [],
       "outputs": [],
       "status": "decomposed",
-      "children": [
-        "build_de_transition_kernel"
-      ],
+      "children": ["build_de_transition_kernel"],
       "depth": 0,
-      "type_signature": "module",
-      "matched_primitive": null,
-      "is_optional": false,
-      "is_opaque": false,
-      "is_external": false,
-      "parallelizable": false,
-      "conceptual_summary": "Grouped atoms sharing an upstream family or module.",
-      "critic_notes": "Auto-generated module CDG for consolidation.",
-      "decomposition_rationale": "Replaces singleton atom subpackages with a flat module layout."
+      "type_signature": "module"
     },
     {
       "node_id": "build_de_transition_kernel",
       "parent_id": "de_root",
       "name": "build_de_transition_kernel",
-      "description": "Creates a pure Differential Evolution transition kernel from the provided target log-density oracle.",
-      "concept_type": "custom",
+      "description": "Build a population-based differential-evolution Metropolis transition kernel.",
+      "concept_type": "mcmc_kernel_builder",
       "inputs": [
-        {
-          "name": "target_log_kernel",
-          "type_desc": "Callable[[np.ndarray], float]",
-          "constraints": "required argument"
-        }
+        {"name": "target_log_kernel", "type_desc": "Callable[[np.ndarray], float]", "required": true},
+        {"name": "gamma_scale", "type_desc": "float", "required": false}
       ],
       "outputs": [
-        {
-          "name": "result",
-          "type_desc": "Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]",
-          "constraints": "function return value"
-        }
+        {"name": "result", "type_desc": "Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]"}
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(target_log_kernel: log-density oracle) -> differential-evolution transition kernel",
-      "matched_primitive": null,
-      "is_optional": false,
-      "is_opaque": false,
-      "is_external": false,
-      "parallelizable": false,
-      "conceptual_summary": "Direct callable atom in the consolidated module.",
-      "critic_notes": "Signature derived from the Python wrapper definition.",
-      "decomposition_rationale": "Leaf atom."
+      "type_signature": "(target_log_kernel, gamma_scale=2.38) -> transition kernel"
     }
   ],
   "edges": []

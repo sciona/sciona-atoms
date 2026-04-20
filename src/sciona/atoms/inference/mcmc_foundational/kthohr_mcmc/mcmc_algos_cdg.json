@@ -3,68 +3,36 @@
     {
       "node_id": "mcmc_algos_root",
       "parent_id": null,
-      "name": "sciona.mcmc_foundational.kthohr_mcmc.mcmc_algos",
-      "description": "Consolidated module for sciona.mcmc_foundational.kthohr_mcmc.mcmc_algos.",
+      "name": "sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.mcmc_algos",
+      "description": "Small local MCMC dispatcher module.",
       "concept_type": "custom",
       "inputs": [],
       "outputs": [],
       "status": "decomposed",
-      "children": [
-        "dispatch_mcmc_algorithm"
-      ],
+      "children": ["dispatch_mcmc_algorithm"],
       "depth": 0,
-      "type_signature": "module",
-      "matched_primitive": null,
-      "is_optional": false,
-      "is_opaque": false,
-      "is_external": false,
-      "parallelizable": false,
-      "conceptual_summary": "Grouped atoms sharing an upstream family or module.",
-      "critic_notes": "Auto-generated module CDG for consolidation.",
-      "decomposition_rationale": "Replaces singleton atom subpackages with a flat module layout."
+      "type_signature": "module"
     },
     {
       "node_id": "dispatch_mcmc_algorithm",
       "parent_id": "mcmc_algos_root",
       "name": "dispatch_mcmc_algorithm",
-      "description": "Routes to the chosen sampling algorithm for drawing random samples from a target distribution. Supports seven sampling methods including random-walk, gradient-based, and population-based approaches.",
-      "concept_type": "custom",
+      "description": "Run one repaired local MCMC kernel repeatedly from an explicit log-density oracle.",
+      "concept_type": "sampler_dispatch",
       "inputs": [
-        {
-          "name": "log_target_density",
-          "type_desc": "np.ndarray",
-          "constraints": "required argument"
-        },
-        {
-          "name": "initial_state",
-          "type_desc": "np.ndarray",
-          "constraints": "required argument"
-        },
-        {
-          "name": "n_draws",
-          "type_desc": "int",
-          "constraints": "required argument"
-        }
+        {"name": "algorithm", "type_desc": "Literal['rwmh', 'hmc', 'de']", "required": true},
+        {"name": "target_log_kernel", "type_desc": "Callable[[np.ndarray], float]", "required": true},
+        {"name": "initial_state", "type_desc": "np.ndarray", "required": true},
+        {"name": "n_draws", "type_desc": "int", "required": true},
+        {"name": "rng_key", "type_desc": "np.ndarray | None", "required": false}
       ],
       "outputs": [
-        {
-          "name": "result",
-          "type_desc": "np.ndarray",
-          "constraints": "function return value"
-        }
+        {"name": "result", "type_desc": "np.ndarray"}
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(log_target_density: np.ndarray, initial_state: np.ndarray, n_draws: int) -> np.ndarray",
-      "matched_primitive": null,
-      "is_optional": false,
-      "is_opaque": false,
-      "is_external": false,
-      "parallelizable": false,
-      "conceptual_summary": "Direct callable atom in the consolidated module.",
-      "critic_notes": "Signature derived from the Python wrapper definition.",
-      "decomposition_rationale": "Leaf atom."
+      "type_signature": "(algorithm, target_log_kernel, initial_state, n_draws, rng_key=None) -> np.ndarray"
     }
   ],
   "edges": []

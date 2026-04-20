@@ -1,12 +1,30 @@
 from __future__ import annotations
-from sciona.ghost.abstract import AbstractArray, AbstractDistribution, AbstractScalar, AbstractSignal
 
-def witness_metropolishastingstransitionkernel(temper_val: AbstractScalar, target_log_kernel: AbstractArray, rng_key_in: AbstractArray) -> tuple[AbstractArray, AbstractArray]:
-    """Shape-and-type check for metropolis hastings transition kernel. Returns output metadata without running the real computation."""
-    mh_step_state_out = AbstractArray(shape=rng_key_in.shape, dtype="float64")
-    rng_key_out = AbstractArray(shape=rng_key_in.shape, dtype="float64")
-    return mh_step_state_out, rng_key_out
+from sciona.ghost.abstract import AbstractArray, AbstractScalar, AbstractSignal
 
-def witness_targetlogkerneloracle(state_candidate: AbstractArray, temper_val: AbstractArray) -> AbstractScalar:
-    """Shape-and-type check for target log kernel oracle. Returns output metadata without running the real computation."""
+
+def witness_metropolishastingstransitionkernel(
+    state_in: AbstractArray,
+    temper_val: AbstractScalar,
+    target_log_kernel: AbstractSignal,
+    rng_key_in: AbstractArray,
+    prop_scaling_mat: AbstractArray,
+) -> tuple[AbstractArray, AbstractArray]:
+    """Return metadata for one AEES local Metropolis transition."""
+    _ = temper_val, target_log_kernel, prop_scaling_mat
+    return (
+        AbstractArray(shape=state_in.shape, dtype="float64"),
+        AbstractArray(shape=rng_key_in.shape, dtype="int64"),
+    )
+
+
+def witness_targetlogkerneloracle(
+    state_candidate: AbstractArray,
+    weights: AbstractArray,
+    means: AbstractArray,
+    variances: AbstractArray,
+    temper_val: AbstractScalar,
+) -> AbstractScalar:
+    """Return scalar metadata for the AEES Gaussian-mixture log kernel."""
+    _ = state_candidate, weights, means, variances, temper_val
     return AbstractScalar(dtype="float64")
