@@ -20,7 +20,6 @@ This is a simple source map for remediation-held atoms that should be reingested
 | `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.nuts.nuts_recursive_tree_build` | `../ageo-atoms/third_party/mcmc/include/mcmc/nuts.ipp:99` |
 | `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rmhmc.buildrmhmctransitionkernel` | `../ageo-atoms/third_party/mcmc/src/rmhmc.cpp:30` |
 | `sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.rwmh.constructrandomwalkmetropoliskernel` | `../ageo-atoms/third_party/mcmc/src/rwmh.cpp:30` |
-| `sciona.atoms.signal_processing.e2e_ppg.kazemi_wrapper.wrapperpredictionsignalcomputation` | `../ageo-atoms/third_party/E2E-PPG/kazemi_peak_detection.py:69` |
 | `sciona.atoms.signal_processing.biosppy.svm_proc.assess_classification` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:1954` |
 | `sciona.atoms.signal_processing.biosppy.svm_proc.assess_runs` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2055` |
 | `sciona.atoms.signal_processing.biosppy.svm_proc.combination` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2181` |
@@ -29,8 +28,6 @@ This is a simple source map for remediation-held atoms that should be reingested
 | `sciona.atoms.signal_processing.biosppy.svm_proc.get_id_rates` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:1751` |
 | `sciona.atoms.signal_processing.biosppy.svm_proc.get_subject_results` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:589` |
 | `sciona.atoms.signal_processing.biosppy.svm_proc.majority_rule` | `../ageo-atoms/third_party/BioSPPy/biosppy/biometrics.py:2255` |
-| `sciona.atoms.bio.mint.axial_attention.row_self_attention` | `../ageo-atoms/third_party/mint/mint/axial_attention.py:12` |
-| `sciona.atoms.bio.mint.axial_attention.rowselfattention` | `../ageo-atoms/third_party/mint/mint/axial_attention.py:12` |
 | `sciona.atoms.bio.molecular_docking.greedy_mapping_d12.construct_mapping_state_via_greedy_expansion` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/greedy_lattice_mapping.py:193` |
 | `sciona.atoms.bio.molecular_docking.greedy_mapping_d12.orchestrate_generation_and_validate` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/greedy_lattice_mapping.py:258` |
 | `sciona.atoms.bio.molecular_docking.greedy_subgraph.greedy_maximum_subgraph` | `../ageo-atoms/third_party/Molecular-Docking/src/solver/greedy_subgraph_vv.py:556` |

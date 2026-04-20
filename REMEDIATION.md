@@ -83,28 +83,6 @@ Evidence as of 2026-04-19:
 
 ## Signal Processing
 
-### `e2e_ppg.kazemi_wrapper.wrapperpredictionsignalcomputation`
-
-Status: keep unpublished for now.
-
-Why it is blocked:
-- The current implementation returns `prediction * raw_signal`, which is a simple elementwise multiplication rather than the upstream Kazemi peak-detection post-processing behavior described by the existing metadata.
-- The surrounding `e2e_ppg.kazemi_wrapper` family has valid publication candidates, but this row has semantic drift and should not be promoted by shared family metadata.
-- Publishing it under the current name would imply a stronger upstream wrapper contract than the implementation provides.
-
-What we verified:
-- The `signalarraynormalization` sibling can be reviewed separately because it delegates to the upstream `kazemi_peak_detection.normalize` routine.
-- `wrapperpredictionsignalcomputation` does not currently delegate to the upstream Kazemi wrapper path and only combines arrays locally.
-
-Proposed fixes:
-1. Replace `wrapperpredictionsignalcomputation` with behavior equivalent to the upstream Kazemi wrapper routine, or rename and narrow the public contract to the local elementwise operation.
-2. Add behavior-level tests against representative upstream-shaped prediction and raw-signal inputs.
-3. Reenter publication review only after the source behavior, references, CDG, and review bundle all describe the same contract.
-
-Evidence as of 2026-04-19:
-- The e2e-PPG publishability review wave held this atom while approving the safe heart-cycle and normalization rows.
-- Local source inspection showed the implementation returns `prediction * raw_signal`.
-
 ### `biosppy.svm_proc`
 
 Status: keep unpublished for now.
@@ -144,28 +122,6 @@ Evidence as of 2026-04-16:
 - The comparison established semantic mismatch for `get_id_rates` and a runtime failure for `combination` on ordinary list-valued classifier results.
 
 ## Bio
-
-### `sciona.atoms.bio.mint.axial_attention` RowSelfAttention rows
-
-Status: keep the listed axial-attention rows unpublished for now.
-
-Held atoms:
-- `sciona.atoms.bio.mint.axial_attention.row_self_attention`
-- `sciona.atoms.bio.mint.axial_attention.rowselfattention`
-
-Why they are blocked:
-- The current wrappers are generic 2D/3D scaled dot-product attention approximations, not source-aligned MINT `RowSelfAttention`.
-- Upstream MINT uses a parameterized `torch.nn.Module` over 4D MSA tensors with `q_proj`, `k_proj`, `v_proj`, `out_proj`, row aggregation, and different padding/mask semantics.
-- The NumPy row has no upstream MINT callable to substantiate a MINT RowSelfAttention claim.
-
-Proposed fixes:
-1. Replace the torch row with a source-aligned RowSelfAttention module/core API that accepts or owns projection parameters and 4D MSA tensors.
-2. Add behavior tests for upstream shape contracts, projection behavior, row aggregation, padding masks, and batched forward behavior.
-3. Either remove/re-scope the NumPy row as generic attention with independent provenance, or provide a clearly documented source-aligned NumPy replay that does not claim to be upstream MINT RowSelfAttention.
-
-Evidence as of 2026-04-19:
-- The `pubrev-019` MINT review held these rows after direct comparison with upstream `mint/axial_attention.py` at commit `79a9956b80e221066a3007bb156e8e986cba6190`.
-- Provider review tests assert both rows remain remediation-only while the safe MINT subset advances.
 
 ### `molecular_docking.greedy_mapping_d12.construct_mapping_state_via_greedy_expansion`
 
@@ -259,21 +215,22 @@ Status: keep unpublished for now.
 Why it is blocked:
 - The implementation documents itself as a deterministic MWIS heuristic placeholder for combinatorial optimization rather than a faithful quantum/PASQAL solver.
 - The public name implies a quantum maximum-weight independent-set solver, but the current behavior is a local heuristic approximation.
-- The family also contains related metadata gaps, so forcing the Pasqal lane through review would hide a real semantic mismatch.
+- The source-backed implementation path depends on Pulser/emulator runtimes, so this should become an optional-dependency publication lane rather than a dependency-driven deletion.
 
 What we verified:
 - The source docstring for `quantum_mwis_solver` explicitly describes it as a placeholder.
 - The physics publishability wave intentionally avoided `physics.pasqal` and ratcheted the smaller Tempo `_zero_offset` lane instead.
+- Source review of `../ageo-atoms/third_party/Molecular-Docking/src/solver/quantum_solver_molecular.py:270` shows the true solver path uses Pulser register/sequence construction and emulator sampling.
 
 Proposed fixes:
-1. Decide whether the atom should expose a true PASQAL/quantum MWIS primitive or be renamed as a deterministic heuristic helper.
-2. If retained as a quantum solver, replace the placeholder with behavior grounded in the intended solver path and add behavior-level tests.
-3. If retained as a heuristic, rename and remap the metadata so the public contract no longer implies quantum solver parity.
-4. Reenter publication review only after the implementation, name, references, and tests align.
+1. Add a provider optional-dependency group for the Pulser/emulator stack required by the source path.
+2. Build and test the source-aligned quantum/PASQAL implementation in a local environment with those optional dependencies installed.
+3. Keep the current heuristic unpublished under the quantum name; if it remains useful, rename it as a deterministic heuristic with separate metadata.
+4. Reenter publication review only after implementation, optional dependency docs, references, and tests align.
 
 Evidence as of 2026-04-19:
 - Local source inspection showed the placeholder description in `sciona.atoms.physics.pasqal.docking.quantum_mwis_solver`.
-- The lane was held during the parallel publishability wave rather than being forced through bundle review.
+- A remediation worker confirmed the source-aligned path needs `pulser`, `pulser_simulation`, `emu_sv`, and `emu_mps`, which are not in the baseline matcher venv.
 
 ## SciPy
 
