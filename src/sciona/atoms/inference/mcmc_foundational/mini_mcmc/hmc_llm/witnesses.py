@@ -43,9 +43,10 @@ def witness_collectposteriorchain(
     chain_state_0: AbstractMCMCTrace,
     kernel_spec: AbstractArray,
     prng_key_state: AbstractRNGState,
+    logp_oracle: AbstractArray,
 ) -> tuple[AbstractArray, AbstractMCMCTrace, AbstractRNGState, AbstractMCMCTrace]:
     """Shape-and-type check for collect posterior chain. Returns output metadata without running the real computation."""
-    _ = n_collect, n_discard, chain_state_0, kernel_spec
+    _ = n_collect, n_discard, chain_state_0, kernel_spec, logp_oracle
     samples = AbstractArray(shape=("N", "D"), dtype="float64")
     final_state = AbstractMCMCTrace(
         n_samples=0,

@@ -1,0 +1,120 @@
+{
+  "nodes": [
+    {
+      "node_id": "scipy_remediation_root",
+      "name": "scipy_remediation_root",
+      "description": "Source-aligned SciPy remediation atoms for sparse graph routines and normal distribution freezing.",
+      "status": "decomposed",
+      "children": [
+        "graph_laplacian",
+        "single_source_shortest_path",
+        "all_pairs_shortest_path",
+        "minimum_spanning_tree",
+        "norm"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "graph_laplacian",
+      "name": "graph_laplacian",
+      "description": "Return SciPy's graph Laplacian matrix for a square weighted adjacency matrix.",
+      "concept_type": "scipy_sparse_graph",
+      "status": "atomic",
+      "type_signature": "(W: SparseGraphInput, normed: bool = False, use_out_degree: bool = False, symmetrized: bool = False) -> SparseGraphOutput",
+      "depth": 1,
+      "inputs": [
+        {"name": "W", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
+        {"name": "normed", "type_desc": "bool", "required": false},
+        {"name": "use_out_degree", "type_desc": "bool", "required": false},
+        {"name": "symmetrized", "type_desc": "bool", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix"}
+      ]
+    },
+    {
+      "node_id": "single_source_shortest_path",
+      "name": "single_source_shortest_path",
+      "description": "Return shortest-path distances from one or more selected SciPy graph source nodes.",
+      "concept_type": "scipy_sparse_graph",
+      "status": "atomic",
+      "type_signature": "(csgraph: SparseGraphInput, indices: np.ndarray | int = 0, method: str = 'auto', directed: bool = True, return_predecessors: bool = False, unweighted: bool = False, overwrite: bool = False) -> tuple[np.ndarray, ...] | np.ndarray",
+      "depth": 1,
+      "inputs": [
+        {"name": "csgraph", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
+        {"name": "indices", "type_desc": "NDArray[np.int64] | int", "required": false},
+        {"name": "method", "type_desc": "str", "required": false},
+        {"name": "directed", "type_desc": "bool", "required": false},
+        {"name": "return_predecessors", "type_desc": "bool", "required": false},
+        {"name": "unweighted", "type_desc": "bool", "required": false},
+        {"name": "overwrite", "type_desc": "bool", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "tuple[NDArray[np.float64], ...] | NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "all_pairs_shortest_path",
+      "name": "all_pairs_shortest_path",
+      "description": "Return all-pairs shortest-path distances with SciPy's sparse graph shortest-path API.",
+      "concept_type": "scipy_sparse_graph",
+      "status": "atomic",
+      "type_signature": "(csgraph: SparseGraphInput, method: str = 'auto', directed: bool = True, return_predecessors: bool = False, unweighted: bool = False, overwrite: bool = False) -> tuple[np.ndarray, ...] | np.ndarray",
+      "depth": 1,
+      "inputs": [
+        {"name": "csgraph", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
+        {"name": "method", "type_desc": "str", "required": false},
+        {"name": "directed", "type_desc": "bool", "required": false},
+        {"name": "return_predecessors", "type_desc": "bool", "required": false},
+        {"name": "unweighted", "type_desc": "bool", "required": false},
+        {"name": "overwrite", "type_desc": "bool", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "tuple[NDArray[np.float64], ...] | NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "minimum_spanning_tree",
+      "name": "minimum_spanning_tree",
+      "description": "Return SciPy's sparse minimum spanning tree for a weighted graph.",
+      "concept_type": "scipy_sparse_graph",
+      "status": "atomic",
+      "type_signature": "(csgraph: SparseGraphInput, overwrite: bool = False) -> scipy.sparse.csr_matrix",
+      "depth": 1,
+      "inputs": [
+        {"name": "csgraph", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
+        {"name": "overwrite", "type_desc": "bool", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "scipy.sparse.csr_matrix"}
+      ]
+    },
+    {
+      "node_id": "norm",
+      "name": "norm",
+      "description": "Freeze SciPy's normal distribution for a finite location and positive scale.",
+      "concept_type": "scipy_stats",
+      "status": "atomic",
+      "type_signature": "(loc: float = 0, scale: float = 1) -> rv_continuous_frozen",
+      "depth": 1,
+      "inputs": [
+        {"name": "loc", "type_desc": "float", "required": false},
+        {"name": "scale", "type_desc": "float", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "scipy.stats.rv_continuous_frozen"}
+      ]
+    }
+  ],
+  "edges": [],
+  "metadata": {
+    "source": "manual_remediation",
+    "source_repo": "https://github.com/scipy/scipy",
+    "source_license": "BSD-3-Clause",
+    "held_atoms": [
+      "sciona.atoms.scipy.sparse_graph.graph_fourier_transform",
+      "sciona.atoms.scipy.sparse_graph.inverse_graph_fourier_transform",
+      "sciona.atoms.scipy.sparse_graph.heat_kernel_diffusion"
+    ]
+  }
+}

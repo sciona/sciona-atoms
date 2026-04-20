@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "atoms": {
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts.nuts_recursive_tree_build@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts.py:28": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts.nuts_recursive_tree_build@sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts.py:252": {
       "references": [
         {
           "ref_id": "hoffman2014nuts",
@@ -9,8 +9,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "low",
-            "notes": "Conceptual NUTS tree-building reference only; this atom is held because the current implementation returns only a position array and omits trajectory bookkeeping, slice checks, U-turn checks, divergence state, and acceptance accumulation."
+            "confidence": "medium",
+            "notes": "Canonical NUTS tree-building reference for recursive subtree endpoints, slice-valid candidate counts, U-turn continuation checks, divergence flags, and acceptance accumulation."
           }
         },
         {
@@ -19,8 +19,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "low",
-            "notes": "Repository-family attribution only; the current callable is remediation-only until its return contract matches a real NUTS trajectory builder."
+            "confidence": "medium",
+            "notes": "Repository-family attribution; the repaired local callable returns compact NumPy trajectory bookkeeping rather than only a rightmost position."
           }
         }
       ],

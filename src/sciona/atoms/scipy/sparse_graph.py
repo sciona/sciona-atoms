@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Tuple
 import os
 
 import numpy as np
@@ -22,31 +21,41 @@ from sciona.atoms.scipy.witnesses import (
 
 _SLOW_CHECKS = os.environ.get("SCIONA_SLOW_CHECKS", "0") == "1"
 
+SparseGraphInput = np.ndarray | scipy.sparse.spmatrix
+SparseGraphOutput = np.ndarray | scipy.sparse.spmatrix
 
-def _is_symmetric(m: scipy.sparse.spmatrix, atol: float = 1e-10) -> bool:
+
+def _is_symmetric(m: SparseGraphInput, atol: float = 1e-10) -> bool:
     """Check that a sparse matrix is symmetric within tolerance."""
     if m.shape[0] != m.shape[1]:
         return False
-    diff = m - m.T
-    if diff.nnz == 0:
-        return True
-    return bool(np.all(np.abs(diff.data) < atol))
+    if scipy.sparse.issparse(m):
+        diff = m - m.T
+        if diff.nnz == 0:
+            return True
+        return bool(np.all(np.abs(diff.data) < atol))
+    return bool(np.allclose(np.asarray(m), np.asarray(m).T, atol=atol))
 
 
-def _is_square_sparse(m: scipy.sparse.spmatrix) -> bool:
-    """Check that a sparse matrix is square."""
-    return m.shape[0] == m.shape[1]
+def _is_square_graph(m: SparseGraphInput) -> bool:
+    """Check that a graph adjacency object is a square matrix."""
+    return len(m.shape) == 2 and m.shape[0] == m.shape[1]
 
 
-def _eigenvalues_nonneg(L: scipy.sparse.spmatrix, k: int = 1) -> bool:
+def _eigenvalues_nonneg(L: SparseGraphOutput, k: int = 1) -> bool:
     """Check that the smallest eigenvalue of L is >= -epsilon (PSD check)."""
     n = L.shape[0]
     if n < 3:
-        L_dense = L.toarray()
+        L_dense = L.toarray() if scipy.sparse.issparse(L) else np.asarray(L)
         eigvals = np.linalg.eigvalsh(L_dense)
         return bool(np.all(eigvals >= -1e-8))
     k_check = min(k, n - 2)
-    eigvals = scipy.sparse.linalg.eigsh(L, k=k_check, which="SM", return_eigenvectors=False)
+    eigvals = scipy.sparse.linalg.eigsh(
+        scipy.sparse.csr_matrix(L),
+        k=k_check,
+        which="SM",
+        return_eigenvectors=False,
+    )
     return bool(np.all(eigvals >= -1e-8))
 
 
@@ -58,7 +67,7 @@ def _total_variation(L: scipy.sparse.spmatrix, x: np.ndarray) -> float:
 
 @register_atom(witness_graph_laplacian)
 @icontract.require(lambda W: _is_symmetric(W), "Weight matrix W must be symmetric")
-@icontract.require(lambda W: _is_square_sparse(W), "Weight matrix W must be square")
+@icontract.require(lambda W: _is_square_graph(W), "Weight matrix W must be square")
 @icontract.ensure(lambda result, W: result.shape == W.shape, "Laplacian shape must match input shape")
 @icontract.ensure(
     lambda result: _eigenvalues_nonneg(result, k=1),
@@ -66,33 +75,39 @@ def _total_variation(L: scipy.sparse.spmatrix, x: np.ndarray) -> float:
     enabled=_SLOW_CHECKS,
 )
 def graph_laplacian(
-    W: scipy.sparse.spmatrix,
+    W: SparseGraphInput,
     normed: bool = False,
-    return_diag: bool = False,
-) -> scipy.sparse.spmatrix:
-    """Compute the graph Laplacian of a weighted adjacency matrix.
+    use_out_degree: bool = False,
+    symmetrized: bool = False,
+) -> SparseGraphOutput:
+    """Return SciPy's graph Laplacian for a square adjacency matrix.
 
-    Computes L = D - W (unnormalized) or the normalized Laplacian
-    from the symmetric weight matrix W.
+    This is a narrow wrapper around ``scipy.sparse.csgraph.laplacian``.
+    It intentionally returns only the Laplacian matrix, not SciPy's
+    optional diagonal side output.
 
     Args:
-        W: Symmetric sparse weight/adjacency matrix of shape (n, n).
+        W: Symmetric weighted adjacency matrix of shape (n, n).
         normed: If True, compute the normalized Laplacian.
-        return_diag: If True, also return the diagonal. The atom
-            returns only the Laplacian; set to False.
+        use_out_degree: If True on a directed graph, use out-degree
+            rather than in-degree when forming the degree matrix.
+        symmetrized: If True, use SciPy's symmetrized graph option.
 
     Returns:
-        The graph Laplacian as a sparse matrix of shape (n, n).
+        The graph Laplacian with the same shape as ``W``.
 
     """
-    result = scipy.sparse.csgraph.laplacian(W, normed=normed, return_diag=return_diag)
-    if return_diag:
-        return result[0]
-    return result
+    return scipy.sparse.csgraph.laplacian(
+        W,
+        normed=normed,
+        return_diag=False,
+        use_out_degree=use_out_degree,
+        symmetrized=symmetrized,
+    )
 
 
 @register_atom(witness_graph_fourier_transform)
-@icontract.require(lambda L: _is_square_sparse(L), "Laplacian L must be square")
+@icontract.require(lambda L: _is_square_graph(L), "Laplacian L must be square")
 @icontract.require(lambda L, x: x.shape[0] == L.shape[0], "Signal length must equal graph size")
 @icontract.ensure(
     lambda result: isinstance(result, tuple) and len(result) == 3,
@@ -160,7 +175,7 @@ def inverse_graph_fourier_transform(
 
 
 @register_atom(witness_heat_kernel_diffusion)
-@icontract.require(lambda L: _is_square_sparse(L), "Laplacian L must be square")
+@icontract.require(lambda L: _is_square_graph(L), "Laplacian L must be square")
 @icontract.require(lambda t: t >= 0, "Diffusion time t must be non-negative")
 @icontract.require(lambda L, x: x.shape[0] == L.shape[0], "Signal length must equal graph size")
 @icontract.ensure(lambda result, x: result.shape == x.shape, "Output shape must be preserved")
@@ -208,54 +223,58 @@ def heat_kernel_diffusion(
     return eigenvectors @ x_hat_filtered
 
 @register_atom(witness_singlesourceshortestpath)
-@icontract.require(lambda limit: isinstance(limit, (float, int, np.number)), "limit must be numeric")
+@icontract.require(lambda csgraph: _is_square_graph(csgraph), "csgraph must be a square graph matrix")
+@icontract.require(lambda indices: indices is not None, "indices must select at least one source node")
 @icontract.ensure(lambda result: result is not None, "Single-source shortest-path output must not be None")
 def single_source_shortest_path(
-    csgraph: np.ndarray,
-    directed: bool = True,
-    indices: np.ndarray | int | None = None,
-    return_predecessors: bool = False,
-    unweighted: bool = False,
-    limit: float = np.inf,
-    min_only: bool = False,
-) -> tuple[np.ndarray, ...] | np.ndarray:
-    """Compute shortest-path distances from one or more source nodes."""
-    return scipy.sparse.csgraph.dijkstra(
-        csgraph,
-        directed=directed,
-        indices=indices,
-        return_predecessors=return_predecessors,
-        unweighted=unweighted,
-        limit=limit,
-        min_only=min_only,
-    )
-
-@register_atom(witness_allpairsshortestpath)
-@icontract.require(lambda csgraph: csgraph is not None, "csgraph cannot be None")
-@icontract.ensure(lambda result: result is not None, "All-pairs shortest-path output must not be None")
-def all_pairs_shortest_path(
-    csgraph: np.ndarray,
+    csgraph: SparseGraphInput,
+    indices: np.ndarray | int = 0,
+    method: str = "auto",
     directed: bool = True,
     return_predecessors: bool = False,
     unweighted: bool = False,
     overwrite: bool = False,
 ) -> tuple[np.ndarray, ...] | np.ndarray:
-    """Compute all-pairs shortest paths."""
-    return scipy.sparse.csgraph.floyd_warshall(
+    """Compute SciPy shortest-path distances from selected source nodes."""
+    return scipy.sparse.csgraph.shortest_path(
         csgraph,
+        method=method,
         directed=directed,
         return_predecessors=return_predecessors,
         unweighted=unweighted,
         overwrite=overwrite,
+        indices=indices,
+    )
+
+@register_atom(witness_allpairsshortestpath)
+@icontract.require(lambda csgraph: _is_square_graph(csgraph), "csgraph must be a square graph matrix")
+@icontract.ensure(lambda result: result is not None, "All-pairs shortest-path output must not be None")
+def all_pairs_shortest_path(
+    csgraph: SparseGraphInput,
+    method: str = "auto",
+    directed: bool = True,
+    return_predecessors: bool = False,
+    unweighted: bool = False,
+    overwrite: bool = False,
+) -> tuple[np.ndarray, ...] | np.ndarray:
+    """Compute all-pairs shortest paths with SciPy's shortest-path API."""
+    return scipy.sparse.csgraph.shortest_path(
+        csgraph,
+        method=method,
+        directed=directed,
+        return_predecessors=return_predecessors,
+        unweighted=unweighted,
+        overwrite=overwrite,
+        indices=None,
     )
 
 @register_atom(witness_minimumspanningtree)
-@icontract.require(lambda csgraph: csgraph is not None, "csgraph cannot be None")
+@icontract.require(lambda csgraph: _is_square_graph(csgraph), "csgraph must be a square graph matrix")
 @icontract.ensure(lambda result: result is not None, "Minimum spanning tree output must not be None")
 def minimum_spanning_tree(
-    csgraph: np.ndarray,
+    csgraph: SparseGraphInput,
     overwrite: bool = False,
-) -> np.ndarray:
+) -> scipy.sparse.csr_matrix:
     """Extract the minimum spanning tree of a sparse weighted graph."""
     return scipy.sparse.csgraph.minimum_spanning_tree(csgraph, overwrite=overwrite)
 

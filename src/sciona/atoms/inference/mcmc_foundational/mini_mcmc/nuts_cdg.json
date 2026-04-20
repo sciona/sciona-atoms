@@ -31,6 +31,11 @@
       "concept_type": "custom",
       "inputs": [
         {
+          "name": "rng_key",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "explicit key for recursive proposal selection"
+        },
+        {
           "name": "direction_val",
           "type_desc": "int",
           "constraints": "required argument"
@@ -69,14 +74,14 @@
       "outputs": [
         {
           "name": "result",
-          "type_desc": "NUTS_Trajectory",
-          "constraints": "function return value"
+          "type_desc": "dict[str, NDArray[np.float64]]",
+          "constraints": "left/right endpoints, proposal, valid count, stop/divergence flags, and acceptance statistics"
         }
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(direction_val: int, step_size: float, log_slice_variable: float, initial_hmc_state: HMCState, log_prob_oracle: log-prob oracle, integrator_fn: integrator oracle, tree_depth: int) -> NUTS_Trajectory",
+      "type_signature": "(rng_key: NDArray[np.int64], direction_val: int, step_size: float, log_slice_variable: float, initial_hmc_state: NDArray[np.float64], log_prob_oracle: log-prob oracle, integrator_fn: integrator oracle, tree_depth: int) -> dict[str, NDArray[np.float64]]",
       "matched_primitive": null,
       "is_optional": false,
       "is_opaque": false,

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "atoms": {
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.initializenutsstate@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py:22": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.initializenutsstate@sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py:104": {
       "references": [
         {
           "ref_id": "hoffman2014nuts",
@@ -26,7 +26,7 @@
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.runnutstransitions@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py:56": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.runnutstransitions@sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py:140": {
       "references": [
         {
           "ref_id": "hoffman2014nuts",
@@ -34,8 +34,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "low",
-            "notes": "Conceptual NUTS transition reference only; this atom is held because the current implementation performs a random walk and does not build no-u-turn trajectories."
+            "confidence": "medium",
+            "notes": "Canonical NUTS reference for slice-variable transitions, recursive tree expansion, no-u-turn checks, divergence handling, and acceptance-statistic accumulation."
           }
         },
         {
@@ -44,8 +44,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "low",
-            "notes": "Repository-family attribution only; publication requires replacing the placeholder transition loop with actual NUTS transitions."
+            "confidence": "medium",
+            "notes": "Repository-family attribution; the repaired local implementation is a compact NumPy NUTS transition loop with fixed step size and explicit RNG threading."
           }
         }
       ],

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "atoms": {
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.initializehmcstate@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:26": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.initializehmcstate@sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:93": {
       "references": [
         {
           "ref_id": "neal2011hmc",
@@ -26,7 +26,7 @@
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.leapfrogproposalkernel@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:62": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.leapfrogproposalkernel@sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:129": {
       "references": [
         {
           "ref_id": "neal2011hmc",
@@ -51,7 +51,7 @@
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.metropolishmctransition@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:110": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.metropolishmctransition@sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:177": {
       "references": [
         {
           "ref_id": "neal2011hmc",
@@ -59,8 +59,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "low",
-            "notes": "Conceptual HMC accept/reject reference only; this atom is held because the implementation does not invoke the proposal kernel as its advertised contract states."
+            "confidence": "high",
+            "notes": "Canonical HMC reference for momentum refresh, leapfrog proposal integration, Hamiltonian accept/reject, gradient refresh, and explicit RNG-state threading."
           }
         },
         {
@@ -69,14 +69,14 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "low",
-            "notes": "Repository-family attribution only; the current callable needs semantic repair before publication."
+            "confidence": "medium",
+            "notes": "Repository-family attribution; the repaired local implementation follows the upstream HMC step structure with NumPy arrays and finite-difference gradients."
           }
         }
       ],
       "auto_attribution_runs": []
     },
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.runsamplingloop@src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:164": {
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.runsamplingloop@sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py:235": {
       "references": [
         {
           "ref_id": "neal2011hmc",
@@ -84,8 +84,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "low",
-            "notes": "Conceptual HMC sampling-loop reference only; this atom is held because the current loop does not call a transition kernel or update posterior state."
+            "confidence": "high",
+            "notes": "Canonical HMC reference for discard and collection loops that repeatedly advance the transition kernel before recording posterior draws."
           }
         },
         {
@@ -94,8 +94,8 @@
             "similarity_score": null,
             "match_type": "manual",
             "matched_nodes": [],
-            "confidence": "low",
-            "notes": "Repository-family attribution only; the current callable is remediation-only until the loop applies real transitions."
+            "confidence": "medium",
+            "notes": "Repository-family attribution; the repaired local loop threads immutable NumPy chain state through source-shaped HMC transitions."
           }
         }
       ],

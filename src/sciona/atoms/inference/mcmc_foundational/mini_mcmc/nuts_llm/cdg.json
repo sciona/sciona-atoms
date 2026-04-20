@@ -103,6 +103,16 @@
           "name": "n_discard",
           "type_desc": "int",
           "constraints": ">= 0"
+        },
+        {
+          "name": "log_prob_oracle",
+          "type_desc": "Callable[[NDArray[np.float64]], float]",
+          "constraints": "finite log-density evaluator used by tree transitions"
+        },
+        {
+          "name": "max_tree_depth",
+          "type_desc": "int",
+          "constraints": ">= 0; optional"
         }
       ],
       "outputs": [
@@ -138,7 +148,7 @@
         "assemblerunprogressresult"
       ],
       "depth": 1,
-      "type_signature": "(nuts_state_in: StateModelSpec{position, momentum, mass_matrix, trace}, rng_key_in: PRNGKey, n_collect: int, n_discard: int) -> tuple[Array[float], Array[Diagnostics], StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
+      "type_signature": "(nuts_state_in: StateModelSpec{position, logp, gradient, target_accept_p, step_size}, rng_key_in: PRNGKey, n_collect: int, n_discard: int, log_prob_oracle: Callable[[NDArray[np.float64]], float], max_tree_depth: int = 6) -> tuple[Array[float], Array[Diagnostics], StateModelSpec, PRNGKey]",
       "matched_primitive": null,
       "is_optional": false,
       "is_opaque": false,

@@ -426,31 +426,47 @@ def witness_differentialevolutionoptimization(
 
 def witness_singlesourceshortestpath(
     csgraph: AbstractArray,
-    directed: AbstractScalar,
-    indices: AbstractArray | AbstractScalar | None,
-    return_predecessors: AbstractScalar,
-    unweighted: AbstractScalar,
-    limit: AbstractScalar,
-    min_only: AbstractScalar,
-) -> AbstractArray:
-    """Return distance-array metadata for the Dijkstra wrapper."""
-    return AbstractArray(shape=csgraph.shape, dtype="float64")
+    indices: AbstractArray | AbstractScalar = AbstractScalar(dtype="int64", min_val=0.0),
+    method: str = "auto",
+    directed: bool = True,
+    return_predecessors: bool = False,
+    unweighted: bool = False,
+    overwrite: bool = False,
+) -> AbstractArray | tuple[AbstractArray, AbstractArray]:
+    """Return metadata for source-indexed SciPy shortest-path output."""
+    _ = (method, directed, unweighted, overwrite)
+    if isinstance(indices, AbstractArray) and indices.shape:
+        output_shape = (indices.shape[0], csgraph.shape[0])
+    else:
+        output_shape = (csgraph.shape[0],)
+    distances = AbstractArray(shape=output_shape, dtype="float64")
+    if return_predecessors:
+        predecessors = AbstractArray(shape=output_shape, dtype="int64", min_val=-9999.0)
+        return (distances, predecessors)
+    return distances
 
 
 def witness_allpairsshortestpath(
     csgraph: AbstractArray,
-    directed: AbstractScalar,
-    return_predecessors: AbstractScalar,
-    unweighted: AbstractScalar,
-    overwrite: AbstractScalar,
-) -> AbstractArray:
-    """Return distance-matrix metadata for the Floyd-Warshall wrapper."""
-    return AbstractArray(shape=csgraph.shape, dtype="float64")
+    method: str = "auto",
+    directed: bool = True,
+    return_predecessors: bool = False,
+    unweighted: bool = False,
+    overwrite: bool = False,
+) -> AbstractArray | tuple[AbstractArray, AbstractArray]:
+    """Return metadata for all-pairs SciPy shortest-path output."""
+    _ = (method, directed, unweighted, overwrite)
+    distances = AbstractArray(shape=csgraph.shape, dtype="float64")
+    if return_predecessors:
+        predecessors = AbstractArray(shape=csgraph.shape, dtype="int64", min_val=-9999.0)
+        return (distances, predecessors)
+    return distances
 
 
 def witness_minimumspanningtree(
     csgraph: AbstractArray,
-    overwrite: AbstractScalar,
+    overwrite: bool = False,
 ) -> AbstractArray:
     """Return sparse-matrix-shaped metadata for the MST wrapper."""
+    _ = overwrite
     return AbstractArray(shape=csgraph.shape, dtype="float64")

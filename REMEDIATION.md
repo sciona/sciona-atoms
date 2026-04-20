@@ -4,40 +4,6 @@ This file tracks heavier-lift catalog debt that should not be papered over with 
 
 ## Inference
 
-### `mcmc_foundational.mini_mcmc` sampling and NUTS transition rows
-
-Status: keep the listed loop/tree transition rows unpublished for now.
-
-Held atoms:
-- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.metropolishmctransition`
-- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.runsamplingloop`
-- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.collectposteriorchain`
-- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.runnutstransitions`
-- `sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts.nuts_recursive_tree_build`
-
-Why they are blocked:
-- `metropolishmctransition` advertises a full HMC transition that samples momentum, invokes leapfrog, accepts/rejects, and returns an updated state. The implementation only consumes a precomputed proposal, samples an original momentum through hidden seed coupling, and preserves the previous gradient even after accepted moves.
-- `runsamplingloop` advertises repeated HMC transitions, but the current loop never calls a transition kernel and does not update the chain position.
-- `collectposteriorchain` advertises transition-kernel collection, but the current loop records the unchanged chain state and only advances an RNG seed.
-- `runnutstransitions` advertises NUTS transitions, but the current implementation performs a simple random-walk position update with no log-probability, leapfrog tree building, slice variable, U-turn criterion, divergence logic, or Metropolis correction.
-- `nuts_recursive_tree_build` advertises a NUTS trajectory object, but it returns only a rightmost position array and drops the trajectory metadata required for a semantically valid NUTS tree builder.
-
-What we verified:
-- The defensible mini-MCMC subset is limited to initialization helpers, the pure leapfrog proposal kernel, and the combined `hmc_llm.hamiltoniantransitionkernel`.
-- References were corrected to current `sciona.atoms.inference...` runtime FQDNs, with low-confidence conceptual-only attribution for held rows.
-- Focused pubrev-008 tests cover the safe subset and assert that held rows are absent from the catalog-ready review bundle.
-
-Proposed fixes:
-1. Replace `metropolishmctransition` with a contract that either accepts both original and proposed momenta explicitly, or make it a complete transition that samples momentum, invokes leapfrog internally, recomputes the accepted gradient, and returns consistent diagnostics.
-2. Replace `runsamplingloop` and `collectposteriorchain` with loops that accept a transition callable or log-probability oracle and actually thread state through repeated transitions before collecting samples.
-3. Replace `runnutstransitions` with a real NUTS transition implementation using slice variables, recursive tree expansion, no-u-turn checks, divergence checks, and acceptance-statistic accumulation.
-4. Replace `nuts_recursive_tree_build` with a structured trajectory return type containing left/right states, candidate proposal, valid count, stop/divergence flags, and acceptance statistics.
-5. Add behavior-level tests on a small Gaussian target before reentering publication review.
-
-Evidence as of 2026-04-19:
-- The pubrev-008 review held these rows instead of forcing publication through family-level MCMC metadata.
-- Local source inspection showed placeholder or semantically incomplete loop/tree behavior for the held atoms.
-
 ### `mcmc_foundational.kthohr_mcmc` auto-generated MCMC wrapper rows
 
 Status: keep the listed KTHOHR MCMC rows unpublished for now.
@@ -123,37 +89,6 @@ Evidence as of 2026-04-16:
 
 ## Bio
 
-### `molecular_docking.greedy_mapping_d12.construct_mapping_state_via_greedy_expansion`
-
-Status: keep unpublished for now.
-
-Why it is blocked:
-- The current implementation uses a simplified first-free-site placement path rather than the advertised D12/lattice placement semantics.
-- Publication should wait for explicit feasibility checks, deterministic seed handling, and preservation of the immutable mapping-state contract.
-
-### `molecular_docking.greedy_mapping_d12.orchestrate_generation_and_validate`
-
-Status: keep unpublished for now.
-
-Why it is blocked:
-- The current wrapper validates a supplied mapping state but does not drive iterative generation from `starting_node` or invoke the expansion stages implied by its public contract.
-
-### `molecular_docking.greedy_subgraph.greedy_maximum_subgraph`
-
-Status: keep unpublished for now.
-
-Why it is blocked:
-- The implementation greedily selects a high-score independent set by treating adjacency as conflicts.
-- The public name and metadata imply a connected maximum-weight subgraph selection contract that the current behavior does not establish.
-
-### `molecular_docking.map_to_udg.graphtoudgmapping`
-
-Status: keep unpublished for now.
-
-Why it is blocked:
-- The current spectral-layout heuristic can add edges and does not prove faithful mapping of the input graph into a unit-disk graph representation.
-- Publication needs either a semantically explicit UDG embedding contract or implementation changes that prove edge preservation.
-
 ### `molecular_docking.quantum_solver.adiabaticquantumsampler`
 
 Status: keep unpublished for now.
@@ -176,8 +111,9 @@ Why it is blocked:
 - The current extraction logic is tied to the placeholder classical solver path and should be re-reviewed only after the quantum-solver contract is repaired or renamed.
 
 Evidence as of 2026-04-19:
-- The `pubrev-005` molecular-docking wave advanced only the directly audited safe rows and held these seven atoms.
-- Focused behavior review found placeholder, over-broad classical stand-in, or semantic-drift behavior for the held rows.
+- The `pubrev-005` molecular-docking wave advanced only the directly audited safe rows and held the quantum-solver atoms.
+- Focused behavior review found placeholder or over-broad classical stand-in behavior for the quantum rows.
+- The 2026-04-20 classical remediation wave repaired the greedy mapping, greedy subgraph, and graph-to-UDG rows; the quantum rows remain held.
 
 ### `molecular_docking.quantum_solver_d12`
 
@@ -236,63 +172,32 @@ Evidence as of 2026-04-19:
 
 ### `scipy.sparse_graph`
 
-Status: keep unpublished for now.
+Status: keep the graph-spectral helpers unpublished for now.
 
 Why it is blocked:
-- The remaining reviewed atoms in this family are not just missing audit metadata; they are currently flagged as misleading in the audit backlog.
-- The family mixes true missing-row constructor/wrapper work with higher-risk graph-spectral helpers whose public names imply standard SciPy graph operations more cleanly than the current local semantics justify.
-- This is not a good candidate for ratcheting by bundle-only review. It needs semantic narrowing or behavior repair first.
+- `graph_fourier_transform`, `inverse_graph_fourier_transform`, and `heat_kernel_diffusion` are local graph-signal helpers rather than direct SciPy sparse-graph APIs.
+- Their public names still imply a broader SciPy sparse-graph contract than the current provenance and review evidence justify.
 
 What we verified:
-- As of 2026-04-16, the backlog still marks `graph_fourier_transform`, `graph_laplacian`, `heat_kernel_diffusion`, and `inverse_graph_fourier_transform` as `misleading`.
-- The remaining `all_pairs_shortest_path`, `minimum_spanning_tree`, and `single_source_shortest_path` rows are still `missing_row`, so the family is split between naming/metadata debt and semantic review debt.
-- Because of that split, forcing the whole family through publishability review would blur together two different remediation classes.
+- In the 2026-04-20 remediation pass, `graph_laplacian` was narrowed to a Laplacian-return wrapper over `scipy.sparse.csgraph.laplacian`, and the shortest-path wrappers were aligned to `scipy.sparse.csgraph.shortest_path`.
+- `minimum_spanning_tree` was verified against `scipy.sparse.csgraph.minimum_spanning_tree`.
+- `graph_fourier_transform`, `inverse_graph_fourier_transform`, and `heat_kernel_diffusion` remain held because they are local graph-signal helpers rather than direct SciPy sparse-graph APIs.
+- The `scipy.stats.norm` remediation row was narrowed to the frozen-distribution call path `scipy.stats.norm(loc=loc, scale=scale)` and removed from remediation.
 
 Proposed fixes:
-1. Separate the family into:
-   - faithful sparse-graph wrappers that can eventually be published once canonical rows and metadata exist
-   - graph-spectral helpers whose current names or semantics are too misleading for publication
-2. For the misleading spectral helpers, either:
+1. For the misleading spectral helpers, either:
    - rename them to match the actual behavior surface, or
    - tighten the implementation and tests until the current names are defensible.
-3. Add behavior-level tests against concrete SciPy sparse/csgraph expectations before reentering the publication queue.
-4. Only restore these atoms to the publishability lane after the misleading subset is resolved.
+2. Add behavior-level tests against concrete graph-signal expectations before reentering the publication queue.
+3. Only restore these atoms to the publishability lane after the misleading subset is resolved.
 
 Suggested remediation order:
-1. `graph_laplacian`
-2. `graph_fourier_transform`
-3. `inverse_graph_fourier_transform`
-4. `heat_kernel_diffusion`
-5. Reevaluate whether the path/minimum-spanning-tree rows should be treated as clean missing-row publication work in a separate wave.
+1. `graph_fourier_transform`
+2. `inverse_graph_fourier_transform`
+3. `heat_kernel_diffusion`
 
-Evidence as of 2026-04-16:
-- Local matcher backlog refresh after the SciPy ratchet waves still shows the four spectral helpers as `misleading`.
-- The remaining path/tree atoms are still blocked as `missing_row` rather than review-approved publication candidates.
-
-### `scipy.stats.norm`
-
-Status: keep unpublished for now.
-
-Why it is blocked:
-- The current backlog still marks this wrapper as misleading rather than simply unaudited.
-- Publishing a distribution-constructor atom under a misleading signature or semantics surface would create a poor public contract because the returned object carries more behavior than the audit surface currently justifies.
-
-What we verified:
-- As of 2026-04-16, `sciona.atoms.scipy.stats.norm` remains non-publishable with verdict `misleading`.
-- The rest of the `scipy.stats` family was publishable without it, so there was no reason to lower the bar and force `norm` through the ratchet.
-
-Proposed fixes:
-1. Re-audit the exact public contract of `norm`, including constructor signature, returned object semantics, and whether the atom should expose a frozen distribution object at all.
-2. Add behavior-level tests that validate the intended callable/returned-object surface against upstream SciPy.
-3. If the returned frozen-distribution contract is too broad for a public atom, replace it with narrower explicit primitives instead of publishing the current wrapper as-is.
-
-Suggested remediation order:
-1. Decide whether `norm` should remain a first-class atom.
-2. If yes, tighten its contract and tests.
-3. Reenter publication review only after the misleading-status cause is resolved.
-
-Evidence as of 2026-04-16:
-- Local backlog refresh after the SciPy ratchet waves still shows `sciona.atoms.scipy.stats.norm` as `misleading`.
+Evidence as of 2026-04-20:
+- The `pubrev-077` remediation wave promoted only source-aligned SciPy wrappers and left the graph-spectral helpers held.
 
 ### SciPy Naming Debt
 

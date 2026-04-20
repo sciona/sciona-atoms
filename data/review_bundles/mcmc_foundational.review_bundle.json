@@ -37,6 +37,10 @@
       "path": "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py"
     },
     {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts.py"
+    },
+    {
       "kind": "local_test",
       "path": "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
     },
@@ -46,7 +50,7 @@
     }
   ],
   "limitations": [
-    "This bundle is scoped to the highest-evidence core MCMC rows and deliberately excludes mini-MCMC loop/tree rows whose implementations are placeholder or semantically narrower than their advertised sampler contracts.",
+    "This bundle is scoped to high-evidence core MCMC rows, including repaired mini-MCMC loop and tree rows that now have focused Gaussian behavior tests.",
     "The approved mini-MCMC rows are lightweight NumPy implementations with finite-difference gradients and identity mass-matrix assumptions; they are catalog-ready as minimal educational primitives, not production-grade adaptive samplers."
   ],
   "blocking_findings": [],
@@ -325,6 +329,181 @@
       "parity_test_status": "usage_equivalent_smoke",
       "parity_fixture_count": 1,
       "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.metropolishmctransition",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+      ],
+      "limitations": [
+        "Single-chain, identity-mass, finite-difference HMC transition; no dense metric or adaptive tuning support."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 27,
+      "risk_reasons": [
+        "The implementation now samples fresh momentum, integrates a leapfrog proposal, applies Hamiltonian Metropolis acceptance, recomputes accepted gradients, and threads RNG state."
+      ],
+      "acceptability_score": 81,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 2,
+      "has_references": true,
+      "references_status": "pass",
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.runsamplingloop",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+      ],
+      "limitations": [
+        "Loops over the local minimal HMC transition and collects post-transition states after discard; progress statistics are limited to transition diagnostics."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 28,
+      "risk_reasons": [
+        "The loop now actually threads chain state through repeated source-shaped HMC transitions before collecting samples."
+      ],
+      "acceptability_score": 80,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.collectposteriorchain",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/hmc_llm/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+      ],
+      "limitations": [
+        "Collects from the local minimal HMC transition kernel with finite-difference gradients and explicit one-element RNG keys."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 27,
+      "risk_reasons": [
+        "The collection loop now calls the transition kernel every iteration and records post-discard samples plus acceptance diagnostics."
+      ],
+      "acceptability_score": 81,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts.nuts_recursive_tree_build",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+      ],
+      "limitations": [
+        "Returns a compact dictionary of NUTS tree arrays rather than upstream Burn tensor types; the integrator remains caller-supplied."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "low",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 30,
+      "risk_reasons": [
+        "The tree builder now returns left/right endpoints, proposal state, valid-count, stop/divergence flags, and acceptance accumulation."
+      ],
+      "acceptability_score": 78,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
+      "has_references": true,
+      "references_status": "pass",
+      "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"
+    },
+    {
+      "atom_key": "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.runnutstransitions",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass_with_limits",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/atoms.py",
+        "src/sciona/atoms/inference/mcmc_foundational/mini_mcmc/nuts_llm/references.json",
+        "tests/test_mcmc_foundational_mini_mcmc_pubrev008.py"
+      ],
+      "limitations": [
+        "Minimal identity-mass NUTS transition with fixed step size; it implements slice/tree/U-turn/divergence mechanics but not dual-averaging adaptation."
+      ],
+      "blocking_findings": [],
+      "required_actions": [],
+      "risk_dimensions": {
+        "provenance": "low",
+        "semantic_drift": "medium",
+        "runtime_coverage": "medium"
+      },
+      "risk_score": 35,
+      "risk_reasons": [
+        "The transition loop now uses slice variables, recursive tree expansion, no-u-turn checks, divergence flags, weighted candidate selection, and explicit RNG threading."
+      ],
+      "acceptability_score": 75,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "usage_equivalent_smoke",
+      "parity_fixture_count": 1,
+      "parity_case_count": 1,
       "has_references": true,
       "references_status": "pass",
       "review_record_path": "data/review_bundles/mcmc_foundational.review_bundle.json"

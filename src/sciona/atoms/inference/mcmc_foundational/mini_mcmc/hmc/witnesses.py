@@ -22,9 +22,10 @@ def witness_leapfrogproposalkernel(
 def witness_metropolishmctransition(
     chain_state_in: AbstractMCMCTrace,
     kernel_static: AbstractArray,
-    proposal_state_out: AbstractMCMCTrace,
+    log_prob_oracle: AbstractArray,
 ) -> tuple[AbstractMCMCTrace, AbstractArray]:
     """Shape-and-type check for metropolis hmc transition. Returns output metadata without running the real computation."""
+    _ = log_prob_oracle
     chain_state_out = AbstractMCMCTrace(
         n_samples=chain_state_in.n_samples,
         n_chains=chain_state_in.n_chains,
@@ -36,10 +37,13 @@ def witness_metropolishmctransition(
 
 def witness_runsamplingloop(
     hmc_state_in: AbstractMCMCTrace,
+    kernel_static: AbstractArray,
     n_collect: AbstractScalar,
     n_discard: AbstractScalar,
+    log_prob_oracle: AbstractArray,
 ) -> tuple[AbstractArray, AbstractMCMCTrace, AbstractMCMCTrace]:
     """Shape-and-type check for run sampling loop. Returns output metadata without running the real computation."""
+    _ = kernel_static, n_collect, n_discard, log_prob_oracle
     samples = AbstractArray(shape=("N", "D"), dtype="float64")
     trace = AbstractMCMCTrace(
         n_samples=0,

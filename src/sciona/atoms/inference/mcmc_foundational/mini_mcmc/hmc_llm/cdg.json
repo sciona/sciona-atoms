@@ -624,6 +624,11 @@
           "name": "prng_key_state",
           "type_desc": "np.ndarray",
           "constraints": "explicit RNG flow through all iterations"
+        },
+        {
+          "name": "logp_oracle",
+          "type_desc": "Callable[[NDArray[np.float64]], float]",
+          "constraints": "finite log-density evaluator used by each transition"
         }
       ],
       "outputs": [
@@ -658,7 +663,7 @@
         "finalizechaintrace"
       ],
       "depth": 1,
-      "type_signature": "(n_collect: int, n_discard: int, chain_state_0: HMCState, kernel_spec: StateModelSpec, prng_key_state: PRNGKey/RNG state) -> tuple[array, HMCState, PRNGKey/RNG state, array/dict]",
+      "type_signature": "(n_collect: int, n_discard: int, chain_state_0: HMCState, kernel_spec: StateModelSpec, prng_key_state: PRNGKey/RNG state, logp_oracle: Callable[[NDArray[np.float64]], float]) -> tuple[array, HMCState, PRNGKey/RNG state, array/dict]",
       "matched_primitive": null,
       "is_optional": false,
       "is_opaque": false,

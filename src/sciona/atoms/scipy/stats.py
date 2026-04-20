@@ -146,17 +146,22 @@ def spearmanr(
     )
 
 @register_atom(witness_scipy_norm, name="scipy.stats.norm")
+@icontract.require(lambda loc: np.isfinite(loc), "Location must be finite")
 @icontract.require(lambda loc, scale: scale > 0, "Scale must be positive")
 @icontract.ensure(lambda result: result is not None, "Normal distribution object must not be None")
 def norm(loc: float = 0, scale: float = 1) -> rv_continuous_frozen:
-    """A normal continuous random variable.
+    """Freeze SciPy's normal distribution with a location and scale.
+
+    This wraps the call form ``scipy.stats.norm(loc=loc, scale=scale)``.
+    It does not return SciPy's module-level distribution generator.
 
     Args:
         loc: Mean ("centre") of the distribution.
         scale: Standard deviation of the distribution.
 
     Returns:
-        A frozen normal distribution object.
+        A frozen normal distribution object whose PDF, CDF, and summary
+        statistics are provided by SciPy.
 
     """
     return scipy.stats.norm(loc=loc, scale=scale)

@@ -144,9 +144,10 @@ Returns:
 @icontract.require(lambda chain_state_0: chain_state_0 is not None, "chain_state_0 cannot be None")
 @icontract.require(lambda kernel_spec: kernel_spec is not None, "kernel_spec cannot be None")
 @icontract.require(lambda prng_key_state: prng_key_state is not None, "prng_key_state cannot be None")
+@icontract.require(lambda logp_oracle: callable(logp_oracle), "logp_oracle must be callable")
 @icontract.ensure(lambda result: all(r is not None for r in result), "CollectPosteriorChain all outputs must not be None")
-def collectposteriorchain(n_collect: int, n_discard: int, chain_state_0: np.ndarray, kernel_spec: np.ndarray, prng_key_state: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Drive warmup/discard and collection loops by repeatedly applying the transition kernel; optionally emit progress while preserving pure state threading.
+def collectposteriorchain(n_collect: int, n_discard: int, chain_state_0: np.ndarray, kernel_spec: np.ndarray, prng_key_state: np.ndarray, logp_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Collect posterior states by repeatedly applying the HMC transition kernel.
 
 Args:
     n_collect: n_collect >= 1
@@ -154,19 +155,19 @@ Args:
     chain_state_0: initial immutable chain state
     kernel_spec: transition hyperparameters
     prng_key_state: explicit random number generator (RNG) flow through all iterations
+    logp_oracle: finite log-density evaluator used for every transition
 
 Returns:
     samples: collected posterior positions
     final_state: immutable terminal state
     final_prng_key: terminal RNG state
     chain_trace: acceptance and trajectory diagnostics"""
+    if n_collect < 0 or n_discard < 0:
+        raise ValueError("n_collect and n_discard must be non-negative")
     # chain_state layout: [pos(dim) | logp(1) | grad(dim)]
     state_len = chain_state_0.shape[0]
     # dim + 1 + dim = 2*dim + 1 => dim = (state_len - 1) / 2
     dim = (state_len - 1) // 2
-
-    rng_seed = int(prng_key_state[0]) % (2**31)
-    local_rng = np.random.RandomState(rng_seed)
 
     current_state = chain_state_0.copy()
     samples = np.zeros((n_collect, dim))
@@ -177,13 +178,25 @@ Returns:
     collected = 0
 
     for step in range(total_iters):
-        pos = current_state[:dim]
+        current_state, prng_key, stats = hamiltoniantransitionkernel(
+            current_state,
+            kernel_spec,
+            prng_key,
+            logp_oracle,
+        )
+        trace_list.append(
+            np.array(
+                [
+                    float(stats["accepted"]),
+                    float(stats["accept_prob"]),
+                    float(stats["delta_H"]),
+                ],
+                dtype=np.float64,
+            )
+        )
         if step >= n_discard:
-            samples[collected] = pos
+            samples[collected] = current_state[:dim]
             collected += 1
-        new_seed = local_rng.randint(0, 2**31)
-        prng_key = np.array([new_seed], dtype=np.int64)
-        trace_list.append(np.array([1.0, 1.0, 0.0]))
 
     trace = np.array(trace_list) if trace_list else np.zeros((0, 3))
     final_rng = prng_key
@@ -229,12 +242,12 @@ def _hamiltoniantransitionkernel_ffi(state_in: np.ndarray, kernel_spec: np.ndarr
     _func.restype = ctypes.c_void_p
     return _func(state_in, kernel_spec, prng_key_in, logp_oracle)
 
-def _collectposteriorchain_ffi(n_collect: int, n_discard: int, chain_state_0: np.ndarray, kernel_spec: np.ndarray, prng_key_state: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def _collectposteriorchain_ffi(n_collect: int, n_discard: int, chain_state_0: np.ndarray, kernel_spec: np.ndarray, prng_key_state: np.ndarray, logp_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Wrapper that calls the Rust version of collect posterior chain. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
     _func_name = 'collectposteriorchain'
     _func = _lib[_func_name]
-    _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p
-    return _func(n_collect, n_discard, chain_state_0, kernel_spec, prng_key_state)
+    return _func(n_collect, n_discard, chain_state_0, kernel_spec, prng_key_state, logp_oracle)

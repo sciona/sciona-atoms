@@ -386,9 +386,9 @@
           "constraints": "contains target/integrator parameters"
         },
         {
-          "name": "proposal_state_out",
-          "type_desc": "StateModelSpec",
-          "constraints": "from leapfrog proposal"
+          "name": "log_prob_oracle",
+          "type_desc": "Callable[[NDArray[np.float64]], float]",
+          "constraints": "finite log-density evaluator used to build the leapfrog proposal"
         }
       ],
       "outputs": [
@@ -416,7 +416,7 @@
         "assemble_transition_result"
       ],
       "depth": 1,
-      "type_signature": "(chain_state_in: StateModelSpec, kernel_static: object, proposal_state_out: StateModelSpec) -> tuple[StateModelSpec, object]",
+      "type_signature": "(chain_state_in: StateModelSpec, kernel_static: NDArray[np.float64], log_prob_oracle: Callable[[NDArray[np.float64]], float]) -> tuple[StateModelSpec, NDArray[np.float64]]",
       "matched_primitive": null,
       "is_optional": false,
       "is_opaque": false,
@@ -881,6 +881,11 @@
           "constraints": "immutable state threaded across iterations"
         },
         {
+          "name": "kernel_static",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "contains step_size, n_leapfrog, and dimension"
+        },
+        {
           "name": "n_collect",
           "type_desc": "int",
           "constraints": ">= 0"
@@ -889,6 +894,11 @@
           "name": "n_discard",
           "type_desc": "int",
           "constraints": ">= 0"
+        },
+        {
+          "name": "log_prob_oracle",
+          "type_desc": "Callable[[NDArray[np.float64]], float]",
+          "constraints": "finite log-density evaluator used by each transition"
         }
       ],
       "outputs": [
@@ -917,7 +927,7 @@
         "finalizeoutputs"
       ],
       "depth": 1,
-      "type_signature": "(hmc_state_in: StateModelSpec, n_collect: int, n_discard: int) -> tuple[array[float], object, StateModelSpec]",
+      "type_signature": "(hmc_state_in: StateModelSpec, kernel_static: NDArray[np.float64], n_collect: int, n_discard: int, log_prob_oracle: Callable[[NDArray[np.float64]], float]) -> tuple[NDArray[np.float64], NDArray[np.float64], StateModelSpec]",
       "matched_primitive": null,
       "is_optional": false,
       "is_opaque": false,
