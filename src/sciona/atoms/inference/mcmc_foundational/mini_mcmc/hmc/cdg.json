@@ -31,7 +31,7 @@
       "parent_id": "HMC_root",
       "name": "InitializeHMCState",
       "description": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
-      "concept_type": "custom",
+      "concept_type": "data_assembly",
       "inputs": [
         {
           "name": "target",
@@ -431,7 +431,7 @@
       "parent_id": "metropolishmctransition",
       "name": "infer_chain_geometry",
       "description": "Extract chain count and latent dimension from the current position tensor shape.",
-      "concept_type": "custom",
+      "concept_type": "dimensionality_reduction",
       "inputs": [
         {
           "name": "chain_state_in",
@@ -603,7 +603,7 @@
       "parent_id": "metropolishmctransition",
       "name": "propose_state_with_leapfrog",
       "description": "Run leapfrog integration from current positions and sampled momenta to obtain proposed state and proposed log-density.",
-      "concept_type": "custom",
+      "concept_type": "sampler",
       "inputs": [
         {
           "name": "positions_current",
@@ -742,7 +742,7 @@
       "parent_id": "metropolishmctransition",
       "name": "apply_metropolis_accept_reject",
       "description": "Compute acceptance log-ratio, build mask, and select accepted proposed positions against current positions.",
-      "concept_type": "custom",
+      "concept_type": "data_assembly",
       "inputs": [
         {
           "name": "h_current",
@@ -980,7 +980,7 @@
       "parent_id": "runsamplingloop",
       "name": "AllocateCollectionBuffer",
       "description": "Create an empty collection tensor to hold all post-burn-in states before final layout conversion.",
-      "concept_type": "custom",
+      "concept_type": "sampler",
       "inputs": [
         {
           "name": "n_collect",

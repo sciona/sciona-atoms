@@ -194,7 +194,7 @@
       "parent_id": "hamiltonianphasepointtransition",
       "name": "InitializeLoopStateFromPhasepoint",
       "description": "Extract phase-point coordinates and cached log-density terms, then initialize loop state and optional trajectory buffer.",
-      "concept_type": "custom",
+      "concept_type": "state_init",
       "inputs": [
         {
           "name": "z",
@@ -242,7 +242,7 @@
       "parent_id": "hamiltonianphasepointtransition",
       "name": "ProposeNextPhasepointWithTemperedLeapfrog",
       "description": "Execute one leapfrog proposal: pre-temper momentum, half momentum update, full position update via dH/dr, second half momentum update via dH/dtheta, post-temper, then build a cached phase-point candidate.",
-      "concept_type": "custom",
+      "concept_type": "sampler",
       "inputs": [
         {
           "name": "lf",
@@ -358,7 +358,7 @@
       "parent_id": "hamiltonianphasepointtransition",
       "name": "AssembleTransitionResult",
       "description": "Choose final return payload from terminal state: full trajectory when requested, otherwise final phase-point; propagate validity flag.",
-      "concept_type": "custom",
+      "concept_type": "data_extraction",
       "inputs": [
         {
           "name": "collect_full_trajectory",

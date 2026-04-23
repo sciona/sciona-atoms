@@ -31,7 +31,7 @@
       "parent_id": "HMC_root",
       "name": "InitializeHMCKernelState",
       "description": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
-      "concept_type": "custom",
+      "concept_type": "log_prob",
       "inputs": [
         {
           "name": "target",
@@ -184,7 +184,7 @@
       "parent_id": "hamiltoniantransitionkernel",
       "name": "infer_chain_geometry",
       "description": "Read the position tensor shape to determine batch size and latent dimension for this transition.",
-      "concept_type": "custom",
+      "concept_type": "dimensionality_reduction",
       "inputs": [
         {
           "name": "state_in.positions",
@@ -361,7 +361,7 @@
       "parent_id": "hamiltoniantransitionkernel",
       "name": "integrate_leapfrog_proposal",
       "description": "Run n_leapfrog symplectic updates to produce proposed positions/momenta and final proposed log density.",
-      "concept_type": "custom",
+      "concept_type": "sampler",
       "inputs": [
         {
           "name": "state_in.positions",
@@ -520,7 +520,7 @@
       "parent_id": "hamiltoniantransitionkernel",
       "name": "assemble_transition_result",
       "description": "Construct next chain state by selecting proposed vs current positions per chain and package diagnostics.",
-      "concept_type": "custom",
+      "concept_type": "data_assembly",
       "inputs": [
         {
           "name": "state_in",
@@ -678,7 +678,7 @@
       "parent_id": "collectposteriorchain",
       "name": "InitializeCollectionContext",
       "description": "Derive chain dimensions from the initial state, allocate the time-major sample buffer, and initialize trace/progress bookkeeping state.",
-      "concept_type": "custom",
+      "concept_type": "dimensionality_reduction",
       "inputs": [
         {
           "name": "n_collect",
@@ -731,7 +731,7 @@
       "parent_id": "collectposteriorchain",
       "name": "RunDiscardPhase",
       "description": "Apply the transition kernel for burn-in/discard steps while threading chain state and RNG state.",
-      "concept_type": "custom",
+      "concept_type": "sampler",
       "inputs": [
         {
           "name": "n_discard",
@@ -789,7 +789,7 @@
       "parent_id": "collectposteriorchain",
       "name": "SeedDiagnosticsFromBurnedState",
       "description": "Register the post-burn-in state as the initial diagnostics sample and update trace state with any recoverable diagnostics warnings.",
-      "concept_type": "custom",
+      "concept_type": "sampler",
       "inputs": [
         {
           "name": "chain_state_burned",
@@ -827,7 +827,7 @@
       "parent_id": "collectposteriorchain",
       "name": "CollectPosteriorTransitions",
       "description": "Iterate n_collect transitions; at each step advance state with kernel, write positions into buffer, and update diagnostics/progress trace.",
-      "concept_type": "custom",
+      "concept_type": "data_assembly",
       "inputs": [
         {
           "name": "n_collect",
@@ -905,7 +905,7 @@
       "parent_id": "collectposteriorchain",
       "name": "ReorderSampleLayout",
       "description": "Convert collected samples from time-major [collect, chain, dim] layout to chain-major [chain, collect, dim] layout.",
-      "concept_type": "custom",
+      "concept_type": "data_assembly",
       "inputs": [
         {
           "name": "collection_buffer_filled",
@@ -938,7 +938,7 @@
       "parent_id": "collectposteriorchain",
       "name": "FinalizeChainTrace",
       "description": "Compute final run diagnostics/statistics from accumulated trace state and samples, producing a pure chain_trace artifact.",
-      "concept_type": "custom",
+      "concept_type": "analysis",
       "inputs": [
         {
           "name": "trace_state_final",
