@@ -1,0 +1,421 @@
+{
+  "asset_id": "solution.kaggle.image_matching_1st",
+  "asset_version": "v1",
+  "family": "geometric_matching",
+  "paradigm": "geometry",
+  "name": "Image Matching Challenge 1st Place — Fundamental Matrix from Local Feature Matching (2022)",
+  "summary": "Multi-method local feature extraction and matching pipeline combining SuperPoint+SuperGlue sparse matching with LoFTR dense matching, fused through MAGSAC++ robust estimation to recover the fundamental matrix.",
+  "dejargonized_summary": "Find matching points between two photos using multiple neural-network detectors, combine all the matches, then use a robust algorithm to throw out wrong matches and compute the geometric relationship between the two camera views.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "feature_matching",
+    "fundamental_matrix",
+    "sparse_dense_fusion",
+    "superpoint_superglue",
+    "loftr_matching",
+    "ransac_geometry",
+    "magsac_plus_plus",
+    "epipolar_geometry",
+    "keypoint_detection",
+    "detector_free_matching",
+    "multi_method_matching",
+    "extreme_aspect_ratio",
+    "textureless_regions",
+    "outdoor_reconstruction"
+  ],
+  "applicability": {
+    "use_when": [
+      "Image pairs contain a mix of textured and textureless regions, so no single matcher type can achieve full coverage",
+      "Camera geometry recovery (fundamental/essential matrix) is the target, not just correspondence finding",
+      "Images may have extreme aspect ratios or resolution variation that require dynamic resizing before feature extraction",
+      "High outlier rates are expected in matches, requiring a robust estimator like MAGSAC++ rather than vanilla RANSAC"
+    ],
+    "do_not_use_when": [
+      "All scenes are richly textured (e.g., document matching) — sparse matching alone (SuperPoint+SuperGlue) suffices and LoFTR adds cost without benefit",
+      "Real-time matching is required — running two neural matchers in parallel doubles inference time",
+      "Only 2D homography is needed (planar scenes) — the full fundamental matrix pipeline is over-engineered for planar-only geometry"
+    ],
+    "key_insight": "Using BOTH sparse (SuperPoint/SuperGlue) and dense (LoFTR) matchers in parallel, then concatenating their correspondences before MAGSAC++, covers both textured and textureless regions. Neither matcher alone achieves full coverage: sparse methods miss low-texture areas, dense methods produce noisier matches in high-texture areas. The combined pool gives MAGSAC++ a richer inlier set to work with.",
+    "critical_stages": ["superpoint_extraction", "loftr_extraction", "match_concatenation", "fundamental_matrix_estimation"],
+    "swappable_stages": {
+      "dynamic_resizing": "Any aspect-ratio-aware resizing strategy works. The key requirement is that both matchers receive consistently sized inputs.",
+      "superglue_matching": "Could be replaced by nearest-neighbor descriptor matching with ratio test (Lowe's), at the cost of some match quality."
+    },
+    "failure_modes": [
+      "Scenes with no visual overlap between images: both matchers produce only outliers, and MAGSAC++ returns a degenerate fundamental matrix",
+      "Purely planar scenes: fundamental matrix is undefined (infinite epipoles), and the pipeline should use homography estimation instead",
+      "Very small images (<256px): both SuperPoint and LoFTR produce too few features for reliable geometry estimation"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "image_pairs",
+      "type_desc": "tuple[NDArray[np.uint8], NDArray[np.uint8]]",
+      "constraints": "Two RGB images of potentially different sizes. May have extreme aspect ratios.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "fundamental_matrix",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (3, 3). Fundamental matrix encoding epipolar geometry between the image pair.",
+      "required": true
+    },
+    {
+      "name": "inlier_matches",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (M, 4). Each row is (x1, y1, x2, y2) for inlier correspondences.",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "resize_before_extraction",
+      "statement": "Dynamic resizing must precede all feature extraction stages.",
+      "rationale": "Extreme aspect ratios cause feature extractors to miss keypoints or exceed memory. Resizing normalizes inputs for both SuperPoint and LoFTR.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle Image Matching 2022"
+    },
+    {
+      "category": "stage",
+      "subject": "match_before_ransac",
+      "statement": "All matching results must be concatenated before MAGSAC++ filtering.",
+      "rationale": "MAGSAC++ jointly reasons about inliers/outliers. Running it on the combined pool yields a more robust fundamental matrix than running it on each match set separately.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle Image Matching 2022"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "dynamic_resizing",
+      "name": "Dynamic Resizing",
+      "description": "Dynamically resize image pairs based on extreme aspect ratios to normalize inputs for downstream feature extraction. Uses OpenCV resize with appropriate interpolation.",
+      "dejargonized_description": "Resize unusually shaped images (very tall or very wide) so that feature detection networks can process them reliably.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "image_pairs",
+          "type_desc": "tuple[NDArray[np.uint8], NDArray[np.uint8]]",
+          "constraints": "Two RGB images, potentially with extreme aspect ratios.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "resized_images",
+          "type_desc": "tuple[NDArray[np.uint8], NDArray[np.uint8]]",
+          "constraints": "Two RGB images resized to manageable dimensions while preserving aspect ratio.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input images are valid RGB arrays."],
+      "guarantees": ["Output images have normalized dimensions suitable for neural feature extractors."],
+      "family_notes": [
+        "Handles edge cases like panoramic or portrait images that would otherwise cause poor keypoint detection."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "superpoint_extraction",
+      "name": "SuperPoint Extraction",
+      "description": "Run SuperPoint CNN to extract sparse keypoints and per-keypoint descriptors from each image. Produces repeatable, sub-pixel keypoint locations with 256-dimensional descriptors.",
+      "dejargonized_description": "Use a neural network to find distinctive points in each image and describe each point with a numerical fingerprint for later matching.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "resized_images",
+          "type_desc": "tuple[NDArray[np.uint8], NDArray[np.uint8]]",
+          "constraints": "Two normalized RGB images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "superpoint_keypoints",
+          "type_desc": "tuple[NDArray[np.float32], NDArray[np.float32]]",
+          "constraints": "Keypoint locations for each image, shape (K, 2) each.",
+          "required": true
+        },
+        {
+          "name": "superpoint_descriptors",
+          "type_desc": "tuple[NDArray[np.float32], NDArray[np.float32]]",
+          "constraints": "256-dim descriptors per keypoint, shape (K, 256) each.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Images are resized to manageable dimensions."],
+      "guarantees": ["Keypoints are sub-pixel accurate. Descriptors are L2-normalized."],
+      "family_notes": [
+        "SuperPoint is a self-supervised keypoint detector trained on synthetic homographies.",
+        "Produces sparse but highly repeatable keypoints compared to classical detectors like SIFT."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "loftr_extraction",
+      "name": "LoFTR Extraction",
+      "description": "Run LoFTR transformer-based matcher to extract dense correspondences between the image pair without requiring explicit keypoint detection. Produces semi-dense matches using coarse-to-fine attention.",
+      "dejargonized_description": "Use a different neural network that directly finds matching points between two images at once, producing many more matches than the sparse detector.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "resized_images",
+          "type_desc": "tuple[NDArray[np.uint8], NDArray[np.uint8]]",
+          "constraints": "Two normalized RGB images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loftr_matches",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (M, 4). Each row is (x1, y1, x2, y2) for a dense correspondence.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Images are resized to manageable dimensions."],
+      "guarantees": ["Matches are semi-dense. Confidence scores are available for filtering."],
+      "family_notes": [
+        "LoFTR uses a transformer with cross-attention to find matches without requiring a separate keypoint detection step.",
+        "Particularly strong in low-texture regions where sparse detectors fail."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "superglue_matching",
+      "name": "SuperGlue Matching",
+      "description": "Match SuperPoint descriptors between the two images using SuperGlue, a graph neural network that jointly reasons about keypoint correspondences using attention over both sets of descriptors.",
+      "dejargonized_description": "Use a neural network to figure out which distinctive points in image 1 correspond to which distinctive points in image 2, using the numerical fingerprints from SuperPoint.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "superpoint_keypoints",
+          "type_desc": "tuple[NDArray[np.float32], NDArray[np.float32]]",
+          "constraints": "Keypoint locations for each image.",
+          "required": true
+        },
+        {
+          "name": "superpoint_descriptors",
+          "type_desc": "tuple[NDArray[np.float32], NDArray[np.float32]]",
+          "constraints": "256-dim descriptors per keypoint for each image.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "superglue_matches",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (M, 4). Each row is (x1, y1, x2, y2) for matched keypoints.",
+          "required": true
+        }
+      ],
+      "preconditions": ["SuperPoint keypoints and descriptors are available for both images."],
+      "guarantees": ["Matches are filtered by SuperGlue's learned confidence. High-quality but sparse."],
+      "family_notes": [
+        "SuperGlue uses a graph neural network with self- and cross-attention to perform optimal partial assignment between keypoint sets."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "match_concatenation",
+      "name": "Match Concatenation",
+      "description": "Combine matching points from SuperGlue (sparse) and LoFTR (dense) into a single pool of correspondences using numpy concatenation.",
+      "dejargonized_description": "Merge all the matched point pairs from both methods into one big list so the geometry estimator can work with all of them together.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "superglue_matches",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (M1, 4). SuperGlue correspondences.",
+          "required": true
+        },
+        {
+          "name": "loftr_matches",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (M2, 4). LoFTR correspondences.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "all_matches",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (M1+M2, 4). Combined correspondences.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Both match sets use the same coordinate system (resized image coordinates)."],
+      "guarantees": ["Output contains all matches from both methods without deduplication."],
+      "family_notes": [
+        "Combining sparse high-precision matches (SuperGlue) with dense semi-accurate matches (LoFTR) provides the best coverage for RANSAC-based estimation."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "fundamental_matrix_estimation",
+      "name": "Fundamental Matrix Estimation",
+      "description": "Run MAGSAC++ (a modern RANSAC variant) via OpenCV to simultaneously filter outlier matches and estimate the fundamental matrix. MAGSAC++ uses a marginalized sample consensus approach that avoids explicit inlier/outlier thresholds.",
+      "dejargonized_description": "Use a robust algorithm to figure out which matched points are correct and which are wrong, then compute the geometric relationship (fundamental matrix) between the two camera views from only the correct matches.",
+      "concept_type": "geometry",
+      "inputs": [
+        {
+          "name": "all_matches",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (M, 4). Combined correspondences from all methods.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fundamental_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (3, 3). Rank-2 fundamental matrix satisfying x'^T F x = 0.",
+          "required": true
+        },
+        {
+          "name": "inlier_matches",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (K, 4). Inlier correspondences after MAGSAC++ filtering.",
+          "required": true
+        }
+      ],
+      "preconditions": ["At least 8 correspondences for 8-point algorithm within RANSAC."],
+      "guarantees": ["Fundamental matrix has rank 2. Inlier set is geometrically consistent."],
+      "family_notes": [
+        "MAGSAC++ marginalizes over a range of inlier thresholds instead of using a fixed one, making it more robust than classical RANSAC.",
+        "OpenCV implements MAGSAC++ via cv2.findFundamentalMat with the cv2.USAC_MAGSAC flag."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "dynamic_resizing",
+      "target_stage_id": "superpoint_extraction",
+      "output_name": "resized_images",
+      "input_name": "resized_images",
+      "source_type": "tuple[NDArray[np.uint8], NDArray[np.uint8]]",
+      "target_type": "tuple[NDArray[np.uint8], NDArray[np.uint8]]",
+      "data_kind": "image_pair",
+      "provenance": "Resized images for sparse keypoint extraction.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "dynamic_resizing",
+      "target_stage_id": "loftr_extraction",
+      "output_name": "resized_images",
+      "input_name": "resized_images",
+      "source_type": "tuple[NDArray[np.uint8], NDArray[np.uint8]]",
+      "target_type": "tuple[NDArray[np.uint8], NDArray[np.uint8]]",
+      "data_kind": "image_pair",
+      "provenance": "Resized images for dense matching.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "superpoint_extraction",
+      "target_stage_id": "superglue_matching",
+      "output_name": "superpoint_keypoints",
+      "input_name": "superpoint_keypoints",
+      "source_type": "tuple[NDArray[np.float32], NDArray[np.float32]]",
+      "target_type": "tuple[NDArray[np.float32], NDArray[np.float32]]",
+      "data_kind": "keypoints",
+      "provenance": "Sparse keypoint locations for graph-based matching.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "superpoint_extraction",
+      "target_stage_id": "superglue_matching",
+      "output_name": "superpoint_descriptors",
+      "input_name": "superpoint_descriptors",
+      "source_type": "tuple[NDArray[np.float32], NDArray[np.float32]]",
+      "target_type": "tuple[NDArray[np.float32], NDArray[np.float32]]",
+      "data_kind": "descriptors",
+      "provenance": "Per-keypoint descriptors for SuperGlue matching.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "superglue_matching",
+      "target_stage_id": "match_concatenation",
+      "output_name": "superglue_matches",
+      "input_name": "superglue_matches",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "correspondences",
+      "provenance": "Sparse high-confidence matches from SuperGlue.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "loftr_extraction",
+      "target_stage_id": "match_concatenation",
+      "output_name": "loftr_matches",
+      "input_name": "loftr_matches",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "correspondences",
+      "provenance": "Dense semi-accurate matches from LoFTR.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "match_concatenation",
+      "target_stage_id": "fundamental_matrix_estimation",
+      "output_name": "all_matches",
+      "input_name": "all_matches",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "correspondences",
+      "provenance": "Combined sparse+dense correspondences for robust estimation.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Image Matching Challenge 2022. Multi-method feature matching pipeline combining SuperPoint+SuperGlue sparse matching with LoFTR dense matching, fused through MAGSAC++ robust estimation.",
+    "dejargonized_summary": "Find matching points between two photos using multiple neural-network detectors, combine all the matches, then use a robust algorithm to throw out wrong matches and compute the geometric relationship between the two camera views.",
+    "provenance_notes": [
+      "Source: Kaggle Image Matching Challenge 2022, 1st place solution writeup",
+      "Source: https://www.kaggle.com/c/image-matching-challenge-2022/discussion/328502"
+    ],
+    "uncertainty_notes": [
+      "Specific resize thresholds for extreme aspect ratios depend on the competition data distribution.",
+      "The relative contribution of SuperGlue vs LoFTR matches varies by scene type (textured vs textureless)."
+    ],
+    "references": [
+      {
+        "title": "SuperPoint",
+        "citation": "DeTone et al. (2018). SuperPoint: Self-Supervised Interest Point Detection and Description.",
+        "url": "https://arxiv.org/abs/1712.07629",
+        "note": "Sparse keypoint detector."
+      },
+      {
+        "title": "SuperGlue",
+        "citation": "Sarlin et al. (2020). SuperGlue: Learning Feature Matching with Graph Neural Networks.",
+        "url": "https://arxiv.org/abs/1911.11763",
+        "note": "Graph neural network matcher."
+      },
+      {
+        "title": "LoFTR",
+        "citation": "Sun et al. (2021). LoFTR: Detector-Free Local Feature Matching with Transformers.",
+        "url": "https://arxiv.org/abs/2104.00680",
+        "note": "Dense transformer-based matcher."
+      },
+      {
+        "title": "MAGSAC++",
+        "citation": "Barath et al. (2020). MAGSAC++, a Fast, Reliable and Accurate Robust Estimator.",
+        "url": "https://arxiv.org/abs/1912.05909",
+        "note": "Modern RANSAC variant for robust estimation."
+      },
+      {
+        "title": "Image Matching Challenge 2022 1st Place Solution",
+        "citation": "Kaggle Image Matching Challenge 2022, 1st place solution writeup (2022)",
+        "url": "https://www.kaggle.com/c/image-matching-challenge-2022/discussion/328502",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

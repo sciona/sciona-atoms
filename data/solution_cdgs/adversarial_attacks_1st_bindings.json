@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.adversarial_attacks_1st",
+  "solution_metadata": {
+    "competition": "NIPS 2017 Non-Targeted + Targeted Adversarial Attack",
+    "placement": "1st (both tracks)",
+    "team": "Yinpeng Dong",
+    "year": 2017,
+    "metric": "Attack success rate (misclassification rate)",
+    "problem_domain": "adversarial_ml",
+    "source_url": "https://github.com/dongyp13/Non-Targeted-Adversarial-Attacks",
+    "source_license": "Apache-2.0"
+  },
+  "bindings": [
+    {
+      "stage_id": "ensemble_prediction_label_inference",
+      "bound_artifact_fqdn": "sciona.atoms.dl.adversarial.ensemble_prediction_label_inference",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "adaptive_epsilon_attack_strategy",
+      "bound_artifact_fqdn": "sciona.atoms.ml.gradient_attacks.adaptive_epsilon_strategy",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "ensemble_logit_fusion_with_asymmetric_weights",
+      "bound_artifact_fqdn": "sciona.atoms.ml.gradient_attacks.ensemble_logit_fusion",
+      "binding_confidence": 0.9,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {"binding_rationale": "Atom implements weighted logit averaging. Asymmetric weighting is a parameter choice, not a separate atom. Confidence 0.9."}
+    },
+    {
+      "stage_id": "auxiliary_logit_loss_fusion",
+      "bound_artifact_fqdn": "sciona.atoms.dl.adversarial.auxiliary_logit_loss_fusion",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {"binding_rationale": "loss_function atom with callable_injection edge. Torch port available for differentiable backprop.", "edge_kind": "callable_injection"}
+    },
+    {
+      "stage_id": "momentum_iterative_gradient_accumulation",
+      "bound_artifact_fqdn": "sciona.atoms.ml.gradient_attacks.momentum_gradient_accumulation",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "std_normalized_momentum_gradient",
+      "bound_artifact_fqdn": "sciona.atoms.dl.adversarial.std_normalized_momentum_gradient",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "rounded_clipped_perturbation_step",
+      "bound_artifact_fqdn": "sciona.atoms.ml.gradient_attacks.rounded_clipped_perturbation_step",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 7,
+    "bound_active": 7,
+    "bound_approximate": 0,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona-atoms-ml": 4,
+      "sciona-atoms-dl": 3
+    },
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
+    "meta_patterns_unbound": []
+  },
+  "architect_test_expectations": {
+    "description": "All 7 atoms are gaps -- none have been ingested. This CDG tests the architect's ability to identify and report missing atoms.",
+    "critical_finding": "This is a pure-gap CDG. The architect should recognize all stages as unbound and surface the fixed-point loop structure (momentum accumulation iterates until budget exhausted). The adaptive_epsilon_attack_strategy stage represents a conditional_routing pattern that the architect should flag as a branching point.",
+    "expected_retrieval_path": "No atoms should be found. All stages should be reported as gaps requiring ingestion."
+  }
+}

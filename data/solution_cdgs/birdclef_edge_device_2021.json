@@ -1,0 +1,305 @@
+{
+  "asset_id": "solution.kaggle.birdclef_edge_device_2021",
+  "asset_version": "v1",
+  "family": "audio_classification",
+  "paradigm": "signal_transform",
+  "name": "BirdCLEF (Edge Device Track) - High-Tier Solution (2021) - Pipeline Template",
+  "summary": "Edge ML / Audio Classification (Constrained) solution template for BirdCLEF (Edge Device Track) - High-Tier Solution (2021), modeled as a 5-stage deterministic pipeline: Audio feature extraction, Teacher Model Training, Student Model Training (Distillation), TFLite Conversion, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by BirdCLEF (Edge Device Track) - High-Tier Solution (2021): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "tflite",
+    "edge_ml",
+    "audio",
+    "classification",
+    "constrained",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Edge ML / Audio Classification (Constrained) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Edge ML / Audio Classification (Constrained).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Audio feature extraction creates the representation needed by On-device Thresholding, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "audio_feature_extraction",
+      "teacher_model_training"
+    ],
+    "swappable_stages": {
+      "on_device_thresholding": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/birdclef-2021/discussion/243456"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/birdclef-2021/discussion/243456"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "audio_feature_extraction",
+      "name": "Audio feature extraction",
+      "description": "generate standard Mel Spectrograms from continuous audio files (librosa)",
+      "dejargonized_description": "This stage generate standard Mel Spectrograms from continuous audio files (librosa).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for BirdCLEF (Edge Device Track) - High-Tier Solution (2021).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio_feature_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "teacher_model_training",
+      "name": "Teacher Model Training",
+      "description": "train a massive, high-accuracy ResNeSt-50 model on the spectrograms without any hardware constraints (PyTorch)",
+      "dejargonized_description": "This stage train a massive, high-accuracy ResNeSt-50 model on the spectrograms without any hardware constraints (PyTorch).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "teacher_model_training_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "teacher_model_training_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "student_model_training_distillation",
+      "name": "Student Model Training (Distillation)",
+      "description": "train a micro MobileNetV3 architecture using the soft probability labels output by the Teacher model rather than the hard ground-truth labels (PyTorch)",
+      "dejargonized_description": "This stage train a micro MobileNetV3 architecture using the soft probability labels output by the Teacher model rather than the hard ground-truth labels (PyTorch).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "student_model_training_distillation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "student_model_training_distillation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tflite_conversion",
+      "name": "TFLite Conversion",
+      "description": "convert the trained PyTorch MobileNetV3 into an ONNX format, then strictly quantize it to INT8 precision using TensorFlow Lite to ensure sub-50ms inference times (ONNX/TFLite)",
+      "dejargonized_description": "This stage convert the trained PyTorch MobileNetV3 into an ONNX format, then strictly quantize it to INT8 precision using TensorFlow Lite to ensure sub-50ms inference times (ONNX/TFLite).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "tflite_conversion_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tflite_conversion_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "on_device_thresholding",
+      "name": "On-device Thresholding",
+      "description": "implement fixed threshold bounds inside the TFLite wrapper to filter predictions before final return",
+      "dejargonized_description": "This stage implement fixed threshold bounds inside the TFLite wrapper to filter predictions before final return.",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "on_device_thresholding_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "audio_feature_extraction",
+      "target_stage_id": "teacher_model_training",
+      "output_name": "audio_feature_extraction_output",
+      "input_name": "teacher_model_training_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Audio feature extraction output is consumed by Teacher Model Training.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "teacher_model_training",
+      "target_stage_id": "student_model_training_distillation",
+      "output_name": "teacher_model_training_output",
+      "input_name": "student_model_training_distillation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Teacher Model Training output is consumed by Student Model Training (Distillation).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "student_model_training_distillation",
+      "target_stage_id": "tflite_conversion",
+      "output_name": "student_model_training_distillation_output",
+      "input_name": "tflite_conversion_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Student Model Training (Distillation) output is consumed by TFLite Conversion.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tflite_conversion",
+      "target_stage_id": "on_device_thresholding",
+      "output_name": "tflite_conversion_output",
+      "input_name": "on_device_thresholding_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "TFLite Conversion output is consumed by On-device Thresholding.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Edge ML / Audio Classification (Constrained).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/birdclef-2021/discussion/243456",
+      "Code URL: writeup only",
+      "Standard tools: librosa, PyTorch, ONNX, TensorFlow Lite"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "BirdCLEF (Edge Device Track) - High-Tier Solution (2021) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/birdclef-2021/discussion/243456",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

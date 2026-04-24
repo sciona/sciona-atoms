@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.parkinsons_fog_1st",
+  "solution_metadata": {
+    "competition": "Parkinson's Freezing of Gait Prediction - 1st Place (2023)",
+    "placement": "1st",
+    "team": null,
+    "year": 2023,
+    "metric": null,
+    "problem_domain": "time_series_classification",
+    "source_url": "https://www.kaggle.com/competitions/tlvmc-parkinsons-freezing-gait-prediction/discussion/416443",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "sliding_window_extraction",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "spectral_feature_extraction",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until a more specific atom or embedding-backed binding is available."
+      }
+    },
+    {
+      "stage_id": "cnn_processing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "model_ensembling",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "post_processing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until a more specific atom or embedding-backed binding is available."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 0,
+    "bound_approximate": 0,
+    "gaps": 2,
+    "atoms_used_by_repo": {},
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "cnn_processing",
+      "sliding_window_extraction"
+    ],
+    "orchestration_resolved": [
+      "model_ensembling",
+      "post_processing",
+      "spectral_feature_extraction"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

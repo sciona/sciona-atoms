@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.optiver_realized_volatility_1st",
+  "solution_metadata": {
+    "competition": "Optiver Realized Volatility Prediction - 1st Place (2021)",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "time_series_forecasting",
+    "source_url": "https://www.kaggle.com/competitions/optiver-realized-volatility-prediction/discussion/274970",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "lob_parsing",
+      "bound_artifact_fqdn": "sciona.atoms.financial_signals.weighted_average_price",
+      "binding_confidence": 0.9,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "time_bucketing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible related atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until embedding-backed binding or a more specific atom exists."
+      }
+    },
+    {
+      "stage_id": "feature_clustering",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "cross_sectional_aggregation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "custom_objective_gbdt",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "financial_signals": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "cross_sectional_aggregation",
+      "feature_clustering"
+    ],
+    "orchestration_resolved": [
+      "custom_objective_gbdt",
+      "time_bucketing"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

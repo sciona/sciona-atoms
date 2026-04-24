@@ -1,0 +1,303 @@
+{
+  "asset_id": "solution.kaggle.outbrain_click_prediction_1st",
+  "asset_version": "v1",
+  "family": "structured_prediction",
+  "paradigm": "optimization",
+  "name": "Outbrain Click Prediction - 1st Place (2017) - Pipeline Template",
+  "summary": "AdTech / Learning-to-Rank solution template for Outbrain Click Prediction - 1st Place (2017), modeled as a 5-stage deterministic pipeline: Data leak extraction, Feature hashing, Field-aware Factorization Machine (FFM), Follow-The-Regularized-Leader (FTRL), and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Outbrain Click Prediction - 1st Place (2017): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "rank_averaging",
+    "adtech",
+    "learning",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a AdTech / Learning-to-Rank task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: AdTech / Learning-to-Rank.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Data leak extraction creates the representation needed by Rank Averaging, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "data_leak_extraction",
+      "feature_hashing"
+    ],
+    "swappable_stages": {
+      "rank_averaging": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/outbrain-click-prediction/discussion/27495"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/outbrain-click-prediction/discussion/27495"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "data_leak_extraction",
+      "name": "Data leak extraction",
+      "description": "algorithmically trace document IDs between page views and ad clicks, generating a strict deterministic matching feature that bypasses ML completely (pandas)",
+      "dejargonized_description": "This stage algorithmically trace document IDs between page views and ad clicks, generating a strict deterministic matching feature that bypasses ML completely (pandas).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Outbrain Click Prediction - 1st Place (2017).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_leak_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_hashing",
+      "name": "Feature hashing",
+      "description": "hash billions of sparse categorical features (user IDs, geo-locations, ad IDs) into a fixed-width vector space to fit into memory (Vowpal Wabbit)",
+      "dejargonized_description": "This stage hash billions of sparse categorical features (user IDs, geo-locations, ad IDs) into a fixed-width vector space to fit into memory (Vowpal Wabbit).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "feature_hashing_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feature_hashing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "field_aware_factorization_machine_ffm",
+      "name": "Field-aware Factorization Machine (FFM)",
+      "description": "train an FFM architecture heavily optimized for sparse click-through-rate predictions (libffm)",
+      "dejargonized_description": "This stage train an FFM architecture heavily optimized for sparse click-through-rate predictions (libffm).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "field_aware_factorization_machine_ffm_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "field_aware_factorization_machine_ffm_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "follow_the_regularized_leader_ftrl",
+      "name": "Follow-The-Regularized-Leader (FTRL)",
+      "description": "train an online FTRL model passing linearly through the dataset row-by-row, constantly updating its weights to handle chronological concept drift (Vowpal Wabbit)",
+      "dejargonized_description": "This stage train an online FTRL model passing linearly through the dataset row-by-row, constantly updating its weights to handle chronological concept drift (Vowpal Wabbit).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "follow_the_regularized_leader_ftrl_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "follow_the_regularized_leader_ftrl_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "rank_averaging",
+      "name": "Rank Averaging",
+      "description": "sort the outputs of the FFM and FTRL models per user, and average their sorted ranks to generate final ad placements (scipy)",
+      "dejargonized_description": "This stage sort the outputs of the FFM and FTRL models per user, and average their sorted ranks to generate final ad placements (scipy).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "rank_averaging_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "data_leak_extraction",
+      "target_stage_id": "feature_hashing",
+      "output_name": "data_leak_extraction_output",
+      "input_name": "feature_hashing_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Data leak extraction output is consumed by Feature hashing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_hashing",
+      "target_stage_id": "field_aware_factorization_machine_ffm",
+      "output_name": "feature_hashing_output",
+      "input_name": "field_aware_factorization_machine_ffm_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Feature hashing output is consumed by Field-aware Factorization Machine (FFM).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "field_aware_factorization_machine_ffm",
+      "target_stage_id": "follow_the_regularized_leader_ftrl",
+      "output_name": "field_aware_factorization_machine_ffm_output",
+      "input_name": "follow_the_regularized_leader_ftrl_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Field-aware Factorization Machine (FFM) output is consumed by Follow-The-Regularized-Leader (FTRL).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "follow_the_regularized_leader_ftrl",
+      "target_stage_id": "rank_averaging",
+      "output_name": "follow_the_regularized_leader_ftrl_output",
+      "input_name": "rank_averaging_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Follow-The-Regularized-Leader (FTRL) output is consumed by Rank Averaging.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for AdTech / Learning-to-Rank.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/outbrain-click-prediction/discussion/27495",
+      "Code URL: writeup only",
+      "Standard tools: pandas, Vowpal Wabbit, libffm, scipy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Outbrain Click Prediction - 1st Place (2017) solution writeup",
+        "citation": "https://www.kaggle.com/c/outbrain-click-prediction/discussion/27495",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

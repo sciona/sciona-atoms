@@ -1,0 +1,347 @@
+{
+  "asset_id": "solution.kaggle.avito_demand_1st",
+  "asset_version": "v1",
+  "family": "multimodal_regression",
+  "paradigm": "neural_network",
+  "name": "Avito Demand Prediction - 1st Place (2018) - Pipeline Template",
+  "summary": "Multi-modal Regression (Tabular + Text + Image) solution template for Avito Demand Prediction - 1st Place (2018), modeled as a 6-stage deterministic pipeline: Image feature extraction, Text feature extraction, Tabular encoding, Concatenation & LightGBM, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Avito Demand Prediction - 1st Place (2018): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "multi",
+    "modal",
+    "regression",
+    "tabular",
+    "image",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Multi-modal Regression (Tabular + Text + Image) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Multi-modal Regression (Tabular + Text + Image).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Image feature extraction creates the representation needed by Final Blend, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "image_feature_extraction",
+      "text_feature_extraction"
+    ],
+    "swappable_stages": {
+      "final_blend": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/avito-demand-prediction/discussion/60059"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/avito-demand-prediction/discussion/60059"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "image_feature_extraction",
+      "name": "Image feature extraction",
+      "description": "pass ad images through a pre-trained VGG16/ResNet50 backbone to extract the penultimate fully-connected layer embeddings (Keras)",
+      "dejargonized_description": "This stage pass ad images through a pre-trained VGG16/ResNet50 backbone to extract the penultimate fully-connected layer embeddings (Keras).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Avito Demand Prediction - 1st Place (2018).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_feature_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "text_feature_extraction",
+      "name": "Text feature extraction",
+      "description": "apply TF-IDF for basic word counts and FastText embeddings for semantic meaning on the ad descriptions and titles (sklearn / Gensim)",
+      "dejargonized_description": "This stage apply TF-IDF for basic word counts and FastText embeddings for semantic meaning on the ad descriptions and titles (sklearn / Gensim).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "text_feature_extraction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text_feature_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tabular_encoding",
+      "name": "Tabular encoding",
+      "description": "apply target-encoding to high-cardinality categorical variables (city, category) using multi-fold splits to prevent target leakage (pandas/category_encoders)",
+      "dejargonized_description": "This stage apply target-encoding to high-cardinality categorical variables (city, category) using multi-fold splits to prevent target leakage (pandas/category_encoders).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "tabular_encoding_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tabular_encoding_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "concatenation_lightgbm",
+      "name": "Concatenation & LightGBM",
+      "description": "stack the image embeddings, text TF-IDF vectors, and tabular features into a massive sparse matrix and feed into LightGBM regressors",
+      "dejargonized_description": "This stage stack the image embeddings, text TF-IDF vectors, and tabular features into a massive sparse matrix and feed into LightGBM regressors.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "concatenation_lightgbm_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "concatenation_lightgbm_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_modal_rnn_architecture",
+      "name": "Multi-modal RNN architecture",
+      "description": "train a parallel Neural Network feeding the FastText embeddings through an RNN, concatenating with image/tabular dense layers, and predicting the target directly (PyTorch)",
+      "dejargonized_description": "This stage train a parallel Neural Network feeding the FastText embeddings through an RNN, concatenating with image/tabular dense layers, and predicting the target directly (PyTorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "multi_modal_rnn_architecture_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multi_modal_rnn_architecture_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "final_blend",
+      "name": "Final Blend",
+      "description": "weight the LightGBM and Neural Network predictions (scipy)",
+      "dejargonized_description": "This stage weight the LightGBM and Neural Network predictions (scipy).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "final_blend_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "image_feature_extraction",
+      "target_stage_id": "text_feature_extraction",
+      "output_name": "image_feature_extraction_output",
+      "input_name": "text_feature_extraction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Image feature extraction output is consumed by Text feature extraction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "text_feature_extraction",
+      "target_stage_id": "tabular_encoding",
+      "output_name": "text_feature_extraction_output",
+      "input_name": "tabular_encoding_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Text feature extraction output is consumed by Tabular encoding.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tabular_encoding",
+      "target_stage_id": "concatenation_lightgbm",
+      "output_name": "tabular_encoding_output",
+      "input_name": "concatenation_lightgbm_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Tabular encoding output is consumed by Concatenation & LightGBM.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "concatenation_lightgbm",
+      "target_stage_id": "multi_modal_rnn_architecture",
+      "output_name": "concatenation_lightgbm_output",
+      "input_name": "multi_modal_rnn_architecture_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Concatenation & LightGBM output is consumed by Multi-modal RNN architecture.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_modal_rnn_architecture",
+      "target_stage_id": "final_blend",
+      "output_name": "multi_modal_rnn_architecture_output",
+      "input_name": "final_blend_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Multi-modal RNN architecture output is consumed by Final Blend.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Multi-modal Regression (Tabular + Text + Image).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/avito-demand-prediction/discussion/60059",
+      "Code URL: writeup only",
+      "Standard tools: Keras, sklearn, FastText, LightGBM, PyTorch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Avito Demand Prediction - 1st Place (2018) solution writeup",
+        "citation": "https://www.kaggle.com/c/avito-demand-prediction/discussion/60059",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

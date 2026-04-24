@@ -1,0 +1,309 @@
+{
+  "asset_id": "solution.kaggle.m5_accuracy_1st",
+  "asset_version": "v1",
+  "family": "time_series_forecasting",
+  "paradigm": "optimization",
+  "name": "M5 Forecasting (Accuracy) - 1st Place (2020) - Pipeline Template",
+  "summary": "Hierarchical Time Series Forecasting solution template for M5 Forecasting (Accuracy) - 1st Place (2020), modeled as a 5-stage deterministic pipeline: Temporal unrolling, Recursive feature engineering, Objective function optimization, Magic Multiplier, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by M5 Forecasting (Accuracy) - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "hierarchical",
+    "series",
+    "forecasting",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Hierarchical Time Series Forecasting task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Hierarchical Time Series Forecasting.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Temporal unrolling creates the representation needed by Hierarchical Reconciliation, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "temporal_unrolling",
+      "recursive_feature_engineering"
+    ],
+    "swappable_stages": {
+      "hierarchical_reconciliation": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/m5-forecasting-accuracy/discussion/163613"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/m5-forecasting-accuracy/discussion/163613"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "temporal_unrolling",
+      "name": "Temporal unrolling",
+      "description": "melt the wide historical sales matrix into a long, row-based format suitable for standard machine learning (pandas)",
+      "dejargonized_description": "This stage melt the wide historical sales matrix into a long, row-based format suitable for standard machine learning (pandas).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for M5 Forecasting (Accuracy) - 1st Place (2020).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "temporal_unrolling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "recursive_feature_engineering",
+      "name": "Recursive feature engineering",
+      "description": "calculate rolling means, standard deviations, and lag features at 7, 14, and 28-day intervals (pandas)",
+      "dejargonized_description": "This stage calculate rolling means, standard deviations, and lag features at 7, 14, and 28-day intervals (pandas).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "recursive_feature_engineering_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "recursive_feature_engineering_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "objective_function_optimization",
+      "name": "Objective function optimization",
+      "description": "configure a LightGBM model utilizing a Tweedie objective function, perfectly suited for data with a massive number of exact zero values (LightGBM)",
+      "dejargonized_description": "This stage configure a LightGBM model utilizing a Tweedie objective function, perfectly suited for data with a massive number of exact zero values (LightGBM).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "objective_function_optimization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "objective_function_optimization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "magic_multiplier",
+      "name": "Magic Multiplier",
+      "description": "mathematically shift all predictions upward by a strict constant multiplier (e.g., 1.03) to manually account for the competition's anomalous \"empty\" days (numpy)",
+      "dejargonized_description": "This stage mathematically shift all predictions upward by a strict constant multiplier (e.g., 1.03) to manually account for the competition's anomalous \"empty\" days (numpy).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "magic_multiplier_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "magic_multiplier_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "hierarchical_reconciliation",
+      "name": "Hierarchical Reconciliation",
+      "description": "aggregate the store-level/item-level predictions bottom-up to ensure they perfectly match the required state-level and national-level hierarchical constraints (scipy)",
+      "dejargonized_description": "This stage aggregate the store-level/item-level predictions bottom-up to ensure they perfectly match the required state-level and national-level hierarchical constraints (scipy).",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "hierarchical_reconciliation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "temporal_unrolling",
+      "target_stage_id": "recursive_feature_engineering",
+      "output_name": "temporal_unrolling_output",
+      "input_name": "recursive_feature_engineering_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Temporal unrolling output is consumed by Recursive feature engineering.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "recursive_feature_engineering",
+      "target_stage_id": "objective_function_optimization",
+      "output_name": "recursive_feature_engineering_output",
+      "input_name": "objective_function_optimization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Recursive feature engineering output is consumed by Objective function optimization.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "objective_function_optimization",
+      "target_stage_id": "magic_multiplier",
+      "output_name": "objective_function_optimization_output",
+      "input_name": "magic_multiplier_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Objective function optimization output is consumed by Magic Multiplier.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "magic_multiplier",
+      "target_stage_id": "hierarchical_reconciliation",
+      "output_name": "magic_multiplier_output",
+      "input_name": "hierarchical_reconciliation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Magic Multiplier output is consumed by Hierarchical Reconciliation.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Hierarchical Time Series Forecasting.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/m5-forecasting-accuracy/discussion/163613",
+      "Code URL: https://github.com/Kyubyong/m5_forecasting",
+      "Standard tools: pandas, LightGBM, numpy, scipy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "M5 Forecasting (Accuracy) - 1st Place (2020) solution writeup",
+        "citation": "https://www.kaggle.com/c/m5-forecasting-accuracy/discussion/163613",
+        "note": "Primary source listed in the source PDF."
+      },
+      {
+        "title": "M5 Forecasting (Accuracy) - 1st Place (2020) code repository",
+        "citation": "https://github.com/Kyubyong/m5_forecasting",
+        "note": "Code URL listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

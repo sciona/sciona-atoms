@@ -1,0 +1,405 @@
+{
+  "asset_id": "solution.kaggle.indoor_navigation_1st",
+  "asset_version": "v1",
+  "family": "sensor_fusion",
+  "paradigm": "optimization",
+  "name": "Indoor Location & Navigation 1st Place — Wi-Fi + IMU Sensor Fusion (2021)",
+  "summary": "Indoor positioning pipeline fusing Wi-Fi fingerprint-based position estimates (LightGBM + 1D CNN) with IMU-based pedestrian dead reckoning via Kalman filtering and cost minimization, with final trajectory snapping to known walkway geometry.",
+  "dejargonized_summary": "Predict indoor location by combining Wi-Fi signal strength measurements with motion sensor data (accelerometer and gyroscope), blending the two estimates with a Kalman filter, and snapping the result onto known hallway paths.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "indoor_positioning",
+    "wifi_fingerprinting",
+    "pedestrian_dead_reckoning",
+    "kalman_filter",
+    "sensor_fusion",
+    "trajectory_optimization",
+    "imu_integration",
+    "rssi_signal_strength",
+    "snap_to_grid",
+    "floor_plan_constraint",
+    "complementary_sensors",
+    "absolute_relative_fusion",
+    "step_detection",
+    "trajectory_smoothing",
+    "lightgbm_regression",
+    "cost_minimization"
+  ],
+  "applicability": {
+    "use_when": [
+      "Two or more sensor modalities provide complementary positioning signals: one absolute but noisy (e.g., Wi-Fi RSSI, BLE beacons, GPS) and one relative but drifting (e.g., IMU/PDR, odometry, visual odometry)",
+      "Known environment geometry (floor plans, road networks, building layouts) is available for post-hoc trajectory correction",
+      "Positioning must be continuous over a trajectory, not just point estimates — the temporal structure of movement constrains predictions between observation points",
+      "Wi-Fi infrastructure is dense enough to provide meaningful fingerprinting signal (multiple visible APs per scan)"
+    ],
+    "do_not_use_when": [
+      "Only one sensor modality is available — sensor fusion requires at least two complementary sources. A single-modality model is simpler and equally effective",
+      "Environment geometry is unknown or frequently changing (e.g., open outdoor spaces, reconfigurable exhibition halls) — snap-to-grid becomes harmful rather than helpful",
+      "IMU data is unavailable or too noisy to extract step counts (e.g., device in a bag with random orientation) — PDR produces garbage displacements that corrupt the fused trajectory"
+    ],
+    "key_insight": "The Kalman filter fuses absolute (Wi-Fi, noisy but unbiased) with relative (IMU/PDR, precise but drifting) positioning — this is the classic complementary sensor fusion pattern. Wi-Fi provides coarse global corrections that prevent PDR drift from accumulating, while PDR provides smooth local trajectory structure between sparse Wi-Fi observations. Neither source alone achieves the accuracy of the fusion.",
+    "critical_stages": ["wifi_position_model", "pedestrian_dead_reckoning", "kalman_sensor_fusion"],
+    "swappable_stages": {
+      "wifi_feature_extraction": "Any method to convert raw RSSI scans into feature vectors works (sparse matrix, KNN fingerprint lookup, learned embeddings). The downstream model just needs a fixed-size representation per timestamp.",
+      "wifi_position_model": "Any regression model (GBM, MLP, KNN) can predict positions from Wi-Fi fingerprints. LightGBM handles the extreme sparsity well, but the pipeline value is in the fusion, not the specific Wi-Fi model.",
+      "snap_to_grid": "Can be replaced by any geometric constraint enforcement (e.g., graph-based shortest-path snapping, soft constraint via penalty term in cost function). The key idea is incorporating known environment structure."
+    },
+    "failure_modes": [
+      "Sparse Wi-Fi coverage: if only 1-2 APs are visible per scan, Wi-Fi fingerprinting degenerates to coarse room-level localization, and the Kalman filter trusts these noisy estimates too much",
+      "Stationary periods: PDR produces zero displacement when the user is not walking, but Wi-Fi noise continues to perturb the fused estimate. The Kalman filter needs explicit stationary detection to avoid position jitter",
+      "Multi-floor transitions: elevator/staircase movement violates the 2D PDR model and can cause the Kalman filter to diverge until the Wi-Fi signal re-anchors on the correct floor"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "wifi_signals",
+      "type_desc": "pd.DataFrame",
+      "constraints": "Columns: timestamp, BSSID, RSSI. Sparse Wi-Fi signal strength measurements from nearby access points.",
+      "required": true
+    },
+    {
+      "name": "imu_data",
+      "type_desc": "pd.DataFrame",
+      "constraints": "Columns: timestamp, accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z. High-frequency IMU sensor readings.",
+      "required": true
+    },
+    {
+      "name": "floor_plans",
+      "type_desc": "list[shapely.geometry.MultiLineString]",
+      "constraints": "Known hallway and walkway geometries per floor.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "predicted_positions",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (T, 2). Predicted X/Y coordinates per Wi-Fi timestamp.",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "feature_extraction_before_model",
+      "statement": "Wi-Fi feature extraction and sensor alignment must precede position model training.",
+      "rationale": "The Wi-Fi position model requires structured sparse matrices of BSSID signal strengths, and the PDR module requires time-aligned IMU data.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle Indoor Location & Navigation 2021"
+    },
+    {
+      "category": "stage",
+      "subject": "fusion_before_snapping",
+      "statement": "Kalman sensor fusion must precede snap-to-grid.",
+      "rationale": "Snapping operates on the fused trajectory. Snapping individual Wi-Fi or PDR estimates separately would lose the smooth trajectory structure from sensor fusion.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle Indoor Location & Navigation 2021"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "wifi_feature_extraction",
+      "name": "Wi-Fi Feature Extraction",
+      "description": "Create sparse matrices of BSSID signal strengths per timestamp using pandas and scipy. Each row is a timestamp, each column is a unique BSSID, and values are RSSI measurements. Missing values (unobserved BSSIDs) are encoded as a sentinel value.",
+      "dejargonized_description": "Organize the Wi-Fi signal strength data into a structured table where each row is a moment in time and each column is a specific Wi-Fi access point, with the signal strength as the value.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "wifi_signals",
+          "type_desc": "pd.DataFrame",
+          "constraints": "Raw Wi-Fi scan data with timestamp, BSSID, RSSI columns.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wifi_features",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "constraints": "Shape (T, B). T timestamps, B unique BSSIDs. Sparse RSSI values.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Wi-Fi scans contain at least one BSSID per timestamp."],
+      "guarantees": ["Output is a sparse matrix. Missing BSSIDs are represented as zeros or sentinel values."],
+      "family_notes": [
+        "Sparse representation is critical because each scan typically observes only 10-50 of thousands of total BSSIDs.",
+        "BSSID vocabulary is built from training data; unseen test BSSIDs are ignored."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sensor_alignment",
+      "name": "Sensor Alignment",
+      "description": "Interpolate high-frequency IMU data (accelerometer, gyroscope) to match the lower-frequency Wi-Fi scan timestamps using numpy interpolation. Ensures temporal alignment between the two sensor modalities.",
+      "dejargonized_description": "Synchronize the fast motion sensor readings with the slower Wi-Fi measurements by interpolating the motion data to match Wi-Fi measurement times.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "imu_data",
+          "type_desc": "pd.DataFrame",
+          "constraints": "High-frequency IMU readings (typically 50-200 Hz).",
+          "required": true
+        },
+        {
+          "name": "wifi_features",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "constraints": "Wi-Fi features with associated timestamps.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "aligned_imu",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, 6). IMU data interpolated to Wi-Fi timestamps. Columns: accel_xyz, gyro_xyz.",
+          "required": true
+        }
+      ],
+      "preconditions": ["IMU data covers the same time range as Wi-Fi scans."],
+      "guarantees": ["Output timestamps exactly match Wi-Fi scan timestamps. Linear interpolation for intermediate values."],
+      "family_notes": [
+        "IMU data is typically 50-200 Hz while Wi-Fi scans occur every 1-5 seconds. Interpolation bridges this frequency gap."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "wifi_position_model",
+      "name": "Wi-Fi Position Model",
+      "description": "Train LightGBM and 1D CNN models to predict raw X/Y coordinates from Wi-Fi fingerprints (sparse BSSID signal strength vectors). LightGBM handles the tabular sparse features directly, while the 1D CNN learns spatial patterns in ordered BSSID features.",
+      "dejargonized_description": "Train machine learning models to estimate location from the pattern of Wi-Fi signal strengths, using both a tree-based model and a neural network for complementary predictions.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "wifi_features",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "constraints": "Shape (T, B). Sparse Wi-Fi fingerprints.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "wifi_positions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, 2). Raw X/Y position estimates from Wi-Fi fingerprinting.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Wi-Fi feature matrices and ground truth positions are available for training."],
+      "guarantees": ["Output provides absolute position estimates. Accuracy varies with Wi-Fi coverage density."],
+      "family_notes": [
+        "LightGBM excels at handling the extreme sparsity of Wi-Fi fingerprint vectors.",
+        "The 1D CNN captures local correlations between BSSIDs from nearby access points."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pedestrian_dead_reckoning",
+      "name": "Pedestrian Dead Reckoning",
+      "description": "Compute relative position displacements from IMU sensors using step detection (accelerometer magnitude peaks), step length estimation, and heading computation (gyroscope integration). Produces a chain of relative displacements.",
+      "dejargonized_description": "Figure out how far and in which direction the person walked between each Wi-Fi measurement by counting steps from the accelerometer and tracking turning from the gyroscope.",
+      "concept_type": "geometry",
+      "inputs": [
+        {
+          "name": "aligned_imu",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, 6). Time-aligned accelerometer and gyroscope data.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pdr_displacements",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T-1, 2). Relative X/Y displacements between consecutive timestamps.",
+          "required": true
+        }
+      ],
+      "preconditions": ["IMU data is temporally aligned. Accelerometer and gyroscope are calibrated."],
+      "guarantees": ["Output represents relative motion. Absolute position requires an initial reference."],
+      "family_notes": [
+        "PDR accumulates drift over time (gyroscope bias, step length errors). Fusion with absolute Wi-Fi positions corrects this drift.",
+        "Step detection uses peak finding on accelerometer magnitude with adaptive thresholds."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "kalman_sensor_fusion",
+      "name": "Kalman Sensor Fusion",
+      "description": "Implement a Kalman Filter combined with cost minimization (scipy.optimize) to fuse absolute Wi-Fi position estimates with relative PDR displacements. The Kalman filter state is (x, y, heading), with Wi-Fi providing measurement updates and PDR providing motion model predictions.",
+      "dejargonized_description": "Blend the Wi-Fi-based location estimates (accurate but noisy) with the step-based movement estimates (smooth but drifting) using a statistical filter that optimally weights each source based on its reliability.",
+      "concept_type": "sequential_filter",
+      "inputs": [
+        {
+          "name": "wifi_positions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, 2). Absolute position estimates from Wi-Fi models.",
+          "required": true
+        },
+        {
+          "name": "pdr_displacements",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T-1, 2). Relative displacements from PDR.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fused_trajectory",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, 2). Smoothed X/Y trajectory combining both sensor modalities.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Wi-Fi positions and PDR displacements are temporally aligned."],
+      "guarantees": ["Output trajectory is smoother than Wi-Fi alone and less drifty than PDR alone."],
+      "family_notes": [
+        "The Kalman filter naturally handles the different uncertainty characteristics: Wi-Fi is noisy but bounded, PDR is smooth but drifting.",
+        "scipy.optimize is used for global trajectory optimization in addition to the sequential Kalman updates."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "snap_to_grid",
+      "name": "Snap to Grid",
+      "description": "Project the final smoothed trajectory onto the nearest known hallway/walkway coordinates using shapely geometric operations. Each predicted point is snapped to the closest point on the walkway geometry.",
+      "dejargonized_description": "Adjust the predicted path so that each point lies on a known hallway or walkway, since people can only walk where there are actual corridors.",
+      "concept_type": "geometry",
+      "inputs": [
+        {
+          "name": "fused_trajectory",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, 2). Smoothed X/Y trajectory.",
+          "required": true
+        },
+        {
+          "name": "floor_plans",
+          "type_desc": "list[shapely.geometry.MultiLineString]",
+          "constraints": "Known walkway geometries.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "predicted_positions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, 2). Final X/Y coordinates snapped to walkway geometry.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Fused trajectory and floor plan geometry are in the same coordinate system."],
+      "guarantees": ["Every output point lies on or near a known walkway. Distance from walkway is minimized."],
+      "family_notes": [
+        "Snap-to-grid acts as a hard geometric constraint, enforcing that predicted positions are physically reachable.",
+        "shapely.nearest_points provides efficient nearest-point-on-geometry computation."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "wifi_feature_extraction",
+      "target_stage_id": "sensor_alignment",
+      "output_name": "wifi_features",
+      "input_name": "wifi_features",
+      "source_type": "scipy.sparse.csr_matrix",
+      "target_type": "scipy.sparse.csr_matrix",
+      "data_kind": "sparse_matrix",
+      "provenance": "Wi-Fi timestamps used as alignment targets for IMU interpolation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "wifi_feature_extraction",
+      "target_stage_id": "wifi_position_model",
+      "output_name": "wifi_features",
+      "input_name": "wifi_features",
+      "source_type": "scipy.sparse.csr_matrix",
+      "target_type": "scipy.sparse.csr_matrix",
+      "data_kind": "sparse_matrix",
+      "provenance": "Sparse BSSID signal strength features for position prediction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "sensor_alignment",
+      "target_stage_id": "pedestrian_dead_reckoning",
+      "output_name": "aligned_imu",
+      "input_name": "aligned_imu",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "time_series",
+      "provenance": "IMU data interpolated to Wi-Fi scan timestamps.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "wifi_position_model",
+      "target_stage_id": "kalman_sensor_fusion",
+      "output_name": "wifi_positions",
+      "input_name": "wifi_positions",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "position_estimates",
+      "provenance": "Absolute X/Y position estimates from Wi-Fi fingerprinting models.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pedestrian_dead_reckoning",
+      "target_stage_id": "kalman_sensor_fusion",
+      "output_name": "pdr_displacements",
+      "input_name": "pdr_displacements",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "displacement_vectors",
+      "provenance": "Relative position displacements from IMU-based dead reckoning.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "kalman_sensor_fusion",
+      "target_stage_id": "snap_to_grid",
+      "output_name": "fused_trajectory",
+      "input_name": "fused_trajectory",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "trajectory",
+      "provenance": "Smoothed trajectory from Kalman fusion of Wi-Fi and PDR.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Indoor Location & Navigation 2021. Sensor fusion pipeline combining Wi-Fi fingerprinting (LightGBM + 1D CNN) with IMU-based pedestrian dead reckoning via Kalman filtering, with geometric snap-to-grid post-processing.",
+    "dejargonized_summary": "Predict indoor location by combining Wi-Fi signal patterns with motion sensor data, blending them with a statistical filter, and snapping results onto known hallway paths.",
+    "provenance_notes": [
+      "Source: Kaggle Indoor Location & Navigation competition, 1st place solution writeup (2021)",
+      "Source: https://www.kaggle.com/c/indoor-location-navigation/discussion/240423",
+      "Code: https://github.com/X-A-N-I-A/Indoor-Location-Navigation-1st-Place"
+    ],
+    "uncertainty_notes": [
+      "Kalman filter noise parameters (process noise, measurement noise) are tuned to this competition's sensor characteristics.",
+      "Snap-to-grid assumes accurate floor plan geometry is available, which may not hold in all deployment scenarios.",
+      "PDR step length calibration varies by individual and device mounting position."
+    ],
+    "references": [
+      {
+        "title": "LightGBM",
+        "citation": "Ke et al. (2017). LightGBM: A Highly Efficient Gradient Boosting Decision Tree.",
+        "url": "https://papers.nips.cc/paper/6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree",
+        "note": "Tree-based model for Wi-Fi fingerprinting."
+      },
+      {
+        "title": "Kalman Filter",
+        "citation": "Kalman (1960). A New Approach to Linear Filtering and Prediction Problems.",
+        "url": "https://doi.org/10.1115/1.3662552",
+        "note": "Sequential state estimation for sensor fusion."
+      },
+      {
+        "title": "Indoor Location & Navigation 1st Place Solution",
+        "citation": "Kaggle Indoor Location & Navigation, 1st place solution writeup (2021)",
+        "url": "https://www.kaggle.com/c/indoor-location-navigation/discussion/240423",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

@@ -1,0 +1,303 @@
+{
+  "asset_id": "solution.kaggle.handm_personalized_fashion_recommendations_1st",
+  "asset_version": "v1",
+  "family": "nlp_span_detection",
+  "paradigm": "signal_filter",
+  "name": "H&M Personalized Fashion Recommendations - 1st Place (2022) - Pipeline Template",
+  "summary": "Information Retrieval / Candidate generation solution template for H&M Personalized Fashion Recommendations - 1st Place (2022), modeled as a 5-stage deterministic pipeline: Trend generation, Collaborative filtering, Candidate merging, Feature engineering, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by H&M Personalized Fashion Recommendations - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "information",
+    "retrieval",
+    "candidate",
+    "generation"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Information Retrieval / Candidate generation task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Information Retrieval / Candidate generation.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Trend generation creates the representation needed by Ranking model, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "trend_generation",
+      "collaborative_filtering"
+    ],
+    "swappable_stages": {
+      "ranking_model": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/discussion/324070"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/discussion/324070"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "trend_generation",
+      "name": "Trend generation",
+      "description": "compute the top 100 most popular items in the trailing 2 weeks (pandas)",
+      "dejargonized_description": "This stage compute the top 100 most popular items in the trailing 2 weeks (pandas).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for H&M Personalized Fashion Recommendations - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trend_generation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "collaborative_filtering",
+      "name": "Collaborative filtering",
+      "description": "use Alternating Least Squares (ALS) to generate matrix factorization candidates for users (implicit)",
+      "dejargonized_description": "This stage use Alternating Least Squares (ALS) to generate matrix factorization candidates for users (implicit).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "collaborative_filtering_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "collaborative_filtering_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "candidate_merging",
+      "name": "Candidate merging",
+      "description": "union trend candidates, ALS candidates, and historically purchased items into a master pool",
+      "dejargonized_description": "This stage union trend candidates, ALS candidates, and historically purchased items into a master pool.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "candidate_merging_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "candidate_merging_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_engineering",
+      "name": "Feature engineering",
+      "description": "calculate user spending power, item price trends, and seasonal overlap (pandas)",
+      "dejargonized_description": "This stage calculate user spending power, item price trends, and seasonal overlap (pandas).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "feature_engineering_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feature_engineering_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "ranking_model",
+      "name": "Ranking model",
+      "description": "train LightGBM in Ranker mode (Lambdarank) optimizing for MAP@12",
+      "dejargonized_description": "This stage train LightGBM in Ranker mode (Lambdarank) optimizing for MAP@12.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "ranking_model_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "trend_generation",
+      "target_stage_id": "collaborative_filtering",
+      "output_name": "trend_generation_output",
+      "input_name": "collaborative_filtering_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Trend generation output is consumed by Collaborative filtering.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "collaborative_filtering",
+      "target_stage_id": "candidate_merging",
+      "output_name": "collaborative_filtering_output",
+      "input_name": "candidate_merging_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Collaborative filtering output is consumed by Candidate merging.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "candidate_merging",
+      "target_stage_id": "feature_engineering",
+      "output_name": "candidate_merging_output",
+      "input_name": "feature_engineering_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Candidate merging output is consumed by Feature engineering.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_engineering",
+      "target_stage_id": "ranking_model",
+      "output_name": "feature_engineering_output",
+      "input_name": "ranking_model_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Feature engineering output is consumed by Ranking model.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Information Retrieval / Candidate generation.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_25-50.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/discussion/324070",
+      "Code URL: writeup only",
+      "Standard tools: pandas, implicit (ALS), LightGBM"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "H&M Personalized Fashion Recommendations - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/discussion/324070",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

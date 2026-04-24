@@ -1,0 +1,308 @@
+{
+  "asset_id": "solution.kaggle.web_traffic_forecasting_1st",
+  "asset_version": "v1",
+  "family": "structured_prediction",
+  "paradigm": "loss_function",
+  "name": "Web Traffic Time Series Forecasting - 1st Place (2017) - Pipeline Template",
+  "summary": "Time Series / Sequence-to-Sequence solution template for Web Traffic Time Series Forecasting - 1st Place (2017), modeled as a 5-stage deterministic pipeline: Log1p Transformation, Missing value masking, Seq2Seq Architecture, Exogenous concatenation, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Web Traffic Time Series Forecasting - 1st Place (2017): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lstm",
+    "series",
+    "sequence",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Time Series / Sequence-to-Sequence task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Time Series / Sequence-to-Sequence.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Log1p Transformation creates the representation needed by SMAPE optimization, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "log1p_transformation",
+      "missing_value_masking"
+    ],
+    "swappable_stages": {
+      "smape_optimization": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/web-traffic-time-series-forecasting/discussion/39395"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/web-traffic-time-series-forecasting/discussion/39395"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "log1p_transformation",
+      "name": "Log1p Transformation",
+      "description": "strictly apply log1p to the Wikipedia page views to suppress massive traffic spikes and stabilize neural network gradients (numpy)",
+      "dejargonized_description": "This stage strictly apply log1p to the Wikipedia page views to suppress massive traffic spikes and stabilize neural network gradients (numpy).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Web Traffic Time Series Forecasting - 1st Place (2017).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "log1p_transformation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "missing_value_masking",
+      "name": "Missing value masking",
+      "description": "tag NaN values with an explicit boolean flag and fill with 0 to inform the network of missing data mechanically (pandas)",
+      "dejargonized_description": "This stage tag NaN values with an explicit boolean flag and fill with 0 to inform the network of missing data mechanically (pandas).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "missing_value_masking_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "missing_value_masking_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "seq2seq_architecture",
+      "name": "Seq2Seq Architecture",
+      "description": "construct an LSTM Encoder-Decoder network. The encoder ingests the trailing 60 days of traffic, passing the hidden state to the decoder which predicts the next 60 days autoregressively (TensorFlow)",
+      "dejargonized_description": "This stage construct an LSTM Encoder-Decoder network. The encoder ingests the trailing 60 days of traffic, passing the hidden state to the decoder which predicts the next 60 days autoregressively (TensorFlow).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "seq2seq_architecture_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "seq2seq_architecture_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "exogenous_concatenation",
+      "name": "Exogenous concatenation",
+      "description": "append Wikipedia page metadata (language, domain) to the LSTM inputs at every timestep",
+      "dejargonized_description": "This stage append Wikipedia page metadata (language, domain) to the LSTM inputs at every timestep.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "exogenous_concatenation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "exogenous_concatenation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "smape_optimization",
+      "name": "SMAPE optimization",
+      "description": "train the entire network natively on a smooth approximation of the SMAPE (Symmetric Mean Absolute Percentage Error) loss function (TensorFlow)",
+      "dejargonized_description": "This stage train the entire network natively on a smooth approximation of the SMAPE (Symmetric Mean Absolute Percentage Error) loss function (TensorFlow).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "smape_optimization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "log1p_transformation",
+      "target_stage_id": "missing_value_masking",
+      "output_name": "log1p_transformation_output",
+      "input_name": "missing_value_masking_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Log1p Transformation output is consumed by Missing value masking.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "missing_value_masking",
+      "target_stage_id": "seq2seq_architecture",
+      "output_name": "missing_value_masking_output",
+      "input_name": "seq2seq_architecture_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Missing value masking output is consumed by Seq2Seq Architecture.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "seq2seq_architecture",
+      "target_stage_id": "exogenous_concatenation",
+      "output_name": "seq2seq_architecture_output",
+      "input_name": "exogenous_concatenation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Seq2Seq Architecture output is consumed by Exogenous concatenation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "exogenous_concatenation",
+      "target_stage_id": "smape_optimization",
+      "output_name": "exogenous_concatenation_output",
+      "input_name": "smape_optimization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Exogenous concatenation output is consumed by SMAPE optimization.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Time Series / Sequence-to-Sequence.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/web-traffic-time-series-forecasting/discussion/39395",
+      "Code URL: https://github.com/Arturus/kaggle-web-traffic",
+      "Standard tools: numpy, pandas, TensorFlow"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Web Traffic Time Series Forecasting - 1st Place (2017) solution writeup",
+        "citation": "https://www.kaggle.com/c/web-traffic-time-series-forecasting/discussion/39395",
+        "note": "Primary source listed in the source PDF."
+      },
+      {
+        "title": "Web Traffic Time Series Forecasting - 1st Place (2017) code repository",
+        "citation": "https://github.com/Arturus/kaggle-web-traffic",
+        "note": "Code URL listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

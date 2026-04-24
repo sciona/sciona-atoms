@@ -1,0 +1,339 @@
+{
+  "asset_id": "solution.kaggle.porto_seguro_1st",
+  "asset_version": "v1",
+  "family": "tabular_classification",
+  "paradigm": "neural_network",
+  "name": "Porto Seguro Safe Driver Prediction 1st Place — Denoising Autoencoder Feature Engineering",
+  "summary": "Tabular binary classification on highly imbalanced driver safety data using denoising autoencoder feature extraction, concatenation with original features, and rank-averaged ensemble of LightGBM, XGBoost, and MLP models.",
+  "dejargonized_summary": "Predict which drivers will file insurance claims by first training a neural network to reconstruct noisy versions of the input data, then using its internal representations as extra features alongside the originals, and combining predictions from several different model types.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "denoising_autoencoder_features",
+    "tabular_deep_learning",
+    "swap_noise_dae",
+    "gbm_nn_ensemble",
+    "rank_averaging",
+    "highly_imbalanced",
+    "high_cardinality_categorical",
+    "sentinel_missing_values",
+    "binary_classification",
+    "insurance"
+  ],
+  "inputs": [
+    {
+      "name": "tabular_features",
+      "type_desc": "DataFrame",
+      "constraints": "Tabular features with categorical and continuous columns. Missing values encoded as -1.",
+      "required": true
+    },
+    {
+      "name": "binary_labels",
+      "type_desc": "NDArray[np.int64]",
+      "constraints": "Shape (N,). Binary target labels (0 or 1), highly imbalanced.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "predicted_probabilities",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N,). Predicted probability of positive class in [0, 1].",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Tabular data with >50 features and high class imbalance (>10:1)",
+      "Missing values encoded as sentinel values (-1, 999, etc.) rather than truly absent",
+      "No strong domain-specific feature engineering available — raw features need nonlinear interaction discovery",
+      "Heterogeneous feature types (mix of categorical and continuous) where manual interaction terms are intractable"
+    ],
+    "do_not_use_when": [
+      "Data has <10 features (DAE hidden layer adds no value on small feature spaces — manual interactions suffice)",
+      "Target is multi-class with >10 classes (rank-averaging is less effective; stacking or per-class calibration is preferred)",
+      "Real-time inference required (DAE feature extraction adds a forward-pass latency that may exceed SLA)",
+      "Dataset has <1000 rows (DAE overfits and produces noisy, unreliable features)"
+    ],
+    "key_insight": "The DAE learns a smooth manifold of the feature space. Its hidden activations capture non-linear feature interactions that tree models cannot discover from raw features alone. The swap-noise corruption forces the DAE to learn robust, denoised representations rather than memorizing individual rows, because swap noise preserves marginal distributions while destroying pairwise correlations.",
+    "critical_stages": ["denoising_autoencoder_features"],
+    "swappable_stages": {
+      "model_training": "Any supervised model (GBM, NN, linear) works here. The value is in the DAE features, not the downstream model.",
+      "rank_average_ensemble": "Any ensembling strategy (stacking, blending, simple average) works. Rank-averaging is just robust to different prediction scales across heterogeneous model types."
+    },
+    "failure_modes": [
+      "Very small datasets (<1000 rows): DAE overfits and produces noisy features that hurt downstream models",
+      "Highly correlated features: DAE hidden layer collapses to first few PCA components, adding no information beyond what PCA would provide",
+      "Time-series data with temporal ordering: DAE ignores sequential structure, producing inferior features vs. lag-based or recurrent approaches"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "imputation_first",
+      "statement": "Missing value imputation and categorical encoding must precede all downstream feature engineering and model training.",
+      "rationale": "The raw data uses -1 as a missing sentinel. DAE training and gradient boosting models require clean numeric inputs.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "dae_before_concatenation",
+      "statement": "Denoising autoencoder must be trained before feature concatenation so hidden activations are available.",
+      "rationale": "The DAE hidden layer outputs serve as learned feature representations that augment the original feature space.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "rank_averaging_over_probability",
+      "statement": "Ensemble via rank averaging rather than direct probability averaging.",
+      "rationale": "Rank averaging is robust to differences in calibration across model types (GBMs vs NNs) and preserves relative ordering without requiring matched probability scales.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "missing_value_imputation",
+      "name": "Missing Value Imputation",
+      "description": "Replace -1 sentinel values with NaN and apply categorical label encoding for categorical features using pandas.",
+      "dejargonized_description": "Clean up the data by replacing placeholder missing values and converting category columns into numbers.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "tabular_features",
+          "type_desc": "DataFrame",
+          "constraints": "Raw tabular features with -1 as missing sentinel.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "clean_features",
+          "type_desc": "DataFrame",
+          "constraints": "Cleaned features with NaN for missing and integer-encoded categoricals.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input DataFrame has columns with -1 sentinel values."],
+      "guarantees": ["All -1 values replaced with NaN. Categorical columns are label-encoded."],
+      "family_notes": [
+        "Standard tabular preprocessing. The -1 sentinel is specific to Porto Seguro dataset conventions."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "denoising_autoencoder_features",
+      "name": "Denoising Autoencoder Features",
+      "description": "Train a denoising autoencoder with swap noise corruption on all input features. Swap noise randomly replaces each feature value with another value from the same column. Extract hidden layer activations as learned feature representations.",
+      "dejargonized_description": "Train a neural network to reconstruct the original data from a randomly scrambled version, then use the network's internal representation as new features that capture patterns in the data.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "clean_features",
+          "type_desc": "DataFrame",
+          "constraints": "Cleaned tabular features.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "dae_activations",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, H). Hidden layer activations from the trained DAE.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input features are cleaned and numerically encoded."],
+      "guarantees": ["Output contains learned representations capturing nonlinear feature interactions."],
+      "family_notes": [
+        "KEY WINNING TECHNIQUE. Swap noise is preferred over Gaussian noise for tabular data because it preserves the marginal distribution of each feature.",
+        "The DAE acts as unsupervised feature engineering, discovering useful feature interactions without using the target variable."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_concatenation",
+      "name": "Feature Concatenation",
+      "description": "Concatenate original cleaned tabular features with DAE hidden layer activations along the feature axis using numpy.",
+      "dejargonized_description": "Combine the original data columns with the new features learned by the autoencoder into one wider table.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "clean_features",
+          "type_desc": "DataFrame",
+          "constraints": "Cleaned tabular features.",
+          "required": true
+        },
+        {
+          "name": "dae_activations",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, H). DAE hidden layer activations.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "concatenated_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, D+H). Original features concatenated with DAE features.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Both inputs have the same number of samples N."],
+      "guarantees": ["Output width equals original feature count plus DAE hidden dimension."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "model_training",
+      "name": "Model Training",
+      "description": "Train LightGBM, XGBoost, and standard MLP models on the concatenated feature space. Each model is trained with cross-validation to produce out-of-fold predictions.",
+      "dejargonized_description": "Train three different types of prediction models on the enriched feature set: two tree-based models and a neural network.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "concatenated_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, D+H). Concatenated feature matrix.",
+          "required": true
+        },
+        {
+          "name": "binary_labels",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N,). Binary target labels.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model_predictions",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "List of prediction arrays, one per model. Each shape (N,).",
+          "required": true
+        }
+      ],
+      "preconditions": ["Concatenated features and labels are aligned."],
+      "guarantees": ["Each model produces calibrated probability estimates via cross-validation."],
+      "family_notes": [
+        "Diversity of model types (GBM vs NN) is critical for ensemble gain.",
+        "LightGBM and XGBoost handle missing values natively, while MLPs require imputation."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "rank_average_ensemble",
+      "name": "Rank Average Ensemble",
+      "description": "Convert each model's predicted probabilities to ranks, average the ranks across models, then convert back to a probability scale using scipy/numpy.",
+      "dejargonized_description": "Instead of averaging raw predictions, rank all predictions from each model separately, then average the ranks to get a final ordering that is robust to differences in how each model scores confidence.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "model_predictions",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "List of prediction arrays from different models.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "predicted_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). Final ensembled predictions in [0, 1].",
+          "required": true
+        }
+      ],
+      "preconditions": ["All model predictions have the same length N."],
+      "guarantees": ["Output preserves relative ordering. Robust to miscalibrated models."],
+      "family_notes": [
+        "Rank averaging is standard in Kaggle competitions for combining heterogeneous model types.",
+        "Equivalent to averaging CDFs, which is more robust than averaging probabilities when models have different calibration curves."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "missing_value_imputation",
+      "target_stage_id": "denoising_autoencoder_features",
+      "output_name": "clean_features",
+      "input_name": "clean_features",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "tabular",
+      "provenance": "Cleaned features with NaN and encoded categoricals.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "missing_value_imputation",
+      "target_stage_id": "feature_concatenation",
+      "output_name": "clean_features",
+      "input_name": "clean_features",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "tabular",
+      "provenance": "Original cleaned features for concatenation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "denoising_autoencoder_features",
+      "target_stage_id": "feature_concatenation",
+      "output_name": "dae_activations",
+      "input_name": "dae_activations",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "embedding",
+      "provenance": "Learned hidden representations from DAE.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "feature_concatenation",
+      "target_stage_id": "model_training",
+      "output_name": "concatenated_features",
+      "input_name": "concatenated_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "tabular",
+      "provenance": "Original + DAE features combined.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "model_training",
+      "target_stage_id": "rank_average_ensemble",
+      "output_name": "model_predictions",
+      "input_name": "model_predictions",
+      "source_type": "list[NDArray[np.float64]]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "predictions",
+      "provenance": "Per-model probability predictions for rank averaging.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Porto Seguro solution. Key innovation is using denoising autoencoders with swap noise as unsupervised feature engineering for tabular data, combined with heterogeneous model ensemble via rank averaging.",
+    "dejargonized_summary": "Predict insurance claims by learning hidden patterns from noisy data reconstruction, adding those as extra features, and combining predictions from multiple model types.",
+    "provenance_notes": [
+      "Source: Kaggle Porto Seguro Safe Driver Prediction competition, 1st place solution (2017)",
+      "Discussion: https://www.kaggle.com/competitions/porto-seguro-safe-driver-prediction/discussion",
+      "Source: https://www.kaggle.com/c/porto-seguro-safe-driver-prediction/discussion/44629",
+      "Code: https://github.com/mjahrer/porto-seguro"
+    ],
+    "uncertainty_notes": [
+      "The optimal DAE hidden dimension and swap noise rate are hyperparameters tuned per dataset.",
+      "Rank averaging assumes all models contribute positively; negative-contributing models would degrade performance."
+    ],
+    "references": [
+      {
+        "title": "Porto Seguro 1st Place Solution",
+        "citation": "Michael Jahrer, 1st place solution writeup",
+        "url": "https://www.kaggle.com/competitions/porto-seguro-safe-driver-prediction/discussion/44629",
+        "note": "1st place solution description."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

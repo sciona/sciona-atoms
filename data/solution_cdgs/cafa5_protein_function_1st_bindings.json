@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.cafa5_protein_function_1st",
+  "solution_metadata": {
+    "competition": "CAFA-5 Protein Function Prediction - 1st Place (2023)",
+    "placement": "1st",
+    "team": null,
+    "year": 2023,
+    "metric": null,
+    "problem_domain": "learning_to_rank",
+    "source_url": "https://www.kaggle.com/competitions/cafa-5-protein-function-prediction/writeups/gocurator-1st-place-solution-for-the-cafa5",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "embeddings_generation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "modality_1_structural",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "modality_2_literature",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "modality_3_text_retrieval",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "modality_4_concatenation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "learning_to_rank_meta_model",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 0,
+    "bound_approximate": 0,
+    "gaps": 5,
+    "atoms_used_by_repo": {},
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "embeddings_generation",
+      "modality_1_structural",
+      "modality_2_literature",
+      "modality_3_text_retrieval",
+      "modality_4_concatenation"
+    ],
+    "orchestration_resolved": [
+      "learning_to_rank_meta_model"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.open_problems_multimodal_single_cell_1st",
+  "solution_metadata": {
+    "competition": "Open Problems - Multimodal Single-Cell Integration - 1st Place (2022)",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "bioinformatics",
+    "source_url": "https://www.kaggle.com/competitions/open-problems-multimodal/discussion/366372",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "sparse_loading",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "dimensionality_reduction",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.decomposition.truncated_svd_fit",
+      "binding_confidence": 0.78,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text maps to the closest existing decomposition primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "cross_modal_projection",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "k_nearest_neighbors_smoothing",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.neighbors.nearest_neighbors_fit",
+      "binding_confidence": 0.8,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "matrix_reconstruction",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 2,
+    "bound_approximate": 0,
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "ml": 2
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "matrix_reconstruction",
+      "sparse_loading"
+    ],
+    "orchestration_resolved": [
+      "cross_modal_projection"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

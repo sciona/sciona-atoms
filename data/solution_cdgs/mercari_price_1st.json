@@ -1,0 +1,430 @@
+{
+  "asset_id": "solution.kaggle.mercari_price_1st",
+  "asset_version": "v1",
+  "family": "tabular_text_regression",
+  "paradigm": "optimization",
+  "name": "Mercari Price Suggestion 1st Place — Sparse Feature Regression with Factorization Machines and Neural Text Model",
+  "summary": "Product price prediction from text and categorical features using CountVectorizer/TF-IDF text vectorization, sparse one-hot categorical encoding, FTRL-trained Factorization Machines on the sparse feature matrix, a 1D CNN neural text model, and weighted ensemble averaging with Ridge Regression.",
+  "dejargonized_summary": "Predict product prices by converting item names, descriptions, brands, and categories into sparse numerical features, training a factorization machine for feature interactions, a neural network for text understanding, and averaging their predictions.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "sparse_feature_regression",
+    "factorization_machine",
+    "text_price_regression",
+    "ftrl_optimization",
+    "cnn_text_regression",
+    "countvectorizer_tfidf",
+    "one_hot_sparse_encoding",
+    "pairwise_feature_interactions",
+    "online_learning",
+    "log_price_regression",
+    "ridge_regression",
+    "high_cardinality_categorical",
+    "hierarchical_category",
+    "wordbatch_fm_ftrl"
+  ],
+  "inputs": [
+    {
+      "name": "item_name",
+      "type_desc": "list[str]",
+      "constraints": "Product listing titles.",
+      "required": true
+    },
+    {
+      "name": "item_description",
+      "type_desc": "list[str]",
+      "constraints": "Free-text product descriptions.",
+      "required": true
+    },
+    {
+      "name": "brand",
+      "type_desc": "list[str]",
+      "constraints": "Brand names. High cardinality.",
+      "required": true
+    },
+    {
+      "name": "category",
+      "type_desc": "list[str]",
+      "constraints": "Hierarchical category strings (e.g., 'Women/Tops/T-Shirts').",
+      "required": true
+    },
+    {
+      "name": "item_condition",
+      "type_desc": "NDArray[np.int64]",
+      "constraints": "Integer condition rating.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "predicted_price",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Predicted product prices in dollars (log-scale predicted, exponentiated for final output).",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Regression task with mixed text and high-cardinality categorical features where the feature space is naturally ultra-sparse",
+      "Dataset is large (>1M samples) and requires memory-efficient sparse representations rather than dense matrices",
+      "Pairwise feature interactions (e.g., brand x category) are predictive but the full interaction matrix is too large to materialize",
+      "Inference time budget is tight (kernel competitions) — FM_FTRL and Ridge on sparse matrices are extremely fast compared to deep learning"
+    ],
+    "do_not_use_when": [
+      "Text requires deep semantic understanding (sentiment, entailment) rather than lexical pattern matching — bag-of-words features miss meaning",
+      "Feature space is naturally dense with few categorical variables — FM provides no advantage over standard GBM on dense features",
+      "Dataset is small (<10K samples) — FTRL online learning and factorization machines need large data to learn stable interaction patterns",
+      "Target depends on sequential word order in text (e.g., negation, conditionals) — CountVectorizer/TF-IDF discards word order entirely"
+    ],
+    "key_insight": "FM_FTRL learns pairwise feature interactions implicitly from an ultra-sparse combined text+categorical matrix without ever materializing the dense interaction space. This is critical because the interaction between brand and category (e.g., 'Nike' x 'Shoes' vs 'Nike' x 'T-Shirts') is highly predictive of price, but explicit interaction features would create an intractably large matrix. The FTRL online optimizer handles this sparsity natively, converging in a single pass over the data.",
+    "critical_stages": ["online_fm_model", "sparse_concatenation"],
+    "swappable_stages": {
+      "neural_text_model": "Any text model (LSTM, GRU, transformer) can replace the 1D CNN. The CNN captures local n-gram patterns efficiently but is not the primary model.",
+      "text_vectorization": "CountVectorizer/TF-IDF can be replaced with hashing vectorizer for even lower memory, or BPE tokenization for subword coverage. The key is sparse output.",
+      "weighted_ensemble": "Simple averaging, stacking, or blending all work. The weighted average is a pragmatic choice given kernel time constraints.",
+      "categorical_encoding": "One-hot can be replaced with feature hashing for extreme cardinality. The critical requirement is sparse binary output for FM compatibility."
+    },
+    "failure_modes": [
+      "Low-cardinality categorical features: FM interaction terms add little value when there are few unique categories, and a simple GBM would suffice",
+      "Short text fields with small vocabulary: sparse text matrices become extremely sparse with few non-zero entries, giving FM insufficient signal for interaction learning",
+      "Non-linear target relationships: FM captures only pairwise interactions — higher-order interactions require deeper models or explicit polynomial features",
+      "Distribution shift in text vocabulary: CountVectorizer vocabulary is fixed at training time, so novel words in test data are ignored entirely"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "vectorization_before_concatenation",
+      "statement": "Text vectorization and categorical encoding must precede sparse concatenation.",
+      "rationale": "Sparse concatenation stacks the output matrices from these stages; they must exist first.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Mercari 1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "sparse_matrix_for_fm",
+      "statement": "Sparse concatenation must precede the FM_FTRL model which operates on the combined sparse matrix.",
+      "rationale": "Factorization Machines learn pairwise feature interactions; they need all features in a single matrix.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Mercari 1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "models_before_ensemble",
+      "statement": "All component models must produce predictions before the weighted ensemble.",
+      "rationale": "The ensemble averages predictions from FM_FTRL, CNN, and Ridge; all must be available.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Mercari 1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "text_vectorization",
+      "name": "Text Vectorization",
+      "description": "Apply CountVectorizer on item names and TF-IDF vectorizer on item descriptions to produce sparse bag-of-words and term-frequency matrices using sklearn.",
+      "dejargonized_description": "Convert product names and descriptions into sparse numerical matrices by counting word occurrences and weighting by how rare each word is.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "item_name",
+          "type_desc": "list[str]",
+          "constraints": "Product titles.",
+          "required": true
+        },
+        {
+          "name": "item_description",
+          "type_desc": "list[str]",
+          "constraints": "Product descriptions.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text_sparse_matrix",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "constraints": "Sparse matrix combining name counts and description TF-IDF. Shape (N, V_name + V_desc).",
+          "required": true
+        }
+      ],
+      "preconditions": ["Text inputs are non-null strings."],
+      "guarantees": ["Output is a sparse matrix with consistent vocabulary across train/test."],
+      "family_notes": [
+        "CountVectorizer for names captures exact word presence.",
+        "TF-IDF for descriptions weights informative words higher than common ones."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "categorical_encoding",
+      "name": "Categorical Encoding",
+      "description": "One-hot encode brand names and hierarchical category strings into highly sparse binary matrices using scipy.sparse.",
+      "dejargonized_description": "Convert brand and category labels into sparse binary columns where each unique value gets its own column.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "brand",
+          "type_desc": "list[str]",
+          "constraints": "Brand names.",
+          "required": true
+        },
+        {
+          "name": "category",
+          "type_desc": "list[str]",
+          "constraints": "Hierarchical category strings.",
+          "required": true
+        },
+        {
+          "name": "item_condition",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Integer condition ratings.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "categorical_sparse_matrix",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "constraints": "Sparse binary matrix for all categorical features. Shape (N, C_brand + C_category + C_condition).",
+          "required": true
+        }
+      ],
+      "preconditions": ["Categorical values are mapped to consistent indices."],
+      "guarantees": ["Output is sparse binary. Unknown categories in test data handled gracefully."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sparse_concatenation",
+      "name": "Sparse Concatenation",
+      "description": "Horizontally stack all sparse matrices (text + categorical) using scipy.sparse.hstack into a single ultra-sparse feature matrix.",
+      "dejargonized_description": "Combine the text and categorical sparse matrices side by side into one large sparse matrix.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "text_sparse_matrix",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "constraints": "Sparse text features.",
+          "required": true
+        },
+        {
+          "name": "categorical_sparse_matrix",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "constraints": "Sparse categorical features.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "combined_sparse_matrix",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "constraints": "Combined sparse feature matrix. Shape (N, V_text + C_cat). Extremely sparse.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Both sparse matrices have the same number of rows (samples)."],
+      "guarantees": ["Output preserves sparsity. No densification occurs."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "online_fm_model",
+      "name": "Online FM Model",
+      "description": "Train Factorization Machines using FTRL (Follow-The-Regularized-Leader) online learning on the combined sparse matrix, capturing pairwise feature interactions without materializing the dense interaction matrix.",
+      "dejargonized_description": "Train a model that learns how pairs of features interact (e.g., brand X category affects price differently than either alone), using an efficient online learning algorithm that handles sparse data well.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "combined_sparse_matrix",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "constraints": "Combined sparse feature matrix.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fm_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Log-price predictions from FM_FTRL model.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Sparse matrix fits in memory."],
+      "guarantees": ["Predictions capture linear and pairwise interaction effects."],
+      "family_notes": [
+        "FM_FTRL from the wordbatch library or custom implementation.",
+        "FTRL is an online optimization algorithm ideal for sparse high-dimensional data.",
+        "Factorization rank (k) controls the expressiveness of pairwise interactions."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "neural_text_model",
+      "name": "Neural Text Model",
+      "description": "Train a 1D CNN on text sequence embeddings alongside an MLP branch for tabular features using Keras, jointly predicting price.",
+      "dejargonized_description": "Train a neural network that reads text sequences through convolutional filters while simultaneously processing tabular features through a separate branch.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "item_name",
+          "type_desc": "list[str]",
+          "constraints": "Product titles as token sequences.",
+          "required": true
+        },
+        {
+          "name": "item_description",
+          "type_desc": "list[str]",
+          "constraints": "Product descriptions as token sequences.",
+          "required": true
+        },
+        {
+          "name": "brand",
+          "type_desc": "list[str]",
+          "constraints": "Brand names for embedding lookup.",
+          "required": true
+        },
+        {
+          "name": "category",
+          "type_desc": "list[str]",
+          "constraints": "Category strings for embedding lookup.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nn_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Log-price predictions from the CNN+MLP model.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Text is tokenized and padded to fixed sequence length."],
+      "guarantees": ["Predictions capture sequential text patterns and categorical interactions."],
+      "family_notes": [
+        "1D convolutions capture local n-gram patterns in text.",
+        "Categorical features are embedded and concatenated with CNN output before final dense layers.",
+        "Keras functional API used for multi-input architecture."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "weighted_ensemble",
+      "name": "Weighted Ensemble",
+      "description": "Weighted average of FM_FTRL, CNN, and Ridge Regression predictions to produce the final price estimate using numpy.",
+      "dejargonized_description": "Combine predictions from three different models using fixed weights to produce a more accurate final prediction.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "fm_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "FM_FTRL log-price predictions.",
+          "required": true
+        },
+        {
+          "name": "nn_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "CNN+MLP log-price predictions.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "predicted_price",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Final price predictions (exponentiated from log-scale).",
+          "required": true
+        }
+      ],
+      "preconditions": ["All component model predictions are available."],
+      "guarantees": ["Output is a weighted combination. Weights sum to 1."],
+      "family_notes": [
+        "Ridge Regression on the sparse matrix is an implicit third model in the ensemble.",
+        "Weights determined via validation performance. Simple averaging also competitive.",
+        "Log-scale predictions are averaged before exponentiation."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "text_vectorization",
+      "target_stage_id": "sparse_concatenation",
+      "output_name": "text_sparse_matrix",
+      "input_name": "text_sparse_matrix",
+      "source_type": "scipy.sparse.csr_matrix",
+      "target_type": "scipy.sparse.csr_matrix",
+      "data_kind": "sparse_matrix",
+      "provenance": "CountVectorizer + TF-IDF sparse text features.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "categorical_encoding",
+      "target_stage_id": "sparse_concatenation",
+      "output_name": "categorical_sparse_matrix",
+      "input_name": "categorical_sparse_matrix",
+      "source_type": "scipy.sparse.csr_matrix",
+      "target_type": "scipy.sparse.csr_matrix",
+      "data_kind": "sparse_matrix",
+      "provenance": "One-hot encoded brand, category, and condition features.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "sparse_concatenation",
+      "target_stage_id": "online_fm_model",
+      "output_name": "combined_sparse_matrix",
+      "input_name": "combined_sparse_matrix",
+      "source_type": "scipy.sparse.csr_matrix",
+      "target_type": "scipy.sparse.csr_matrix",
+      "data_kind": "sparse_matrix",
+      "provenance": "Combined ultra-sparse feature matrix for FM_FTRL training.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "online_fm_model",
+      "target_stage_id": "weighted_ensemble",
+      "output_name": "fm_predictions",
+      "input_name": "fm_predictions",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "FM_FTRL log-price predictions.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "neural_text_model",
+      "target_stage_id": "weighted_ensemble",
+      "output_name": "nn_predictions",
+      "input_name": "nn_predictions",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "CNN+MLP neural text model log-price predictions.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Mercari Price Suggestion solution. Sparse feature regression combining FM_FTRL on text/categorical sparse matrices with a 1D CNN neural text model and Ridge Regression in a weighted ensemble.",
+    "dejargonized_summary": "Predict product prices by combining a factorization machine that captures feature interactions on sparse text/category data with a neural network that reads text sequences.",
+    "provenance_notes": [
+      "Source: Kaggle Mercari Price Suggestion Challenge (2018), 1st place solution",
+      "Source: https://www.kaggle.com/c/mercari-price-suggestion-challenge/discussion/50256",
+      "Code: https://github.com/pjankiewicz/mercari-solution"
+    ],
+    "uncertainty_notes": [
+      "FM factorization rank affects model capacity and training time.",
+      "FTRL learning rate schedule is critical for convergence.",
+      "Ensemble weights are tuned on validation and may not transfer to distribution shifts."
+    ],
+    "references": [
+      {
+        "title": "Mercari 1st Place Solution",
+        "citation": "Kaggle Mercari Price Suggestion Challenge, 1st place solution writeup (2018)",
+        "url": "https://www.kaggle.com/competitions/mercari-price-suggestion-challenge/discussion/50256",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

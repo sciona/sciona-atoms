@@ -1,0 +1,304 @@
+{
+  "asset_id": "solution.kaggle.santa_2021_magic_minves_1st",
+  "asset_version": "v1",
+  "family": "combinatorial_optimization",
+  "paradigm": "graph_signal_processing",
+  "name": "Santa 2021 - The Magic of Magical Minves - 1st Place (2021) - Pipeline Template",
+  "summary": "Combinatorial Optimization (String routing) solution template for Santa 2021 - The Magic of Magical Minves - 1st Place (2021), modeled as a 5-stage deterministic pipeline: Problem reduction, Distance matrix generation, Greedy initialization, LKH Optimization, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Santa 2021 - The Magic of Magical Minves - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "combinatorial",
+    "optimization",
+    "string",
+    "routing",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Combinatorial Optimization (String routing) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Combinatorial Optimization (String routing).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Problem reduction creates the representation needed by Wildcard injection, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "problem_reduction",
+      "distance_matrix_generation"
+    ],
+    "swappable_stages": {
+      "wildcard_injection": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/santa-2021/discussion/301413"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/santa-2021/discussion/301413"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "problem_reduction",
+      "name": "Problem reduction",
+      "description": "translate the string permutation problem structurally into a classic Asymmetric Traveling Salesman Problem (ATSP) (Python)",
+      "dejargonized_description": "This stage translate the string permutation problem structurally into a classic Asymmetric Traveling Salesman Problem (ATSP) (Python).",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Santa 2021 - The Magic of Magical Minves - 1st Place (2021).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "problem_reduction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "distance_matrix_generation",
+      "name": "Distance matrix generation",
+      "description": "compute the exact edge weights (overlap distance) between every possible mandatory substring (numpy)",
+      "dejargonized_description": "This stage compute the exact edge weights (overlap distance) between every possible mandatory substring (numpy).",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "distance_matrix_generation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distance_matrix_generation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "greedy_initialization",
+      "name": "Greedy initialization",
+      "description": "run a fast greedy search to generate a mathematically valid, but non-optimal, baseline path through the graph (NetworkX)",
+      "dejargonized_description": "This stage run a fast greedy search to generate a mathematically valid, but non-optimal, baseline path through the graph (NetworkX).",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "greedy_initialization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "greedy_initialization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "lkh_optimization",
+      "name": "LKH Optimization",
+      "description": "pass the distance matrix and baseline path into LKH-3 (a state-of-the-art heuristic solver for ATSP) to iteratively optimize the route (LKH-3 C binary)",
+      "dejargonized_description": "This stage pass the distance matrix and baseline path into LKH-3 (a state-of-the-art heuristic solver for ATSP) to iteratively optimize the route (LKH-3 C binary).",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "lkh_optimization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "lkh_optimization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "wildcard_injection",
+      "name": "Wildcard injection",
+      "description": "post-process the solver's output by algorithmically injecting the allowable \"wildcard\" characters to squeeze out the final few characters of string length (Python)",
+      "dejargonized_description": "This stage post-process the solver's output by algorithmically injecting the allowable \"wildcard\" characters to squeeze out the final few characters of string length (Python).",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "wildcard_injection_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "problem_reduction",
+      "target_stage_id": "distance_matrix_generation",
+      "output_name": "problem_reduction_output",
+      "input_name": "distance_matrix_generation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Problem reduction output is consumed by Distance matrix generation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "distance_matrix_generation",
+      "target_stage_id": "greedy_initialization",
+      "output_name": "distance_matrix_generation_output",
+      "input_name": "greedy_initialization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Distance matrix generation output is consumed by Greedy initialization.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "greedy_initialization",
+      "target_stage_id": "lkh_optimization",
+      "output_name": "greedy_initialization_output",
+      "input_name": "lkh_optimization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Greedy initialization output is consumed by LKH Optimization.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "lkh_optimization",
+      "target_stage_id": "wildcard_injection",
+      "output_name": "lkh_optimization_output",
+      "input_name": "wildcard_injection_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "LKH Optimization output is consumed by Wildcard injection.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Combinatorial Optimization (String routing).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/santa-2021/discussion/301413",
+      "Code URL: writeup only",
+      "Standard tools: numpy, NetworkX, LKH-3"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Santa 2021 - The Magic of Magical Minves - 1st Place (2021) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/santa-2021/discussion/301413",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

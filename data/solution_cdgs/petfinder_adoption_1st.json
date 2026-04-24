@@ -1,0 +1,374 @@
+{
+  "asset_id": "solution.kaggle.petfinder_adoption_1st",
+  "asset_version": "v1",
+  "family": "multimodal_classification",
+  "paradigm": "optimization",
+  "name": "PetFinder.my Adoption Prediction 1st Place — Multimodal Ordinal Classification with Threshold Optimization",
+  "summary": "Ordinal adoption speed prediction from pet images, text descriptions, and tabular metadata via DenseNet121 image embeddings, TF-IDF/SVD text features, target-encoded tabular features, an XGBoost/LightGBM/TabNet ensemble, and Nelder-Mead threshold optimization for Quadratic Weighted Kappa.",
+  "dejargonized_summary": "Predict how quickly a pet will be adopted by combining information from its photos, text description, and profile data, training multiple models and then optimizing the cutoff points between adoption speed categories.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "multimodal_ordinal_regression",
+    "image_text_tabular_fusion",
+    "threshold_optimized_classification",
+    "qwk_optimization",
+    "pet_adoption_prediction",
+    "nelder_mead_threshold",
+    "densenet_image_embedding",
+    "tfidf_svd_text",
+    "target_encoding",
+    "ordinal_bin_optimization",
+    "quadratic_weighted_kappa",
+    "xgboost_lightgbm_tabnet_ensemble",
+    "sentiment_features"
+  ],
+  "inputs": [
+    {
+      "name": "pet_images",
+      "type_desc": "list[NDArray[np.uint8]]",
+      "constraints": "Pet profile images, variable resolution. Multiple images per pet possible.",
+      "required": true
+    },
+    {
+      "name": "text_descriptions",
+      "type_desc": "list[str]",
+      "constraints": "Free-text pet descriptions written by adopters.",
+      "required": true
+    },
+    {
+      "name": "tabular_metadata",
+      "type_desc": "DataFrame",
+      "constraints": "Structured metadata: age, breed, color, location, vaccination status, etc.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "adoption_speed",
+      "type_desc": "NDArray[np.int64]",
+      "constraints": "Ordinal class labels 1-5 representing adoption speed categories.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Ordinal classification task where the metric is Quadratic Weighted Kappa (QWK) or another ranking-sensitive ordinal metric",
+      "Multimodal inputs (image + text + tabular) where no single modality dominates and early fusion into a flat feature matrix is feasible",
+      "Target is ordinal with 3-7 ordered categories — few enough for threshold optimization to be tractable but too many for naive rounding to be optimal",
+      "Competition or production metric is non-differentiable and requires post-hoc optimization rather than direct gradient-based training"
+    ],
+    "do_not_use_when": [
+      "Target is nominal (unordered) multi-class — threshold optimization on continuous scores assumes ordinal structure",
+      "Number of ordinal categories is very large (>10) — threshold optimization over many thresholds becomes unstable and prone to overfitting on validation set",
+      "Dataset is small (<1000 samples) — Nelder-Mead threshold optimization overfits to validation fold noise",
+      "Image or text modalities are highly complex (e.g., medical imaging) and require specialized architectures rather than frozen pretrained embeddings"
+    ],
+    "key_insight": "Nelder-Mead threshold optimization on QWK is the critical stage -- it converts continuous regression outputs into optimal ordinal bins, which is non-obvious because naive rounding loses significant QWK score. By treating the regression-to-ordinal conversion as a separate optimization problem with a derivative-free solver, the pipeline decouples learning the ranking from learning the bin boundaries, and the 4-threshold search space is small enough for Nelder-Mead to find near-global optima.",
+    "critical_stages": ["threshold_optimization", "feature_union"],
+    "swappable_stages": {
+      "image_processing": "Any pretrained image backbone (ResNet, EfficientNet, ViT) works. DenseNet121 is a reasonable default but not load-bearing.",
+      "text_processing": "TF-IDF/SVD can be replaced with sentence transformers or fastText embeddings. Sentiment features are supplementary.",
+      "level1_models": "Any regressor ensemble works (GBM variants, neural networks, linear models). The value is in the threshold optimization, not the specific model.",
+      "tabular_processing": "Target encoding can be replaced with CatBoost native encoding or frequency encoding. GroupBy aggregates are domain-specific."
+    },
+    "failure_modes": [
+      "Nelder-Mead finds a local optimum: QWK landscape can have multiple local optima, especially with skewed class distributions — multiple random restarts are needed",
+      "Target encoding leakage: if not properly cross-validated, target encoding inflates validation QWK and thresholds overfit",
+      "Class distribution shift between train and test: thresholds optimized on training distribution produce suboptimal bins on a shifted test distribution",
+      "Dominant modality drowns out others: if tabular features overwhelm image/text features in the flat concatenation, the ensemble effectively ignores visual and textual signal"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "modality_processing_before_union",
+      "statement": "All three modality processing stages (image, text, tabular) must precede feature union.",
+      "rationale": "Feature union concatenates outputs from all modalities; incomplete inputs produce an invalid feature matrix.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "PetFinder 1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "regression_before_threshold",
+      "statement": "Level-1 model training must precede threshold optimization.",
+      "rationale": "Threshold optimization converts continuous regression scores into ordinal classes; it requires the regression outputs as input.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "PetFinder 1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "image_processing",
+      "name": "Image Processing",
+      "description": "Extract object detection bounding boxes and classification embeddings from pet images via a pretrained DenseNet121 backbone using PyTorch.",
+      "dejargonized_description": "Use a pretrained image model to extract numerical features from pet photos, capturing visual attributes like breed appearance and photo quality.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "pet_images",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Pet images, resized to DenseNet input dimensions.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_features",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Dense image embedding vectors, one per pet (aggregated across multiple images).",
+          "required": true
+        }
+      ],
+      "preconditions": ["Images are valid and loadable."],
+      "guarantees": ["Each pet receives a fixed-length image feature vector."],
+      "family_notes": [
+        "DenseNet121 pretrained on ImageNet. Features from penultimate layer.",
+        "Multiple images per pet are aggregated (mean/max pooling)."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "text_processing",
+      "name": "Text Processing",
+      "description": "Apply TF-IDF vectorization followed by SVD dimensionality reduction on pet descriptions, and extract sentiment scores via Google NLP API, using sklearn.",
+      "dejargonized_description": "Convert text descriptions into numerical features by measuring word importance and reducing to key themes, plus add sentiment analysis scores.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "text_descriptions",
+          "type_desc": "list[str]",
+          "constraints": "Raw text descriptions.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Dense text feature vectors combining SVD components and sentiment scores.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Text descriptions are non-null (empty strings handled)."],
+      "guarantees": ["Fixed-length text feature vector per pet."],
+      "family_notes": [
+        "TF-IDF + TruncatedSVD is a standard text featurization pipeline.",
+        "Google Cloud NLP API sentiment scores add supervised signal about description quality."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tabular_processing",
+      "name": "Tabular Processing",
+      "description": "Target-encode high-cardinality categorical features (breed, location) and compute groupby aggregate features using pandas and category_encoders.",
+      "dejargonized_description": "Convert categorical attributes like breed and location into numbers based on how they relate to the target variable, and compute summary statistics grouped by key attributes.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "tabular_metadata",
+          "type_desc": "DataFrame",
+          "constraints": "Raw structured pet metadata.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tabular_features",
+          "type_desc": "DataFrame",
+          "constraints": "Engineered tabular features with target-encoded categoricals and aggregates.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Target variable available for computing target encodings (training phase)."],
+      "guarantees": ["All categorical variables are converted to numeric. No missing values in encoded features."],
+      "family_notes": [
+        "Target encoding uses leave-one-out or fold-based scheme to prevent leakage.",
+        "GroupBy aggregates capture location-level and breed-level statistics."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_union",
+      "name": "Feature Union",
+      "description": "Horizontally concatenate image, text, and tabular dense feature vectors into a single feature matrix using pandas.",
+      "dejargonized_description": "Combine all the different types of features side by side into one wide table for model training.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "image_features",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Dense image embeddings.",
+          "required": true
+        },
+        {
+          "name": "text_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Dense text features.",
+          "required": true
+        },
+        {
+          "name": "tabular_features",
+          "type_desc": "DataFrame",
+          "constraints": "Engineered tabular features.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "unified_features",
+          "type_desc": "DataFrame",
+          "constraints": "Complete feature matrix, one row per pet, all columns numeric.",
+          "required": true
+        }
+      ],
+      "preconditions": ["All feature sources share a common pet identifier."],
+      "guarantees": ["Output contains features from all three modalities for every pet."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "level1_models",
+      "name": "Level-1 Models",
+      "description": "Train XGBoost, LightGBM, and TabNet regressors on the unified feature matrix, producing continuous regression scores that approximate adoption speed.",
+      "dejargonized_description": "Train multiple different prediction models that each output a continuous score estimating adoption speed.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "unified_features",
+          "type_desc": "DataFrame",
+          "constraints": "Complete multimodal feature matrix.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "regression_scores",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Continuous regression predictions, typically in range [0, 4]. Averaged across models.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Unified features are complete with no missing critical values."],
+      "guarantees": ["Each pet receives a continuous score from the ensemble."],
+      "family_notes": [
+        "Regression rather than classification is used because threshold optimization handles discretization.",
+        "XGBoost and LightGBM provide the bulk of performance; TabNet adds diversity."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "threshold_optimization",
+      "name": "Threshold Optimization",
+      "description": "Use Nelder-Mead optimization from scipy to find optimal bin cutoff thresholds that maximize Quadratic Weighted Kappa when converting continuous regression scores into ordinal classes 1-5.",
+      "dejargonized_description": "Find the best cutoff points to convert continuous scores into the 5 adoption speed categories, searching for the cutoffs that give the highest agreement with true labels.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "regression_scores",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Continuous regression predictions from the ensemble.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "adoption_speed",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Ordinal class predictions 1-5.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Regression scores are available for all pets."],
+      "guarantees": ["Output classes are integers in {1, 2, 3, 4, 5}. Thresholds maximize QWK on validation."],
+      "family_notes": [
+        "KEY WINNING TECHNIQUE. Direct optimization of the competition metric (QWK) via threshold search.",
+        "Nelder-Mead is derivative-free, suitable for the non-differentiable QWK metric.",
+        "4 thresholds define 5 bins; the optimization landscape is smooth enough for Nelder-Mead to converge."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "image_processing",
+      "target_stage_id": "feature_union",
+      "output_name": "image_features",
+      "input_name": "image_features",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "feature_vector",
+      "provenance": "DenseNet121 image embeddings aggregated per pet.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "text_processing",
+      "target_stage_id": "feature_union",
+      "output_name": "text_features",
+      "input_name": "text_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "feature_vector",
+      "provenance": "TF-IDF/SVD text features and sentiment scores.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "tabular_processing",
+      "target_stage_id": "feature_union",
+      "output_name": "tabular_features",
+      "input_name": "tabular_features",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "feature_table",
+      "provenance": "Target-encoded categoricals and groupby aggregates.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_union",
+      "target_stage_id": "level1_models",
+      "output_name": "unified_features",
+      "input_name": "unified_features",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "feature_table",
+      "provenance": "Complete multimodal feature matrix.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "level1_models",
+      "target_stage_id": "threshold_optimization",
+      "output_name": "regression_scores",
+      "input_name": "regression_scores",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "Continuous regression scores from XGBoost/LightGBM/TabNet ensemble.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle PetFinder solution. Multimodal ordinal classification combining image, text, and tabular features with Nelder-Mead threshold optimization for QWK.",
+    "dejargonized_summary": "Predict pet adoption speed from photos, descriptions, and profile data by training an ensemble of models and optimizing the category cutoff points.",
+    "provenance_notes": [
+      "Source: Kaggle PetFinder.my Adoption Prediction competition (2019), 1st place solution",
+      "Source: https://www.kaggle.com/c/petfinder-adoption-prediction/discussion/88773",
+      "Code: https://github.com/bestfitting/kaggle-petfinder"
+    ],
+    "uncertainty_notes": [
+      "Target encoding can leak if not properly cross-validated.",
+      "Google NLP API sentiment scores may not generalize to non-English descriptions.",
+      "Nelder-Mead threshold optimization may find local optima; multiple restarts recommended."
+    ],
+    "references": [
+      {
+        "title": "PetFinder 1st Place Solution",
+        "citation": "Kaggle PetFinder.my Adoption Prediction, 1st place solution writeup (2019)",
+        "url": "https://www.kaggle.com/competitions/petfinder-adoption-prediction/discussion/88773",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

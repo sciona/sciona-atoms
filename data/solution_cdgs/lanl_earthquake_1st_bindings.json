@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.lanl_earthquake_1st",
+  "solution_metadata": {
+    "competition": "LANL Earthquake Prediction - 1st Place (2019)",
+    "placement": "1st",
+    "team": null,
+    "year": 2019,
+    "metric": null,
+    "problem_domain": "signal_regression",
+    "source_url": "https://www.kaggle.com/c/LANL-Earthquake-Prediction/discussion/94390",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "signal_chunking",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "time_domain_features",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "frequency_domain_features",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until a more specific atom or embedding-backed binding is available."
+      }
+    },
+    {
+      "stage_id": "adversarial_validation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "model_training",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until a more specific atom or embedding-backed binding is available."
+      }
+    },
+    {
+      "stage_id": "stacking",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 0,
+    "bound_approximate": 0,
+    "gaps": 3,
+    "atoms_used_by_repo": {},
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "signal_chunking",
+      "stacking",
+      "time_domain_features"
+    ],
+    "orchestration_resolved": [
+      "adversarial_validation",
+      "frequency_domain_features",
+      "model_training"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

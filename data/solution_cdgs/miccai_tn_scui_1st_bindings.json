@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.miccai_tn_scui_1st",
+  "solution_metadata": {
+    "competition": "MICCAI TN-SCUI - 1st Place (2020)",
+    "placement": "1st",
+    "team": null,
+    "year": 2020,
+    "metric": null,
+    "problem_domain": "semantic_segmentation",
+    "source_url": "https://github.com/WAMAWAMA/TNSCUI2020-Seg-Rank1st",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "data_loading",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "image_normalization",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until a more specific atom or embedding-backed binding is available."
+      }
+    },
+    {
+      "stage_id": "segmentation_training",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "tta_inference",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "binarization",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until a more specific atom or embedding-backed binding is available."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 0,
+    "bound_approximate": 0,
+    "gaps": 1,
+    "atoms_used_by_repo": {},
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "data_loading"
+    ],
+    "orchestration_resolved": [
+      "binarization",
+      "image_normalization",
+      "segmentation_training",
+      "tta_inference"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

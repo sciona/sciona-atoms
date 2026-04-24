@@ -1,0 +1,306 @@
+{
+  "asset_id": "solution.kaggle.jpx_stock_prediction_1st",
+  "asset_version": "v1",
+  "family": "tabular_regression",
+  "paradigm": "optimization",
+  "name": "JPX Tokyo Stock Exchange Prediction - 1st Place (2022) - Pipeline Template",
+  "summary": "Financial Tabular (Rank / Sharpe Ratio Optimization) solution template for JPX Tokyo Stock Exchange Prediction - 1st Place (2022), modeled as a 5-stage deterministic pipeline: Target normalization, Technical features, Factor modeling, Rank transformation, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by JPX Tokyo Stock Exchange Prediction - 1st Place (2022): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "financial",
+    "tabular",
+    "sharpe",
+    "ratio",
+    "optimization",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Financial Tabular (Rank / Sharpe Ratio Optimization) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Financial Tabular (Rank / Sharpe Ratio Optimization).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Target normalization creates the representation needed by Sharpe Ratio smoothing, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "target_normalization",
+      "technical_features"
+    ],
+    "swappable_stages": {
+      "sharpe_ratio_smoothing": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/jpx-tokyo-stock-exchange-prediction/discussion/335602"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/jpx-tokyo-stock-exchange-prediction/discussion/335602"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "target_normalization",
+      "name": "Target normalization",
+      "description": "adjust the raw target (future return) by subtracting the market-wide index return to isolate the alpha of individual stocks (pandas)",
+      "dejargonized_description": "This stage adjust the raw target (future return) by subtracting the market-wide index return to isolate the alpha of individual stocks (pandas).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for JPX Tokyo Stock Exchange Prediction - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "target_normalization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "technical_features",
+      "name": "Technical features",
+      "description": "calculate standard financial indicators (moving averages, volatility, RSI) over multiple windows (pandas/TA-Lib)",
+      "dejargonized_description": "This stage calculate standard financial indicators (moving averages, volatility, RSI) over multiple windows (pandas/TA-Lib).",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "technical_features_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "technical_features_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "factor_modeling",
+      "name": "Factor modeling",
+      "description": "train LightGBM regressors to predict the continuous adjusted return",
+      "dejargonized_description": "This stage train LightGBM regressors to predict the continuous adjusted return.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "factor_modeling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "factor_modeling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "rank_transformation",
+      "name": "Rank transformation",
+      "description": "ignore the absolute values of the predictions, immediately converting the regression outputs into a strictly ranked integer list [1 to 2000] for all stocks on a given day (scipy.stats.rankdata)",
+      "dejargonized_description": "This stage ignore the absolute values of the predictions, immediately converting the regression outputs into a strictly ranked integer list [1 to 2000] for all stocks on a given day (scipy.stats.rankdata).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "rank_transformation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rank_transformation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sharpe_ratio_smoothing",
+      "name": "Sharpe Ratio smoothing",
+      "description": "apply an Exponential Moving Average (EMA) to the daily predictions over time to prevent the model from rapidly flipping ranks, which directly maximizes the Sharpe Ratio evaluation metric",
+      "dejargonized_description": "This stage apply an Exponential Moving Average (EMA) to the daily predictions over time to prevent the model from rapidly flipping ranks, which directly maximizes the Sharpe Ratio evaluation metric.",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "sharpe_ratio_smoothing_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "target_normalization",
+      "target_stage_id": "technical_features",
+      "output_name": "target_normalization_output",
+      "input_name": "technical_features_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Target normalization output is consumed by Technical features.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "technical_features",
+      "target_stage_id": "factor_modeling",
+      "output_name": "technical_features_output",
+      "input_name": "factor_modeling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Technical features output is consumed by Factor modeling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "factor_modeling",
+      "target_stage_id": "rank_transformation",
+      "output_name": "factor_modeling_output",
+      "input_name": "rank_transformation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Factor modeling output is consumed by Rank transformation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "rank_transformation",
+      "target_stage_id": "sharpe_ratio_smoothing",
+      "output_name": "rank_transformation_output",
+      "input_name": "sharpe_ratio_smoothing_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Rank transformation output is consumed by Sharpe Ratio smoothing.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Financial Tabular (Rank / Sharpe Ratio Optimization).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/jpx-tokyo-stock-exchange-prediction/discussion/335602",
+      "Code URL: writeup only",
+      "Standard tools: pandas, TA-Lib, LightGBM, scipy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "JPX Tokyo Stock Exchange Prediction - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/jpx-tokyo-stock-exchange-prediction/discussion/335602",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

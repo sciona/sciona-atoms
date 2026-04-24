@@ -1,0 +1,394 @@
+{
+  "asset_id": "solution.kaggle.covid_vaccine_mrna_1st",
+  "asset_version": "v1",
+  "family": "structured_prediction",
+  "paradigm": "neural_network",
+  "name": "Stanford COVID Vaccine mRNA 1st Place — Per-Nucleotide Degradation Prediction",
+  "summary": "Dual-branch neural architecture combining bidirectional RNN on raw RNA sequences with GCN on secondary-structure adjacency matrices, fused at every sequence position and decoded with a linear head to predict per-nucleotide degradation rates.",
+  "dejargonized_summary": "Predict how fast each position in an RNA strand degrades by reading the sequence left-to-right and right-to-left with one model, while a second model reasons about which bases are physically paired, then merging both views before making the final prediction.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "rna_degradation_prediction",
+    "graph_sequence_fusion",
+    "bidirectional_rnn_gcn",
+    "mrna_stability",
+    "structured_prediction_rna",
+    "per_position_regression",
+    "dual_branch_architecture",
+    "secondary_structure_adjacency",
+    "sequence_structure_fusion",
+    "bio_sequence_modeling"
+  ],
+  "applicability": {
+    "use_when": [
+      "Per-position prediction on biological sequences where both linear order and structural (base-pairing or contact) topology carry information",
+      "Secondary structure or contact maps are available or can be predicted, providing a meaningful graph for GCN message passing",
+      "Output is a dense per-residue regression or classification (not a single sequence-level label)"
+    ],
+    "do_not_use_when": [
+      "No structural information is available and cannot be predicted — the GCN branch adds complexity with no signal",
+      "Sequence length exceeds ~1000 positions — bidirectional RNN becomes a bottleneck and transformer-based approaches scale better",
+      "Task requires only a single global prediction per sequence (sequence-level classification) — pooling over fused features wastes the per-position design"
+    ],
+    "key_insight": "RNA degradation is governed by both sequential context (neighboring nucleotides) and structural context (physically paired bases that may be distant in sequence). A single-modality model captures only one view. The dual-branch fusion forces complementary learning: the RNN captures sequential motifs while the GCN propagates information along base-pair edges, and their concatenation at every position gives the output head both views simultaneously.",
+    "critical_stages": ["secondary_structure_parsing", "feature_fusion"],
+    "swappable_stages": {
+      "sequence_to_sequence_model": "Any sequence encoder works here — transformer encoder, 1D CNN, or Mamba. The key requirement is per-position hidden states.",
+      "graph_neural_network": "GCN can be replaced with GAT, GIN, or message-passing NN. The value is in using the adjacency structure, not the specific graph architecture.",
+      "output_head": "Linear head can be replaced with a small MLP or even a CRF if label dependencies matter."
+    },
+    "failure_modes": [
+      "Inaccurate secondary structure predictions: garbage adjacency matrices cause the GCN branch to inject noise rather than signal",
+      "Very short sequences (<30 nt): insufficient context for the RNN and too few graph edges for meaningful GCN aggregation",
+      "Sequences with no stable secondary structure (e.g., disordered regions): the GCN branch contributes nothing and the fusion becomes a bottleneck"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "rna_sequence",
+      "type_desc": "str",
+      "constraints": "RNA nucleotide string (A, U, G, C). Variable length.",
+      "required": true
+    },
+    {
+      "name": "secondary_structure",
+      "type_desc": "str",
+      "constraints": "Dot-bracket notation string encoding base-pair structure, same length as rna_sequence.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "degradation_rates",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (L, 5): per-nucleotide predictions for reactivity, deg_Mg_pH10, deg_pH10, deg_Mg_50C, deg_50C.",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "structure_before_graph",
+      "statement": "Secondary structure parsing must precede graph neural network training.",
+      "rationale": "The GCN operates on adjacency matrices derived from predicted base pairings; without parsed structure there is no graph to convolve over.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "fusion_after_branches",
+      "statement": "Feature fusion must follow both the sequence-to-sequence model and the graph neural network.",
+      "rationale": "Fusion concatenates the hidden states from both branches; both must produce outputs before merging is possible.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "secondary_structure_parsing",
+      "name": "Secondary Structure Parsing",
+      "description": "Convert RNA sequence strings into adjacency matrices encoding base-pair connectivity using Arnie/ViennaRNA thermodynamic folding predictions.",
+      "dejargonized_description": "Use physics-based RNA folding software to predict which bases in the strand pair up, and store those pairings as a connectivity matrix.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "rna_sequence",
+          "type_desc": "str",
+          "constraints": "RNA nucleotide string.",
+          "required": true
+        },
+        {
+          "name": "secondary_structure",
+          "type_desc": "str",
+          "constraints": "Dot-bracket notation string.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "adjacency_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (L, L): binary or probabilistic adjacency encoding base pairs.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input sequence and structure strings have equal length."],
+      "guarantees": ["Output is a symmetric (L, L) matrix with ones at paired positions."],
+      "family_notes": [
+        "Uses Arnie wrapper around ViennaRNA to compute base-pair probability matrices.",
+        "Multiple folding algorithms can be ensembled for more robust structure predictions."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "node_feature_generation",
+      "name": "Node Feature Generation",
+      "description": "Compute per-nucleotide features (one-hot nucleotide type, positional encoding) and per-edge features (base-pair probabilities from the adjacency matrix).",
+      "dejargonized_description": "Build a feature vector for each position in the RNA describing what nucleotide it is and how strongly it pairs with other positions.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "rna_sequence",
+          "type_desc": "str",
+          "constraints": "RNA nucleotide string.",
+          "required": true
+        },
+        {
+          "name": "adjacency_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (L, L).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "node_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (L, D_node): per-nucleotide feature vectors.",
+          "required": true
+        },
+        {
+          "name": "edge_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (E, D_edge): per-edge feature vectors for graph edges.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Adjacency matrix and sequence are available and length-consistent."],
+      "guarantees": ["Node features cover all L positions. Edge features cover all nonzero adjacency entries."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sequence_to_sequence_model",
+      "name": "Sequence-to-Sequence Model",
+      "description": "Train a bidirectional GRU/LSTM on the 1D RNA sequence to produce per-position hidden states capturing long-range sequential context.",
+      "dejargonized_description": "Read the RNA sequence forwards and backwards with a recurrent neural network to build a context-aware representation at each position.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "node_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (L, D_node).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rnn_hidden_states",
+          "type_desc": "Tensor",
+          "constraints": "Shape (L, H_rnn): per-position hidden states from bidirectional RNN.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Node features are computed for all positions."],
+      "guarantees": ["Output has one hidden vector per sequence position."],
+      "family_notes": [
+        "Uses PyTorch bidirectional GRU or LSTM.",
+        "Captures sequential dependencies that the graph branch may miss."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "graph_neural_network",
+      "name": "Graph Neural Network",
+      "description": "Train a GCN on the adjacency matrices to produce per-node embeddings that capture structural (base-pairing) context, in parallel with the sequence branch.",
+      "dejargonized_description": "Use a graph neural network to learn representations based on which bases are physically paired together in the RNA's 3D structure.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "node_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (L, D_node).",
+          "required": true
+        },
+        {
+          "name": "adjacency_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (L, L).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gcn_embeddings",
+          "type_desc": "Tensor",
+          "constraints": "Shape (L, H_gcn): per-node embeddings from GCN.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Adjacency matrix and node features are available."],
+      "guarantees": ["Output has one embedding vector per nucleotide node."],
+      "family_notes": [
+        "Uses PyTorch Geometric GCN layers.",
+        "Runs in parallel with the sequence-to-sequence model branch."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_fusion",
+      "name": "Feature Fusion",
+      "description": "Concatenate RNN hidden states and GCN embeddings at every sequence position to form a unified representation combining sequential and structural information.",
+      "dejargonized_description": "Merge the sequence-reading model's output with the structure-reading model's output at each RNA position.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "rnn_hidden_states",
+          "type_desc": "Tensor",
+          "constraints": "Shape (L, H_rnn).",
+          "required": true
+        },
+        {
+          "name": "gcn_embeddings",
+          "type_desc": "Tensor",
+          "constraints": "Shape (L, H_gcn).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fused_features",
+          "type_desc": "Tensor",
+          "constraints": "Shape (L, H_rnn + H_gcn): concatenated per-position features.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Both branches produce L-length outputs."],
+      "guarantees": ["Output dimension is the sum of both branch hidden dimensions."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "output_head",
+      "name": "Output Head",
+      "description": "Linear layer mapping fused features to per-nucleotide degradation rate predictions across 5 target columns.",
+      "dejargonized_description": "A simple linear layer that converts the merged representation into the final degradation rate predictions for each position.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "fused_features",
+          "type_desc": "Tensor",
+          "constraints": "Shape (L, H_rnn + H_gcn).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "degradation_rates",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (L, 5): predictions for reactivity, deg_Mg_pH10, deg_pH10, deg_Mg_50C, deg_50C.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Fused features available for all positions."],
+      "guarantees": ["Output covers all scored positions with 5 target values each."],
+      "family_notes": [],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "secondary_structure_parsing",
+      "target_stage_id": "node_feature_generation",
+      "output_name": "adjacency_matrix",
+      "input_name": "adjacency_matrix",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "adjacency_matrix",
+      "provenance": "Base-pair adjacency from RNA folding prediction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "node_feature_generation",
+      "target_stage_id": "sequence_to_sequence_model",
+      "output_name": "node_features",
+      "input_name": "node_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "feature_matrix",
+      "provenance": "Per-nucleotide feature vectors for RNN input.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "node_feature_generation",
+      "target_stage_id": "graph_neural_network",
+      "output_name": "node_features",
+      "input_name": "node_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "feature_matrix",
+      "provenance": "Per-nucleotide feature vectors for GCN input.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "secondary_structure_parsing",
+      "target_stage_id": "graph_neural_network",
+      "output_name": "adjacency_matrix",
+      "input_name": "adjacency_matrix",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "adjacency_matrix",
+      "provenance": "Structure adjacency for GCN message passing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "sequence_to_sequence_model",
+      "target_stage_id": "feature_fusion",
+      "output_name": "rnn_hidden_states",
+      "input_name": "rnn_hidden_states",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "hidden_states",
+      "provenance": "Per-position sequential context from bidirectional RNN.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "graph_neural_network",
+      "target_stage_id": "feature_fusion",
+      "output_name": "gcn_embeddings",
+      "input_name": "gcn_embeddings",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "embeddings",
+      "provenance": "Per-node structural context from GCN.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_fusion",
+      "target_stage_id": "output_head",
+      "output_name": "fused_features",
+      "input_name": "fused_features",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "feature_matrix",
+      "provenance": "Concatenated sequential and structural representations.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Stanford COVID Vaccine solution. Dual-branch architecture fusing bidirectional RNN (sequential) and GCN (structural) for per-nucleotide mRNA degradation prediction.",
+    "dejargonized_summary": "Predict how fast each part of an RNA molecule degrades by combining a model that reads the sequence linearly with one that understands the physical pairing structure.",
+    "provenance_notes": [
+      "Source: Kaggle Stanford COVID Vaccine competition, 1st place (2020)",
+      "Source: https://www.kaggle.com/c/stanford-covid-vaccine/discussion/189620",
+      "Code: https://github.com/gregwchase/stanford-covid-vaccine"
+    ],
+    "uncertainty_notes": [
+      "Exact GRU vs LSTM choice and hidden dimensions depend on final hyperparameter sweep.",
+      "Secondary structure quality depends on ViennaRNA/Arnie accuracy for the given sequences."
+    ],
+    "references": [
+      {
+        "title": "Stanford COVID Vaccine 1st Place Solution",
+        "citation": "Kaggle Stanford COVID Vaccine, 1st place solution writeup (2020)",
+        "url": "https://www.kaggle.com/c/stanford-covid-vaccine/discussion/189620",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

@@ -1,0 +1,344 @@
+{
+  "asset_id": "solution.kaggle.um_mcts_strength_1st",
+  "asset_version": "v1",
+  "family": "tabular_regression",
+  "paradigm": "loss_function",
+  "name": "UM Game Playing Strength of MCTS - 1st Place (2024) - Pipeline Template",
+  "summary": "Tabular regression solution template for UM Game Playing Strength of MCTS - 1st Place (2024), modeled as a 6-stage deterministic pipeline: Feature Augmentation, Target Smoothing, Quantile Regression Training (Lower), Quantile Regression Training (Upper), and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by UM Game Playing Strength of MCTS - 1st Place (2024): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "xgboost",
+    "quantile_loss",
+    "tabular",
+    "regression"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Tabular regression task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Tabular regression.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Feature Augmentation creates the representation needed by 8/0.2 weighting schema (numpy)., so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "feature_augmentation",
+      "target_smoothing"
+    ],
+    "swappable_stages": {
+      "8_0_2_weighting_schema_numpy": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/um-game-playing-strength-of-mcts-variants/writeups/james-day-1st-place-solution"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/um-game-playing-strength-of-mcts-variants/writeups/james-day-1st-place-solution"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "feature_augmentation",
+      "name": "Feature Augmentation",
+      "description": "Recompute all non-deterministic search tree features 10 distinct times and sample directly from non-held-out runs. This topological stage intentionally injects structural noise into the training rows to combat overfitting (pandas, numpy)",
+      "dejargonized_description": "This stage recompute all non-deterministic search tree features 10 distinct times and sample directly from non-held-out runs. This topological stage intentionally injects structural noise into the training rows to combat overfitting (pandas, numpy).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for UM Game Playing Strength of MCTS - 1st Place (2024).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feature_augmentation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "target_smoothing",
+      "name": "Target Smoothing",
+      "description": "Recompute the competition's target labels 5 times to estimate a significantly cleaner, lower-variance \"real\" target value",
+      "dejargonized_description": "This stage recompute the competition's target labels 5 times to estimate a significantly cleaner, lower-variance \"real\" target value.",
+      "concept_type": "sequential_filter",
+      "inputs": [
+        {
+          "name": "target_smoothing_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "target_smoothing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "quantile_regression_training_lower",
+      "name": "Quantile Regression Training (Lower)",
+      "description": "Train a regressor explicitly targeted toward the negative (-1) direction utilizing a strict quantile loss function (alpha=0.2) (lightgbm or xgboost)",
+      "dejargonized_description": "This stage train a regressor explicitly targeted toward the negative (-1) direction utilizing a strict quantile loss function (alpha=0.2) (lightgbm or xgboost).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "quantile_regression_training_lower_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "quantile_regression_training_lower_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "quantile_regression_training_upper",
+      "name": "Quantile Regression Training (Upper)",
+      "description": "Train an independent regressor targeted toward the positive (+1) direction using an inverse quantile loss (alpha=0.8)",
+      "dejargonized_description": "This stage train an independent regressor targeted toward the positive (+1) direction using an inverse quantile loss (alpha=0.8).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "quantile_regression_training_upper_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "quantile_regression_training_upper_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "directional_ensembling",
+      "name": "Directional Ensembling",
+      "description": "Blend the initial negative predictions heavily with the alpha=0.2 model and positive predictions with the alpha=0.8 model using a fixed",
+      "dejargonized_description": "This stage blend the initial negative predictions heavily with the alpha=0.2 model and positive predictions with the alpha=0.8 model using a fixed.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "directional_ensembling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "directional_ensembling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "8_0_2_weighting_schema_numpy",
+      "name": "8/0.2 weighting schema (numpy).",
+      "description": "8/0.2 weighting schema (numpy)",
+      "dejargonized_description": "This stage 8/0.2 weighting schema (numpy).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "8_0_2_weighting_schema_numpy_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "feature_augmentation",
+      "target_stage_id": "target_smoothing",
+      "output_name": "feature_augmentation_output",
+      "input_name": "target_smoothing_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Feature Augmentation output is consumed by Target Smoothing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "target_smoothing",
+      "target_stage_id": "quantile_regression_training_lower",
+      "output_name": "target_smoothing_output",
+      "input_name": "quantile_regression_training_lower_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Target Smoothing output is consumed by Quantile Regression Training (Lower).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "quantile_regression_training_lower",
+      "target_stage_id": "quantile_regression_training_upper",
+      "output_name": "quantile_regression_training_lower_output",
+      "input_name": "quantile_regression_training_upper_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Quantile Regression Training (Lower) output is consumed by Quantile Regression Training (Upper).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "quantile_regression_training_upper",
+      "target_stage_id": "directional_ensembling",
+      "output_name": "quantile_regression_training_upper_output",
+      "input_name": "directional_ensembling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Quantile Regression Training (Upper) output is consumed by Directional Ensembling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "directional_ensembling",
+      "target_stage_id": "8_0_2_weighting_schema_numpy",
+      "output_name": "directional_ensembling_output",
+      "input_name": "8_0_2_weighting_schema_numpy_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Directional Ensembling output is consumed by 8/0.2 weighting schema (numpy)..",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Tabular regression.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/um-game-playing-strength-of-mcts-variants/writeups/james-day-1st-place-solution",
+      "Code URL: writeup only",
+      "Standard tools: pandas, numpy, lightgbm, xgboost"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "UM Game Playing Strength of MCTS - 1st Place (2024) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/um-game-playing-strength-of-mcts-variants/writeups/james-day-1st-place-solution",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

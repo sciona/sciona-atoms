@@ -1,0 +1,301 @@
+{
+  "asset_id": "solution.kaggle.vesuvius_ink_detection_1st",
+  "asset_version": "v1",
+  "family": "semantic_segmentation",
+  "paradigm": "optimization",
+  "name": "Vesuvius Challenge 2023 - 1st Place (2023) - Pipeline Template",
+  "summary": "3D Volume to 2D Segmentation solution template for Vesuvius Challenge 2023 - 1st Place (2023), modeled as a 5-stage deterministic pipeline: Z-axis slicing, Volumetric augmentation, 2.5D architecture, Decoder projection, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by Vesuvius Challenge 2023 - 1st Place (2023): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "unet",
+    "segmentation",
+    "volume"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a 3D Volume to 2D Segmentation task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: 3D Volume to 2D Segmentation.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Z-axis slicing creates the representation needed by Thresholding, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "z_axis_slicing",
+      "volumetric_augmentation"
+    ],
+    "swappable_stages": {
+      "thresholding": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/vesuvius-challenge-ink-detection/discussion/417496"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/vesuvius-challenge-ink-detection/discussion/417496"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "z_axis_slicing",
+      "name": "Z-axis slicing",
+      "description": "extract sub-volumes around the known papyrus surface mesh (e.g., slices 20 to 40 out of 65) to discard empty air in the CT scans (numpy)",
+      "dejargonized_description": "This stage extract sub-volumes around the known papyrus surface mesh (e.g., slices 20 to 40 out of 65) to discard empty air in the CT scans (numpy).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Vesuvius Challenge 2023 - 1st Place (2023).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "z_axis_slicing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "volumetric_augmentation",
+      "name": "Volumetric augmentation",
+      "description": "apply 3D rotations and random elastic deformations to the CT volumes (TorchIO)",
+      "dejargonized_description": "This stage apply 3D rotations and random elastic deformations to the CT volumes (TorchIO).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "volumetric_augmentation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "volumetric_augmentation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "2_5d_architecture",
+      "name": "2.5D architecture",
+      "description": "treat the Z-axis of the 3D volume as the channels of a 2D image, and pass it through a ResNet34 backbone (PyTorch)",
+      "dejargonized_description": "This stage treat the Z-axis of the 3D volume as the channels of a 2D image, and pass it through a ResNet34 backbone (PyTorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "2_5d_architecture_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "2_5d_architecture_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "decoder_projection",
+      "name": "Decoder projection",
+      "description": "pass the backbone embeddings through a UNet-style decoder to project the multi-channel volume down into a single 2D segmentation mask representing ink (segmentation_models_pytorch)",
+      "dejargonized_description": "This stage pass the backbone embeddings through a UNet-style decoder to project the multi-channel volume down into a single 2D segmentation mask representing ink (segmentation_models_pytorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "decoder_projection_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "decoder_projection_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "thresholding",
+      "name": "Thresholding",
+      "description": "apply a strict probability threshold to generate the final binary map, dropping small isolated pixel noise",
+      "dejargonized_description": "This stage apply a strict probability threshold to generate the final binary map, dropping small isolated pixel noise.",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "thresholding_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "z_axis_slicing",
+      "target_stage_id": "volumetric_augmentation",
+      "output_name": "z_axis_slicing_output",
+      "input_name": "volumetric_augmentation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Z-axis slicing output is consumed by Volumetric augmentation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "volumetric_augmentation",
+      "target_stage_id": "2_5d_architecture",
+      "output_name": "volumetric_augmentation_output",
+      "input_name": "2_5d_architecture_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Volumetric augmentation output is consumed by 2.5D architecture.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "2_5d_architecture",
+      "target_stage_id": "decoder_projection",
+      "output_name": "2_5d_architecture_output",
+      "input_name": "decoder_projection_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "2.5D architecture output is consumed by Decoder projection.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "decoder_projection",
+      "target_stage_id": "thresholding",
+      "output_name": "decoder_projection_output",
+      "input_name": "thresholding_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Decoder projection output is consumed by Thresholding.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for 3D Volume to 2D Segmentation.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_25-50.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/vesuvius-challenge-ink-detection/discussion/417496",
+      "Code URL: writeup only",
+      "Standard tools: numpy, TorchIO, PyTorch, segmentation_models_pytorch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Vesuvius Challenge 2023 - 1st Place (2023) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/vesuvius-challenge-ink-detection/discussion/417496",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

@@ -1,0 +1,304 @@
+{
+  "asset_id": "solution.kaggle.aptos_blindness_1st",
+  "asset_version": "v1",
+  "family": "medical_detection_2d",
+  "paradigm": "loss_function",
+  "name": "APTOS 2019 Blindness Detection - 1st Place (2019) - Pipeline Template",
+  "summary": "Ordinal Classification (Medical Imaging) solution template for APTOS 2019 Blindness Detection - 1st Place (2019), modeled as a 5-stage deterministic pipeline: Image standardization, CNN Backbone, Quadratic Weighted Kappa (QWK) Loss, Pre-training & Fine-tuning, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by APTOS 2019 Blindness Detection - 1st Place (2019): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "ordinal",
+    "classification",
+    "medical",
+    "imaging",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Ordinal Classification (Medical Imaging) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Ordinal Classification (Medical Imaging).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Image standardization creates the representation needed by Threshold Calibration, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "image_standardization",
+      "cnn_backbone"
+    ],
+    "swappable_stages": {
+      "threshold_calibration": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/aptos2019-blindness-detection/discussion/108065"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/aptos2019-blindness-detection/discussion/108065"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "image_standardization",
+      "name": "Image standardization",
+      "description": "apply Ben Graham's preprocessing method: crop to the circular retina, subtract local median color to highlight blood vessels, and resize (OpenCV)",
+      "dejargonized_description": "This stage apply Ben Graham's preprocessing method: crop to the circular retina, subtract local median color to highlight blood vessels, and resize (OpenCV).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for APTOS 2019 Blindness Detection - 1st Place (2019).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_standardization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "cnn_backbone",
+      "name": "CNN Backbone",
+      "description": "train EfficientNet and SE-ResNeXt architectures initialized with ImageNet weights (PyTorch)",
+      "dejargonized_description": "This stage train EfficientNet and SE-ResNeXt architectures initialized with ImageNet weights (PyTorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "cnn_backbone_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cnn_backbone_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "quadratic_weighted_kappa_qwk_loss",
+      "name": "Quadratic Weighted Kappa (QWK) Loss",
+      "description": "optimize the network using a smooth QWK loss function, heavily penalizing off-by-2 errors (e.g., predicting 0 when truth is 4) more than off-by-1 errors (custom PyTorch loss)",
+      "dejargonized_description": "This stage optimize the network using a smooth QWK loss function, heavily penalizing off-by-2 errors (e.g., predicting 0 when truth is 4) more than off-by-1 errors (custom PyTorch loss).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "quadratic_weighted_kappa_qwk_loss_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "quadratic_weighted_kappa_qwk_loss_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pre_training_fine_tuning",
+      "name": "Pre-training & Fine-tuning",
+      "description": "pre-train the model on massive public datasets from past 2015 competitions, then strictly fine-tune only the last 2 layers on the smaller 2019 competition dataset",
+      "dejargonized_description": "This stage pre-train the model on massive public datasets from past 2015 competitions, then strictly fine-tune only the last 2 layers on the smaller 2019 competition dataset.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "pre_training_fine_tuning_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pre_training_fine_tuning_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "threshold_calibration",
+      "name": "Threshold Calibration",
+      "description": "use Nelder-Mead optimization to perfectly tune the decision boundaries between classes [0, 1, 2, 3, 4] to maximize the QWK metric",
+      "dejargonized_description": "This stage use Nelder-Mead optimization to perfectly tune the decision boundaries between classes [0, 1, 2, 3, 4] to maximize the QWK metric.",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "threshold_calibration_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "image_standardization",
+      "target_stage_id": "cnn_backbone",
+      "output_name": "image_standardization_output",
+      "input_name": "cnn_backbone_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Image standardization output is consumed by CNN Backbone.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "cnn_backbone",
+      "target_stage_id": "quadratic_weighted_kappa_qwk_loss",
+      "output_name": "cnn_backbone_output",
+      "input_name": "quadratic_weighted_kappa_qwk_loss_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "CNN Backbone output is consumed by Quadratic Weighted Kappa (QWK) Loss.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "quadratic_weighted_kappa_qwk_loss",
+      "target_stage_id": "pre_training_fine_tuning",
+      "output_name": "quadratic_weighted_kappa_qwk_loss_output",
+      "input_name": "pre_training_fine_tuning_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Quadratic Weighted Kappa (QWK) Loss output is consumed by Pre-training & Fine-tuning.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pre_training_fine_tuning",
+      "target_stage_id": "threshold_calibration",
+      "output_name": "pre_training_fine_tuning_output",
+      "input_name": "threshold_calibration_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Pre-training & Fine-tuning output is consumed by Threshold Calibration.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Ordinal Classification (Medical Imaging).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/aptos2019-blindness-detection/discussion/108065",
+      "Code URL: writeup only",
+      "Standard tools: OpenCV, PyTorch, scipy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "APTOS 2019 Blindness Detection - 1st Place (2019) solution writeup",
+        "citation": "https://www.kaggle.com/c/aptos2019-blindness-detection/discussion/108065",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

@@ -1,0 +1,348 @@
+{
+  "asset_id": "solution.kaggle.flavours_physics_1st",
+  "asset_version": "v1",
+  "family": "constrained_ml",
+  "paradigm": "optimization",
+  "name": "Flavours of Physics 1st Place -- Constraint-Satisfying Classification",
+  "summary": "Three parallel classification paths (safe-feature vanilla GBM, flatness-constrained gradient boosting with mass decorrelation, full-feature GBM with noise injection) evaluated against statistical constraint gates (KS agreement < 0.09, CvM mass decorrelation < 0.002) using a truncated weighted AUC metric that emphasizes low-TPR precision.",
+  "dejargonized_summary": "Train three separate classifiers with different strategies for avoiding bias toward a protected variable (particle mass): one uses only safe features, one penalizes mass-correlated predictions during training, and one adds random noise afterward. Each must pass statistical tests proving its predictions are independent of mass before being accepted.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "constrained_classification",
+    "fairness_aware_ml",
+    "decorrelation",
+    "mass_independent_classifier",
+    "flatness_boosting",
+    "cvm_decorrelation",
+    "ks_agreement_test",
+    "protected_variable",
+    "training_time_penalty",
+    "hard_constraint_gate",
+    "statistical_independence",
+    "tabular_with_fairness",
+    "simulation_agreement"
+  ],
+  "inputs": [
+    {
+      "name": "training_data",
+      "type_desc": "DataFrame",
+      "constraints": "Tabular data with features, binary signal label, mass column, and data/MC source indicator.",
+      "required": true
+    },
+    {
+      "name": "agreement_data",
+      "type_desc": "DataFrame",
+      "constraints": "Real data and Monte Carlo simulation data for KS agreement test.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "predictions",
+      "type_desc": "ndarray(n_samples,)",
+      "constraints": "Signal probability per sample. Must satisfy KS < 0.09 and CvM < 0.002 constraints.",
+      "required": true
+    },
+    {
+      "name": "weighted_auc",
+      "type_desc": "float",
+      "constraints": "Truncated weighted AUC score emphasizing low-TPR region.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Classification where predictions must be statistically independent of a protected/sensitive variable (fairness, physics mass independence)",
+      "Hard constraint gates (not soft regularization) must be satisfied before model quality is evaluated",
+      "Multiple decorrelation strategies should be explored in parallel because the accuracy-fairness tradeoff is problem-specific",
+      "Tabular data where gradient boosting is the natural model family and decorrelation must be integrated into the training loop"
+    ],
+    "do_not_use_when": [
+      "The protected variable is high-dimensional or categorical with many levels (flatness binning becomes impractical)",
+      "Soft fairness regularization is acceptable — the flatness penalty is overkill if approximate decorrelation suffices",
+      "The model is a neural network — flatness boosting is specific to gradient boosting; for NNs, use adversarial decorrelation or gradient reversal",
+      "No agreement/simulation data is available for the KS test — the constraint gate cannot be evaluated"
+    ],
+    "key_insight": "The flatness penalty gradient pushes per-bin CDFs toward the global CDF, enforcing statistical independence between predictions and the protected variable during training. This is a training-time penalty (not post-hoc), so the model learns representations that are intrinsically decorrelated from the protected variable rather than having correlation removed after the fact.",
+    "critical_stages": ["flatness_constrained_gradient_boosting", "compute_cvm_mass_decorrelation", "compute_ks_agreement"],
+    "swappable_stages": {
+      "feature_selection_safe": "Domain-specific — any method for identifying protected-variable-independent features works. Not needed if flatness constraint is used.",
+      "noise_injection_decorrelation": "Any post-hoc decorrelation (calibration, histogram matching) can replace noise injection. Noise injection is the simplest fallback.",
+      "roc_auc_truncated_weighted": "Standard AUC or any classification metric works. The truncated weighting is competition-specific."
+    },
+    "failure_modes": [
+      "Protected variable with very few unique values (e.g., binary): flatness binning has too few bins for meaningful CDF comparison",
+      "Very strong correlation between features and protected variable: flatness penalty must be extremely strong, collapsing model capacity",
+      "Constraint thresholds (KS < 0.09, CvM < 0.002) are too tight for the data size: even a truly decorrelated model may fail the statistical test due to finite-sample noise"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "constraint_gates",
+      "statement": "Predictions must pass BOTH the KS agreement test (< 0.09) and CvM mass decorrelation test (< 0.002) before the AUC metric is computed.",
+      "rationale": "These are hard constraints, not soft penalties. A model with AUC 0.99 but KS 0.10 is REJECTED. The competition enforces fairness as a gate, not a regularizer.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Flavours of Physics competition rules"
+    },
+    {
+      "category": "stage",
+      "subject": "parallel_model_paths",
+      "statement": "The three model paths (safe-feature, flatness-constrained, noise-injected) should be developed independently and evaluated against constraints separately.",
+      "rationale": "Each path uses a different decorrelation strategy. The winning solution used flatness-constrained boosting, but noise injection is a viable fallback.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "Solution analysis CDG structure"
+    },
+    {
+      "category": "stage",
+      "subject": "asymmetric_flatness",
+      "statement": "Flatness constraint should be applied only to background (label=0) predictions, not signal predictions.",
+      "rationale": "uniform_label=0 in BinFlatnessLossFunction. Signal events are rare and have genuine mass structure; only background must be flat w.r.t. mass to prevent sculpting.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "flatness_boosting.ipynb cell 8"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "feature_selection_safe",
+      "name": "Safe Feature Selection",
+      "description": "Select features known to be physically independent of mass. Restricts model to 3 safe variables that cannot introduce mass correlation.",
+      "dejargonized_description": "Pick only the features that are guaranteed not to leak information about the protected variable (mass), even though this limits the model's power.",
+      "concept_type": "external_knowledge",
+      "inputs": [
+        {"name": "data", "type_desc": "DataFrame", "constraints": "Full training data.", "required": true}
+      ],
+      "outputs": [
+        {"name": "safe_features", "type_desc": "DataFrame", "constraints": "Subset of columns known to be mass-independent.", "required": true}
+      ],
+      "preconditions": ["Feature metadata available indicating mass-safe columns."],
+      "guarantees": ["No mass-correlated features in output."],
+      "family_notes": [
+        "Domain-specific physics knowledge: which features are guaranteed mass-independent.",
+        "Not a reusable atom — the safe feature set is specific to this particle physics problem."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "flatness_constrained_gradient_boosting",
+      "name": "Flatness-Constrained Gradient Boosting",
+      "description": "Gradient boosting with modified loss (BinFlatnessLossFunction from hep_ml) that penalizes prediction-mass correlation during training. Decorrelation enforced during training, not post-hoc. uniform_label=0 means only background predictions must be flat w.r.t. mass. Model sees mass during training (for flatness penalty gradient) but does NOT use it as a splitting feature. Based on arXiv:1305.7248, arXiv:1410.4140.",
+      "dejargonized_description": "Train a tree-based classifier that is explicitly penalized whenever its predictions become correlated with the protected variable, learning to ignore mass-related patterns during training itself.",
+      "concept_type": "optimization",
+      "inputs": [
+        {"name": "features", "type_desc": "DataFrame", "constraints": "Training features (may include mass-correlated features).", "required": true},
+        {"name": "labels", "type_desc": "ndarray", "constraints": "Binary signal labels.", "required": true},
+        {"name": "protected_variable", "type_desc": "str", "constraints": "Column name of protected variable (mass).", "required": true},
+        {"name": "n_bins", "type_desc": "int", "constraints": "Number of bins for flatness computation.", "required": false},
+        {"name": "ada_coefficient", "type_desc": "float", "constraints": "Strength of flatness penalty.", "required": false}
+      ],
+      "outputs": [
+        {"name": "predictions", "type_desc": "ndarray", "constraints": "Mass-decorrelated prediction probabilities.", "required": true}
+      ],
+      "preconditions": ["Protected variable column exists in features."],
+      "guarantees": ["Predictions are approximately decorrelated from protected variable."],
+      "family_notes": [
+        "Composition of a loss_function atom (flatness_penalty_gradient) injected as a callable into a gradient boosting trainer.",
+        "The novel piece is the loss function; the boosting structure is standard.",
+        "Uses callable_injection edge from loss atom to boosting trainer."
+      ],
+      "matched_primitive": "sciona.atoms.ml.constrained_ml.decorrelation.flatness_penalty_gradient"
+    },
+    {
+      "stage_id": "noise_injection_decorrelation",
+      "name": "Noise Injection Decorrelation",
+      "description": "Mixes uniform random noise: output = level * random() + (1 - level) * prediction. Brute-force but effective. At 40% noise, AUC drops from 0.982 to 0.881 but KS drops from 0.169 (FAIL) to 0.027 (PASS). Quantifiable tradeoff between discriminative power and constraint satisfaction.",
+      "dejargonized_description": "Add random noise to a strong model's predictions to wash out any correlation with the protected variable, trading some accuracy for constraint compliance.",
+      "concept_type": "randomized",
+      "inputs": [
+        {"name": "predictions", "type_desc": "ndarray", "constraints": "Raw model predictions.", "required": true},
+        {"name": "noise_level", "type_desc": "float", "constraints": "Fraction of noise to mix in (0.0 = no noise, 1.0 = pure noise). Default 0.40.", "required": true},
+        {"name": "random_seed", "type_desc": "int", "constraints": "Random seed for reproducibility.", "required": false}
+      ],
+      "outputs": [
+        {"name": "noisy_predictions", "type_desc": "ndarray", "constraints": "Decorrelated predictions with reduced discriminative power.", "required": true}
+      ],
+      "preconditions": ["Predictions available from a trained model."],
+      "guarantees": ["Output predictions have reduced correlation with any protected variable."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "compute_ks_agreement",
+      "name": "KS Agreement Test",
+      "description": "Computes KS distance between prediction distributions on real data vs Monte Carlo simulation using ROC-curve machinery. Max |FPR - TPR| along the ROC curve of 'data vs MC' equals the KS distance. Must be < 0.09 to pass. Tests whether classifier treats real and simulated data similarly.",
+      "dejargonized_description": "Check whether the model gives similar predictions on real data and simulated data -- if not, the model may be exploiting simulation artifacts rather than real physics.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "data_prediction", "type_desc": "ndarray", "constraints": "Predictions on real data.", "required": true},
+        {"name": "mc_prediction", "type_desc": "ndarray", "constraints": "Predictions on Monte Carlo data.", "required": true},
+        {"name": "weights_data", "type_desc": "ndarray", "constraints": "Sample weights for real data.", "required": true},
+        {"name": "weights_mc", "type_desc": "ndarray", "constraints": "Sample weights for MC data.", "required": true}
+      ],
+      "outputs": [
+        {"name": "ks_distance", "type_desc": "float", "constraints": "KS distance. Must be < 0.09 to pass.", "required": true}
+      ],
+      "preconditions": ["Predictions available for both real and MC data."],
+      "guarantees": ["Output is in [0, 1]. Threshold at 0.09 is a hard constraint."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "compute_cvm_mass_decorrelation",
+      "name": "CvM Mass Decorrelation Test",
+      "description": "Cramer-von Mises statistic measuring whether classifier predictions are correlated with mass. Uses rolling window binning over sorted mass values, comparing global prediction CDF to local (mass-bin) prediction CDF. Converts predictions to ranks before comparing distributions -- invariant to monotone transforms. Must be < 0.002 to pass.",
+      "dejargonized_description": "Check whether the model's predictions change depending on particle mass -- if they do, the model is biased and must be rejected. Uses a statistical test that is insensitive to how predictions are scaled.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "predictions", "type_desc": "ndarray", "constraints": "Model predictions.", "required": true},
+        {"name": "masses", "type_desc": "ndarray", "constraints": "Protected variable (mass) values.", "required": true},
+        {"name": "n_neighbours", "type_desc": "int", "constraints": "Rolling window size (default 200).", "required": false},
+        {"name": "step", "type_desc": "int", "constraints": "Step size for rolling window (default 50).", "required": false}
+      ],
+      "outputs": [
+        {"name": "cvm_value", "type_desc": "float", "constraints": "Average CvM statistic. Lower = more decorrelated. Must be < 0.002.", "required": true}
+      ],
+      "preconditions": ["Predictions and masses have matching length."],
+      "guarantees": ["Output is non-negative. Rank-based computation is invariant to monotone prediction transforms."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "roc_auc_truncated_weighted",
+      "name": "Truncated Weighted ROC AUC",
+      "description": "Segments the ROC curve by TPR thresholds (0.2, 0.4, 0.6, 0.8) and weights each segment independently. Default weights (4,3,2,1,0) mean only the low-TPR (high-precision) region matters. The highest-TPR segment gets weight 0.",
+      "dejargonized_description": "Measure classifier quality focusing only on the high-confidence predictions, ignoring performance on hard-to-classify examples where the model guesses.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "labels", "type_desc": "ndarray", "constraints": "Binary true labels.", "required": true},
+        {"name": "predictions", "type_desc": "ndarray", "constraints": "Model prediction scores.", "required": true},
+        {"name": "tpr_thresholds", "type_desc": "tuple[float]", "constraints": "TPR boundaries for segments (default: 0.2, 0.4, 0.6, 0.8).", "required": false},
+        {"name": "roc_weights", "type_desc": "tuple[float]", "constraints": "Weights per segment (default: 4, 3, 2, 1, 0).", "required": false}
+      ],
+      "outputs": [
+        {"name": "weighted_auc", "type_desc": "float", "constraints": "Weighted AUC normalized to [0, 1].", "required": true}
+      ],
+      "preconditions": ["Labels are binary. Predictions are finite."],
+      "guarantees": ["Output in [0, 1]."],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "feature_selection_safe",
+      "target_stage_id": "flatness_constrained_gradient_boosting",
+      "output_name": "safe_features",
+      "input_name": "features",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "tabular",
+      "provenance": "Safe features can also be used by flatness-constrained model (uses all features but mass only for penalty).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "flatness_constrained_gradient_boosting",
+      "target_stage_id": "compute_ks_agreement",
+      "output_name": "predictions",
+      "input_name": "data_prediction",
+      "source_type": "ndarray",
+      "target_type": "ndarray",
+      "data_kind": "prediction",
+      "provenance": "Flatness-constrained predictions evaluated by KS agreement gate.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "flatness_constrained_gradient_boosting",
+      "target_stage_id": "compute_cvm_mass_decorrelation",
+      "output_name": "predictions",
+      "input_name": "predictions",
+      "source_type": "ndarray",
+      "target_type": "ndarray",
+      "data_kind": "prediction",
+      "provenance": "Flatness-constrained predictions evaluated by CvM decorrelation gate.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "noise_injection_decorrelation",
+      "target_stage_id": "compute_ks_agreement",
+      "output_name": "noisy_predictions",
+      "input_name": "data_prediction",
+      "source_type": "ndarray",
+      "target_type": "ndarray",
+      "data_kind": "prediction",
+      "provenance": "Noise-injected predictions evaluated by KS agreement gate.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "noise_injection_decorrelation",
+      "target_stage_id": "compute_cvm_mass_decorrelation",
+      "output_name": "noisy_predictions",
+      "input_name": "predictions",
+      "source_type": "ndarray",
+      "target_type": "ndarray",
+      "data_kind": "prediction",
+      "provenance": "Noise-injected predictions evaluated by CvM decorrelation gate.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "compute_ks_agreement",
+      "target_stage_id": "roc_auc_truncated_weighted",
+      "output_name": "ks_distance",
+      "input_name": "gate_ks",
+      "source_type": "float",
+      "target_type": "float",
+      "data_kind": "constraint_result",
+      "provenance": "KS test must pass (< 0.09) before AUC is computed.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "compute_cvm_mass_decorrelation",
+      "target_stage_id": "roc_auc_truncated_weighted",
+      "output_name": "cvm_value",
+      "input_name": "gate_cvm",
+      "source_type": "float",
+      "target_type": "float",
+      "data_kind": "constraint_result",
+      "provenance": "CvM test must pass (< 0.002) before AUC is computed.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Flavours of Physics. Pioneering constrained ML / fairness-aware classification with broadly applicable decorrelation atoms. Core algorithm in hep_ml (Apache 2.0) but solution repo has NO LICENSE.",
+    "dejargonized_summary": "Classify rare particle decays while proving the classifier is not biased by particle mass, using three different strategies (restricted features, training-time penalties, post-hoc noise) and hard statistical tests as acceptance gates.",
+    "provenance_notes": [
+      "Source: https://github.com/yandexdataschool/flavours-of-physics-start (NO LICENSE -- blocked for direct ingestion)",
+      "Core decorrelation algorithm: hep_ml library (Apache 2.0, same authors)",
+      "Papers: arXiv:1305.7248, arXiv:1410.4140",
+      "Local analysis: kaggle-solutions/docs/analysis-flavours-physics-1st.md",
+      "All 6 atoms are gaps -- none ingested. Clean-room reimplementation from papers is feasible."
+    ],
+    "uncertainty_notes": [
+      "NO LICENSE on solution repo. CDG structure is valuable for architect testing but atoms must be reimplemented from papers or hep_ml (Apache 2.0).",
+      "The feature_selection_safe stage is domain-specific (which physics features are mass-independent) and not a reusable atom.",
+      "CvM and KS thresholds (0.002, 0.09) are competition-specific but the constraint-gate pattern generalizes to any fairness scenario."
+    ],
+    "references": [
+      {
+        "title": "Rogozhnikov (2015)",
+        "citation": "Gradient boosting with flatness constraints for decorrelation, arXiv:1410.4140",
+        "url": "https://arxiv.org/abs/1410.4140",
+        "note": "BinFlatnessLossFunction theoretical foundation."
+      },
+      {
+        "title": "Flavours of Physics: Finding tau to 3mu Competition",
+        "citation": "Kaggle Competition, 2015",
+        "url": "https://www.kaggle.com/c/flavours-of-physics",
+        "note": "Competition page."
+      },
+      {
+        "title": "Pivnenko et al. (2013)",
+        "citation": "A new method for mass-independent event selection, arXiv:1305.7248",
+        "url": "https://arxiv.org/abs/1305.7248",
+        "note": "Mass-independent classifier methodology."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

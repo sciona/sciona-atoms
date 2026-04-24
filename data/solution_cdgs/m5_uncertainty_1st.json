@@ -1,0 +1,304 @@
+{
+  "asset_id": "solution.kaggle.m5_uncertainty_1st",
+  "asset_version": "v1",
+  "family": "time_series_forecasting",
+  "paradigm": "loss_function",
+  "name": "M5 Forecasting (Uncertainty) - 1st Place (2020) - Pipeline Template",
+  "summary": "Probabilistic Hierarchical Time Series solution template for M5 Forecasting (Uncertainty) - 1st Place (2020), modeled as a 5-stage deterministic pipeline: Base Forecasting, Residual calculation, Probability distribution fitting, Quantile Generation, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by M5 Forecasting (Uncertainty) - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "probabilistic",
+    "hierarchical",
+    "series",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Probabilistic Hierarchical Time Series task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Probabilistic Hierarchical Time Series.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Base Forecasting creates the representation needed by Hierarchical scaling, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "base_forecasting",
+      "residual_calculation"
+    ],
+    "swappable_stages": {
+      "hierarchical_scaling": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/m5-forecasting-uncertainty/discussion/165311"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/m5-forecasting-uncertainty/discussion/165311"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "base_forecasting",
+      "name": "Base Forecasting",
+      "description": "generate point predictions for all items using the standard M5 Accuracy methodology (LightGBM with Tweedie loss) (LightGBM)",
+      "dejargonized_description": "This stage generate point predictions for all items using the standard M5 Accuracy methodology (LightGBM with Tweedie loss) (LightGBM).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for M5 Forecasting (Uncertainty) - 1st Place (2020).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "base_forecasting_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "residual_calculation",
+      "name": "Residual calculation",
+      "description": "calculate the historical errors (residuals) of the trained model over the validation period (pandas/numpy)",
+      "dejargonized_description": "This stage calculate the historical errors (residuals) of the trained model over the validation period (pandas/numpy).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "residual_calculation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "residual_calculation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "probability_distribution_fitting",
+      "name": "Probability distribution fitting",
+      "description": "fit continuous mathematical distributions (e.g., Gaussian, Negative Binomial) over the grouped residuals to estimate the variance for each product category (scipy.stats)",
+      "dejargonized_description": "This stage fit continuous mathematical distributions (e.g., Gaussian, Negative Binomial) over the grouped residuals to estimate the variance for each product category (scipy.stats).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "probability_distribution_fitting_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "probability_distribution_fitting_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "quantile_generation",
+      "name": "Quantile Generation",
+      "description": "sample the fitted distributions to calculate the exact 9 discrete target quantiles (e.g., 0.005, 0.50, 0.995) required by the competition (numpy)",
+      "dejargonized_description": "This stage sample the fitted distributions to calculate the exact 9 discrete target quantiles (e.g., 0.005, 0.50, 0.995) required by the competition (numpy).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "quantile_generation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "quantile_generation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "hierarchical_scaling",
+      "name": "Hierarchical scaling",
+      "description": "scale the lower-level quantiles algorithmically so that the statistical spread of the lowest item perfectly aligns with the required variance of the top-level national aggregate (custom math / scipy)",
+      "dejargonized_description": "This stage scale the lower-level quantiles algorithmically so that the statistical spread of the lowest item perfectly aligns with the required variance of the top-level national aggregate (custom math / scipy).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "hierarchical_scaling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "base_forecasting",
+      "target_stage_id": "residual_calculation",
+      "output_name": "base_forecasting_output",
+      "input_name": "residual_calculation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Base Forecasting output is consumed by Residual calculation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "residual_calculation",
+      "target_stage_id": "probability_distribution_fitting",
+      "output_name": "residual_calculation_output",
+      "input_name": "probability_distribution_fitting_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Residual calculation output is consumed by Probability distribution fitting.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "probability_distribution_fitting",
+      "target_stage_id": "quantile_generation",
+      "output_name": "probability_distribution_fitting_output",
+      "input_name": "quantile_generation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Probability distribution fitting output is consumed by Quantile Generation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "quantile_generation",
+      "target_stage_id": "hierarchical_scaling",
+      "output_name": "quantile_generation_output",
+      "input_name": "hierarchical_scaling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Quantile Generation output is consumed by Hierarchical scaling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Probabilistic Hierarchical Time Series.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/m5-forecasting-uncertainty/discussion/165311",
+      "Code URL: writeup only",
+      "Standard tools: LightGBM, pandas, numpy, scipy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "M5 Forecasting (Uncertainty) - 1st Place (2020) solution writeup",
+        "citation": "https://www.kaggle.com/c/m5-forecasting-uncertainty/discussion/165311",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

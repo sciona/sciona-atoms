@@ -1,0 +1,360 @@
+{
+  "asset_id": "solution.kaggle.melanoma_1st",
+  "asset_version": "v1",
+  "family": "medical_image_tabular",
+  "paradigm": "neural_network",
+  "name": "SIIM-ISIC Melanoma Classification 1st Place — Multi-Modal CNN with Pseudo-Labeling and Rank Averaging",
+  "summary": "Melanoma classification from dermoscopic images and patient metadata using EfficientNet/SE-ResNeXt backbones with domain-specific augmentations, metadata concatenation, pseudo-labeling on prior competition data, and rank-average ensembling across 15+ models.",
+  "dejargonized_summary": "Detect skin cancer from photographs by training image-recognition networks with realistic data distortions, combining image features with patient information, adding pseudo-labeled historical data, and averaging rankings across many models.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "melanoma_detection",
+    "dermoscopy_classification",
+    "medical_imaging",
+    "multimodal_image_tabular",
+    "pseudo_labeling",
+    "rank_average_ensemble",
+    "extreme_class_imbalance",
+    "focal_loss",
+    "domain_specific_augmentation",
+    "metadata_fusion",
+    "external_data_pseudo_labels",
+    "cutmix",
+    "hair_artifact_augmentation",
+    "efficientnet",
+    "se_resnext"
+  ],
+  "applicability": {
+    "use_when": [
+      "Medical image classification with extreme class imbalance (<5% positive rate) where domain-specific augmentations can simulate real-world artifacts",
+      "Patient metadata (age, sex, anatomical site) provides strong clinical priors that complement visual features",
+      "Historical or external unlabeled datasets from the same domain are available for pseudo-labeling to expand the small labeled training set",
+      "Multiple backbone architectures and resolutions are feasible and rank-average ensembling can reduce variance"
+    ],
+    "do_not_use_when": [
+      "No domain-specific augmentation knowledge exists: generic augmentations may not bridge the domain gap, and the microscope-artifact augmentations are specific to dermoscopy",
+      "Metadata is unavailable or unreliable: the metadata concatenation path adds no value and the meta head may overfit on noise",
+      "External datasets have significant distribution shift from the target data: pseudo-labeling propagates systematic errors",
+      "Single-model inference is required for regulatory or latency reasons: the 15+ model rank-average ensemble is impractical"
+    ],
+    "key_insight": "Domain-specific augmentations (microscope borders, hair overlay, CutMix) are the primary regularizer for extreme class imbalance — they force the model to learn lesion-intrinsic features rather than memorizing imaging artifacts. Metadata concatenation at the penultimate layer provides clinical priors (e.g., melanoma is more common at certain ages and anatomical sites) that pure image models cannot learn from pixels alone. Pseudo-labeling on historical competition data expands the effective positive sample count, which is the binding constraint at <2% prevalence.",
+    "critical_stages": ["microscope_augmentation", "metadata_concatenation", "pseudo_labeling"],
+    "swappable_stages": {
+      "image_backbone_training": "Any ImageNet-pretrained CNN (EfficientNet, SE-ResNeXt, ConvNeXt, ViT) works. Diversity of backbones matters more than the specific choice.",
+      "meta_head": "Any classifier (MLP, logistic regression) on the fused features works. The value is in the fusion, not the head architecture.",
+      "rank_average_ensemble": "Any ensembling strategy (simple average, stacking, Bayesian model combination) can replace rank averaging. Rank averaging is preferred for robustness to different prediction scales."
+    },
+    "failure_modes": [
+      "Domain-specific augmentations do not match the target imaging modality: e.g., hair overlay and microscope borders are meaningless for non-dermoscopic images",
+      "Pseudo-labeled external data overwhelms the real labels: if the external dataset is much larger, the model may overfit to pseudo-label noise",
+      "Metadata leaks demographic bias into predictions: the model may learn age/sex correlations that do not generalize to different populations"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "dermoscopic_images",
+      "type_desc": "NDArray[np.uint8]",
+      "constraints": "Shape (N, H, W, 3). RGB dermoscopic images at varying resolutions.",
+      "required": true
+    },
+    {
+      "name": "patient_metadata",
+      "type_desc": "DataFrame",
+      "constraints": "Columns: age, sex, anatomical site of lesion.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "melanoma_probability",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N,). Melanoma probability in [0, 1].",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "augmentation_for_class_imbalance",
+      "statement": "Domain-specific augmentations (microscope artifacts, hair overlay) must be applied during training to improve robustness.",
+      "rationale": "Melanoma is extremely rare in the dataset (<2%); augmentations simulate real-world dermoscopic variation and help prevent overfitting to the majority class.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "metadata_fusion",
+      "statement": "Patient metadata must be concatenated with CNN embeddings before the final classification head.",
+      "rationale": "Age, sex, and anatomical site provide strong priors for melanoma risk that complement visual features.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "microscope_augmentation",
+      "name": "Microscope Augmentation",
+      "description": "Apply domain-specific augmentations: circular black masks simulating dermoscope borders, fake hair overlay, and CutMix. Uses Albumentations and custom transforms.",
+      "dejargonized_description": "Add realistic distortions to training images like circular borders, fake hairs, and image mixing to help the model handle real-world dermoscopic variation.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "dermoscopic_images",
+          "type_desc": "NDArray[np.uint8]",
+          "constraints": "Shape (N, H, W, 3). Raw dermoscopic images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "NDArray[np.uint8]",
+          "constraints": "Shape (N_aug, H, W, 3). Augmented dermoscopic images.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Raw images are available."],
+      "guarantees": ["Augmented images simulate realistic dermoscopic artifacts."],
+      "family_notes": [
+        "Hair overlay and microscope border augmentations are specific to dermoscopy and significantly improve generalization."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "image_backbone_training",
+      "name": "Image Backbone Training",
+      "description": "Train EfficientNet B3-B7 and SE-ResNeXt backbones on augmented dermoscopic images using Focal Loss to handle extreme class imbalance (<2% positive rate).",
+      "dejargonized_description": "Train several powerful image-recognition networks on the skin images, using a special loss function that pays extra attention to the rare cancer cases.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "NDArray[np.uint8]",
+          "constraints": "Shape (N_aug, H, W, 3). Augmented images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_embeddings",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, D). Penultimate layer embeddings from CNN backbone.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Augmented training images are available."],
+      "guarantees": ["Embeddings capture visual features relevant to melanoma detection."],
+      "family_notes": [
+        "Focal Loss down-weights easy negatives and up-weights hard examples, critical for <2% positive rate."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "metadata_concatenation",
+      "name": "Metadata Concatenation",
+      "description": "Extract the penultimate embedding layer from each CNN backbone and concatenate with encoded patient metadata (age, sex, anatomical location).",
+      "dejargonized_description": "Combine the image features extracted by the neural network with patient information like age, sex, and where the lesion is on the body.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "image_embeddings",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, D). CNN embeddings.",
+          "required": true
+        },
+        {
+          "name": "patient_metadata",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, M). Encoded metadata features.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fused_features",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, D + M). Concatenated image and metadata features.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Image embeddings and metadata are available and aligned by sample."],
+      "guarantees": ["Output contains both visual and clinical information."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "meta_head",
+      "name": "Meta Head",
+      "description": "Pass the concatenated image embedding + metadata vector through a small MLP for final binary classification (melanoma vs. benign).",
+      "dejargonized_description": "Feed the combined image and patient features through a small neural network to produce the final cancer probability.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "fused_features",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, D + M). Concatenated features.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). Per-model melanoma probabilities.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Fused features are available."],
+      "guarantees": ["Output is a calibrated probability per sample."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pseudo_labeling",
+      "name": "Pseudo-Labeling",
+      "description": "Use trained models to predict on old 2018/2019 ISIC competition datasets, then add high-confidence pseudo-labeled samples to the training pool to increase effective dataset size.",
+      "dejargonized_description": "Apply trained models to older competition datasets to generate predicted labels, then add these extra labeled examples to the training data.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "external_images",
+          "type_desc": "NDArray[np.uint8]",
+          "constraints": "Images from 2018/2019 ISIC competitions.",
+          "required": true
+        },
+        {
+          "name": "model_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Predictions from trained models on external data.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pseudo_labeled_dataset",
+          "type_desc": "tuple",
+          "constraints": "Extended training set with pseudo-labeled external images.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Initial models are trained and external data is available."],
+      "guarantees": ["Pseudo-labeled samples expand the training pool with high-confidence examples."],
+      "family_notes": [
+        "Pseudo-labeling leverages the large volume of unlabeled historical competition data to boost effective sample size."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "rank_average_ensemble",
+      "name": "Rank Average Ensemble",
+      "description": "Rank-average predictions across 15+ CNN backbone variants and seeds. Each model's predictions are converted to ranks, averaged, then converted back to probabilities.",
+      "dejargonized_description": "Combine predictions from many different models by converting each to rankings, averaging the rankings, to get a final robust prediction.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "model_predictions",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "List of (N,) prediction arrays from 15+ models.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "melanoma_probability",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). Final ensembled melanoma probability.",
+          "required": true
+        }
+      ],
+      "preconditions": ["All individual model predictions are available."],
+      "guarantees": ["Rank averaging is robust to different prediction scales across models."],
+      "family_notes": [
+        "Rank averaging is preferred over simple averaging because it is invariant to monotonic transformations of individual model outputs."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "microscope_augmentation",
+      "target_stage_id": "image_backbone_training",
+      "output_name": "augmented_images",
+      "input_name": "augmented_images",
+      "source_type": "NDArray[np.uint8]",
+      "target_type": "NDArray[np.uint8]",
+      "data_kind": "image",
+      "provenance": "Dermoscopic images with domain-specific augmentations applied.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "image_backbone_training",
+      "target_stage_id": "metadata_concatenation",
+      "output_name": "image_embeddings",
+      "input_name": "image_embeddings",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "embedding",
+      "provenance": "Penultimate layer embeddings from CNN backbone.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "metadata_concatenation",
+      "target_stage_id": "meta_head",
+      "output_name": "fused_features",
+      "input_name": "fused_features",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "embedding",
+      "provenance": "Concatenated image embeddings and patient metadata.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "meta_head",
+      "target_stage_id": "pseudo_labeling",
+      "output_name": "model_predictions",
+      "input_name": "model_predictions",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "Model predictions used to pseudo-label external datasets.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "meta_head",
+      "target_stage_id": "rank_average_ensemble",
+      "output_name": "model_predictions",
+      "input_name": "model_predictions",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "prediction",
+      "provenance": "Per-model predictions collected for rank averaging.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place SIIM-ISIC Melanoma Classification solution. Multi-modal approach combining CNN image backbones with patient metadata, domain-specific augmentations, pseudo-labeling, and rank-average ensembling.",
+    "dejargonized_summary": "Detect skin cancer by training image networks with realistic dermoscopic distortions, combining image features with patient info, adding pseudo-labeled historical data, and averaging rankings across many models.",
+    "provenance_notes": [
+      "Source: Kaggle SIIM-ISIC Melanoma Classification 1st place solution (2020)",
+      "Source: https://www.kaggle.com/c/siim-isic-melanoma-classification/discussion/175412",
+      "Code: https://github.com/haqishen/SIIM-ISIC-Melanoma-Classification-1st-Place"
+    ],
+    "uncertainty_notes": [
+      "Pseudo-labeling on historical competition data assumes similar data distribution across years.",
+      "Focal Loss hyperparameters are tuned to the specific class imbalance ratio of this dataset."
+    ],
+    "references": [
+      {
+        "title": "SIIM-ISIC Melanoma Classification 1st Place Solution",
+        "citation": "Kaggle SIIM-ISIC Melanoma Classification, 1st place solution writeup (2020)",
+        "url": "https://www.kaggle.com/c/siim-isic-melanoma-classification/discussion/175412",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

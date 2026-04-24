@@ -1,0 +1,368 @@
+{
+  "asset_id": "solution.kaggle.feedback_prize_writing_1st",
+  "asset_version": "v1",
+  "family": "nlp_span_detection",
+  "paradigm": "neural_network",
+  "name": "Feedback Prize — Evaluating Student Writing 1st Place — NLP Span Detection via DeBERTa Token Tagging",
+  "summary": "Token-level B-I-O span detection on long student essays using sliding-window DeBERTa-v3 models with character-to-token offset mapping, text-adapted Weighted Box Fusion for multi-seed span merging, and minimum-length class filtering.",
+  "dejargonized_summary": "Break long essays into overlapping chunks, train a model to label each word as the beginning, inside, or outside of a discourse element, then merge overlapping predictions from multiple models and discard unreasonably short spans.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "token_classification_span",
+    "bio_tagging",
+    "sliding_window_nlp",
+    "discourse_element_detection",
+    "long_document_ner",
+    "deberta_token_tagging",
+    "weighted_box_fusion_text",
+    "multi_seed_ensemble",
+    "character_offset_alignment",
+    "long_document_chunking",
+    "per_class_length_filtering"
+  ],
+  "inputs": [
+    {
+      "name": "essays",
+      "type_desc": "list[str]",
+      "constraints": "Student essays as raw text strings, potentially thousands of tokens long.",
+      "required": true
+    },
+    {
+      "name": "span_annotations",
+      "type_desc": "list[dict]",
+      "constraints": "Character-level start/end offsets with discourse element class labels for training.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "discourse_spans",
+      "type_desc": "list[dict]",
+      "constraints": "Predicted discourse element spans with class labels and character-level offsets.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Task requires extracting contiguous text spans with class labels from long documents (>512 tokens)",
+      "Annotations are at character-level offsets and must be mapped to subword token boundaries",
+      "Multiple overlapping span predictions need to be merged into consensus spans (multi-model ensembling)",
+      "Discourse elements or entity types have minimum length priors that can be exploited for filtering"
+    ],
+    "do_not_use_when": [
+      "Documents fit within a single transformer context window (<512 tokens) — sliding window overhead adds complexity for no benefit",
+      "Task is sentence-level or document-level classification rather than span extraction",
+      "Span boundaries are fuzzy or overlapping by definition (e.g., nested NER) — B-I-O tagging assumes non-overlapping spans",
+      "Real-time inference is required — multi-seed ensembling with text WBF is computationally expensive"
+    ],
+    "key_insight": "Text-adapted Weighted Box Fusion is the critical ensembling innovation: by treating character-offset spans as 1D bounding boxes and computing IoU as character overlap ratio, it merges multi-seed span predictions into high-confidence consensus spans. This is far more effective than majority voting on token labels because it resolves boundary disagreements smoothly rather than discretely.",
+    "critical_stages": ["text_weighted_box_fusion", "char_to_token_offset_mapping"],
+    "swappable_stages": {
+      "sequence_tagging_training": "Any token-level classifier works (Longformer, BigBird, DeBERTa variants). The value is in the span fusion pipeline, not the specific backbone.",
+      "length_constraint_filtering": "Can be replaced with confidence thresholding or class-specific post-processing rules. The filtering logic is domain-dependent.",
+      "sliding_window_tokenization": "Any chunking strategy that preserves overlap works. Stride and window size are tunable hyperparameters."
+    },
+    "failure_modes": [
+      "Short documents where sliding window creates only one chunk: multi-seed WBF provides no benefit over simple argmax decoding",
+      "Highly nested or overlapping span annotations: B-I-O tagging cannot represent nested structures, requiring a different formulation (e.g., span enumeration)",
+      "Extremely long documents (>10K tokens): quadratic cost of pairwise IoU computation in text WBF becomes prohibitive",
+      "Classes with highly variable span lengths: fixed per-class minimum length thresholds may not generalize across datasets"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "tokenization_before_training",
+      "statement": "Sliding window tokenization must precede sequence tagging training.",
+      "rationale": "Long essays exceed transformer context limits; they must be chunked with overlap before tokens can be classified.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Feedback Prize 1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "offset_mapping_before_training",
+      "statement": "Character-to-token offset mapping must be computed before training so labels align with tokenized inputs.",
+      "rationale": "Annotations are character-level but the model operates on tokens; misaligned labels would corrupt training.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Feedback Prize 1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "fusion_before_filtering",
+      "statement": "Text Weighted Box Fusion must precede length constraint filtering.",
+      "rationale": "Merging overlapping spans first produces consolidated predictions; filtering on unmerged spans would remove valid partial predictions that should be combined.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "Feedback Prize 1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "sliding_window_tokenization",
+      "name": "Sliding Window Tokenization",
+      "description": "Chunk long essays using Longformer and DeBERTa tokenizers with sliding windows to produce overlapping token sequences that fit within transformer context limits.",
+      "dejargonized_description": "Break long essays into overlapping pieces small enough for the model to process, using the model's own text splitter.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "essays",
+          "type_desc": "list[str]",
+          "constraints": "Raw essay text strings.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "token_chunks",
+          "type_desc": "list[dict]",
+          "constraints": "Overlapping tokenized chunks with positional metadata. Each chunk fits within transformer max_length.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Essays are non-empty strings."],
+      "guarantees": ["All tokens in the original essay are covered by at least one chunk. Overlap ensures boundary tokens appear in multiple chunks."],
+      "family_notes": [
+        "HuggingFace tokenizers with return_offsets_mapping=True used for alignment.",
+        "Stride parameter controls overlap between adjacent windows."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "char_to_token_offset_mapping",
+      "name": "Character to Token Offset Mapping",
+      "description": "Map character-level span annotations to token-level offsets using the tokenizer's offset mapping, producing B-I-O labels for each token.",
+      "dejargonized_description": "Convert the human annotations (which mark character positions) into per-token labels that the model can learn from.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "token_chunks",
+          "type_desc": "list[dict]",
+          "constraints": "Tokenized chunks with offset mappings.",
+          "required": true
+        },
+        {
+          "name": "span_annotations",
+          "type_desc": "list[dict]",
+          "constraints": "Character-level span annotations with class labels.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "labeled_tokens",
+          "type_desc": "list[dict]",
+          "constraints": "Token sequences with aligned B-I-O labels per token.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Token chunks contain valid offset mappings back to original text."],
+      "guarantees": ["Every token has exactly one B-I-O label. Character-token alignment is consistent."],
+      "family_notes": [
+        "Custom implementation handling edge cases at chunk boundaries and multi-token words."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sequence_tagging_training",
+      "name": "Sequence Tagging Training",
+      "description": "Train DeBERTa-v3 as a token-level B-I-O classifier using PyTorch and HuggingFace Transformers. Multiple seeds produce diverse models for downstream ensembling.",
+      "dejargonized_description": "Fine-tune a large language model to predict for each word whether it begins, continues, or is outside a discourse element.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "labeled_tokens",
+          "type_desc": "list[dict]",
+          "constraints": "Tokenized sequences with B-I-O labels.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "token_probabilities",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Per-token class probabilities from multiple model seeds.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Labeled tokens are properly aligned with B-I-O scheme."],
+      "guarantees": ["Each token receives a probability distribution over B-I-O tags for each discourse class."],
+      "family_notes": [
+        "DeBERTa-v3-large used as backbone. Multiple random seeds for ensemble diversity.",
+        "Training uses cross-entropy loss on token-level B-I-O labels."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "span_extraction",
+      "name": "Span Extraction",
+      "description": "Decode token-level B-I-O probabilities back into character-level string spans by applying argmax, grouping consecutive I-tags following B-tags, and mapping back to character offsets.",
+      "dejargonized_description": "Convert the model's per-word predictions back into contiguous text spans with start and end positions in the original essay.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "token_probabilities",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Per-token B-I-O probabilities.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "raw_spans",
+          "type_desc": "list[dict]",
+          "constraints": "Extracted spans with character offsets, class labels, and confidence scores. One set per model seed.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Token probabilities and offset mappings are available."],
+      "guarantees": ["Each span maps to a contiguous substring in the original essay."],
+      "family_notes": [
+        "Custom decoding logic handles overlapping sliding window regions by averaging probabilities."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "text_weighted_box_fusion",
+      "name": "Text Weighted Box Fusion",
+      "description": "Merge overlapping text spans from different model seeds using Weighted Box Fusion adapted for 1D text offsets. Spans with sufficient overlap are fused into consensus spans with averaged confidence.",
+      "dejargonized_description": "Combine predictions from multiple models by merging overlapping spans into a single best span, weighted by each model's confidence.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "raw_spans",
+          "type_desc": "list[list[dict]]",
+          "constraints": "Lists of span predictions from multiple model seeds.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fused_spans",
+          "type_desc": "list[dict]",
+          "constraints": "Merged consensus spans with aggregated confidence scores.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Multiple sets of span predictions are available from different seeds."],
+      "guarantees": ["Overlapping spans from different models are merged into single consensus spans."],
+      "family_notes": [
+        "Adaptation of object-detection WBF to 1D text spans. IoU computed as character overlap ratio.",
+        "Key ensembling technique that significantly boosts performance over simple voting."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "length_constraint_filtering",
+      "name": "Length Constraint Filtering",
+      "description": "Filter predicted spans shorter than a per-class minimum length threshold, removing noise predictions that are too short to represent valid discourse elements.",
+      "dejargonized_description": "Remove predictions that are unreasonably short for their type, since real discourse elements like thesis statements or evidence spans require a minimum number of words.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "fused_spans",
+          "type_desc": "list[dict]",
+          "constraints": "Merged spans from WBF.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "discourse_spans",
+          "type_desc": "list[dict]",
+          "constraints": "Final filtered spans with class labels and character offsets.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Fused spans have been produced by text WBF."],
+      "guarantees": ["All output spans meet minimum length requirements per discourse class."],
+      "family_notes": [
+        "Minimum lengths are tuned per class on validation data using numpy operations."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "sliding_window_tokenization",
+      "target_stage_id": "char_to_token_offset_mapping",
+      "output_name": "token_chunks",
+      "input_name": "token_chunks",
+      "source_type": "list[dict]",
+      "target_type": "list[dict]",
+      "data_kind": "tokenized_text",
+      "provenance": "Overlapping token chunks with offset mappings from HuggingFace tokenizer.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "char_to_token_offset_mapping",
+      "target_stage_id": "sequence_tagging_training",
+      "output_name": "labeled_tokens",
+      "input_name": "labeled_tokens",
+      "source_type": "list[dict]",
+      "target_type": "list[dict]",
+      "data_kind": "labeled_sequence",
+      "provenance": "Token sequences with aligned B-I-O labels for supervised training.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "sequence_tagging_training",
+      "target_stage_id": "span_extraction",
+      "output_name": "token_probabilities",
+      "input_name": "token_probabilities",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "probability_distribution",
+      "provenance": "Per-token B-I-O class probabilities from trained DeBERTa models.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "span_extraction",
+      "target_stage_id": "text_weighted_box_fusion",
+      "output_name": "raw_spans",
+      "input_name": "raw_spans",
+      "source_type": "list[dict]",
+      "target_type": "list[list[dict]]",
+      "data_kind": "span_predictions",
+      "provenance": "Character-level spans decoded from token probabilities, one set per model seed.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "text_weighted_box_fusion",
+      "target_stage_id": "length_constraint_filtering",
+      "output_name": "fused_spans",
+      "input_name": "fused_spans",
+      "source_type": "list[dict]",
+      "target_type": "list[dict]",
+      "data_kind": "span_predictions",
+      "provenance": "Consensus spans from multi-seed WBF merging.",
+      "loss_class": "lossy_but_allowed"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Feedback Prize solution. Token-level NER on long essays with sliding window DeBERTa, text-adapted WBF ensembling, and per-class length filtering.",
+    "dejargonized_summary": "Detect discourse elements in student essays by labeling each word, merging overlapping predictions from multiple models, and removing unreasonably short results.",
+    "provenance_notes": [
+      "Source: Kaggle Feedback Prize — Evaluating Student Writing competition (2022), 1st place solution",
+      "Source: https://www.kaggle.com/c/feedback-prize-2021/discussion/313330",
+      "Code: https://github.com/yasufuminakama/feedback-prize-2021-1st-place"
+    ],
+    "uncertainty_notes": [
+      "Sliding window stride and overlap parameters are tuned empirically.",
+      "Text WBF IoU threshold for merging spans is a hyperparameter.",
+      "Per-class minimum length thresholds depend on the specific discourse taxonomy."
+    ],
+    "references": [
+      {
+        "title": "Feedback Prize 1st Place Solution",
+        "citation": "Kaggle Feedback Prize — Evaluating Student Writing, 1st place solution writeup (2022)",
+        "url": "https://www.kaggle.com/competitions/feedback-prize-2021/discussion/313235",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

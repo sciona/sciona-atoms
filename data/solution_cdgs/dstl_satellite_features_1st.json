@@ -1,0 +1,304 @@
+{
+  "asset_id": "solution.kaggle.dstl_satellite_features_1st",
+  "asset_version": "v1",
+  "family": "geospatial_segmentation",
+  "paradigm": "neural_network",
+  "name": "Dstl Satellite Imagery Feature Detection - 1st Place (2017) - Pipeline Template",
+  "summary": "Geospatial / Polygon generation solution template for Dstl Satellite Imagery Feature Detection - 1st Place (2017), modeled as a 5-stage deterministic pipeline: Vector rasterization, Multi-resolution concatenation, U-Net Segmentation, Conditional Random Fields (CRF), and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Dstl Satellite Imagery Feature Detection - 1st Place (2017): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "segmentation",
+    "geospatial",
+    "polygon",
+    "generation",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Geospatial / Polygon generation task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Geospatial / Polygon generation.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Vector rasterization creates the representation needed by Vectorization, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "vector_rasterization",
+      "multi_resolution_concatenation"
+    ],
+    "swappable_stages": {
+      "vectorization": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/dstl-satellite-imagery-feature-detection/discussion/29487"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/dstl-satellite-imagery-feature-detection/discussion/29487"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "vector_rasterization",
+      "name": "Vector rasterization",
+      "description": "convert the provided WKT polygon strings into dense binary masks mapping perfectly to the GeoTIFF coordinates (OpenCV/GDAL)",
+      "dejargonized_description": "This stage convert the provided WKT polygon strings into dense binary masks mapping perfectly to the GeoTIFF coordinates (OpenCV/GDAL).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Dstl Satellite Imagery Feature Detection - 1st Place (2017).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vector_rasterization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_resolution_concatenation",
+      "name": "Multi-resolution concatenation",
+      "description": "upsample the 16-band multispectral low-resolution images to match the high-resolution panchromatic images, concatenating them into a unified tensor (scipy)",
+      "dejargonized_description": "This stage upsample the 16-band multispectral low-resolution images to match the high-resolution panchromatic images, concatenating them into a unified tensor (scipy).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "multi_resolution_concatenation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multi_resolution_concatenation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "u_net_segmentation",
+      "name": "U-Net Segmentation",
+      "description": "train an ensemble of deep U-Nets to predict probability masks for 10 distinct terrain classes (Keras)",
+      "dejargonized_description": "This stage train an ensemble of deep U-Nets to predict probability masks for 10 distinct terrain classes (Keras).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "u_net_segmentation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "u_net_segmentation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "conditional_random_fields_crf",
+      "name": "Conditional Random Fields (CRF)",
+      "description": "apply dense CRFs to the output masks to strictly snap the blurry segmentation predictions to the sharp visible edges of the original image (pydensecrf)",
+      "dejargonized_description": "This stage apply dense CRFs to the output masks to strictly snap the blurry segmentation predictions to the sharp visible edges of the original image (pydensecrf).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "conditional_random_fields_crf_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "conditional_random_fields_crf_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "vectorization",
+      "name": "Vectorization",
+      "description": "execute contour finding algorithms to trace the CRF masks, applying Douglas-Peucker simplification to output clean multi-polygons (Shapely/OpenCV)",
+      "dejargonized_description": "This stage execute contour finding algorithms to trace the CRF masks, applying Douglas-Peucker simplification to output clean multi-polygons (Shapely/OpenCV).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "vectorization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "vector_rasterization",
+      "target_stage_id": "multi_resolution_concatenation",
+      "output_name": "vector_rasterization_output",
+      "input_name": "multi_resolution_concatenation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Vector rasterization output is consumed by Multi-resolution concatenation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_resolution_concatenation",
+      "target_stage_id": "u_net_segmentation",
+      "output_name": "multi_resolution_concatenation_output",
+      "input_name": "u_net_segmentation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Multi-resolution concatenation output is consumed by U-Net Segmentation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "u_net_segmentation",
+      "target_stage_id": "conditional_random_fields_crf",
+      "output_name": "u_net_segmentation_output",
+      "input_name": "conditional_random_fields_crf_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "U-Net Segmentation output is consumed by Conditional Random Fields (CRF).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "conditional_random_fields_crf",
+      "target_stage_id": "vectorization",
+      "output_name": "conditional_random_fields_crf_output",
+      "input_name": "vectorization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Conditional Random Fields (CRF) output is consumed by Vectorization.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Geospatial / Polygon generation.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/dstl-satellite-imagery-feature-detection/discussion/29487",
+      "Code URL: writeup only",
+      "Standard tools: OpenCV, GDAL, Keras, pydensecrf, Shapely"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Dstl Satellite Imagery Feature Detection - 1st Place (2017) solution writeup",
+        "citation": "https://www.kaggle.com/c/dstl-satellite-imagery-feature-detection/discussion/29487",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

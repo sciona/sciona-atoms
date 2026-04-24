@@ -1,0 +1,307 @@
+{
+  "asset_id": "solution.kaggle.santa_2020_candy_cane_1st",
+  "asset_version": "v1",
+  "family": "reinforcement_learning",
+  "paradigm": "optimization",
+  "name": "Santa 2020 - The Candy Cane Contest - 1st Place (2020) - Pipeline Template",
+  "summary": "Multi-Armed Bandit / Reinforcement Learning solution template for Santa 2020 - The Candy Cane Contest - 1st Place (2020), modeled as a 5-stage deterministic pipeline: Belief State Initialization, Opponent modeling, Bayesian UCB sampling, Action execution, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Santa 2020 - The Candy Cane Contest - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "reinforcement_learning",
+    "ppo",
+    "bandit",
+    "multi",
+    "armed",
+    "reinforcement",
+    "learning",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Multi-Armed Bandit / Reinforcement Learning task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Multi-Armed Bandit / Reinforcement Learning.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Belief State Initialization creates the representation needed by Belief updating, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "belief_state_initialization",
+      "opponent_modeling"
+    ],
+    "swappable_stages": {
+      "belief_updating": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/santa-2020/discussion/216503"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/santa-2020/discussion/216503"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "belief_state_initialization",
+      "name": "Belief State Initialization",
+      "description": "initialize 100 distinct Beta distributions representing the unknown payout probabilities of the 100 bandit machines (scipy.stats)",
+      "dejargonized_description": "This stage initialize 100 distinct Beta distributions representing the unknown payout probabilities of the 100 bandit machines (scipy.stats).",
+      "concept_type": "posterior_update",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Santa 2020 - The Candy Cane Contest - 1st Place (2020).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "belief_state_initialization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "opponent_modeling",
+      "name": "Opponent modeling",
+      "description": "algorithmically track the decay of machines specifically triggered by the opponent agent, updating the internal probability map without spending own turns (Python)",
+      "dejargonized_description": "This stage algorithmically track the decay of machines specifically triggered by the opponent agent, updating the internal probability map without spending own turns (Python).",
+      "concept_type": "posterior_update",
+      "inputs": [
+        {
+          "name": "opponent_modeling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "opponent_modeling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "bayesian_ucb_sampling",
+      "name": "Bayesian UCB sampling",
+      "description": "calculate the Upper Confidence Bound (UCB) mathematically to balance exploitation (pulling known good machines) and exploration (testing unknown machines)",
+      "dejargonized_description": "This stage calculate the Upper Confidence Bound (UCB) mathematically to balance exploitation (pulling known good machines) and exploration (testing unknown machines).",
+      "concept_type": "posterior_update",
+      "inputs": [
+        {
+          "name": "bayesian_ucb_sampling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bayesian_ucb_sampling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "action_execution",
+      "name": "Action execution",
+      "description": "submit the highest-scoring machine index",
+      "dejargonized_description": "This stage submit the highest-scoring machine index.",
+      "concept_type": "posterior_update",
+      "inputs": [
+        {
+          "name": "action_execution_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "action_execution_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "belief_updating",
+      "name": "Belief updating",
+      "description": "receive the reward (0 or 1) from the environment and update the Alpha/Beta parameters of the specific machine's distribution (Python)",
+      "dejargonized_description": "This stage receive the reward (0 or 1) from the environment and update the Alpha/Beta parameters of the specific machine's distribution (Python).",
+      "concept_type": "posterior_update",
+      "inputs": [
+        {
+          "name": "belief_updating_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "belief_state_initialization",
+      "target_stage_id": "opponent_modeling",
+      "output_name": "belief_state_initialization_output",
+      "input_name": "opponent_modeling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Belief State Initialization output is consumed by Opponent modeling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "opponent_modeling",
+      "target_stage_id": "bayesian_ucb_sampling",
+      "output_name": "opponent_modeling_output",
+      "input_name": "bayesian_ucb_sampling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Opponent modeling output is consumed by Bayesian UCB sampling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "bayesian_ucb_sampling",
+      "target_stage_id": "action_execution",
+      "output_name": "bayesian_ucb_sampling_output",
+      "input_name": "action_execution_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Bayesian UCB sampling output is consumed by Action execution.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "action_execution",
+      "target_stage_id": "belief_updating",
+      "output_name": "action_execution_output",
+      "input_name": "belief_updating_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Action execution output is consumed by Belief updating.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Multi-Armed Bandit / Reinforcement Learning.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/santa-2020/discussion/216503",
+      "Code URL: writeup only",
+      "Standard tools: scipy, Python"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Santa 2020 - The Candy Cane Contest - 1st Place (2020) solution writeup",
+        "citation": "https://www.kaggle.com/c/santa-2020/discussion/216503",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

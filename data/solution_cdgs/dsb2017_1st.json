@@ -1,0 +1,295 @@
+{
+  "asset_id": "solution.kaggle.dsb2017_1st",
+  "asset_version": "v1",
+  "family": "medical_imaging_3d",
+  "paradigm": "neural_network",
+  "name": "DSB2017 1st Place — Lung Cancer Detection from CT Scans",
+  "summary": "Detect-then-classify pipeline for lung cancer prediction from 3D CT volumes: a coordinate-aware 3D U-Net detects nodule candidates, proposals are sampled stochastically, per-nodule features are extracted and classified, then patient-level probability is computed via noisy-OR pooling with a learned baseline for missed detections.",
+  "dejargonized_summary": "Find suspicious lumps in a 3D lung scan, crop and classify each one, then combine the per-lump cancer probabilities into a single patient-level prediction using a formula that accounts for the detector possibly missing some lumps entirely.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "detect_then_classify",
+    "multi_instance_learning",
+    "noisy_or_aggregation",
+    "3d_medical_detection",
+    "lung_cancer_screening",
+    "learned_baseline_leak",
+    "coordinate_aware_convolution",
+    "volumetric_tiling",
+    "hard_negative_mining",
+    "proposal_sampling",
+    "patient_level_aggregation"
+  ],
+  "inputs": [
+    {
+      "name": "ct_volume",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (Z, H, W): raw CT volume in Hounsfield units. Typically ~300x512x512.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "cancer_probability",
+      "type_desc": "float",
+      "constraints": "Patient-level cancer probability in [0, 1].",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Patient-level classification from 3D medical volumes where the signal comes from localized lesions (nodules, tumors, masses)",
+      "The volume is too large for direct end-to-end classification — a detect-then-classify decomposition is needed",
+      "The detector may miss relevant findings, and missed detections must be accounted for in aggregation (not just max/mean)",
+      "Multiple instances (nodules) per patient with independent cancer probabilities that should be combined"
+    ],
+    "do_not_use_when": [
+      "The pathology is diffuse rather than focal (e.g., interstitial lung disease) — there are no localized objects to detect",
+      "The volume is small enough for direct 3D classification without tiling (<64^3 voxels)",
+      "Ground-truth bounding boxes are unavailable for training the detector stage",
+      "Real-time inference is required — the detect-then-classify pipeline with tiling is slow (~minutes per scan)"
+    ],
+    "key_insight": "Noisy-OR with a learned baseline (initialized at sigmoid(-30) ~ 0) correctly models the case where ZERO detected nodules are cancerous but cancer exists in an undetected region. The baseline acts as a learned 'leak' probability that the detector missed something, starting near zero so the model initially relies on detected nodules and learns to increase the leak only if the detector systematically misses cancerous cases.",
+    "critical_stages": ["noisy_or_pooling", "coordinate_aware_3d_unet", "center_feature_extraction_3d"],
+    "swappable_stages": {
+      "lung_mask_with_bone_removal": "Any lung segmentation method (U-Net, threshold-based, atlas registration) works. The key requirement is removing bone from the pleural boundary.",
+      "softmax_temperature_proposal_sampling": "Greedy top-k or NMS-filtered selection can replace stochastic proposal sampling at the cost of reduced diversity during training.",
+      "miss_penalty_loss": "Standard binary cross-entropy works but misses the safety net for known-positive nodules receiving very low scores."
+    },
+    "failure_modes": [
+      "Datasets where most cancers are detected by the detector: the learned baseline stays near zero and provides no benefit over simple max pooling",
+      "Very small nodules (<3mm) that the 3D U-Net cannot resolve at 1mm isotropic spacing: detector recall drops and the baseline leak cannot compensate for systematic detector blindness",
+      "Multi-cancer patients where cancer probabilities are NOT independent: noisy-OR assumes independence, which breaks for correlated multi-focal disease"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "detect_before_classify",
+      "statement": "Nodule detection must precede classification; the classifier operates on per-proposal crops, not the full volume.",
+      "rationale": "The full CT volume is too large for direct classification. The detector localizes candidate nodules, and the classifier focuses on each candidate independently.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Liao et al. 2017, arXiv:1711.08324"
+    },
+    {
+      "category": "stage",
+      "subject": "noisy_or_aggregation",
+      "statement": "Patient-level probability must use noisy-OR pooling, not simple max or mean.",
+      "rationale": "Noisy-OR with a learned baseline correctly models the case where ZERO detected nodules are cancerous but cancer exists in an undetected region. Simple max/mean cannot account for detector misses.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Liao et al. 2017, Section 3.2"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "lung_mask_with_bone_removal",
+      "name": "Lung Mask with Bone Removal",
+      "description": "Per-slice convex hulls, dilation, masking, then bone identification (>210 HU) in the pleural boundary with replacement by pad value. Prevents detector confusing rib cross-sections with nodules.",
+      "dejargonized_description": "Isolate the lungs from the surrounding bone and tissue so the detector only looks at lung tissue.",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {"name": "ct_volume", "type_desc": "NDArray[np.float64]", "constraints": "Raw HU volume.", "required": true}
+      ],
+      "outputs": [
+        {"name": "preprocessed_volume", "type_desc": "NDArray[np.float64]", "constraints": "Masked, 1mm isotropic volume.", "required": true}
+      ],
+      "preconditions": ["Raw CT volume available in Hounsfield units."],
+      "guarantees": ["Output contains only lung tissue; bone and exterior removed."],
+      "matched_primitive": "sciona.atoms.dl.detection.lung_mask_with_bone_removal"
+    },
+    {
+      "stage_id": "volume_split_combine",
+      "name": "3D Volume Split-Combine with Margin",
+      "description": "Overlapping 3D tiling for inference. Splits volume into overlapping cubes with margins, processes each tile, then recombines by stripping margins. Unassigned voxels initialized to -1e6 (very negative logit) to suppress false positives.",
+      "dejargonized_description": "Break the big scan into overlapping smaller cubes that fit in GPU memory, process each one, and stitch the results back together.",
+      "concept_type": "map_over",
+      "inputs": [
+        {"name": "preprocessed_volume", "type_desc": "NDArray[np.float64]", "constraints": "Full preprocessed volume.", "required": true}
+      ],
+      "outputs": [
+        {"name": "detection_logits", "type_desc": "NDArray[np.float64]", "constraints": "Per-voxel detection logits.", "required": true}
+      ],
+      "preconditions": ["Preprocessed volume available."],
+      "guarantees": ["Output covers entire volume with no gaps."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "coordinate_aware_3d_unet",
+      "name": "Coordinate-Aware 3D U-Net",
+      "description": "3D U-Net with skip connections. Injects 3 normalized coordinate channels (position within full CT volume) at the decoder stage, giving the network location awareness. Predates CoordConv (2018). Coordinates are normalized relative to full scan, not patch, and track correctly through cropping/scaling augmentations.",
+      "dejargonized_description": "A neural network that looks at 3D image patches and knows WHERE in the body each patch came from, which helps because nodule likelihood depends on anatomical location.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {"name": "volume_tile", "type_desc": "NDArray[np.float64]", "constraints": "One tile from split-combine.", "required": true},
+        {"name": "coordinates", "type_desc": "NDArray[np.float64]", "constraints": "Normalized position channels.", "required": true}
+      ],
+      "outputs": [
+        {"name": "detection_output", "type_desc": "NDArray[np.float64]", "constraints": "Per-anchor objectness + regression.", "required": true}
+      ],
+      "preconditions": ["Volume tile and coordinate channels available."],
+      "guarantees": ["Output contains per-anchor detection logits and bounding box regressions."],
+      "family_notes": [
+        "Predates CoordConv (Liu et al. 2018) by using position-aware channels at the decoder.",
+        "Critical because nodule probability varies by anatomical location (e.g., upper lobes vs lower lobes)."
+      ],
+      "matched_primitive": "sciona.atoms.dl.detection.coordinate_aware_3d_unet"
+    },
+    {
+      "stage_id": "anchor_label_mapping_with_iou_dilation",
+      "name": "3D Anchor Label Mapping with IoU Dilation",
+      "description": "Two-tier anchor assignment: binary dilation around positives creates an ignore zone so near-miss anchors aren't penalized as negatives. IoU > 0.5 for positive assignment with regression targets encoded as offset/anchor_size.",
+      "dejargonized_description": "Decide which anchor boxes match real nodules and which are negatives, with a buffer zone around each real nodule where uncertain anchors are ignored.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {"name": "anchors", "type_desc": "list[float]", "constraints": "3 anchor sizes.", "required": true},
+        {"name": "targets", "type_desc": "NDArray[np.float64]", "constraints": "Ground truth bounding boxes.", "required": true}
+      ],
+      "outputs": [
+        {"name": "labels", "type_desc": "NDArray[np.float64]", "constraints": "Per-anchor labels (pos/neg/ignore) + regression targets.", "required": true}
+      ],
+      "preconditions": ["Anchor grid and ground truth boxes available."],
+      "guarantees": ["Binary dilation creates ignore zone; near-miss anchors not penalized."],
+      "matched_primitive": "sciona.atoms.dl.detection.anchor_label_mapping_with_iou_dilation"
+    },
+    {
+      "stage_id": "online_hard_negative_mining",
+      "name": "Online Hard Negative Mining (3D)",
+      "description": "OHEM for 3D anchor-based detection. num_hard=2 per sample. Balanced 50/50 positive/negative loss weighting prevents massive class imbalance from dominating training.",
+      "dejargonized_description": "During training, focus on the hardest negative examples (background regions the detector is most confused about) rather than easy ones.",
+      "concept_type": "optimization",
+      "inputs": [
+        {"name": "neg_logits", "type_desc": "NDArray[np.float64]", "constraints": "Negative anchor logits.", "required": true}
+      ],
+      "outputs": [
+        {"name": "hard_negatives", "type_desc": "NDArray[np.float64]", "constraints": "Filtered hardest negative logits.", "required": true}
+      ],
+      "preconditions": ["Detection logits available."],
+      "guarantees": ["Only num_hard hardest negatives per sample retained."],
+      "matched_primitive": "sciona.atoms.dl.training.online_hard_negative_mining"
+    },
+    {
+      "stage_id": "size_aware_nodule_oversampling",
+      "name": "Size-Aware Nodule Oversampling",
+      "description": "Oversample large nodules (1x >6mm, 3x >30mm, 7x >40mm). Counterintuitive: large nodules need more diverse crop positions to learn all perspectives, despite being easier to detect.",
+      "dejargonized_description": "Show the network more examples of large nodules because they need to be seen from many different angles.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {"name": "labels", "type_desc": "list[NDArray]", "constraints": "Nodule bounding boxes with diameter.", "required": true}
+      ],
+      "outputs": [
+        {"name": "oversampled_labels", "type_desc": "list[NDArray]", "constraints": "Expanded bbox list.", "required": true}
+      ],
+      "preconditions": ["Nodule labels with diameter available."],
+      "guarantees": ["Large nodules oversampled proportionally."],
+      "matched_primitive": "sciona.atoms.dl.training.size_aware_nodule_oversampling"
+    },
+    {
+      "stage_id": "softmax_temperature_proposal_sampling",
+      "name": "Softmax Temperature Proposal Sampling",
+      "description": "Sample top-k proposals proportional to softmax(confidence/T) with sequential without-replacement, instead of greedy top-k. High T = near-uniform, low T = greedy. Data augmentation at the proposal level.",
+      "dejargonized_description": "Instead of always picking the most confident detections, randomly sample from the top detections with probabilities based on confidence, adding diversity during training.",
+      "concept_type": "randomized",
+      "inputs": [
+        {"name": "confidences", "type_desc": "NDArray[np.float64]", "constraints": "Detection confidence scores.", "required": true},
+        {"name": "temperature", "type_desc": "float", "constraints": "Sampling temperature.", "required": true}
+      ],
+      "outputs": [
+        {"name": "selected_indices", "type_desc": "list[int]", "constraints": "Selected proposal indices.", "required": true}
+      ],
+      "preconditions": ["Detection confidences available."],
+      "guarantees": ["Selected proposals are diverse; temperature controls exploration vs exploitation."],
+      "matched_primitive": "sciona.atoms.dl.training.softmax_temperature_proposal_sampling"
+    },
+    {
+      "stage_id": "center_feature_extraction_3d",
+      "name": "Center Feature Extraction (3D)",
+      "description": "Extract exactly the 2x2x2 center voxels of the 3D feature map (the nodule center location) and max-pool to a single 128-d vector per proposal. Avoids diluting nodule features with surrounding tissue.",
+      "dejargonized_description": "Grab only the center of each detected region's features, rather than averaging over the whole region, to get the purest signal about the nodule itself.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {"name": "feature_map", "type_desc": "NDArray[np.float64]", "constraints": "Shape (n*k, 128, D, H, W).", "required": true}
+      ],
+      "outputs": [
+        {"name": "center_features", "type_desc": "NDArray[np.float64]", "constraints": "Shape (n*k, 128).", "required": true}
+      ],
+      "preconditions": ["3D feature maps from proposals available."],
+      "guarantees": ["Output is a fixed-size vector per proposal."],
+      "family_notes": [
+        "An LLM would use global pooling. The center-only extraction is the non-obvious design choice."
+      ],
+      "matched_primitive": "sciona.atoms.dl.detection.center_feature_extraction_3d"
+    },
+    {
+      "stage_id": "noisy_or_pooling",
+      "name": "Noisy-OR Pooling with Learned Baseline",
+      "description": "Patient-level aggregation: casePred = 1 - prod(1-p_i) * (1-base_prob), where base_prob = sigmoid(baseline) with baseline initialized at -30 (near-zero). The 'leak' accounts for the detector missing cancerous nodules entirely. Initialization at -30 means model initially relies on detected nodules, then learns to increase baseline if detector systematically misses cases.",
+      "dejargonized_description": "Combine all per-nodule cancer probabilities into one patient probability, with a safety term that accounts for the possibility that the detector missed a cancerous nodule entirely.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "nodule_probs", "type_desc": "NDArray[np.float64]", "constraints": "Per-nodule cancer probabilities.", "required": true},
+        {"name": "baseline_logit", "type_desc": "float", "constraints": "Learned leak parameter (initialized -30).", "required": true}
+      ],
+      "outputs": [
+        {"name": "cancer_probability", "type_desc": "float", "constraints": "Patient-level probability in [0, 1].", "required": true}
+      ],
+      "preconditions": ["Per-nodule probabilities available."],
+      "guarantees": ["Output is in [0, 1]. Accounts for missed detections via learned baseline."],
+      "family_notes": [
+        "KEY WINNING TECHNIQUE. The learned leak parameter is the core contribution.",
+        "An LLM would not spontaneously add the baseline or know the -30 initialization."
+      ],
+      "matched_primitive": "sciona.atoms.medical_imaging_3d.aggregation.case_probability_from_nodule_scores"
+    },
+    {
+      "stage_id": "miss_penalty_loss",
+      "name": "Miss Penalty Loss",
+      "description": "Asymmetric conditional penalty: -log(P) * 1(y_nod=1 & P<0.03). Strong penalty when a known nodule gets <3% cancer probability. Safety net preventing noisy-OR from explaining away known nodules as benign.",
+      "dejargonized_description": "During training, heavily penalize the model when it assigns very low cancer probability to a known cancerous nodule — a safety mechanism to prevent the model from being too dismissive.",
+      "concept_type": "optimization",
+      "inputs": [
+        {"name": "nodule_probs", "type_desc": "NDArray[np.float64]", "constraints": "Per-nodule predictions.", "required": true},
+        {"name": "nodule_labels", "type_desc": "NDArray[np.float64]", "constraints": "Per-nodule ground truth.", "required": true}
+      ],
+      "outputs": [
+        {"name": "loss", "type_desc": "float", "constraints": "Scalar loss term.", "required": true}
+      ],
+      "preconditions": ["Predictions and labels available."],
+      "guarantees": ["Only activates when P < 0.03 for known positive nodules."],
+      "matched_primitive": "sciona.atoms.dl.loss.miss_penalty_loss"
+    }
+  ],
+  "edges": [
+    {"source_stage_id": "lung_mask_with_bone_removal", "target_stage_id": "volume_split_combine", "output_name": "preprocessed_volume", "input_name": "preprocessed_volume", "source_type": "NDArray", "target_type": "NDArray", "data_kind": "medical_volume", "provenance": "Masked lung volume.", "loss_class": "lossy_but_allowed"},
+    {"source_stage_id": "volume_split_combine", "target_stage_id": "coordinate_aware_3d_unet", "output_name": "volume_tile", "input_name": "volume_tile", "source_type": "NDArray", "target_type": "NDArray", "data_kind": "volume_tile", "provenance": "One overlapping tile.", "loss_class": "preserving"},
+    {"source_stage_id": "coordinate_aware_3d_unet", "target_stage_id": "softmax_temperature_proposal_sampling", "output_name": "detection_output", "input_name": "confidences", "source_type": "NDArray", "target_type": "NDArray", "data_kind": "detection", "provenance": "NMS-filtered proposals.", "loss_class": "lossy_but_allowed"},
+    {"source_stage_id": "softmax_temperature_proposal_sampling", "target_stage_id": "center_feature_extraction_3d", "output_name": "selected_indices", "input_name": "proposal_indices", "source_type": "list[int]", "target_type": "list[int]", "data_kind": "index", "provenance": "Sampled proposal indices.", "loss_class": "lossy_but_allowed"},
+    {"source_stage_id": "center_feature_extraction_3d", "target_stage_id": "noisy_or_pooling", "output_name": "center_features", "input_name": "nodule_features", "source_type": "NDArray", "target_type": "NDArray", "data_kind": "feature_vector", "provenance": "Per-nodule 128-d vectors → FC → sigmoid → probabilities.", "loss_class": "lossy_but_allowed"}
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Data Science Bowl 2017. Detect-then-classify with noisy-OR aggregation. Tests deep learning atom coverage and multi-instance learning patterns.",
+    "dejargonized_summary": "Find suspicious spots in a 3D lung scan, classify each one, and combine the results accounting for missed detections.",
+    "provenance_notes": [
+      "Source: https://github.com/lfz/DSB2017 (MIT)",
+      "Paper: Liao et al. 2017, arXiv:1711.08324",
+      "Local analysis: kaggle-solutions/docs/analysis-dsb2017-1st.md",
+      "1 atom ingested: case_probability_from_nodule_scores in sciona-atoms-bio"
+    ],
+    "uncertainty_notes": [
+      "Most stages are PyTorch neural network components — the atom catalog has limited DL coverage.",
+      "The noisy-OR baseline initialization (-30) is a critical hyperparameter; the atom captures the formula but not the initialization strategy."
+    ],
+    "references": [
+      {
+        "title": "Liao et al. (2017)",
+        "citation": "Evaluate the Malignancy of Pulmonary Nodules Using the 3D Deep Leaky Noisy-or Network",
+        "url": "https://arxiv.org/abs/1711.08324",
+        "note": "1st place solution paper."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.flavours_physics_1st",
+  "solution_metadata": {
+    "competition": "Flavours of Physics: Finding tau to 3mu",
+    "placement": "1st",
+    "team": "Tatiana Likhomanenko & Alexey Rogozhnikov (Yandex Data School)",
+    "year": 2015,
+    "metric": "Truncated weighted AUC (low-TPR emphasis)",
+    "problem_domain": "constrained_classification",
+    "source_url": "https://github.com/yandexdataschool/flavours-of-physics-start",
+    "source_license": "NO LICENSE (blocked for ingestion; hep_ml is Apache-2.0)"
+  },
+  "bindings": [
+    {
+      "stage_id": "feature_selection_safe",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "resolved_reason": "Domain-specific physics knowledge: which features are guaranteed mass-independent. Modeled as external_knowledge concept_type. Not a gap — the knowledge is problem-specific and cannot be generalized into an atom."
+      }
+    },
+    {
+      "stage_id": "flatness_constrained_gradient_boosting",
+      "bound_artifact_fqdn": "sciona.atoms.ml.constrained_ml.decorrelation.flatness_penalty_gradient",
+      "binding_confidence": 0.85,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "The novel component (flatness penalty loss function) is now an atom. The boosting structure itself uses standard GBC/XGBoost. Bound via callable_injection: the loss atom is passed as a custom objective to the boosting trainer. Confidence 0.85 because the full stage is a composition (loss atom + boosting trainer), not a single atom.",
+        "edge_kind": "callable_injection"
+      }
+    },
+    {
+      "stage_id": "noise_injection_decorrelation",
+      "bound_artifact_fqdn": "sciona.atoms.ml.constrained_ml.decorrelation.noise_injection_decorrelation",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "compute_ks_agreement",
+      "bound_artifact_fqdn": "sciona.atoms.ml.constrained_ml.decorrelation.compute_ks_agreement",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "compute_cvm_mass_decorrelation",
+      "bound_artifact_fqdn": "sciona.atoms.ml.constrained_ml.decorrelation.compute_cvm_mass_decorrelation",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "roc_auc_truncated_weighted",
+      "bound_artifact_fqdn": "sciona.atoms.ml.constrained_ml.decorrelation.roc_auc_truncated_weighted",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 6,
+    "bound_approximate": 0,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona-atoms-ml": 5
+    },
+    "novel_atoms_needed": [],
+    "external_knowledge_unbound": ["feature_selection_safe"]
+  },
+  "architect_test_expectations": {
+    "description": "All 6 stages are gaps. This CDG tests the architect's handling of constraint gates (KS, CvM) that act as hard pass/fail filters before metric computation.",
+    "critical_finding": "The constraint-gate pattern (hard statistical tests as acceptance criteria) is broadly applicable to fairness-aware ML. The architect should recognize that compute_ks_agreement and compute_cvm_mass_decorrelation are evaluation/auditing atoms, not model components. The NO LICENSE status blocks direct ingestion but clean-room reimplementation from papers is feasible for all atoms.",
+    "expected_retrieval_path": "No atoms should be found. All stages should be reported as gaps. The flatness_constrained_gradient_boosting atom may be partially matchable to hep_ml (Apache 2.0) if that library is indexed."
+  }
+}

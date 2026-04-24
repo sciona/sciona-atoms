@@ -1,0 +1,310 @@
+{
+  "asset_id": "solution.kaggle.dfdc_deepfake_detection",
+  "asset_version": "v1",
+  "family": "video_understanding",
+  "paradigm": "neural_network",
+  "name": "Deepfake Detection Challenge (DFDC) - 1st Place (2020) - Pipeline Template",
+  "summary": "Video understanding / Image classification solution template for Deepfake Detection Challenge (DFDC) - 1st Place (2020), modeled as a 5-stage deterministic pipeline: Frame extraction, Face detection, Face alignment & cropping, Deep fake classification, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by Deepfake Detection Challenge (DFDC) - 1st Place (2020): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "cnn",
+    "efficientnet",
+    "rag",
+    "video",
+    "understanding",
+    "image",
+    "classification"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Video understanding / Image classification task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Video understanding / Image classification.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Frame extraction creates the representation needed by Temporal aggregation, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "frame_extraction",
+      "face_detection"
+    ],
+    "swappable_stages": {
+      "temporal_aggregation": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/deepfake-detection-challenge/discussion/145721"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/deepfake-detection-challenge/discussion/145721"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "frame_extraction",
+      "name": "Frame extraction",
+      "description": "sample 32 frames uniformly across each video file (OpenCV)",
+      "dejargonized_description": "This stage sample 32 frames uniformly across each video file (OpenCV).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Deepfake Detection Challenge (DFDC) - 1st Place (2020).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "frame_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "face_detection",
+      "name": "Face detection",
+      "description": "run an MTCNN/RetinaFace detector on extracted frames to find bounding boxes (PyTorch)",
+      "dejargonized_description": "This stage run an MTCNN/RetinaFace detector on extracted frames to find bounding boxes (PyTorch).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "face_detection_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "face_detection_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "face_alignment_cropping",
+      "name": "Face alignment & cropping",
+      "description": "apply margin expansions and align facial landmarks to a standard template, cropping to just the face (OpenCV/Albumentations)",
+      "dejargonized_description": "This stage apply margin expansions and align facial landmarks to a standard template, cropping to just the face (OpenCV/Albumentations).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "face_alignment_cropping_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "face_alignment_cropping_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "deep_fake_classification",
+      "name": "Deep fake classification",
+      "description": "train an ensemble of EfficientNet-B7 and Se-ResNeXt50 on the cropped faces with heavy image augmentations (PyTorch)",
+      "dejargonized_description": "This stage train an ensemble of EfficientNet-B7 and Se-ResNeXt50 on the cropped faces with heavy image augmentations (PyTorch).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "deep_fake_classification_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "deep_fake_classification_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "temporal_aggregation",
+      "name": "Temporal aggregation",
+      "description": "average the frame-level deepfake probability predictions across the video to produce a single score (numpy)",
+      "dejargonized_description": "This stage average the frame-level deepfake probability predictions across the video to produce a single score (numpy).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "temporal_aggregation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "frame_extraction",
+      "target_stage_id": "face_detection",
+      "output_name": "frame_extraction_output",
+      "input_name": "face_detection_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Frame extraction output is consumed by Face detection.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "face_detection",
+      "target_stage_id": "face_alignment_cropping",
+      "output_name": "face_detection_output",
+      "input_name": "face_alignment_cropping_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Face detection output is consumed by Face alignment & cropping.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "face_alignment_cropping",
+      "target_stage_id": "deep_fake_classification",
+      "output_name": "face_alignment_cropping_output",
+      "input_name": "deep_fake_classification_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Face alignment & cropping output is consumed by Deep fake classification.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "deep_fake_classification",
+      "target_stage_id": "temporal_aggregation",
+      "output_name": "deep_fake_classification_output",
+      "input_name": "temporal_aggregation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Deep fake classification output is consumed by Temporal aggregation.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Video understanding / Image classification.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_25-50.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/deepfake-detection-challenge/discussion/145721",
+      "Code URL: https://github.com/selimsef/dfdc_deepfake_challenge",
+      "Standard tools: OpenCV, PyTorch, Albumentations, numpy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Deepfake Detection Challenge (DFDC) - 1st Place (2020) solution writeup",
+        "citation": "https://www.kaggle.com/c/deepfake-detection-challenge/discussion/145721",
+        "note": "Primary source listed in the source PDF."
+      },
+      {
+        "title": "Deepfake Detection Challenge (DFDC) - 1st Place (2020) code repository",
+        "citation": "https://github.com/selimsef/dfdc_deepfake_challenge",
+        "note": "Code URL listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

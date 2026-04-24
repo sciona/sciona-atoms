@@ -1,0 +1,302 @@
+{
+  "asset_id": "solution.kaggle.rsna_miccai_brain_tumor_1st",
+  "asset_version": "v1",
+  "family": "structured_prediction",
+  "paradigm": "neural_network",
+  "name": "RSNA-MICCAI Brain Tumor Radiogenomic Classification - 1st Place (2021) - Pipeline Template",
+  "summary": "3D MRI to Genomics (Weak labels) solution template for RSNA-MICCAI Brain Tumor Radiogenomic Classification - 1st Place (2021), modeled as a 5-stage deterministic pipeline: 3D Volume registration, Brain masking, 3D CNN Backbone, Multi-plane slicing (2.5D fallback), and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by RSNA-MICCAI Brain Tumor Radiogenomic Classification - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "genomics",
+    "labels",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a 3D MRI to Genomics (Weak labels) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: 3D MRI to Genomics (Weak labels).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: 3D Volume registration creates the representation needed by Late Fusion, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "3d_volume_registration",
+      "brain_masking"
+    ],
+    "swappable_stages": {
+      "late_fusion": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/rsna-miccai-brain-tumor-radiogenomic-classification/discussion/281030"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/rsna-miccai-brain-tumor-radiogenomic-classification/discussion/281030"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "3d_volume_registration",
+      "name": "3D Volume registration",
+      "description": "coregister all 4 MRI modalities (FLAIR, T1w, T1Gd, T2w) into exactly the same physical space using a medical imaging registration tool (ANTs/SimpleITK)",
+      "dejargonized_description": "This stage coregister all 4 MRI modalities (FLAIR, T1w, T1Gd, T2w) into exactly the same physical space using a medical imaging registration tool (ANTs/SimpleITK).",
+      "concept_type": "geometry",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for RSNA-MICCAI Brain Tumor Radiogenomic Classification - 1st Place (2021).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "3d_volume_registration_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "brain_masking",
+      "name": "Brain masking",
+      "description": "utilize a pre-trained Brain Extraction Tool (BET) to strictly mask out the skull and eyes from the 3D volume (SimpleITK)",
+      "dejargonized_description": "This stage utilize a pre-trained Brain Extraction Tool (BET) to strictly mask out the skull and eyes from the 3D volume (SimpleITK).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "brain_masking_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "brain_masking_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "3d_cnn_backbone",
+      "name": "3D CNN Backbone",
+      "description": "train a 3D ResNet/EfficientNet-3D architecture on the volumes (PyTorch / MONAI)",
+      "dejargonized_description": "This stage train a 3D ResNet/EfficientNet-3D architecture on the volumes (PyTorch / MONAI).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "3d_cnn_backbone_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "3d_cnn_backbone_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_plane_slicing_2_5d_fallback",
+      "name": "Multi-plane slicing (2.5D fallback)",
+      "description": "extract the middle slices across the Axial, Coronal, and Sagittal planes, and train separate 2D CNNs on each plane (PyTorch)",
+      "dejargonized_description": "This stage extract the middle slices across the Axial, Coronal, and Sagittal planes, and train separate 2D CNNs on each plane (PyTorch).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "multi_plane_slicing_2_5d_fallback_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multi_plane_slicing_2_5d_fallback_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "late_fusion",
+      "name": "Late Fusion",
+      "description": "concatenate the 1D embeddings of the 3D model and the 2.5D models into an MLP to predict the MGMT promoter methylation status (genomic binary target)",
+      "dejargonized_description": "This stage concatenate the 1D embeddings of the 3D model and the 2.5D models into an MLP to predict the MGMT promoter methylation status (genomic binary target).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "late_fusion_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "3d_volume_registration",
+      "target_stage_id": "brain_masking",
+      "output_name": "3d_volume_registration_output",
+      "input_name": "brain_masking_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "3D Volume registration output is consumed by Brain masking.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "brain_masking",
+      "target_stage_id": "3d_cnn_backbone",
+      "output_name": "brain_masking_output",
+      "input_name": "3d_cnn_backbone_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Brain masking output is consumed by 3D CNN Backbone.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "3d_cnn_backbone",
+      "target_stage_id": "multi_plane_slicing_2_5d_fallback",
+      "output_name": "3d_cnn_backbone_output",
+      "input_name": "multi_plane_slicing_2_5d_fallback_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "3D CNN Backbone output is consumed by Multi-plane slicing (2.5D fallback).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_plane_slicing_2_5d_fallback",
+      "target_stage_id": "late_fusion",
+      "output_name": "multi_plane_slicing_2_5d_fallback_output",
+      "input_name": "late_fusion_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Multi-plane slicing (2.5D fallback) output is consumed by Late Fusion.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for 3D MRI to Genomics (Weak labels).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/rsna-miccai-brain-tumor-radiogenomic-classification/discussion/281030",
+      "Code URL: writeup only",
+      "Standard tools: SimpleITK, MONAI, PyTorch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "RSNA-MICCAI Brain Tumor Radiogenomic Classification - 1st Place (2021) solution writeup",
+        "citation": "https://www.kaggle.com/c/rsna-miccai-brain-tumor-radiogenomic-classification/discussion/281030",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

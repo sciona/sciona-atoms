@@ -1,0 +1,304 @@
+{
+  "asset_id": "solution.kaggle.novozymes_enzyme_stability_1st",
+  "asset_version": "v1",
+  "family": "bioinformatics",
+  "paradigm": "external_tool",
+  "name": "Novozymes Enzyme Stability Prediction - 1st Place (2023) - Pipeline Template",
+  "summary": "Bioinformatics / 3D Protein Graph solution template for Novozymes Enzyme Stability Prediction - 1st Place (2023), modeled as a 5-stage deterministic pipeline: 3D Structure Parsing, LLM Embedding, 3D GNN Backbone, Feature concatenation, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Novozymes Enzyme Stability Prediction - 1st Place (2023): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "gnn",
+    "bioinformatics",
+    "protein",
+    "graph",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Bioinformatics / 3D Protein Graph task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Bioinformatics / 3D Protein Graph.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: 3D Structure Parsing creates the representation needed by Regression Head, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "3d_structure_parsing",
+      "llm_embedding"
+    ],
+    "swappable_stages": {
+      "regression_head": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/novozymes-enzyme-stability-prediction/discussion/375765"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/novozymes-enzyme-stability-prediction/discussion/375765"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "3d_structure_parsing",
+      "name": "3D Structure Parsing",
+      "description": "convert the provided PDB (Protein Data Bank) files into 3D spatial graphs, where nodes are amino acids and edges connect atoms within a specific angstrom radius (BioPython/numpy)",
+      "dejargonized_description": "This stage convert the provided PDB (Protein Data Bank) files into 3D spatial graphs, where nodes are amino acids and edges connect atoms within a specific angstrom radius (BioPython/numpy).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Novozymes Enzyme Stability Prediction - 1st Place (2023).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "3d_structure_parsing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "llm_embedding",
+      "name": "LLM Embedding",
+      "description": "pass the 1D amino acid sequence through a pre-trained biological language model (ESM-2) to extract rich semantic sequence embeddings (HuggingFace)",
+      "dejargonized_description": "This stage pass the 1D amino acid sequence through a pre-trained biological language model (ESM-2) to extract rich semantic sequence embeddings (HuggingFace).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "llm_embedding_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "llm_embedding_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "3d_gnn_backbone",
+      "name": "3D GNN Backbone",
+      "description": "train a specialized 3D Graph Neural Network (e.g., SchNet or EGNN) to process the spatial coordinates, natively handling rotational and translational equivariance (PyTorch Geometric)",
+      "dejargonized_description": "This stage train a specialized 3D Graph Neural Network (e.g., SchNet or EGNN) to process the spatial coordinates, natively handling rotational and translational equivariance (PyTorch Geometric).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "3d_gnn_backbone_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "3d_gnn_backbone_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_concatenation",
+      "name": "Feature concatenation",
+      "description": "combine the ESM-2 sequence embeddings and the EGNN structural embeddings into a unified vector",
+      "dejargonized_description": "This stage combine the ESM-2 sequence embeddings and the EGNN structural embeddings into a unified vector.",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "feature_concatenation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feature_concatenation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "regression_head",
+      "name": "Regression Head",
+      "description": "output the continuous melting point (Tm) prediction using an MLP",
+      "dejargonized_description": "This stage output the continuous melting point (Tm) prediction using an MLP.",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "regression_head_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "3d_structure_parsing",
+      "target_stage_id": "llm_embedding",
+      "output_name": "3d_structure_parsing_output",
+      "input_name": "llm_embedding_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "3D Structure Parsing output is consumed by LLM Embedding.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "llm_embedding",
+      "target_stage_id": "3d_gnn_backbone",
+      "output_name": "llm_embedding_output",
+      "input_name": "3d_gnn_backbone_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "LLM Embedding output is consumed by 3D GNN Backbone.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "3d_gnn_backbone",
+      "target_stage_id": "feature_concatenation",
+      "output_name": "3d_gnn_backbone_output",
+      "input_name": "feature_concatenation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "3D GNN Backbone output is consumed by Feature concatenation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_concatenation",
+      "target_stage_id": "regression_head",
+      "output_name": "feature_concatenation_output",
+      "input_name": "regression_head_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Feature concatenation output is consumed by Regression Head.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Bioinformatics / 3D Protein Graph.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/novozymes-enzyme-stability-prediction/discussion/375765",
+      "Code URL: writeup only",
+      "Standard tools: BioPython, HuggingFace, PyTorch Geometric, PyTorch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Novozymes Enzyme Stability Prediction - 1st Place (2023) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/novozymes-enzyme-stability-prediction/discussion/375765",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

@@ -1,0 +1,344 @@
+{
+  "asset_id": "solution.kaggle.otto_group_product_1st",
+  "asset_version": "v1",
+  "family": "multilabel_tabular",
+  "paradigm": "optimization",
+  "name": "Otto Group Product Classification - 1st Place (2015) - Pipeline Template",
+  "summary": "Multi-label classification solution template for Otto Group Product Classification - 1st Place (2015), modeled as a 6-stage deterministic pipeline: Numerical Engineering, Interaction Features, Stratification, Base Modeling, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by Otto Group Product Classification - 1st Place (2015): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "xgboost",
+    "multi",
+    "label",
+    "classification"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Multi-label classification task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Multi-label classification.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Numerical Engineering creates the representation needed by Final Ensemble, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "numerical_engineering",
+      "interaction_features"
+    ],
+    "swappable_stages": {
+      "final_ensemble": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/discussions/general/583830"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/discussions/general/583830"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "numerical_engineering",
+      "name": "Numerical Engineering",
+      "description": "Scale the base data and generate Gaussian Mixture Model (GMM) clustering assignments as entirely new synthetic features (sklearn.mixture)",
+      "dejargonized_description": "This stage scale the base data and generate Gaussian Mixture Model (GMM) clustering assignments as entirely new synthetic features (sklearn.mixture).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Otto Group Product Classification - 1st Place (2015).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "numerical_engineering_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "interaction_features",
+      "name": "Interaction Features",
+      "description": "Create hard-coded ratios, mathematical products, and statistical measures combining the original categorical and numerical columns (pandas)",
+      "dejargonized_description": "This stage create hard-coded ratios, mathematical products, and statistical measures combining the original categorical and numerical columns (pandas).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "interaction_features_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "interaction_features_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "stratification",
+      "name": "Stratification",
+      "description": "Execute a Repeated Multilabel Stratified K-Fold cross-validation strategy specifically designed to perfectly preserve class distributions across all folds (iterative-stratification)",
+      "dejargonized_description": "This stage execute a Repeated Multilabel Stratified K-Fold cross-validation strategy specifically designed to perfectly preserve class distributions across all folds (iterative-stratification).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "stratification_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "stratification_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "base_modeling",
+      "name": "Base Modeling",
+      "description": "Train XGBoost and LightGBM models wrapped inside a MultiOutputClassifier to handle the diverse label space (sklearn.multioutput, xgboost, lightgbm)",
+      "dejargonized_description": "This stage train XGBoost and LightGBM models wrapped inside a MultiOutputClassifier to handle the diverse label space (sklearn.multioutput, xgboost, lightgbm).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "base_modeling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "base_modeling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "level_2_meta_modeling",
+      "name": "Level-2 Meta-Modeling",
+      "description": "Extract the Out-of-Fold probabilities from the GBDTs and use them to train secondary Neural Networks and AdaBoost models (torch, sklearn.ensemble)",
+      "dejargonized_description": "This stage extract the Out-of-Fold probabilities from the GBDTs and use them to train secondary Neural Networks and AdaBoost models (torch, sklearn.ensemble).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "level_2_meta_modeling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "level_2_meta_modeling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "final_ensemble",
+      "name": "Final Ensemble",
+      "description": "Blend the Level-2 meta-predictions utilizing a carefully weighted geometric and arithmetic mean",
+      "dejargonized_description": "This stage blend the Level-2 meta-predictions utilizing a carefully weighted geometric and arithmetic mean.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "final_ensemble_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "numerical_engineering",
+      "target_stage_id": "interaction_features",
+      "output_name": "numerical_engineering_output",
+      "input_name": "interaction_features_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Numerical Engineering output is consumed by Interaction Features.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "interaction_features",
+      "target_stage_id": "stratification",
+      "output_name": "interaction_features_output",
+      "input_name": "stratification_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Interaction Features output is consumed by Stratification.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "stratification",
+      "target_stage_id": "base_modeling",
+      "output_name": "stratification_output",
+      "input_name": "base_modeling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Stratification output is consumed by Base Modeling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "base_modeling",
+      "target_stage_id": "level_2_meta_modeling",
+      "output_name": "base_modeling_output",
+      "input_name": "level_2_meta_modeling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Base Modeling output is consumed by Level-2 Meta-Modeling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "level_2_meta_modeling",
+      "target_stage_id": "final_ensemble",
+      "output_name": "level_2_meta_modeling_output",
+      "input_name": "final_ensemble_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Level-2 Meta-Modeling output is consumed by Final Ensemble.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Multi-label classification.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/discussions/general/583830",
+      "Code URL: writeup only",
+      "Standard tools: sklearn, pandas, xgboost, lightgbm, torch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Otto Group Product Classification - 1st Place (2015) solution writeup",
+        "citation": "https://www.kaggle.com/discussions/general/583830",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

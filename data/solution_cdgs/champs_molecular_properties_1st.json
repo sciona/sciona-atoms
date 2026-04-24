@@ -1,0 +1,306 @@
+{
+  "asset_id": "solution.kaggle.champs_molecular_properties_1st",
+  "asset_version": "v1",
+  "family": "graph_regression",
+  "paradigm": "graph_signal_processing",
+  "name": "Predicting Molecular Properties (CHAMPS) - 1st Place (2019) - Pipeline Template",
+  "summary": "Quantum Chemistry / Graph Neural Networks solution template for Predicting Molecular Properties (CHAMPS) - 1st Place (2019), modeled as a 5-stage deterministic pipeline: Spatial Graphing, Target scaling, Message Passing Neural Network (MPNN), Attention mechanism, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Predicting Molecular Properties (CHAMPS) - 1st Place (2019): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "quantum",
+    "chemistry",
+    "graph",
+    "neural",
+    "networks",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Quantum Chemistry / Graph Neural Networks task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Quantum Chemistry / Graph Neural Networks.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Spatial Graphing creates the representation needed by Ensembling, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "spatial_graphing",
+      "target_scaling"
+    ],
+    "swappable_stages": {
+      "ensembling": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/champs-scalar-coupling/discussion/106293"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/champs-scalar-coupling/discussion/106293"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "spatial_graphing",
+      "name": "Spatial Graphing",
+      "description": "convert 3D Cartesian coordinates of atoms into distance matrices representing molecular bonds (pandas/numpy)",
+      "dejargonized_description": "This stage convert 3D Cartesian coordinates of atoms into distance matrices representing molecular bonds (pandas/numpy).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Predicting Molecular Properties (CHAMPS) - 1st Place (2019).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "spatial_graphing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "target_scaling",
+      "name": "Target scaling",
+      "description": "mathematically standardize the highly variant scalar coupling constants into a normal distribution for stable gradient descent (sklearn)",
+      "dejargonized_description": "This stage mathematically standardize the highly variant scalar coupling constants into a normal distribution for stable gradient descent (sklearn).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "target_scaling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "target_scaling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "message_passing_neural_network_mpnn",
+      "name": "Message Passing Neural Network (MPNN)",
+      "description": "train a specialized SchNet architecture (a continuous-filter convolutional neural network for modeling quantum interactions) on the atomic nodes and distances (PyTorch)",
+      "dejargonized_description": "This stage train a specialized SchNet architecture (a continuous-filter convolutional neural network for modeling quantum interactions) on the atomic nodes and distances (PyTorch).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "message_passing_neural_network_mpnn_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "message_passing_neural_network_mpnn_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "attention_mechanism",
+      "name": "Attention mechanism",
+      "description": "apply an attention layer to pool the final node embeddings into pair-wise interaction scores (PyTorch)",
+      "dejargonized_description": "This stage apply an attention layer to pool the final node embeddings into pair-wise interaction scores (PyTorch).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "attention_mechanism_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "attention_mechanism_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "ensembling",
+      "name": "Ensembling",
+      "description": "average predictions across dozens of MPNN seeds and LightGBM models trained purely on the extracted graph features",
+      "dejargonized_description": "This stage average predictions across dozens of MPNN seeds and LightGBM models trained purely on the extracted graph features.",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "ensembling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "spatial_graphing",
+      "target_stage_id": "target_scaling",
+      "output_name": "spatial_graphing_output",
+      "input_name": "target_scaling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Spatial Graphing output is consumed by Target scaling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "target_scaling",
+      "target_stage_id": "message_passing_neural_network_mpnn",
+      "output_name": "target_scaling_output",
+      "input_name": "message_passing_neural_network_mpnn_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Target scaling output is consumed by Message Passing Neural Network (MPNN).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "message_passing_neural_network_mpnn",
+      "target_stage_id": "attention_mechanism",
+      "output_name": "message_passing_neural_network_mpnn_output",
+      "input_name": "attention_mechanism_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Message Passing Neural Network (MPNN) output is consumed by Attention mechanism.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "attention_mechanism",
+      "target_stage_id": "ensembling",
+      "output_name": "attention_mechanism_output",
+      "input_name": "ensembling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Attention mechanism output is consumed by Ensembling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Quantum Chemistry / Graph Neural Networks.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/champs-scalar-coupling/discussion/106293",
+      "Code URL: writeup only",
+      "Standard tools: pandas, numpy, PyTorch, LightGBM"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Predicting Molecular Properties (CHAMPS) - 1st Place (2019) solution writeup",
+        "citation": "https://www.kaggle.com/c/champs-scalar-coupling/discussion/106293",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

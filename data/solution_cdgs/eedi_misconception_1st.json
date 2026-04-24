@@ -1,0 +1,382 @@
+{
+  "asset_id": "solution.kaggle.eedi_misconception_1st",
+  "asset_version": "v1",
+  "family": "learning_to_rank",
+  "paradigm": "loss_function",
+  "name": "EEDI Misconception Prediction - 1st Place (2025) - Pipeline Template",
+  "summary": "Learning-to-rank / NLP Classification solution template for EEDI Misconception Prediction - 1st Place (2025), modeled as a 7-stage deterministic pipeline: Data Deduplication, Prefix Formatting, Attention Masking, Feature Extraction, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by EEDI Misconception Prediction - 1st Place (2025): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "learning",
+    "classification"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Learning-to-rank / NLP Classification task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Learning-to-rank / NLP Classification.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Data Deduplication creates the representation needed by Model Merging, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "data_deduplication",
+      "prefix_formatting"
+    ],
+    "swappable_stages": {
+      "model_merging": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/conjuring92/writeups"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/conjuring92/writeups"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "data_deduplication",
+      "name": "Data Deduplication",
+      "description": "Clean the input diagnostic math multiple-choice questions and permanently drop duplicate text rows to prevent data leakage (pandas)",
+      "dejargonized_description": "This stage clean the input diagnostic math multiple-choice questions and permanently drop duplicate text rows to prevent data leakage (pandas).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for EEDI Misconception Prediction - 1st Place (2025).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_deduplication_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "prefix_formatting",
+      "name": "Prefix Formatting",
+      "description": "Organize text inputs into a highly structured \"prefix-shared\" format, combining the overarching context, the correct answer, and multiple candidate misconceptions into a single continuous prompt block",
+      "dejargonized_description": "This stage organize text inputs into a highly structured \"prefix-shared\" format, combining the overarching context, the correct answer, and multiple candidate misconceptions into a single continuous prompt block.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "prefix_formatting_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "prefix_formatting_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "attention_masking",
+      "name": "Attention Masking",
+      "description": "Utilize custom attention masks (FlexAttention) to explicitly map the causal relationships between the shared prefix and the multiple suffix candidates without cross-contamination (torch.nn.attention)",
+      "dejargonized_description": "This stage utilize custom attention masks (FlexAttention) to explicitly map the causal relationships between the shared prefix and the multiple suffix candidates without cross-contamination (torch.nn.attention).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "attention_masking_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "attention_masking_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_extraction",
+      "name": "Feature Extraction",
+      "description": "Extract the isolated last-token features from the concatenated sequences",
+      "dejargonized_description": "This stage extract the isolated last-token features from the concatenated sequences.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "feature_extraction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feature_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sft_head",
+      "name": "SFT Head",
+      "description": "Feed the extracted features into a standard linear classifier (nn.Linear) optimized strictly with Cross-Entropy Loss to initially score the candidates via Supervised Fine-Tuning",
+      "dejargonized_description": "This stage feed the extracted features into a standard linear classifier (nn.Linear) optimized strictly with Cross-Entropy Loss to initially score the candidates via Supervised Fine-Tuning.",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "sft_head_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sft_head_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "reasoning_optimization",
+      "name": "Reasoning Optimization",
+      "description": "Fine-tune a secondary, deeper checkpoint utilizing Group Relative Policy Optimization (GRPO) on significantly longer context windows to capture extended logic",
+      "dejargonized_description": "This stage fine-tune a secondary, deeper checkpoint utilizing Group Relative Policy Optimization (GRPO) on significantly longer context windows to capture extended logic.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "reasoning_optimization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "reasoning_optimization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "model_merging",
+      "name": "Model Merging",
+      "description": "Merge the distinct SFT and GRPO weights linearly to strike an optimal balance between token efficiency and complex reasoning accuracy (peft, torch)",
+      "dejargonized_description": "This stage merge the distinct SFT and GRPO weights linearly to strike an optimal balance between token efficiency and complex reasoning accuracy (peft, torch).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "model_merging_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "data_deduplication",
+      "target_stage_id": "prefix_formatting",
+      "output_name": "data_deduplication_output",
+      "input_name": "prefix_formatting_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Data Deduplication output is consumed by Prefix Formatting.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "prefix_formatting",
+      "target_stage_id": "attention_masking",
+      "output_name": "prefix_formatting_output",
+      "input_name": "attention_masking_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Prefix Formatting output is consumed by Attention Masking.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "attention_masking",
+      "target_stage_id": "feature_extraction",
+      "output_name": "attention_masking_output",
+      "input_name": "feature_extraction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Attention Masking output is consumed by Feature Extraction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_extraction",
+      "target_stage_id": "sft_head",
+      "output_name": "feature_extraction_output",
+      "input_name": "sft_head_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Feature Extraction output is consumed by SFT Head.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "sft_head",
+      "target_stage_id": "reasoning_optimization",
+      "output_name": "sft_head_output",
+      "input_name": "reasoning_optimization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "SFT Head output is consumed by Reasoning Optimization.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "reasoning_optimization",
+      "target_stage_id": "model_merging",
+      "output_name": "reasoning_optimization_output",
+      "input_name": "model_merging_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Reasoning Optimization output is consumed by Model Merging.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Learning-to-rank / NLP Classification.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/conjuring92/writeups",
+      "Code URL: writeup only",
+      "Standard tools: pandas, torch, peft"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "EEDI Misconception Prediction - 1st Place (2025) solution writeup",
+        "citation": "https://www.kaggle.com/conjuring92/writeups",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

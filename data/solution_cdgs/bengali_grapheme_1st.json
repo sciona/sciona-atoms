@@ -1,0 +1,477 @@
+{
+  "asset_id": "solution.kaggle.bengali_grapheme_1st",
+  "asset_version": "v1",
+  "family": "multitask_image_classification",
+  "paradigm": "neural_network",
+  "name": "Bengali.AI Handwritten Grapheme 1st Place — Multi-Head Classification with OHEM (2020)",
+  "summary": "Multi-task handwritten grapheme classification using SE-ResNeXt-50 with three classification heads (root, vowel, consonant), weighted multi-task loss, CutMix/MixUp/GridMask augmentation, online hard example mining, and soft voting ensemble.",
+  "dejargonized_summary": "Classify handwritten Bengali characters by breaking them into three components (root shape, vowel mark, consonant mark), training a shared neural network with three separate output heads, focusing training on the hardest examples, and averaging predictions across multiple models.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "multitask_learning",
+    "handwriting_recognition",
+    "grapheme_classification",
+    "cutmix_mixup",
+    "hard_example_mining",
+    "multi_head_network",
+    "se_resnext",
+    "squeeze_excitation",
+    "weighted_loss",
+    "gridmask_augmentation",
+    "soft_voting",
+    "structured_label",
+    "compositional_classification",
+    "high_cardinality_classification",
+    "ohem"
+  ],
+  "applicability": {
+    "use_when": [
+      "Classification target has a compositional structure that can be decomposed into multiple sub-tasks sharing visual features (e.g., grapheme = root + vowel + consonant)",
+      "Sub-tasks have very different cardinalities (e.g., 168 vs 11 vs 7 classes), requiring weighted loss to balance gradient contributions",
+      "Training data contains many easy examples and a long tail of hard/rare cases where OHEM can focus model capacity",
+      "Evaluation metric weights sub-tasks differently, so loss weighting must align with metric structure"
+    ],
+    "do_not_use_when": [
+      "Classification target is atomic (single label, no compositional structure) — multi-head architecture adds unnecessary complexity over a single head",
+      "All classes are roughly equally difficult — OHEM provides no benefit when the loss distribution is uniform across samples",
+      "Sub-tasks are semantically independent (e.g., unrelated attributes) — a shared backbone may learn features that compromise across tasks rather than excelling at any one"
+    ],
+    "key_insight": "The multi-head architecture with weighted loss aligns the training objective with the compositional structure of the label space. By sharing a backbone across sub-tasks, the model learns features that capture the common visual structure of the grapheme, while the per-head loss weighting (2:1:1) ensures the hardest sub-task (168-class root) receives proportionally more gradient signal. OHEM further sharpens this by dropping easy samples that contribute little to learning.",
+    "critical_stages": ["multihead_backbone", "weighted_multitask_loss", "ohem_training"],
+    "swappable_stages": {
+      "heavy_augmentation": "Any strong augmentation strategy (CutOut, RandAugment, AugMax) works. CutMix/MixUp require label mixing logic, but the pipeline does not depend on the specific augmentation choice.",
+      "multihead_backbone": "Any CNN backbone with channel attention (SE-ResNet, ECA-Net, CBAM-ResNet) works. The multi-head design is the load-bearing pattern, not the specific backbone.",
+      "soft_voting_ensemble": "Any ensembling method (simple average, stacking, rank averaging) works at inference time. Soft voting is simple and effective when models are trained with different seeds."
+    },
+    "failure_modes": [
+      "Sub-tasks with conflicting feature requirements: if the optimal features for one head hurt another head, the shared backbone learns a compromise that underperforms separate models",
+      "Incorrect loss weighting: over-weighting a sub-task causes the backbone to specialize for it at the expense of others, reducing overall metric",
+      "OHEM with too-aggressive top-k ratio: discarding too many samples per batch causes training instability and can miss learning signal from medium-difficulty examples"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "grapheme_images",
+      "type_desc": "NDArray[np.uint8]",
+      "constraints": "Grayscale images of handwritten Bengali graphemes. Variable sizes.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "grapheme_root",
+      "type_desc": "NDArray[np.int64]",
+      "constraints": "Shape (N,). Predicted grapheme root class (168 classes).",
+      "required": true
+    },
+    {
+      "name": "vowel_diacritic",
+      "type_desc": "NDArray[np.int64]",
+      "constraints": "Shape (N,). Predicted vowel diacritic class (11 classes).",
+      "required": true
+    },
+    {
+      "name": "consonant_diacritic",
+      "type_desc": "NDArray[np.int64]",
+      "constraints": "Shape (N,). Predicted consonant diacritic class (7 classes).",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preprocessing_before_augmentation",
+      "statement": "Image preprocessing (inversion, cropping, resizing) must precede augmentation.",
+      "rationale": "Augmentations like CutMix and MixUp operate on standardized image representations. Applying them before cropping would mix background with foreground incorrectly.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle Bengali.AI 2020"
+    },
+    {
+      "category": "stage",
+      "subject": "loss_weighting",
+      "statement": "Grapheme root head must receive 2x the loss weight of vowel and consonant heads.",
+      "rationale": "The competition metric weights the three components by recall. The root component has 168 classes (vs 11 and 7) and dominates the weighted score, so focusing training on root classification improves overall ranking.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle Bengali.AI 2020"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "image_preprocessing",
+      "name": "Image Preprocessing",
+      "description": "Invert image colors (white-on-black to black-on-white), crop to the bounding box of non-zero pixels to remove excess whitespace, and resize to a fixed resolution using OpenCV.",
+      "dejargonized_description": "Flip the image colors, trim away empty borders around the handwriting, and resize to a standard size.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "grapheme_images",
+          "type_desc": "NDArray[np.uint8]",
+          "constraints": "Raw grayscale handwritten grapheme images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "preprocessed_images",
+          "type_desc": "NDArray[np.uint8]",
+          "constraints": "Fixed-size grayscale images with consistent orientation and scale.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Images contain handwritten content with non-zero pixels."],
+      "guarantees": ["Output images are consistently sized and cropped to content. Colors are inverted."],
+      "family_notes": [
+        "Bounding box cropping removes variable padding that would otherwise waste model capacity on empty regions."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "heavy_augmentation",
+      "name": "Heavy Augmentation",
+      "description": "Apply CutMix, MixUp, and GridMask augmentations randomly during training using Albumentations and custom implementations. CutMix pastes rectangular patches between training images. MixUp linearly interpolates images and labels. GridMask removes regular grid patterns.",
+      "dejargonized_description": "During training, randomly combine parts of different images, blend images together, or mask out grid patterns to force the network to learn from partial information and become more robust.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "preprocessed_images",
+          "type_desc": "NDArray[np.uint8]",
+          "constraints": "Fixed-size preprocessed images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Augmented images with mixed labels for CutMix/MixUp.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Preprocessed images are available at consistent resolution."],
+      "guarantees": ["Augmentations are applied stochastically. Labels are adjusted for CutMix/MixUp."],
+      "family_notes": [
+        "CutMix and MixUp require label mixing (soft labels), changing the loss computation.",
+        "GridMask provides complementary regularization to CutMix by masking regular patterns rather than random rectangles."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multihead_backbone",
+      "name": "Multi-Head Backbone",
+      "description": "SE-ResNeXt-50 backbone with squeeze-and-excitation blocks, feeding into three separate classification heads: grapheme root (168 classes), vowel diacritic (11 classes), and consonant diacritic (7 classes). Each head is a linear layer on top of global average pooling.",
+      "dejargonized_description": "A shared feature extractor (neural network backbone) processes each image once, then three separate classifiers each predict one component of the Bengali character.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Augmented training images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "root_logits",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N, 168). Unnormalized scores for grapheme root classes.",
+          "required": true
+        },
+        {
+          "name": "vowel_logits",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N, 11). Unnormalized scores for vowel diacritic classes.",
+          "required": true
+        },
+        {
+          "name": "consonant_logits",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N, 7). Unnormalized scores for consonant diacritic classes.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Images are at the expected input resolution."],
+      "guarantees": ["Three logit tensors are produced per input. Backbone features are shared across heads."],
+      "family_notes": [
+        "SE (squeeze-and-excitation) blocks provide channel-wise attention, helping the shared backbone learn features relevant to all three classification tasks.",
+        "Multi-head design is more parameter-efficient than training three separate models."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "weighted_multitask_loss",
+      "name": "Weighted Multi-Task Loss",
+      "description": "Compute cross-entropy loss per classification head, weighted 2.0 for root, 1.0 for vowel, and 1.0 for consonant. The combined loss is the weighted sum.",
+      "dejargonized_description": "Calculate how wrong each prediction head is, giving double importance to the root character component since it has the most classes and matters most for the competition score.",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "root_logits",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N, 168). Root class logits.",
+          "required": true
+        },
+        {
+          "name": "vowel_logits",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N, 11). Vowel class logits.",
+          "required": true
+        },
+        {
+          "name": "consonant_logits",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N, 7). Consonant class logits.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "total_loss",
+          "type_desc": "torch.Tensor",
+          "constraints": "Scalar. 2.0 * CE_root + 1.0 * CE_vowel + 1.0 * CE_consonant.",
+          "required": true
+        }
+      ],
+      "preconditions": ["All three logit tensors and ground truth labels are available."],
+      "guarantees": ["Root classification receives 2x gradient contribution. Total loss is differentiable."],
+      "family_notes": [
+        "The 2:1:1 weighting reflects both the number of classes and the competition metric structure."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "ohem_training",
+      "name": "OHEM Training",
+      "description": "Online Hard Example Mining: during each training iteration, compute loss for all samples in the batch, then backpropagate only through the top-k hardest (highest loss) samples. Focuses model capacity on difficult and misclassified graphemes.",
+      "dejargonized_description": "During training, identify which examples the model gets most wrong and focus the learning updates on those hard cases, ignoring easy examples the model already handles well.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "total_loss",
+          "type_desc": "torch.Tensor",
+          "constraints": "Per-sample losses before reduction.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ohem_loss",
+          "type_desc": "torch.Tensor",
+          "constraints": "Scalar loss computed from top-k hardest samples only.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Per-sample losses are available (not already reduced to scalar)."],
+      "guarantees": ["Only the hardest k samples contribute to the gradient update."],
+      "family_notes": [
+        "OHEM is particularly effective for grapheme classification where certain rare roots are inherently harder to distinguish.",
+        "Requires per-sample loss computation rather than batch-reduced loss."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "soft_voting_ensemble",
+      "name": "Soft Voting Ensemble",
+      "description": "Average softmax probabilities across diverse backbone seeds for each classification head using numpy. Final class predictions are argmax of the averaged probabilities.",
+      "dejargonized_description": "Run multiple independently trained models on each test image, average their confidence scores for each class, and pick the class with the highest average confidence.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "root_logits",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N, 168, M). Root logits from M models.",
+          "required": true
+        },
+        {
+          "name": "vowel_logits",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N, 11, M). Vowel logits from M models.",
+          "required": true
+        },
+        {
+          "name": "consonant_logits",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N, 7, M). Consonant logits from M models.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "grapheme_root",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N,). Final predicted grapheme root class.",
+          "required": true
+        },
+        {
+          "name": "vowel_diacritic",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N,). Final predicted vowel diacritic class.",
+          "required": true
+        },
+        {
+          "name": "consonant_diacritic",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N,). Final predicted consonant diacritic class.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Multiple trained models with different random seeds are available."],
+      "guarantees": ["Output classes are determined by argmax of averaged softmax probabilities."],
+      "family_notes": [
+        "Soft voting (averaging probabilities) outperforms hard voting (majority of argmax) because it preserves confidence information.",
+        "Diversity across seeds is critical for ensemble benefit."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "image_preprocessing",
+      "target_stage_id": "heavy_augmentation",
+      "output_name": "preprocessed_images",
+      "input_name": "preprocessed_images",
+      "source_type": "NDArray[np.uint8]",
+      "target_type": "NDArray[np.uint8]",
+      "data_kind": "image",
+      "provenance": "Cropped and resized grapheme images for augmentation.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "heavy_augmentation",
+      "target_stage_id": "multihead_backbone",
+      "output_name": "augmented_images",
+      "input_name": "augmented_images",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "image",
+      "provenance": "Augmented training images with mixed labels.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "multihead_backbone",
+      "target_stage_id": "weighted_multitask_loss",
+      "output_name": "root_logits",
+      "input_name": "root_logits",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "logits",
+      "provenance": "Root classification logits for loss computation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multihead_backbone",
+      "target_stage_id": "weighted_multitask_loss",
+      "output_name": "vowel_logits",
+      "input_name": "vowel_logits",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "logits",
+      "provenance": "Vowel classification logits for loss computation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multihead_backbone",
+      "target_stage_id": "weighted_multitask_loss",
+      "output_name": "consonant_logits",
+      "input_name": "consonant_logits",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "logits",
+      "provenance": "Consonant classification logits for loss computation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "weighted_multitask_loss",
+      "target_stage_id": "ohem_training",
+      "output_name": "total_loss",
+      "input_name": "total_loss",
+      "source_type": "torch.Tensor",
+      "target_type": "torch.Tensor",
+      "data_kind": "loss",
+      "provenance": "Per-sample weighted multi-task loss for hard example selection.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multihead_backbone",
+      "target_stage_id": "soft_voting_ensemble",
+      "output_name": "root_logits",
+      "input_name": "root_logits",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "logits",
+      "provenance": "Root logits from multiple seed models for ensembling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multihead_backbone",
+      "target_stage_id": "soft_voting_ensemble",
+      "output_name": "vowel_logits",
+      "input_name": "vowel_logits",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "logits",
+      "provenance": "Vowel logits from multiple seed models for ensembling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multihead_backbone",
+      "target_stage_id": "soft_voting_ensemble",
+      "output_name": "consonant_logits",
+      "input_name": "consonant_logits",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "logits",
+      "provenance": "Consonant logits from multiple seed models for ensembling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Bengali.AI Handwritten Grapheme Classification 2020. Multi-task architecture with SE-ResNeXt-50, weighted loss, heavy augmentation (CutMix/MixUp/GridMask), OHEM, and soft voting ensemble.",
+    "dejargonized_summary": "Classify handwritten Bengali characters by breaking them into three components, training a shared neural network with three output heads, focusing on hard examples, and averaging predictions from multiple models.",
+    "provenance_notes": [
+      "Source: Kaggle Bengali.AI Handwritten Grapheme Classification, 1st place solution writeup (2020)",
+      "Source: https://www.kaggle.com/c/bengaliai-cv19/discussion/135984"
+    ],
+    "uncertainty_notes": [
+      "The exact OHEM top-k ratio is not specified in the solution writeup.",
+      "The relative benefit of GridMask vs CutMix/MixUp alone is unclear.",
+      "Loss weight ratio 2:1:1 may not be optimal for all Bengali grapheme distributions."
+    ],
+    "references": [
+      {
+        "title": "SE-ResNeXt",
+        "citation": "Hu et al. (2018). Squeeze-and-Excitation Networks.",
+        "url": "https://arxiv.org/abs/1709.01507",
+        "note": "Backbone with channel attention."
+      },
+      {
+        "title": "CutMix",
+        "citation": "Yun et al. (2019). CutMix: Regularization Strategy to Train Strong Classifiers with Localizable Features.",
+        "url": "https://arxiv.org/abs/1905.04899",
+        "note": "Patch-based augmentation."
+      },
+      {
+        "title": "MixUp",
+        "citation": "Zhang et al. (2018). mixup: Beyond Empirical Risk Minimization.",
+        "url": "https://arxiv.org/abs/1710.09412",
+        "note": "Linear interpolation augmentation."
+      },
+      {
+        "title": "GridMask",
+        "citation": "Chen et al. (2020). GridMask Data Augmentation.",
+        "url": "https://arxiv.org/abs/2001.04086",
+        "note": "Grid-based masking augmentation."
+      },
+      {
+        "title": "Bengali.AI Handwritten Grapheme Classification 1st Place Solution",
+        "citation": "Kaggle Bengali.AI Handwritten Grapheme Classification, 1st place solution writeup (2020)",
+        "url": "https://www.kaggle.com/c/bengaliai-cv19/discussion/135984",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

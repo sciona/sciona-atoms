@@ -1,0 +1,304 @@
+{
+  "asset_id": "solution.kaggle.open_problems_multimodal_single_cell_1st",
+  "asset_version": "v1",
+  "family": "bioinformatics",
+  "paradigm": "optimization",
+  "name": "Open Problems - Multimodal Single-Cell Integration - 1st Place (2022) - Pipeline Template",
+  "summary": "Bioinformatics / Domain Adaptation solution template for Open Problems - Multimodal Single-Cell Integration - 1st Place (2022), modeled as a 5-stage deterministic pipeline: Sparse loading, Dimensionality reduction, Cross-modal projection, K-Nearest Neighbors smoothing, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Open Problems - Multimodal Single-Cell Integration - 1st Place (2022): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "knn",
+    "bioinformatics",
+    "domain",
+    "adaptation",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Bioinformatics / Domain Adaptation task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Bioinformatics / Domain Adaptation.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Sparse loading creates the representation needed by Matrix reconstruction, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "sparse_loading",
+      "dimensionality_reduction"
+    ],
+    "swappable_stages": {
+      "matrix_reconstruction": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/open-problems-multimodal/discussion/366372"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/open-problems-multimodal/discussion/366372"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "sparse_loading",
+      "name": "Sparse loading",
+      "description": "ingest ultra-high-dimensional gene expression and chromatin accessibility datasets utilizing highly compressed sparse row (CSR) matrices (scipy.sparse)",
+      "dejargonized_description": "This stage ingest ultra-high-dimensional gene expression and chromatin accessibility datasets utilizing highly compressed sparse row (CSR) matrices (scipy.sparse).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Open Problems - Multimodal Single-Cell Integration - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sparse_loading_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "dimensionality_reduction",
+      "name": "Dimensionality reduction",
+      "description": "fit Truncated SVD models independently to both biological modalities to compress 100,000+ columns down to 512 dense components (sklearn)",
+      "dejargonized_description": "This stage fit Truncated SVD models independently to both biological modalities to compress 100,000+ columns down to 512 dense components (sklearn).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "dimensionality_reduction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "dimensionality_reduction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "cross_modal_projection",
+      "name": "Cross-modal projection",
+      "description": "train a multi-layer perceptron to map the SVD components of Modality 1 into the SVD space of Modality 2 (PyTorch)",
+      "dejargonized_description": "This stage train a multi-layer perceptron to map the SVD components of Modality 1 into the SVD space of Modality 2 (PyTorch).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "cross_modal_projection_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cross_modal_projection_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "k_nearest_neighbors_smoothing",
+      "name": "K-Nearest Neighbors smoothing",
+      "description": "run a KNN regressor over the predicted space to smooth out individual cell predictions based on their spatial proximity to known cell clusters (cuml)",
+      "dejargonized_description": "This stage run a KNN regressor over the predicted space to smooth out individual cell predictions based on their spatial proximity to known cell clusters (cuml).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "k_nearest_neighbors_smoothing_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "k_nearest_neighbors_smoothing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "matrix_reconstruction",
+      "name": "Matrix reconstruction",
+      "description": "inverse-transform the predicted components back into the original 100,000+ dimensional sparse space (scipy/sklearn)",
+      "dejargonized_description": "This stage inverse-transform the predicted components back into the original 100,000+ dimensional sparse space (scipy/sklearn).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "matrix_reconstruction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "sparse_loading",
+      "target_stage_id": "dimensionality_reduction",
+      "output_name": "sparse_loading_output",
+      "input_name": "dimensionality_reduction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Sparse loading output is consumed by Dimensionality reduction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "dimensionality_reduction",
+      "target_stage_id": "cross_modal_projection",
+      "output_name": "dimensionality_reduction_output",
+      "input_name": "cross_modal_projection_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Dimensionality reduction output is consumed by Cross-modal projection.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "cross_modal_projection",
+      "target_stage_id": "k_nearest_neighbors_smoothing",
+      "output_name": "cross_modal_projection_output",
+      "input_name": "k_nearest_neighbors_smoothing_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Cross-modal projection output is consumed by K-Nearest Neighbors smoothing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "k_nearest_neighbors_smoothing",
+      "target_stage_id": "matrix_reconstruction",
+      "output_name": "k_nearest_neighbors_smoothing_output",
+      "input_name": "matrix_reconstruction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "K-Nearest Neighbors smoothing output is consumed by Matrix reconstruction.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Bioinformatics / Domain Adaptation.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/open-problems-multimodal/discussion/366372",
+      "Code URL: writeup only",
+      "Standard tools: scipy, sklearn, PyTorch, RAPIDS cuML"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Open Problems - Multimodal Single-Cell Integration - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/open-problems-multimodal/discussion/366372",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

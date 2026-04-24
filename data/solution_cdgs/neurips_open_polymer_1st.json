@@ -1,0 +1,392 @@
+{
+  "asset_id": "solution.kaggle.neurips_open_polymer_1st",
+  "asset_version": "v1",
+  "family": "multilabel_tabular",
+  "paradigm": "neural_network",
+  "name": "NeurIPS Open Polymer Prediction - 1st Place (2025) - Pipeline Template",
+  "summary": "Multi-label / Multi-target Regression (Structured Data) solution template for NeurIPS Open Polymer Prediction - 1st Place (2025), modeled as a 7-stage deterministic pipeline: Chemical Descriptor Extraction, Data Augmentation, LM Representation, Tabular Modeling, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by NeurIPS Open Polymer Prediction - 1st Place (2025): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "transformer",
+    "rag",
+    "multi",
+    "label",
+    "target",
+    "regression",
+    "structured"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Multi-label / Multi-target Regression (Structured Data) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Multi-label / Multi-target Regression (Structured Data).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Chemical Descriptor Extraction creates the representation needed by Exact Match Override, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "chemical_descriptor_extraction",
+      "data_augmentation"
+    ],
+    "swappable_stages": {
+      "exact_match_override": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://github.com/nkwork9999/NeurIP2025_mytrial_following_1st_solution"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://github.com/nkwork9999/NeurIP2025_mytrial_following_1st_solution"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "chemical_descriptor_extraction",
+      "name": "Chemical Descriptor Extraction",
+      "description": "Process SMILES chemical strings to structurally generate RDKit molecular descriptors and Morgan fingerprints (rdkit)",
+      "dejargonized_description": "This stage process SMILES chemical strings to structurally generate RDKit molecular descriptors and Morgan fingerprints (rdkit).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for NeurIPS Open Polymer Prediction - 1st Place (2025).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "chemical_descriptor_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "data_augmentation",
+      "name": "Data Augmentation",
+      "description": "Apply randomized SMILES generation protocols (10x augmentation) to create robust text representations of identical molecules",
+      "dejargonized_description": "This stage apply randomized SMILES generation protocols (10x augmentation) to create robust text representations of identical molecules.",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "data_augmentation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_augmentation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "lm_representation",
+      "name": "LM Representation",
+      "description": "Fine-tune a code-pretrained language model (CodeBERTa) on the SMILES strings to predict multiple continuous properties simultaneously (transformers, torch)",
+      "dejargonized_description": "This stage fine-tune a code-pretrained language model (CodeBERTa) on the SMILES strings to predict multiple continuous properties simultaneously (transformers, torch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "lm_representation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "lm_representation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tabular_modeling",
+      "name": "Tabular Modeling",
+      "description": "Parallelly train an AutoGluon tabular model specifically on the generated RDKit/Morgan descriptor outputs (autogluon)",
+      "dejargonized_description": "This stage parallelly train an AutoGluon tabular model specifically on the generated RDKit/Morgan descriptor outputs (autogluon).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "tabular_modeling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tabular_modeling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "ensembling",
+      "name": "Ensembling",
+      "description": "Calculate target-specific weighted averages across both streams (heavily weighting the BERT model, assigning it a 0.91-0.97 coefficient)",
+      "dejargonized_description": "This stage calculate target-specific weighted averages across both streams (heavily weighting the BERT model, assigning it a 0.91-0.97 coefficient).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "ensembling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ensembling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "distribution_shift_post_processing",
+      "name": "Distribution Shift Post-processing",
+      "description": "Shift the predictions for specific targets (e.g., Tg) by statistical factors (std * 0.5644) to manually correct a known train/test distribution mismatch (numpy)",
+      "dejargonized_description": "This stage shift the predictions for specific targets (e.g., Tg) by statistical factors (std * 0.5644) to manually correct a known train/test distribution mismatch (numpy).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "distribution_shift_post_processing_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distribution_shift_post_processing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "exact_match_override",
+      "name": "Exact Match Override",
+      "description": "Intercept the pipeline output and forcefully replace predictions with ground-truth values if the test SMILES perfectly matches a known training sample",
+      "dejargonized_description": "This stage intercept the pipeline output and forcefully replace predictions with ground-truth values if the test SMILES perfectly matches a known training sample.",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "exact_match_override_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "chemical_descriptor_extraction",
+      "target_stage_id": "data_augmentation",
+      "output_name": "chemical_descriptor_extraction_output",
+      "input_name": "data_augmentation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Chemical Descriptor Extraction output is consumed by Data Augmentation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "data_augmentation",
+      "target_stage_id": "lm_representation",
+      "output_name": "data_augmentation_output",
+      "input_name": "lm_representation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Data Augmentation output is consumed by LM Representation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "lm_representation",
+      "target_stage_id": "tabular_modeling",
+      "output_name": "lm_representation_output",
+      "input_name": "tabular_modeling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "LM Representation output is consumed by Tabular Modeling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tabular_modeling",
+      "target_stage_id": "ensembling",
+      "output_name": "tabular_modeling_output",
+      "input_name": "ensembling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Tabular Modeling output is consumed by Ensembling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "ensembling",
+      "target_stage_id": "distribution_shift_post_processing",
+      "output_name": "ensembling_output",
+      "input_name": "distribution_shift_post_processing_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Ensembling output is consumed by Distribution Shift Post-processing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "distribution_shift_post_processing",
+      "target_stage_id": "exact_match_override",
+      "output_name": "distribution_shift_post_processing_output",
+      "input_name": "exact_match_override_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Distribution Shift Post-processing output is consumed by Exact Match Override.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "neurips_competition",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Multi-label / Multi-target Regression (Structured Data).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle / NeurIPS",
+      "Writeup URL: https://github.com/nkwork9999/NeurIP2025_mytrial_following_1st_solution",
+      "Code URL: https://github.com/nkwork9999/NeurIP2025_mytrial_following_1st_solution",
+      "Standard tools: rdkit, transformers, torch, autogluon, numpy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "NeurIPS Open Polymer Prediction - 1st Place (2025) solution writeup",
+        "citation": "https://github.com/nkwork9999/NeurIP2025_mytrial_following_1st_solution",
+        "note": "Primary source listed in the source PDF."
+      },
+      {
+        "title": "NeurIPS Open Polymer Prediction - 1st Place (2025) code repository",
+        "citation": "https://github.com/nkwork9999/NeurIP2025_mytrial_following_1st_solution",
+        "note": "Code URL listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

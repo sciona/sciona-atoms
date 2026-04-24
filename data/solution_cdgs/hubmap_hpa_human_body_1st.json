@@ -1,0 +1,305 @@
+{
+  "asset_id": "solution.kaggle.hubmap_hpa_human_body_1st",
+  "asset_version": "v1",
+  "family": "semantic_segmentation",
+  "paradigm": "neural_network",
+  "name": "HuBMAP + HPA - Hacking the Human Body - 1st Place (2022) - Pipeline Template",
+  "summary": "Multi-organ Segmentation (Domain Translation) solution template for HuBMAP + HPA - Hacking the Human Body - 1st Place (2022), modeled as a 5-stage deterministic pipeline: Stain Translation, Pseudo-labeling, Multi-organ Backbone, Organ-specific thresholds, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by HuBMAP + HPA - Hacking the Human Body - 1st Place (2022): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "segmentation",
+    "multi",
+    "organ",
+    "domain",
+    "translation",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Multi-organ Segmentation (Domain Translation) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Multi-organ Segmentation (Domain Translation).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Stain Translation creates the representation needed by Contour smoothing, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "stain_translation",
+      "pseudo_labeling"
+    ],
+    "swappable_stages": {
+      "contour_smoothing": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/hubmap-organ-segmentation/discussion/352994"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/hubmap-organ-segmentation/discussion/352994"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "stain_translation",
+      "name": "Stain Translation",
+      "description": "use CycleGAN to strictly translate the color profiles of the HPA dataset (immunofluorescence) to perfectly match the color profiles of the HuBMAP dataset (PAS stain) (PyTorch)",
+      "dejargonized_description": "This stage use CycleGAN to strictly translate the color profiles of the HPA dataset (immunofluorescence) to perfectly match the color profiles of the HuBMAP dataset (PAS stain) (PyTorch).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for HuBMAP + HPA - Hacking the Human Body - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "stain_translation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pseudo_labeling",
+      "name": "Pseudo-labeling",
+      "description": "use models trained on HuBMAP to generate masks for the translated HPA images, creating a massive new supervised dataset",
+      "dejargonized_description": "This stage use models trained on HuBMAP to generate masks for the translated HPA images, creating a massive new supervised dataset.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "pseudo_labeling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pseudo_labeling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_organ_backbone",
+      "name": "Multi-organ Backbone",
+      "description": "train a U-Net / CoatNet architecture to segment all 5 organs simultaneously, rather than training 5 separate models (segmentation_models_pytorch)",
+      "dejargonized_description": "This stage train a U-Net / CoatNet architecture to segment all 5 organs simultaneously, rather than training 5 separate models (segmentation_models_pytorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "multi_organ_backbone_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multi_organ_backbone_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "organ_specific_thresholds",
+      "name": "Organ-specific thresholds",
+      "description": "run an optimization loop to find the perfect pixel-probability cutoff threshold independently for each organ type (e.g., lungs vs kidneys) (scipy)",
+      "dejargonized_description": "This stage run an optimization loop to find the perfect pixel-probability cutoff threshold independently for each organ type (e.g., lungs vs kidneys) (scipy).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "organ_specific_thresholds_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "organ_specific_thresholds_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "contour_smoothing",
+      "name": "Contour smoothing",
+      "description": "apply morphological closing and small-hole filling to the binary masks to ensure biologically coherent outputs (OpenCV)",
+      "dejargonized_description": "This stage apply morphological closing and small-hole filling to the binary masks to ensure biologically coherent outputs (OpenCV).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "contour_smoothing_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "stain_translation",
+      "target_stage_id": "pseudo_labeling",
+      "output_name": "stain_translation_output",
+      "input_name": "pseudo_labeling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Stain Translation output is consumed by Pseudo-labeling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pseudo_labeling",
+      "target_stage_id": "multi_organ_backbone",
+      "output_name": "pseudo_labeling_output",
+      "input_name": "multi_organ_backbone_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Pseudo-labeling output is consumed by Multi-organ Backbone.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_organ_backbone",
+      "target_stage_id": "organ_specific_thresholds",
+      "output_name": "multi_organ_backbone_output",
+      "input_name": "organ_specific_thresholds_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Multi-organ Backbone output is consumed by Organ-specific thresholds.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "organ_specific_thresholds",
+      "target_stage_id": "contour_smoothing",
+      "output_name": "organ_specific_thresholds_output",
+      "input_name": "contour_smoothing_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Organ-specific thresholds output is consumed by Contour smoothing.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Multi-organ Segmentation (Domain Translation).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/hubmap-organ-segmentation/discussion/352994",
+      "Code URL: writeup only",
+      "Standard tools: PyTorch, segmentation_models_pytorch, scipy, OpenCV"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "HuBMAP + HPA - Hacking the Human Body - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/hubmap-organ-segmentation/discussion/352994",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

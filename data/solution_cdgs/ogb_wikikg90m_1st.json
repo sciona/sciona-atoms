@@ -1,0 +1,303 @@
+{
+  "asset_id": "solution.kaggle.ogb_wikikg90m_1st",
+  "asset_version": "v1",
+  "family": "graph_inference",
+  "paradigm": "graph_signal_processing",
+  "name": "OGB Large-Scale Challenge - WikiKG90M - 1st Place (2021) - Pipeline Template",
+  "summary": "Graph ML / Link Prediction solution template for OGB Large-Scale Challenge - WikiKG90M - 1st Place (2021), modeled as a 5-stage deterministic pipeline: Language feature embedding, Relational embedding (TransE), Relational embedding (ComplEx), Candidate generation, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by OGB Large-Scale Challenge - WikiKG90M - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "faiss",
+    "graph",
+    "prediction",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Graph ML / Link Prediction task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Graph ML / Link Prediction.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Language feature embedding creates the representation needed by MLP Re-ranking, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "language_feature_embedding",
+      "relational_embedding_transe"
+    ],
+    "swappable_stages": {
+      "mlp_re_ranking": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://arxiv.org/abs/2109.00412"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://arxiv.org/abs/2109.00412"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "language_feature_embedding",
+      "name": "Language feature embedding",
+      "description": "process the text descriptions of all 90 million Wikipedia entities using a pre-trained RoBERTa model to output dense 768D text vectors (HuggingFace)",
+      "dejargonized_description": "This stage process the text descriptions of all 90 million Wikipedia entities using a pre-trained RoBERTa model to output dense 768D text vectors (HuggingFace).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for OGB Large-Scale Challenge - WikiKG90M - 1st Place (2021).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "language_feature_embedding_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "relational_embedding_transe",
+      "name": "Relational embedding (TransE)",
+      "description": "train a TransE translation model over the Knowledge Graph triples (Head, Relation, Tail) using the text vectors as initialization weights (DGL-KE)",
+      "dejargonized_description": "This stage train a TransE translation model over the Knowledge Graph triples (Head, Relation, Tail) using the text vectors as initialization weights (DGL-KE).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "relational_embedding_transe_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "relational_embedding_transe_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "relational_embedding_complex",
+      "name": "Relational embedding (ComplEx)",
+      "description": "train a ComplEx model in parallel to capture non-symmetric and inverse relation logic across the graph (DGL-KE)",
+      "dejargonized_description": "This stage train a ComplEx model in parallel to capture non-symmetric and inverse relation logic across the graph (DGL-KE).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "relational_embedding_complex_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "relational_embedding_complex_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "candidate_generation",
+      "name": "Candidate generation",
+      "description": "perform a fast K-Nearest Neighbor query in the embedded graph space to retrieve the top 100 most likely target entities for a missing link (FAISS)",
+      "dejargonized_description": "This stage perform a fast K-Nearest Neighbor query in the embedded graph space to retrieve the top 100 most likely target entities for a missing link (FAISS).",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "candidate_generation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "candidate_generation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "mlp_re_ranking",
+      "name": "MLP Re-ranking",
+      "description": "concatenate the embeddings of the retrieved Head, Relation, and candidate Tail, passing them through an MLP to score and re-sort the final 100 choices (PyTorch)",
+      "dejargonized_description": "This stage concatenate the embeddings of the retrieved Head, Relation, and candidate Tail, passing them through an MLP to score and re-sort the final 100 choices (PyTorch).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "mlp_re_ranking_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "language_feature_embedding",
+      "target_stage_id": "relational_embedding_transe",
+      "output_name": "language_feature_embedding_output",
+      "input_name": "relational_embedding_transe_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Language feature embedding output is consumed by Relational embedding (TransE).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "relational_embedding_transe",
+      "target_stage_id": "relational_embedding_complex",
+      "output_name": "relational_embedding_transe_output",
+      "input_name": "relational_embedding_complex_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Relational embedding (TransE) output is consumed by Relational embedding (ComplEx).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "relational_embedding_complex",
+      "target_stage_id": "candidate_generation",
+      "output_name": "relational_embedding_complex_output",
+      "input_name": "candidate_generation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Relational embedding (ComplEx) output is consumed by Candidate generation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "candidate_generation",
+      "target_stage_id": "mlp_re_ranking",
+      "output_name": "candidate_generation_output",
+      "input_name": "mlp_re_ranking_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Candidate generation output is consumed by MLP Re-ranking.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kdd_cup",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Graph ML / Link Prediction.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: KDD Cup",
+      "Writeup URL: https://arxiv.org/abs/2109.00412",
+      "Code URL: writeup only",
+      "Standard tools: HuggingFace, DGL-KE, FAISS, PyTorch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "OGB Large-Scale Challenge - WikiKG90M - 1st Place (2021) solution writeup",
+        "citation": "https://arxiv.org/abs/2109.00412",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

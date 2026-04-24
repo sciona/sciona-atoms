@@ -1,0 +1,331 @@
+{
+  "asset_id": "solution.kaggle.barachant_seizure_1st",
+  "asset_version": "v1",
+  "family": "riemannian_bci",
+  "paradigm": "signal_filter",
+  "name": "Melbourne Uni Seizure Prediction 1st Place -- Riemannian EEG Pipeline",
+  "summary": "Four parallel EEG feature extraction branches (relative log-power, classical statistics, autocorrelation covariance with tangent space projection, cross-frequency coherence with tangent space projection) each feeding XGBoost classifiers with segment-max aggregation, blended via rank-normalized prediction averaging.",
+  "dejargonized_summary": "Split each EEG recording into short windows, extract four different kinds of features from each window (frequency power, statistical summaries, time-delay patterns projected from a curved mathematical space to a flat one, and frequency-coupling patterns similarly projected), train a separate tree-based classifier on each, take the most seizure-like window per recording, then blend all classifiers by ranking their predictions.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "seizure_prediction",
+    "riemannian_eeg",
+    "tangent_space_eeg",
+    "autocorrelation_covariance",
+    "cross_frequency_coherence",
+    "spd_manifold_classification",
+    "covariance_matrix_features",
+    "non_stationary_events",
+    "multi_channel_neural_signal",
+    "frechet_mean",
+    "log_spaced_delays",
+    "max_aggregation"
+  ],
+  "inputs": [
+    {
+      "name": "eeg_segments",
+      "type_desc": "ndarray(n_segments, n_channels, n_samples)",
+      "constraints": "10-minute iEEG segments from multiple electrode channels. Sampling rate ~400Hz.",
+      "required": true
+    },
+    {
+      "name": "labels",
+      "type_desc": "ndarray(n_segments,)",
+      "constraints": "Binary: 0=interictal, 1=preictal (seizure precursor).",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "seizure_probability",
+      "type_desc": "ndarray(n_segments,)",
+      "constraints": "Probability of preictal state per segment, in [0, 1].",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Multi-channel neural/physiological signals where spatial covariance structure carries discriminative information",
+      "The signal of interest is non-stationary and appears in only a subset of time windows (requiring max, not mean, aggregation)",
+      "Covariance matrices are the natural representation (EEG, MEG, EMG, fMRI connectivity) and must be classified in their native geometry",
+      "Standard Euclidean feature extraction (PSD, band power) is insufficient and cross-channel/cross-frequency coupling matters"
+    ],
+    "do_not_use_when": [
+      "Single-channel signals where covariance matrices are scalar (Riemannian tools add no value)",
+      "Very high channel count (>100 channels) making covariance matrices ill-conditioned even with shrinkage",
+      "The discriminative signal is in temporal waveform morphology rather than spatial/spectral covariance structure",
+      "Real-time, sample-by-sample classification is needed (Riemannian mean computation is too slow for streaming)"
+    ],
+    "key_insight": "Tangent space projection with sqrt(2) off-diagonal scaling IS the kernel trick for SPD manifolds — it preserves Riemannian distances as Euclidean distances, enabling any flat-space classifier (XGBoost, SVM, logistic regression) to work in curved matrix space without modification.",
+    "critical_stages": ["tangent_space_projection", "riemannian_mean_spd", "segment_max_aggregation"],
+    "swappable_stages": {
+      "autocorrelation_covariance_matrix": "Standard spatial covariance (channels x channels) can replace autocorrelation covariance when temporal structure is less important than spatial structure.",
+      "cross_frequency_coherence_matrix": "Any SPD-valued feature (wavelet covariance, multivariate AR model covariance) can replace coherence matrices.",
+      "ranked_prediction_blend": "Any ensemble strategy (stacking, simple average, voting) works. Rank normalization is robust but not essential."
+    },
+    "failure_modes": [
+      "Stationary signals where seizure/event signatures are spread uniformly across all windows: max aggregation degrades to near-mean and loses no advantage",
+      "Very short windows (<1 second at typical EEG rates): covariance matrices are rank-deficient and tangent space projection amplifies noise",
+      "Label noise or ambiguous pre-ictal boundaries: max aggregation is sensitive to single noisy window predictions"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "parallel_branches",
+      "statement": "The four feature extraction branches (log-power, statistics, autocorrelation covariance, cross-frequency coherence) must run independently and merge only at the rank-blend stage.",
+      "rationale": "Each branch captures fundamentally different EEG characteristics. Merging earlier would lose the diversity that makes the ensemble effective.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Seizure repo pipeline YAML configuration"
+    },
+    {
+      "category": "stage",
+      "subject": "max_not_mean_aggregation",
+      "statement": "Sub-window predictions must be aggregated by MAX (not mean) to produce segment-level predictions.",
+      "rationale": "Seizure precursors are non-stationary and appear in only a few windows. Mean gives AUC 0.674 vs max gives AUC 0.805.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Seizure prediction solution analysis"
+    },
+    {
+      "category": "stage",
+      "subject": "spd_guarantee",
+      "statement": "All covariance matrices must be strictly positive definite before Riemannian operations. Use shrinkage regularization (e.g. Ledoit-Wolf or 1e-9 identity) to guarantee SPD.",
+      "rationale": "Riemannian mean and tangent space projection require matrix logarithm, which is undefined for non-SPD matrices. Barachant consistently uses Shrinkage(1e-9).",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "All Barachant repos"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "windower",
+      "name": "Segment Windower",
+      "description": "Splits 10-minute EEG segments into overlapping 20-second sub-windows for feature extraction. Each sub-window is independently processed by all branches.",
+      "dejargonized_description": "Cut the long recording into short overlapping clips so each can be analyzed separately.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {"name": "segment", "type_desc": "ndarray(n_channels, n_samples)", "constraints": "Single 10-minute EEG segment.", "required": true}
+      ],
+      "outputs": [
+        {"name": "windows", "type_desc": "ndarray(n_windows, n_channels, n_window_samples)", "constraints": "20-second sub-windows.", "required": true}
+      ],
+      "preconditions": ["Segment length > window size."],
+      "guarantees": ["All windows have identical shape."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "autocorrelation_covariance_matrix",
+      "name": "Autocorrelation Covariance Matrix",
+      "description": "Constructs Hankel matrix from time-delayed copies with logarithmically-spaced delays [1,2,4,8,16,32,64], then computes correlation matrix. Converts 1D temporal signal into SPD matrix processable with Riemannian tools. Log-spaced delays capture multi-scale temporal structure in a single matrix.",
+      "dejargonized_description": "Create a matrix that captures how each EEG channel's signal at one time relates to itself at different time offsets (1, 2, 4, ... 64 samples apart), using logarithmic spacing to capture both fast and slow patterns.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {"name": "signal", "type_desc": "ndarray(n_samples,)", "constraints": "Single-channel EEG signal from one window.", "required": true},
+        {"name": "delays", "type_desc": "list[int]", "constraints": "Logarithmically-spaced delay values, e.g. [1,2,4,8,16,32,64].", "required": true},
+        {"name": "subsample", "type_desc": "int", "constraints": "Subsampling factor for computational efficiency.", "required": false}
+      ],
+      "outputs": [
+        {"name": "cov", "type_desc": "ndarray(n_delays, n_delays)", "constraints": "SPD autocorrelation matrix per channel.", "required": true}
+      ],
+      "preconditions": ["Signal length > max(delays) * subsample."],
+      "guarantees": ["Output is symmetric positive definite (with shrinkage regularization)."],
+      "matched_primitive": "sciona.atoms.riemannian_bci.covariance_features.autocorrelation_covariance_matrix"
+    },
+    {
+      "stage_id": "cross_frequency_coherence_matrix",
+      "name": "Cross-Frequency Coherence Matrix",
+      "description": "With transpose=True, computes frequency-by-frequency coherence for each channel instead of standard channel-by-channel coherence per band. Captures cross-frequency coupling (e.g., gamma-theta) relevant to seizure prediction. The axis inversion is creative and non-obvious.",
+      "dejargonized_description": "Measure how much each pair of frequency bands (e.g., fast brain waves vs slow brain waves) are synchronized within each electrode, producing a matrix that captures cross-frequency relationships relevant to seizures.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {"name": "signal", "type_desc": "ndarray(n_channels, n_samples)", "constraints": "Multi-channel EEG window.", "required": true},
+        {"name": "frequencies", "type_desc": "list[list[float]]", "constraints": "Band-pass frequency ranges.", "required": true},
+        {"name": "transpose", "type_desc": "bool", "constraints": "If True, compute freq-by-freq per channel instead of channel-by-channel per freq.", "required": true}
+      ],
+      "outputs": [
+        {"name": "coh", "type_desc": "ndarray(n_channels, n_freq, n_freq)", "constraints": "SPD coherence matrices when transposed.", "required": true}
+      ],
+      "preconditions": ["Signal has sufficient samples for lowest frequency band."],
+      "guarantees": ["Output matrices are SPD (with regularization)."],
+      "matched_primitive": "sciona.atoms.riemannian_bci.covariance_features.cross_frequency_coherence_matrix"
+    },
+    {
+      "stage_id": "riemannian_mean_spd",
+      "name": "Riemannian Mean (SPD Manifold)",
+      "description": "Frechet/Karcher mean on SPD manifold under affine-invariant metric. Iterative gradient descent with adaptive step-size. Requires matrix square roots, logarithms, exponentials at each iteration. Used as reference point for tangent space projection.",
+      "dejargonized_description": "Find the 'center' of a set of matrices on a curved mathematical space, which serves as the reference point for projecting all matrices into a flat space where standard classifiers can work.",
+      "concept_type": "optimization",
+      "inputs": [
+        {"name": "covmats", "type_desc": "ndarray(n_matrices, n, n)", "constraints": "Collection of SPD matrices.", "required": true},
+        {"name": "metric", "type_desc": "str", "constraints": "Distance metric: 'riemann' (affine-invariant) or 'logeuclid'.", "required": false}
+      ],
+      "outputs": [
+        {"name": "C", "type_desc": "ndarray(n, n)", "constraints": "Mean SPD matrix.", "required": true}
+      ],
+      "preconditions": ["All input matrices are strictly SPD."],
+      "guarantees": ["Output is SPD. Converges for well-conditioned inputs."],
+      "matched_primitive": "sciona.atoms.riemannian_bci.covariance_features.riemannian_mean_spd"
+    },
+    {
+      "stage_id": "tangent_space_projection",
+      "name": "Tangent Space Projection",
+      "description": "Projects SPD matrices from Riemannian manifold to Euclidean tangent space at a reference point. Involves: inverse sqrt of reference, whitening, matrix log, extract upper triangle with sqrt(2) off-diagonal scaling. The sqrt(2) scaling preserves the Riemannian metric as Euclidean distance in tangent space -- this IS the kernel trick for SPD manifolds.",
+      "dejargonized_description": "Flatten the curved-space matrices into ordinary number vectors that preserve the geometric distances, so standard machine learning algorithms (like XGBoost) can work on them directly.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {"name": "covmats", "type_desc": "ndarray(n_matrices, n, n)", "constraints": "SPD matrices to project.", "required": true},
+        {"name": "ref", "type_desc": "ndarray(n, n)", "constraints": "Reference point (typically Riemannian mean).", "required": true}
+      ],
+      "outputs": [
+        {"name": "T", "type_desc": "ndarray(n_matrices, n*(n+1)/2)", "constraints": "Tangent vectors in Euclidean space.", "required": true}
+      ],
+      "preconditions": ["All covmats and ref are strictly SPD."],
+      "guarantees": ["Euclidean distance in output approximates Riemannian distance on manifold near reference."],
+      "matched_primitive": "sciona.atoms.riemannian_bci.covariance_features.tangent_space_projection"
+    },
+    {
+      "stage_id": "segment_max_aggregation",
+      "name": "Segment Max Aggregation",
+      "description": "For 10-minute segments predicted from 20-second sub-windows, takes MAX prediction (not mean). Mean gives AUC 0.674 vs max gives AUC 0.805. Seizure precursors are non-stationary -- the pattern appears in only a few windows. Std of predictions also works well (0.805), validating variability as a seizure indicator.",
+      "dejargonized_description": "From all the short-window predictions within one long recording, take the highest seizure-likelihood score as the overall prediction, because seizure signs only appear briefly.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "window_preds", "type_desc": "ndarray(n_windows,)", "constraints": "Per-window seizure probabilities.", "required": true}
+      ],
+      "outputs": [
+        {"name": "segment_pred", "type_desc": "float", "constraints": "Single segment-level prediction.", "required": true}
+      ],
+      "preconditions": ["At least one window prediction available."],
+      "guarantees": ["Output is max of input predictions."],
+      "matched_primitive": "sciona.atoms.riemannian_bci.signal_processing.segment_max_aggregation"
+    },
+    {
+      "stage_id": "ranked_prediction_blend",
+      "name": "Ranked Prediction Blend",
+      "description": "Rank-normalizes each model's predictions (rankdata(p)/len(p)) before weighted averaging. Robust to different probability scales across models. Blends 11 models from 4 branches.",
+      "dejargonized_description": "Convert each model's raw predictions into rankings (percentiles), then average the rankings -- this way models that output different scales of numbers can still be combined fairly.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "predictions", "type_desc": "dict[str, ndarray]", "constraints": "Model name to prediction array mapping.", "required": true},
+        {"name": "weights", "type_desc": "dict[str, float]", "constraints": "Model name to blend weight mapping.", "required": false}
+      ],
+      "outputs": [
+        {"name": "blended", "type_desc": "ndarray", "constraints": "Rank-blended ensemble prediction.", "required": true}
+      ],
+      "preconditions": ["All prediction arrays have same length."],
+      "guarantees": ["Output values in [0, 1] due to rank normalization."],
+      "matched_primitive": "sciona.atoms.riemannian_bci.signal_processing.ranked_prediction_blend"
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "windower",
+      "target_stage_id": "autocorrelation_covariance_matrix",
+      "output_name": "windows",
+      "input_name": "signal",
+      "source_type": "ndarray(n_windows, n_channels, n_window_samples)",
+      "target_type": "ndarray(n_samples,)",
+      "data_kind": "time_series",
+      "provenance": "Each window's channels independently converted to autocorrelation covariance.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "windower",
+      "target_stage_id": "cross_frequency_coherence_matrix",
+      "output_name": "windows",
+      "input_name": "signal",
+      "source_type": "ndarray(n_windows, n_channels, n_window_samples)",
+      "target_type": "ndarray(n_channels, n_samples)",
+      "data_kind": "time_series",
+      "provenance": "Each window processed for cross-frequency coherence.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "autocorrelation_covariance_matrix",
+      "target_stage_id": "riemannian_mean_spd",
+      "output_name": "cov",
+      "input_name": "covmats",
+      "source_type": "ndarray(n_delays, n_delays)",
+      "target_type": "ndarray(n_matrices, n, n)",
+      "data_kind": "spd_matrix",
+      "provenance": "Autocorrelation covariance matrices collected for Riemannian mean computation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "cross_frequency_coherence_matrix",
+      "target_stage_id": "riemannian_mean_spd",
+      "output_name": "coh",
+      "input_name": "covmats",
+      "source_type": "ndarray(n_channels, n_freq, n_freq)",
+      "target_type": "ndarray(n_matrices, n, n)",
+      "data_kind": "spd_matrix",
+      "provenance": "Cross-frequency coherence matrices collected for Riemannian mean.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "riemannian_mean_spd",
+      "target_stage_id": "tangent_space_projection",
+      "output_name": "C",
+      "input_name": "ref",
+      "source_type": "ndarray(n, n)",
+      "target_type": "ndarray(n, n)",
+      "data_kind": "spd_matrix",
+      "provenance": "Riemannian mean serves as reference point for tangent space projection.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tangent_space_projection",
+      "target_stage_id": "segment_max_aggregation",
+      "output_name": "T",
+      "input_name": "window_preds",
+      "source_type": "ndarray(n_matrices, n*(n+1)/2)",
+      "target_type": "ndarray(n_windows,)",
+      "data_kind": "prediction",
+      "provenance": "Tangent vectors fed to XGBoost classifier (implicit), predictions aggregated by max.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "segment_max_aggregation",
+      "target_stage_id": "ranked_prediction_blend",
+      "output_name": "segment_pred",
+      "input_name": "predictions",
+      "source_type": "float",
+      "target_type": "dict[str, ndarray]",
+      "data_kind": "prediction",
+      "provenance": "Segment-level predictions from each branch collected for rank blending.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Melbourne University Seizure Prediction 2016. Representative of Barachant's Riemannian BCI methodology applied across 4 competitions. Simplest of the 4 CDGs and BSD-licensed.",
+    "dejargonized_summary": "Predict seizures from brain recordings by extracting multiple kinds of patterns from short time windows, projecting curved-space matrix features into flat space for standard classifiers, taking the most seizure-like window per recording, and blending multiple models by ranking.",
+    "provenance_notes": [
+      "Source: https://github.com/alexandrebarachant/kaggle-seizure-prediction (BSD 3-Clause)",
+      "Local analysis: kaggle-solutions/docs/analysis-barachant-eeg-bci.md",
+      "All 6 atoms are gaps -- none ingested yet. Riemannian atoms available in pyRiemann (BSD)."
+    ],
+    "uncertainty_notes": [
+      "The windower and XGBoost classifier stages are standard sklearn-compatible components, not novel atoms.",
+      "Riemannian mean and tangent space projection are shared across all 4 Barachant solutions -- ingesting them benefits multiple CDGs.",
+      "Log-spaced delay values [1,2,4,8,16,32,64] in autocorrelation covariance are competition-tuned."
+    ],
+    "references": [
+      {
+        "title": "Barachant et al. (2013)",
+        "citation": "Classification of covariance matrices using a Riemannian-based kernel for BCI applications, Neurocomputing 2013",
+        "note": "Tangent space projection theoretical foundation."
+      },
+      {
+        "title": "Melbourne University AES/MathWorks/NIH Seizure Prediction Competition",
+        "citation": "Kaggle Competition, 2016",
+        "url": "https://www.kaggle.com/c/melbourne-university-seizure-prediction",
+        "note": "Competition page."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

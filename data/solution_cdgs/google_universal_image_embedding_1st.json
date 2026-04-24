@@ -1,0 +1,306 @@
+{
+  "asset_id": "solution.kaggle.google_universal_image_embedding_1st",
+  "asset_version": "v1",
+  "family": "multimodal_retrieval",
+  "paradigm": "loss_function",
+  "name": "Google Universal Image Embedding - 1st Place (2022) - Pipeline Template",
+  "summary": "Representation Learning / Metric Learning solution template for Google Universal Image Embedding - 1st Place (2022), modeled as a 5-stage deterministic pipeline: Image resizing, Transformer Backbone, Sub-center ArcFace, PCA dimensionality reduction, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Google Universal Image Embedding - 1st Place (2022): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "arcface",
+    "metric_learning",
+    "transformer",
+    "representation",
+    "learning",
+    "metric",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Representation Learning / Metric Learning task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Representation Learning / Metric Learning.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Image resizing creates the representation needed by L2 Normalization, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "image_resizing",
+      "transformer_backbone"
+    ],
+    "swappable_stages": {
+      "l2_normalization": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/google-universal-image-embedding/discussion/359331"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/google-universal-image-embedding/discussion/359331"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "image_resizing",
+      "name": "Image resizing",
+      "description": "dynamically resize diverse multi-domain images (landmarks, apparel, artwork) to fixed dimensions, applying heavy domain-agnostic augmentations (Albumentations)",
+      "dejargonized_description": "This stage dynamically resize diverse multi-domain images (landmarks, apparel, artwork) to fixed dimensions, applying heavy domain-agnostic augmentations (Albumentations).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Google Universal Image Embedding - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_resizing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "transformer_backbone",
+      "name": "Transformer Backbone",
+      "description": "pass images through a massive ViT-Huge architecture to extract high-dimensional representation features (timm/PyTorch)",
+      "dejargonized_description": "This stage pass images through a massive ViT-Huge architecture to extract high-dimensional representation features (timm/PyTorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "transformer_backbone_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "transformer_backbone_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sub_center_arcface",
+      "name": "Sub-center ArcFace",
+      "description": "train the model using a Sub-center ArcFace loss function, which creates multiple cluster centers per class to handle visually dissimilar items that belong to the same category (e.g., front vs back of a dress) (PyTorch)",
+      "dejargonized_description": "This stage train the model using a Sub-center ArcFace loss function, which creates multiple cluster centers per class to handle visually dissimilar items that belong to the same category (e.g., front vs back of a dress) (PyTorch).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "sub_center_arcface_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sub_center_arcface_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pca_dimensionality_reduction",
+      "name": "PCA dimensionality reduction",
+      "description": "fit a Principal Component Analysis (PCA) model to compress the resulting 1024D embeddings strictly down to 64D as required by the competition constraints (sklearn)",
+      "dejargonized_description": "This stage fit a Principal Component Analysis (PCA) model to compress the resulting 1024D embeddings strictly down to 64D as required by the competition constraints (sklearn).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "pca_dimensionality_reduction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pca_dimensionality_reduction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "l2_normalization",
+      "name": "L2 Normalization",
+      "description": "normalize the final 64D vector to project all embeddings onto a hypersphere for perfect cosine similarity retrieval (numpy)",
+      "dejargonized_description": "This stage normalize the final 64D vector to project all embeddings onto a hypersphere for perfect cosine similarity retrieval (numpy).",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "l2_normalization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "image_resizing",
+      "target_stage_id": "transformer_backbone",
+      "output_name": "image_resizing_output",
+      "input_name": "transformer_backbone_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Image resizing output is consumed by Transformer Backbone.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "transformer_backbone",
+      "target_stage_id": "sub_center_arcface",
+      "output_name": "transformer_backbone_output",
+      "input_name": "sub_center_arcface_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Transformer Backbone output is consumed by Sub-center ArcFace.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "sub_center_arcface",
+      "target_stage_id": "pca_dimensionality_reduction",
+      "output_name": "sub_center_arcface_output",
+      "input_name": "pca_dimensionality_reduction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Sub-center ArcFace output is consumed by PCA dimensionality reduction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pca_dimensionality_reduction",
+      "target_stage_id": "l2_normalization",
+      "output_name": "pca_dimensionality_reduction_output",
+      "input_name": "l2_normalization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "PCA dimensionality reduction output is consumed by L2 Normalization.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Representation Learning / Metric Learning.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/google-universal-image-embedding/discussion/359331",
+      "Code URL: writeup only",
+      "Standard tools: Albumentations, timm, PyTorch, sklearn, numpy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Google Universal Image Embedding - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/google-universal-image-embedding/discussion/359331",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

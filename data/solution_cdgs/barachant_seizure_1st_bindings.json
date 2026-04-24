@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.barachant_seizure_1st",
+  "solution_metadata": {
+    "competition": "Melbourne University AES/MathWorks/NIH Seizure Prediction",
+    "placement": "1st",
+    "team": "Alexandre Barachant & Gilberto (team)",
+    "year": 2016,
+    "metric": "AUC",
+    "problem_domain": "brain_computer_interface",
+    "source_url": "https://github.com/alexandrebarachant/kaggle-seizure-prediction",
+    "source_license": "BSD-3-Clause"
+  },
+  "bindings": [
+    {
+      "stage_id": "windower",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "orchestration",
+      "evidence_summary": {"resolved_reason": "MAP_OVER orchestration: sliding window segmentation with map_window_size and map_hop_size. Skeleton exists in sciona-matcher. Standard signal processing primitive covered by the windowing combinator."}
+    },
+    {
+      "stage_id": "autocorrelation_covariance_matrix",
+      "bound_artifact_fqdn": "sciona.atoms.riemannian_bci.covariance_features.autocorrelation_covariance_matrix",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "cross_frequency_coherence_matrix",
+      "bound_artifact_fqdn": "sciona.atoms.riemannian_bci.covariance_features.cross_frequency_coherence_matrix",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "riemannian_mean_spd",
+      "bound_artifact_fqdn": "sciona.atoms.riemannian_bci.covariance_features.riemannian_mean_spd",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "tangent_space_projection",
+      "bound_artifact_fqdn": "sciona.atoms.riemannian_bci.covariance_features.tangent_space_projection",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "segment_max_aggregation",
+      "bound_artifact_fqdn": "sciona.atoms.riemannian_bci.signal_processing.segment_max_aggregation",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "ranked_prediction_blend",
+      "bound_artifact_fqdn": "sciona.atoms.riemannian_bci.signal_processing.ranked_prediction_blend",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 7,
+    "bound_active": 7,
+    "bound_approximate": 0,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona-atoms-signal": 6
+    },
+    "novel_atoms_needed": [],
+    "meta_patterns_unbound": ["windower"]
+  },
+  "architect_test_expectations": {
+    "description": "All 7 stages are gaps. The Riemannian atoms (mean, tangent space) are shared across all 4 Barachant solutions -- ingesting them would benefit multiple CDGs.",
+    "critical_finding": "This CDG has 4 parallel branches that merge at ranked_prediction_blend. The architect must recognize the parallel structure and not try to serialize the branches. The riemannian_mean_spd and tangent_space_projection stages appear on two of the four branches (autocorrelation and coherence).",
+    "expected_retrieval_path": "No atoms should be found. All stages should be reported as gaps. The windower stage is low-novelty and may be deprioritized for ingestion."
+  }
+}

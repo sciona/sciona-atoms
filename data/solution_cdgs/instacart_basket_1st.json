@@ -1,0 +1,302 @@
+{
+  "asset_id": "solution.kaggle.instacart_basket_1st",
+  "asset_version": "v1",
+  "family": "set_prediction",
+  "paradigm": "optimization",
+  "name": "Instacart Market Basket Analysis 1st Place — F1-Optimal Reorder Set Prediction",
+  "summary": "Two-stage pipeline computing rich user-product interaction features fed into a LightGBM reorder-probability model, followed by an exact dynamic programming algorithm (Faron's kernel) to select the product subset maximizing expected F1 score.",
+  "dejargonized_summary": "Predict which grocery products a customer will reorder by first estimating the probability of each product being reordered using gradient boosting, then using a clever algorithm to pick the exact set of products that maximizes the F1 scoring metric.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "market_basket_prediction",
+    "reorder_probability",
+    "f1_maximization",
+    "set_selection_dp",
+    "grocery_recommendation",
+    "optimal_subset_selection",
+    "expected_f1_optimization",
+    "user_product_interaction_features",
+    "candidate_generation_reranking",
+    "lightgbm_binary_classification",
+    "threshold_free_set_prediction"
+  ],
+  "applicability": {
+    "use_when": [
+      "Task requires predicting a variable-size set of items per entity (e.g., products per user, tags per document) and evaluation metric is F1",
+      "Per-item probabilities can be estimated independently but the optimal subset depends on their joint distribution under the F1 metric",
+      "Rich historical interaction data is available for feature engineering (repeat purchase patterns, temporal recency, frequency)"
+    ],
+    "do_not_use_when": [
+      "Set size is fixed or evaluation metric is not F1 (e.g., precision@k, recall@k) — the DP kernel is specifically derived for expected F1 maximization",
+      "Items have strong inter-dependencies (complements/substitutes) that violate the independence assumption required by Faron's DP",
+      "Cold-start scenario with no historical interactions — the candidate generation and feature engineering stages require purchase history"
+    ],
+    "key_insight": "Faron's F1 maximization DP is the critical innovation. Given per-item reorder probabilities from any classifier, naive thresholding (select all items with p > 0.5) is suboptimal for F1 because the optimal threshold depends on the number of true positives, which is unknown. The DP algorithm exactly computes the expected F1 for every possible subset size and selects the subset that maximizes it, turning an intractable combinatorial problem into an O(n^2) computation under the independence assumption.",
+    "critical_stages": ["f1_maximization_dp"],
+    "swappable_stages": {
+      "user_product_aggregation": "Any feature engineering approach works — the key requirement is per-candidate probability estimates, not the specific features.",
+      "reorder_probability_model": "LightGBM can be replaced with XGBoost, neural network, or logistic regression. The DP stage is agnostic to how probabilities are produced, as long as they are calibrated.",
+      "candidate_generation": "Candidate filtering strategy can vary (e.g., recency-based, frequency-based) as long as recall is high enough to include true reorders."
+    },
+    "failure_modes": [
+      "Poorly calibrated probabilities: the DP assumes input probabilities reflect true reorder likelihood — miscalibrated scores produce suboptimal subsets",
+      "Strong item-item dependencies (e.g., buying milk implies buying cereal): the independence assumption breaks down and the DP may select redundant or incomplete sets",
+      "Very large candidate sets (>500 items per user): the O(n^2) DP becomes slow, though this is rare in practice"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "order_history",
+      "type_desc": "DataFrame",
+      "constraints": "Columns: user_id, product_id, order_number, day_of_week, hour_of_day, days_since_prior_order.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "predicted_product_sets",
+      "type_desc": "Dict[int, List[int]]",
+      "constraints": "Mapping from user_id to list of predicted reorder product_ids.",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "features_before_model",
+      "statement": "User-product aggregation and feature merging must precede the reorder probability model.",
+      "rationale": "LightGBM requires pre-computed feature vectors for each user-product candidate pair.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "probabilities_before_dp",
+      "statement": "The reorder probability model must produce per-pair probabilities before F1 maximization DP.",
+      "rationale": "The DP algorithm takes calibrated probabilities as input to compute the optimal subset.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "user_product_aggregation",
+      "name": "User-Product Aggregation",
+      "description": "Compute historical reorder rates, day-of-week purchasing patterns, average days-since-prior-order, and other interaction statistics for every user-product pair.",
+      "dejargonized_description": "Calculate statistics about each customer's purchasing history for every product they have bought: how often they reorder it, which days they buy it, and how long between orders.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "order_history",
+          "type_desc": "DataFrame",
+          "constraints": "Full order history with user_id, product_id, order_number, day_of_week, hour, days_since_prior.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "interaction_features",
+          "type_desc": "DataFrame",
+          "constraints": "One row per user-product pair with aggregated statistics.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Order history contains at least one prior order per user."],
+      "guarantees": ["Every historically ordered user-product pair has a feature row."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "candidate_generation",
+      "name": "Candidate Generation",
+      "description": "Filter to products each user has ordered at least once previously, forming the candidate set for reorder prediction.",
+      "dejargonized_description": "Only consider products the customer has bought before as potential reorders — do not predict completely new products.",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "order_history",
+          "type_desc": "DataFrame",
+          "constraints": "Full order history.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "candidate_pairs",
+          "type_desc": "DataFrame",
+          "constraints": "Subset of user-product pairs that are candidates for reorder.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Order history is available."],
+      "guarantees": ["Every candidate pair has at least one historical purchase."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_merging",
+      "name": "Feature Merging",
+      "description": "Join User-level features, Product-level features, and User-Product interaction features onto the candidate pairs to create the final training/inference feature matrix.",
+      "dejargonized_description": "Combine all the different types of statistics (about the customer, the product, and the customer-product relationship) into one table for the model to use.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "candidate_pairs",
+          "type_desc": "DataFrame",
+          "constraints": "User-product candidate pairs.",
+          "required": true
+        },
+        {
+          "name": "interaction_features",
+          "type_desc": "DataFrame",
+          "constraints": "Aggregated user-product interaction statistics.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feature_matrix",
+          "type_desc": "DataFrame",
+          "constraints": "One row per candidate pair with all features joined.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Candidate pairs and interaction features share user_id, product_id keys."],
+      "guarantees": ["All candidate pairs have complete feature vectors."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "reorder_probability_model",
+      "name": "Reorder Probability Model",
+      "description": "Train a LightGBM binary classifier to predict the probability that a user will reorder a given product in their next order.",
+      "dejargonized_description": "Use gradient-boosted decision trees to estimate how likely each product is to be reordered by the customer.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "feature_matrix",
+          "type_desc": "DataFrame",
+          "constraints": "Complete feature matrix for candidate pairs.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "reorder_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_candidates,): calibrated reorder probability per candidate pair.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Feature matrix includes binary reorder target for training rows."],
+      "guarantees": ["Output probabilities are in [0, 1] for all candidate pairs."],
+      "family_notes": [
+        "LightGBM chosen for speed and performance on large tabular datasets."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "f1_maximization_dp",
+      "name": "F1 Maximization DP",
+      "description": "Run an exact dynamic programming algorithm (Faron's kernel) per user to select the product subset that maximizes the expected F1 score given individual reorder probabilities.",
+      "dejargonized_description": "Use a mathematical algorithm to pick the best set of products to predict for each customer, optimizing for the F1 score rather than just picking all products above a threshold.",
+      "concept_type": "dynamic_programming",
+      "inputs": [
+        {
+          "name": "reorder_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Per-candidate reorder probabilities for a single user, sorted descending.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "predicted_product_sets",
+          "type_desc": "Dict[int, List[int]]",
+          "constraints": "Mapping from user_id to optimal product subset.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Probabilities are calibrated and per-user grouping is available."],
+      "guarantees": ["Selected subset maximizes expected F1 under the independence assumption."],
+      "family_notes": [
+        "Implemented in custom Cython for performance.",
+        "KEY WINNING TECHNIQUE. Exact F1 optimization outperforms naive thresholding.",
+        "Based on the observation that F1 maximization over independent Bernoulli variables has an O(n^2) exact solution."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "user_product_aggregation",
+      "target_stage_id": "feature_merging",
+      "output_name": "interaction_features",
+      "input_name": "interaction_features",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "tabular",
+      "provenance": "Aggregated user-product interaction statistics.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "candidate_generation",
+      "target_stage_id": "feature_merging",
+      "output_name": "candidate_pairs",
+      "input_name": "candidate_pairs",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "tabular",
+      "provenance": "Filtered user-product candidate pairs.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "feature_merging",
+      "target_stage_id": "reorder_probability_model",
+      "output_name": "feature_matrix",
+      "input_name": "feature_matrix",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "tabular",
+      "provenance": "Complete feature vectors for all candidate pairs.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "reorder_probability_model",
+      "target_stage_id": "f1_maximization_dp",
+      "output_name": "reorder_probabilities",
+      "input_name": "reorder_probabilities",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "probabilities",
+      "provenance": "Calibrated per-pair reorder probabilities for DP optimization.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Instacart Market Basket Analysis solution. Core innovation: exact DP for F1-optimal subset selection given per-item reorder probabilities from LightGBM.",
+    "dejargonized_summary": "Predict which products each customer will reorder by estimating individual reorder probabilities then mathematically selecting the best set to maximize the scoring metric.",
+    "provenance_notes": [
+      "Source: Kaggle Instacart Market Basket Analysis competition, 1st place (2017)",
+      "Source: https://www.kaggle.com/c/instacart-market-basket-analysis/discussion/38100",
+      "Code: https://github.com/sjv/Kaggle-Instacart"
+    ],
+    "uncertainty_notes": [
+      "The independence assumption in F1 DP may not hold for complementary/substitute products.",
+      "Feature engineering details may vary from the exact 1st place implementation."
+    ],
+    "references": [
+      {
+        "title": "Instacart Market Basket Analysis 1st Place Solution",
+        "citation": "Kaggle Instacart Market Basket Analysis, 1st place solution writeup (2017)",
+        "url": "https://www.kaggle.com/c/instacart-market-basket-analysis/discussion/38100",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

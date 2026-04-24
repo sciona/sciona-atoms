@@ -1,0 +1,387 @@
+{
+  "asset_id": "solution.kaggle.shopee_price_match_1st",
+  "asset_version": "v1",
+  "family": "multimodal_retrieval",
+  "paradigm": "neural_network",
+  "name": "Shopee Price Match Guarantee 1st Place — Multimodal ArcFace Retrieval with Graph Matching",
+  "summary": "Multimodal product matching using ArcFace-trained image embeddings (NFNet/ResNeXt), multilingual BERT and TF-IDF text embeddings, L2-normalized fusion, RAPIDS cuML cosine similarity search, dynamic thresholding, and connected component extraction for final group assignment.",
+  "dejargonized_summary": "Find matching products by computing visual and textual similarity scores, combining them, finding all pairs above a confidence threshold, and grouping connected matches together.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "arcface_embedding",
+    "multimodal_retrieval",
+    "image_text_fusion",
+    "cosine_similarity_search",
+    "connected_component_grouping",
+    "multilingual_text",
+    "product_matching",
+    "near_duplicate_detection",
+    "metric_learning",
+    "large_scale_retrieval",
+    "e_commerce"
+  ],
+  "inputs": [
+    {
+      "name": "product_images",
+      "type_desc": "list[NDArray[np.uint8]]",
+      "constraints": "Product listing images, variable resolution.",
+      "required": true
+    },
+    {
+      "name": "product_text",
+      "type_desc": "list[str]",
+      "constraints": "Product title and description strings, multilingual.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "matching_groups",
+      "type_desc": "list[list[int]]",
+      "constraints": "Groups of product indices that are matches (same product).",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Multimodal matching/retrieval where both image and text signals are available and complementary",
+      "Near-duplicate or same-entity detection at scale (>10K items) requiring pairwise similarity",
+      "Fine-grained visual similarity where class boundaries are tight (e.g., same product vs. similar product)",
+      "Multilingual text where semantic matching must work across languages"
+    ],
+    "do_not_use_when": [
+      "Single-modality data (image-only or text-only) — the fusion and graph stages add overhead without the complementary signal advantage",
+      "Exact duplicate detection — perceptual hashing is faster and sufficient when images/text are byte-level identical",
+      "Hierarchical or taxonomic matching (matching to a category tree) — ArcFace assumes flat class structure and connected components cannot encode hierarchy",
+      "Extremely large catalogs (>10M items) without approximate nearest neighbor infrastructure — brute-force cosine similarity is O(N^2)"
+    ],
+    "key_insight": "ArcFace margin loss transforms the embedding space so that cosine similarity becomes a reliable proxy for semantic equivalence: it enforces an angular margin between classes, meaning the threshold for 'same product' is geometrically well-separated from 'different product'. This makes the downstream thresholding step robust rather than fragile. Connected components then propagate transitive matches, recovering groups that no single pairwise comparison would capture.",
+    "critical_stages": ["image_embedding", "text_embedding", "dynamic_thresholding", "connected_components"],
+    "swappable_stages": {
+      "embedding_fusion": "Concatenation + L2-norm is simplest; weighted sum, learned fusion, or cross-attention are alternatives. The key requirement is that the fused space supports cosine similarity.",
+      "pairwise_similarity": "Any nearest-neighbor search works (FAISS, ScaNN, brute-force). RAPIDS cuML is just one GPU-accelerated option.",
+      "image_embedding": "Any metric-learning backbone (ResNet, ViT, EfficientNet) with ArcFace/CosFace/Triplet loss works. The margin loss matters more than the backbone."
+    },
+    "failure_modes": [
+      "Connected component error propagation: one false-positive match can merge two unrelated product groups, and the error is irrecoverable without post-hoc splitting",
+      "Modality mismatch: products with identical images but different text (or vice versa) produce ambiguous fused embeddings — the fusion weights must reflect which modality is more discriminative for the domain",
+      "Threshold sensitivity on non-ArcFace embeddings: without angular margin training, the similarity distribution has no clean separation gap, making any fixed threshold fragile"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "embedding_before_fusion",
+      "statement": "Image and text embeddings must be computed before fusion.",
+      "rationale": "Fusion operates on fixed-dimensional embedding vectors from both modalities.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "similarity_before_thresholding",
+      "statement": "Pairwise similarity must be computed before dynamic thresholding and graph extraction.",
+      "rationale": "Thresholding converts continuous similarity scores into a binary adjacency matrix.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "arcface_margin_loss",
+      "statement": "Image and text embeddings should be trained with ArcFace margin loss to enforce angular separation.",
+      "rationale": "ArcFace produces more discriminative embeddings than standard softmax by enforcing an angular margin between classes in the embedding space.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "image_embedding",
+      "name": "Image Embedding",
+      "description": "Extract 512-dimensional image embeddings using NFNet or ResNeXt backbones fine-tuned with ArcFace angular margin loss. The margin loss enforces tight intra-class clustering and inter-class separation in embedding space.",
+      "dejargonized_description": "Convert each product image into a compact 512-number fingerprint using a deep neural network trained so that images of the same product end up close together and different products end up far apart.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "product_images",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Product listing images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_embeddings",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 512). L2-normalized image embedding vectors.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Pre-trained backbone weights are available. ArcFace head is configured."],
+      "guarantees": ["Embeddings are L2-normalized. Same-product images cluster together."],
+      "family_notes": [
+        "ArcFace loss is borrowed from face recognition and is highly effective for fine-grained visual similarity.",
+        "NFNet provides strong performance without batch normalization."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "text_embedding",
+      "name": "Text Embedding",
+      "description": "Extract text embeddings using a combination of Multilingual BERT (fine-tuned with ArcFace loss) and TF-IDF sparse vectors. BERT captures semantic meaning while TF-IDF captures exact lexical matches.",
+      "dejargonized_description": "Convert each product description into a numeric fingerprint using both a deep language model (for meaning) and a word-frequency method (for exact word matches).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "product_text",
+          "type_desc": "list[str]",
+          "constraints": "Product title and description strings.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text_embeddings",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, D_text). Combined BERT + TF-IDF text embeddings.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Multilingual BERT model is available. TF-IDF vocabulary is fitted."],
+      "guarantees": ["Embeddings capture both semantic and lexical similarity."],
+      "family_notes": [
+        "Multilingual BERT is critical for Shopee's multilingual product listings.",
+        "TF-IDF complements BERT by capturing exact brand names and model numbers that BERT may not preserve."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "embedding_fusion",
+      "name": "Embedding Fusion",
+      "description": "Concatenate image and text embedding vectors along the feature axis and apply L2 normalization to the fused vector.",
+      "dejargonized_description": "Combine the image and text fingerprints into one unified fingerprint and normalize its length.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "image_embeddings",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 512). Image embeddings.",
+          "required": true
+        },
+        {
+          "name": "text_embeddings",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, D_text). Text embeddings.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fused_embeddings",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 512+D_text). L2-normalized concatenated embeddings.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Both embedding matrices have the same number of samples N."],
+      "guarantees": ["Output vectors are L2-normalized. Both modalities contribute to similarity."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pairwise_similarity",
+      "name": "Pairwise Similarity",
+      "description": "Compute exact cosine similarity across all product pairs in the batch using RAPIDS cuML KNN or brute-force matrix multiplication on GPU. Returns top-K nearest neighbors per query.",
+      "dejargonized_description": "Compare every product's fingerprint against every other product's fingerprint to find the most similar pairs, using GPU acceleration for speed.",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "fused_embeddings",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, D). L2-normalized fused embeddings.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "similarity_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, K). Top-K cosine similarity scores per product.",
+          "required": true
+        },
+        {
+          "name": "neighbor_indices",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, K). Indices of top-K nearest neighbors.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Embeddings are L2-normalized for cosine similarity via dot product."],
+      "guarantees": ["Similarity scores are in [-1, 1]. Neighbors are sorted by descending similarity."],
+      "family_notes": [
+        "For L2-normalized vectors, cosine similarity equals dot product, enabling efficient GPU matrix multiplication.",
+        "RAPIDS cuML provides GPU-accelerated KNN for large-scale retrieval."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "dynamic_thresholding",
+      "name": "Dynamic Thresholding",
+      "description": "Apply a dynamic confidence threshold to convert continuous similarity scores into a binary adjacency matrix. The threshold may vary per query based on the distribution of similarity scores.",
+      "dejargonized_description": "Decide which product pairs are actual matches by applying a confidence cutoff, potentially adjusting the cutoff based on how similar each product's neighbors are.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "similarity_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, K). Top-K similarity scores.",
+          "required": true
+        },
+        {
+          "name": "neighbor_indices",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, K). Top-K neighbor indices.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "adjacency_pairs",
+          "type_desc": "list[tuple[int, int]]",
+          "constraints": "List of (i, j) pairs where products i and j are predicted matches.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Similarity scores and neighbor indices are available."],
+      "guarantees": ["Output contains only pairs above the confidence threshold."],
+      "family_notes": [
+        "Dynamic thresholding adapts to varying density in embedding space, handling products with many near-duplicates differently from unique products."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "connected_components",
+      "name": "Connected Components",
+      "description": "Build a graph from the adjacency pairs and extract connected components using NetworkX or cuGraph. Each connected component forms a group of matching products.",
+      "dejargonized_description": "Group all matched product pairs into clusters by following chains of matches: if A matches B and B matches C, then A, B, and C are all in the same group.",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "adjacency_pairs",
+          "type_desc": "list[tuple[int, int]]",
+          "constraints": "List of (i, j) match pairs.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "matching_groups",
+          "type_desc": "list[list[int]]",
+          "constraints": "Groups of product indices that are matches.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Adjacency pairs define a valid undirected graph."],
+      "guarantees": ["Every product appears in exactly one group. Isolated products form singleton groups."],
+      "family_notes": [
+        "Connected components is a standard graph algorithm (BFS/DFS or Union-Find).",
+        "cuGraph provides GPU-accelerated graph algorithms for large-scale matching."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "image_embedding",
+      "target_stage_id": "embedding_fusion",
+      "output_name": "image_embeddings",
+      "input_name": "image_embeddings",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "embedding",
+      "provenance": "ArcFace-trained image embeddings.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "text_embedding",
+      "target_stage_id": "embedding_fusion",
+      "output_name": "text_embeddings",
+      "input_name": "text_embeddings",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "embedding",
+      "provenance": "BERT + TF-IDF text embeddings.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "embedding_fusion",
+      "target_stage_id": "pairwise_similarity",
+      "output_name": "fused_embeddings",
+      "input_name": "fused_embeddings",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "embedding",
+      "provenance": "L2-normalized multimodal embeddings.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pairwise_similarity",
+      "target_stage_id": "dynamic_thresholding",
+      "output_name": "similarity_matrix",
+      "input_name": "similarity_matrix",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "similarity_scores",
+      "provenance": "Top-K cosine similarity scores.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pairwise_similarity",
+      "target_stage_id": "dynamic_thresholding",
+      "output_name": "neighbor_indices",
+      "input_name": "neighbor_indices",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "indices",
+      "provenance": "Top-K neighbor indices.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "dynamic_thresholding",
+      "target_stage_id": "connected_components",
+      "output_name": "adjacency_pairs",
+      "input_name": "adjacency_pairs",
+      "source_type": "list[tuple[int, int]]",
+      "target_type": "list[tuple[int, int]]",
+      "data_kind": "edge_list",
+      "provenance": "Binary match pairs from thresholding.",
+      "loss_class": "lossy_but_allowed"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Shopee Price Match solution. Key innovations include ArcFace-trained multimodal embeddings, GPU-accelerated nearest neighbor search, and graph-based grouping via connected components.",
+    "dejargonized_summary": "Match duplicate products by computing visual and textual similarity fingerprints, finding close pairs, and grouping them into clusters using graph connectivity.",
+    "provenance_notes": [
+      "Source: Kaggle Shopee Price Match Guarantee competition, 1st place solution (2021)",
+      "Discussion: https://www.kaggle.com/competitions/shopee-product-matching/discussion",
+      "Source: https://www.kaggle.com/c/shopee-product-matching/discussion/238136"
+    ],
+    "uncertainty_notes": [
+      "Dynamic threshold selection is sensitive to the embedding quality and domain.",
+      "Connected components can propagate errors: one bad match can merge two unrelated groups."
+    ],
+    "references": [
+      {
+        "title": "Shopee Price Match 1st Place Solution",
+        "citation": "1st place solution writeup, Shopee Product Matching",
+        "url": "https://www.kaggle.com/competitions/shopee-product-matching/discussion/244064",
+        "note": "1st place solution description."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

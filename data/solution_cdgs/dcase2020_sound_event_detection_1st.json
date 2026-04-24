@@ -1,0 +1,302 @@
+{
+  "asset_id": "solution.kaggle.dcase2020_sound_event_detection_1st",
+  "asset_version": "v1",
+  "family": "audio_classification",
+  "paradigm": "loss_function",
+  "name": "DCASE 2020 Task 4 (Sound Event Detection) - 1st Place (2020) - Pipeline Template",
+  "summary": "Audio SED / Semi-supervised solution template for DCASE 2020 Task 4 (Sound Event Detection) - 1st Place (2020), modeled as a 5-stage deterministic pipeline: Audio conversion, Mean-Teacher framework initialization, Supervised phase, Unsupervised consistency phase, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by DCASE 2020 Task 4 (Sound Event Detection) - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "audio",
+    "supervised",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Audio SED / Semi-supervised task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Audio SED / Semi-supervised.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Audio conversion creates the representation needed by Post-processing, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "audio_conversion",
+      "mean_teacher_framework_initialization"
+    ],
+    "swappable_stages": {
+      "post_processing": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "cdg_fast_50-75.pdf"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "cdg_fast_50-75.pdf"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "audio_conversion",
+      "name": "Audio conversion",
+      "description": "generate standard Log-Mel Spectrograms from both labeled and weakly-labeled datasets (librosa)",
+      "dejargonized_description": "This stage generate standard Log-Mel Spectrograms from both labeled and weakly-labeled datasets (librosa).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for DCASE 2020 Task 4 (Sound Event Detection) - 1st Place (2020).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio_conversion_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "mean_teacher_framework_initialization",
+      "name": "Mean-Teacher framework initialization",
+      "description": "instantiate two identical CNN-RNN architectures (CRNNs): one designated \"Student\", one designated \"Teacher\" (PyTorch)",
+      "dejargonized_description": "This stage instantiate two identical CNN-RNN architectures (CRNNs): one designated \"Student\", one designated \"Teacher\" (PyTorch).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "mean_teacher_framework_initialization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mean_teacher_framework_initialization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "supervised_phase",
+      "name": "Supervised phase",
+      "description": "train the Student model normally on the small set of ground-truth labeled audio samples",
+      "dejargonized_description": "This stage train the Student model normally on the small set of ground-truth labeled audio samples.",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "supervised_phase_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "supervised_phase_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "unsupervised_consistency_phase",
+      "name": "Unsupervised consistency phase",
+      "description": "pass unlabeled audio through both models. Use MSE loss to force the Student model's predictions to match the Teacher model's predictions, constantly updating the Teacher via Exponential Moving Average (EMA) of the Student's weights (PyTorch)",
+      "dejargonized_description": "This stage pass unlabeled audio through both models. Use MSE loss to force the Student model's predictions to match the Teacher model's predictions, constantly updating the Teacher via Exponential Moving Average (EMA) of the Student's weights (PyTorch).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "unsupervised_consistency_phase_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "unsupervised_consistency_phase_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "post_processing",
+      "name": "Post-processing",
+      "description": "apply a mathematical Median Filter to the frame-level predictions to eliminate impossible rapid clicking/switching between active sound classes (scipy.signal)",
+      "dejargonized_description": "This stage apply a mathematical Median Filter to the frame-level predictions to eliminate impossible rapid clicking/switching between active sound classes (scipy.signal).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "post_processing_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "audio_conversion",
+      "target_stage_id": "mean_teacher_framework_initialization",
+      "output_name": "audio_conversion_output",
+      "input_name": "mean_teacher_framework_initialization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Audio conversion output is consumed by Mean-Teacher framework initialization.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "mean_teacher_framework_initialization",
+      "target_stage_id": "supervised_phase",
+      "output_name": "mean_teacher_framework_initialization_output",
+      "input_name": "supervised_phase_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Mean-Teacher framework initialization output is consumed by Supervised phase.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "supervised_phase",
+      "target_stage_id": "unsupervised_consistency_phase",
+      "output_name": "supervised_phase_output",
+      "input_name": "unsupervised_consistency_phase_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Supervised phase output is consumed by Unsupervised consistency phase.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "unsupervised_consistency_phase",
+      "target_stage_id": "post_processing",
+      "output_name": "unsupervised_consistency_phase_output",
+      "input_name": "post_processing_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Unsupervised consistency phase output is consumed by Post-processing.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "academic_benchmark",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Audio SED / Semi-supervised.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Academic (DCASE)",
+      "Code URL: writeup only",
+      "Standard tools: librosa, PyTorch, scipy",
+      "Reference URL: https://www.kaggle.com/"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "DCASE 2020 Task 4 (Sound Event Detection) - 1st Place (2020) source PDF entry",
+        "citation": "https://www.kaggle.com/",
+        "note": "Local source PDF entry; exact writeup URL was not specified as an HTTP URL."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

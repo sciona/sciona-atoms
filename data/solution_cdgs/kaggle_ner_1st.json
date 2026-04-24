@@ -1,0 +1,301 @@
+{
+  "asset_id": "solution.kaggle.kaggle_ner_1st",
+  "asset_version": "v1",
+  "family": "nlp_span_detection",
+  "paradigm": "neural_network",
+  "name": "Kaggle Feature Engineering / NER - 1st Place (2022) - Pipeline Template",
+  "summary": "NLP Text Classification / NER solution template for Kaggle Feature Engineering / NER - 1st Place (2022), modeled as a 5-stage deterministic pipeline: Sequence Tokenization, QA Reformulation, QA Softmax Head, Span Prediction, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by Kaggle Feature Engineering / NER - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "transformer",
+    "segmentation",
+    "classification"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a NLP Text Classification / NER task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: NLP Text Classification / NER.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Sequence Tokenization creates the representation needed by Decoding, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "sequence_tokenization",
+      "qa_reformulation"
+    ],
+    "swappable_stages": {
+      "decoding": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/cdeotte/writeups"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/cdeotte/writeups"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "sequence_tokenization",
+      "name": "Sequence Tokenization",
+      "description": "Tokenize raw text data and generate corresponding index offsets (transformers.AutoTokenizer)",
+      "dejargonized_description": "This stage tokenize raw text data and generate corresponding index offsets (transformers.AutoTokenizer).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Kaggle Feature Engineering / NER - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sequence_tokenization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "qa_reformulation",
+      "name": "QA Reformulation",
+      "description": "Reformat the standard NER data arrays entirely into a Question-Answering structure, guaranteeing one absolute \"onset\" tag and one \"wakeup\" tag per continuous train sequence",
+      "dejargonized_description": "This stage reformat the standard NER data arrays entirely into a Question-Answering structure, guaranteeing one absolute \"onset\" tag and one \"wakeup\" tag per continuous train sequence.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "qa_reformulation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "qa_reformulation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "qa_softmax_head",
+      "name": "QA Softmax Head",
+      "description": "Instead of utilizing a standard BertForTokenClassification module (which acts as an NLP analog to image segmentation), structurally attach a BertForQuestionAnswering head (the NLP analog to bounding-box object detection) to the core transformer backbone (transformers, torch.nn)",
+      "dejargonized_description": "This stage instead of utilizing a standard BertForTokenClassification module (which acts as an NLP analog to image segmentation), structurally attach a BertForQuestionAnswering head (the NLP analog to bounding-box object detection) to the core transformer backbone (transformers, torch.nn).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "qa_softmax_head_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "qa_softmax_head_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "span_prediction",
+      "name": "Span Prediction",
+      "description": "Train the reformulated model to predict explicit start and end logit spans across the sequence rather than classifying every individual token sequentially",
+      "dejargonized_description": "This stage train the reformulated model to predict explicit start and end logit spans across the sequence rather than classifying every individual token sequentially.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "span_prediction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "span_prediction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "decoding",
+      "name": "Decoding",
+      "description": "Convert the predicted start/end probabilistic indices back to highly accurate text spans utilizing the saved offsets (numpy)",
+      "dejargonized_description": "This stage convert the predicted start/end probabilistic indices back to highly accurate text spans utilizing the saved offsets (numpy).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "decoding_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "sequence_tokenization",
+      "target_stage_id": "qa_reformulation",
+      "output_name": "sequence_tokenization_output",
+      "input_name": "qa_reformulation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Sequence Tokenization output is consumed by QA Reformulation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "qa_reformulation",
+      "target_stage_id": "qa_softmax_head",
+      "output_name": "qa_reformulation_output",
+      "input_name": "qa_softmax_head_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "QA Reformulation output is consumed by QA Softmax Head.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "qa_softmax_head",
+      "target_stage_id": "span_prediction",
+      "output_name": "qa_softmax_head_output",
+      "input_name": "span_prediction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "QA Softmax Head output is consumed by Span Prediction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "span_prediction",
+      "target_stage_id": "decoding",
+      "output_name": "span_prediction_output",
+      "input_name": "decoding_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Span Prediction output is consumed by Decoding.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for NLP Text Classification / NER.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/cdeotte/writeups",
+      "Code URL: writeup only",
+      "Standard tools: transformers, torch, numpy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Kaggle Feature Engineering / NER - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/cdeotte/writeups",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

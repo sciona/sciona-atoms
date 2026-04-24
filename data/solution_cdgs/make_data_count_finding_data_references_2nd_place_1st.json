@@ -1,0 +1,301 @@
+{
+  "asset_id": "solution.kaggle.make_data_count_finding_data_references_2nd_place_1st",
+  "asset_version": "v1",
+  "family": "nlp_classification",
+  "paradigm": "signal_filter",
+  "name": "Make Data Count: Finding Data References - 2nd Place (2022) - Pipeline Template",
+  "summary": "NLP Text Classification solution template for Make Data Count: Finding Data References - 2nd Place (2022), modeled as a 5-stage deterministic pipeline: External Data Gathering, RegEx Filtering, Text Classification Model, Cross-Validation, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by Make Data Count: Finding Data References - 2nd Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "transformer",
+    "rag",
+    "classification"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a NLP Text Classification task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: NLP Text Classification.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: External Data Gathering creates the representation needed by Ensembling, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "external_data_gathering",
+      "regex_filtering"
+    ],
+    "swappable_stages": {
+      "ensembling": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/make-data-count-finding-data-references/writeups/2nd-place-solution"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/make-data-count-finding-data-references/writeups/2nd-place-solution"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "external_data_gathering",
+      "name": "External Data Gathering",
+      "description": "Execute automated scripts to download supplementary open-access corpus data directly from PubMed. This step physically augments the heavily constrained training set prior to any modeling (requests, beautifulsoup)",
+      "dejargonized_description": "This stage execute automated scripts to download supplementary open-access corpus data directly from PubMed. This step physically augments the heavily constrained training set prior to any modeling (requests, beautifulsoup).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Make Data Count: Finding Data References - 2nd Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "external_data_gathering_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "regex_filtering",
+      "name": "RegEx Filtering",
+      "description": "Apply a rigid, regular expression-based programmatic system to detect common dataset name variations and filter out severe noise strings (re)",
+      "dejargonized_description": "This stage apply a rigid, regular expression-based programmatic system to detect common dataset name variations and filter out severe noise strings (re).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "regex_filtering_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "regex_filtering_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "text_classification_model",
+      "name": "Text Classification Model",
+      "description": "Train a robust transformer-based text classifier on the augmented dataset, entirely bypassing structurally unstable NER models that failed to converge on the small dataset (transformers)",
+      "dejargonized_description": "This stage train a robust transformer-based text classifier on the augmented dataset, entirely bypassing structurally unstable NER models that failed to converge on the small dataset (transformers).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "text_classification_model_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text_classification_model_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "cross_validation",
+      "name": "Cross-Validation",
+      "description": "Train the models across multiple strict folds to stabilize severe early-epoch convergence issues explicitly caused by the microscopic dataset size",
+      "dejargonized_description": "This stage train the models across multiple strict folds to stabilize severe early-epoch convergence issues explicitly caused by the microscopic dataset size.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "cross_validation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cross_validation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "ensembling",
+      "name": "Ensembling",
+      "description": "Average the output classification probabilities across all stable folds",
+      "dejargonized_description": "This stage average the output classification probabilities across all stable folds.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "ensembling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "external_data_gathering",
+      "target_stage_id": "regex_filtering",
+      "output_name": "external_data_gathering_output",
+      "input_name": "regex_filtering_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "External Data Gathering output is consumed by RegEx Filtering.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "regex_filtering",
+      "target_stage_id": "text_classification_model",
+      "output_name": "regex_filtering_output",
+      "input_name": "text_classification_model_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "RegEx Filtering output is consumed by Text Classification Model.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "text_classification_model",
+      "target_stage_id": "cross_validation",
+      "output_name": "text_classification_model_output",
+      "input_name": "cross_validation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Text Classification Model output is consumed by Cross-Validation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "cross_validation",
+      "target_stage_id": "ensembling",
+      "output_name": "cross_validation_output",
+      "input_name": "ensembling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Cross-Validation output is consumed by Ensembling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for NLP Text Classification.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/make-data-count-finding-data-references/writeups/2nd-place-solution",
+      "Code URL: writeup only",
+      "Standard tools: requests, re, transformers, numpy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Make Data Count: Finding Data References - 2nd Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/make-data-count-finding-data-references/writeups/2nd-place-solution",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "asset_id": "solution.kaggle.rsna_cervical_spine_fast91_1st",
+  "asset_version": "v1",
+  "family": "object_detection_2d",
+  "paradigm": "loss_function",
+  "name": "RSNA 2022 Cervical Spine Fracture Detection - 1st Place (2022) - Pipeline Template",
+  "summary": "3D Object Detection + Sequence Classification solution template for RSNA 2022 Cervical Spine Fracture Detection - 1st Place (2022), modeled as a 5-stage deterministic pipeline: 3D Crop/Registration, 2.5D Slice Extraction, Sequence Modeling (Bi-LSTM), Multi-task heads, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by RSNA 2022 Cervical Spine Fracture Detection - 1st Place (2022): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lstm",
+    "object",
+    "detection",
+    "sequence",
+    "classification",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a 3D Object Detection + Sequence Classification task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: 3D Object Detection + Sequence Classification.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: 3D Crop/Registration creates the representation needed by Loss Weighting, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "3d_crop_registration",
+      "2_5d_slice_extraction"
+    ],
+    "swappable_stages": {
+      "loss_weighting": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection/discussion/362607"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection/discussion/362607"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "3d_crop_registration",
+      "name": "3D Crop/Registration",
+      "description": "train a 3D U-Net to locate the exact bounding box of the 7 cervical vertebrae, cropping the original CT scan to isolate the spine (MONAI)",
+      "dejargonized_description": "This stage train a 3D U-Net to locate the exact bounding box of the 7 cervical vertebrae, cropping the original CT scan to isolate the spine (MONAI).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for RSNA 2022 Cervical Spine Fracture Detection - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "3d_crop_registration_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "2_5d_slice_extraction",
+      "name": "2.5D Slice Extraction",
+      "description": "extract 3 consecutive slices (Z-axis) into a 3-channel RGB format and pass them through a 2D EfficientNet to extract 1D spatial embeddings (PyTorch)",
+      "dejargonized_description": "This stage extract 3 consecutive slices (Z-axis) into a 3-channel RGB format and pass them through a 2D EfficientNet to extract 1D spatial embeddings (PyTorch).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "2_5d_slice_extraction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "2_5d_slice_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sequence_modeling_bi_lstm",
+      "name": "Sequence Modeling (Bi-LSTM)",
+      "description": "feed the ordered Z-axis embeddings into a Bidirectional LSTM to allow the network to contextually link adjacent bone slices (PyTorch)",
+      "dejargonized_description": "This stage feed the ordered Z-axis embeddings into a Bidirectional LSTM to allow the network to contextually link adjacent bone slices (PyTorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "sequence_modeling_bi_lstm_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sequence_modeling_bi_lstm_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_task_heads",
+      "name": "Multi-task heads",
+      "description": "attach 8 separate classification heads to the LSTM outputs (one predicting overall patient fracture, seven predicting fractures for specific C1-C7 vertebrae)",
+      "dejargonized_description": "This stage attach 8 separate classification heads to the LSTM outputs (one predicting overall patient fracture, seven predicting fractures for specific C1-C7 vertebrae).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "multi_task_heads_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multi_task_heads_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "loss_weighting",
+      "name": "Loss Weighting",
+      "description": "apply the competition's exact custom weighting scheme natively in the Cross-Entropy loss function during training to optimize the metric directly",
+      "dejargonized_description": "This stage apply the competition's exact custom weighting scheme natively in the Cross-Entropy loss function during training to optimize the metric directly.",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "loss_weighting_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "3d_crop_registration",
+      "target_stage_id": "2_5d_slice_extraction",
+      "output_name": "3d_crop_registration_output",
+      "input_name": "2_5d_slice_extraction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "3D Crop/Registration output is consumed by 2.5D Slice Extraction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "2_5d_slice_extraction",
+      "target_stage_id": "sequence_modeling_bi_lstm",
+      "output_name": "2_5d_slice_extraction_output",
+      "input_name": "sequence_modeling_bi_lstm_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "2.5D Slice Extraction output is consumed by Sequence Modeling (Bi-LSTM).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "sequence_modeling_bi_lstm",
+      "target_stage_id": "multi_task_heads",
+      "output_name": "sequence_modeling_bi_lstm_output",
+      "input_name": "multi_task_heads_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Sequence Modeling (Bi-LSTM) output is consumed by Multi-task heads.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_task_heads",
+      "target_stage_id": "loss_weighting",
+      "output_name": "multi_task_heads_output",
+      "input_name": "loss_weighting_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Multi-task heads output is consumed by Loss Weighting.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for 3D Object Detection + Sequence Classification.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection/discussion/362607",
+      "Code URL: writeup only",
+      "Standard tools: MONAI, PyTorch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "RSNA 2022 Cervical Spine Fracture Detection - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection/discussion/362607",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

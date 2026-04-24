@@ -1,0 +1,527 @@
+{
+  "asset_id": "solution.kaggle.cause_effect_2nd",
+  "asset_version": "v1",
+  "family": "causal_inference",
+  "paradigm": "analysis",
+  "name": "Cause-Effect Pairs 2nd Place — Causal Direction from Bivariate Data",
+  "summary": "Determine causal direction between variable pairs using asymmetric statistical features (IGCI, HSIC, conditional noise diagnostics, additive noise model residuals) fed into a three-estimator ensemble with antisymmetry enforcement.",
+  "dejargonized_summary": "For each pair of variables, compute features that are different depending on which causes which, then train classifiers on those features and enforce the physical constraint that if A causes B then B cannot cause A.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "causal_discovery",
+    "cause_effect_pairs",
+    "bivariate_causal_inference",
+    "additive_noise_model",
+    "independence_of_cause_and_mechanism",
+    "igci",
+    "hsic_kernel_test",
+    "antisymmetric_features",
+    "mixed_continuous_discrete",
+    "deterministic_causal_systems",
+    "small_sample_bivariate"
+  ],
+  "inputs": [
+    {
+      "name": "pair_data",
+      "type_desc": "tuple[NDArray[np.float64], NDArray[np.float64]]",
+      "constraints": "Two 1D arrays (A, B) representing a bivariate observation pair. Type metadata (continuous/discrete/binary) available per variable.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "causal_score",
+      "type_desc": "float",
+      "constraints": "Score in [-1, +1]. Positive = A causes B. Negative = B causes A. Near zero = independent.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Determining causal direction from bivariate observational data (two variables, no interventions)",
+      "Data pairs may be continuous, discrete, or mixed-type and the method must handle all three",
+      "The underlying causal mechanism is approximately deterministic (Y = f(X) + small noise)",
+      "Both independence detection and direction inference are needed (some pairs may be independent)"
+    ],
+    "do_not_use_when": [
+      "Multivariate causal discovery with >2 variables (this pipeline is strictly bivariate)",
+      "Confounders are likely present (IGCI assumes no hidden common cause)",
+      "The causal relationship is purely stochastic with no functional form (e.g., Y is noise given X)",
+      "Sample size is very small (<50 observations) — conditional noise statistics become unreliable"
+    ],
+    "key_insight": "IGCI (information-geometric causal inference) exploits the independence of cause mechanism from cause distribution — a theoretical asymmetry that holds for deterministic causal systems. The cause's distribution and the mechanism mapping cause to effect are independently chosen by nature, creating a detectable statistical signature.",
+    "critical_stages": ["igci_asymmetry_score", "asymmetric_feature_difference", "two_stage_independence_direction"],
+    "swappable_stages": {
+      "polyfit_residual_error": "Any regression method (GP, kernel ridge, spline) can replace polynomial fits for residual-based asymmetry detection.",
+      "weighted_ensemble_combination": "Any ensemble strategy (stacking, simple average) works. The specific weights are competition-tuned.",
+      "left_right_decomposed_prediction": "Alternative estimator architectures (single multi-class, ordinal regression) can replace the left-right decomposition."
+    },
+    "failure_modes": [
+      "Symmetric causal mechanisms where f and f^{-1} have identical complexity: IGCI score is near zero and direction is unresolvable",
+      "Heavy confounding: all asymmetric features measure spurious associations rather than causal direction",
+      "Highly nonlinear relationships with few samples: polynomial residual features underfit while conditional statistics have high variance"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "symmetry_enforcement",
+      "statement": "All asymmetric features must be computed in BOTH directions (A→B and B→A) and differenced.",
+      "rationale": "The compute-both-directions-then-subtract meta-pattern is essential: f(A,B) - f(B,A) produces a causal asymmetry signal. Computing only one direction loses the comparison.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Fonollosa, Cause-Effect Pairs 2nd place solution"
+    },
+    {
+      "category": "stage",
+      "subject": "discretization_dependency",
+      "statement": "discretize_and_bin must precede all discrete-domain feature extractors.",
+      "rationale": "Nearly all discrete features (conditional noise stats, normalized error probability, mutual information) depend on the shared binning scheme. Inconsistent binning would produce incomparable features.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "features.py dependency graph"
+    },
+    {
+      "category": "stage",
+      "subject": "independence_before_direction",
+      "statement": "The two-stage estimator should classify independence first, then direction only for dependent pairs.",
+      "rationale": "Assigning causal direction to independent pairs is meaningless. The multiplicative combination P(dependent) × direction_score ensures independent pairs get ~0 regardless of the direction classifier.",
+      "confidence": 0.95,
+      "source_stage": "solution_analysis",
+      "source_reference": "estimator.py:177-239"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "discretize_and_bin",
+      "name": "Discretize and Bin",
+      "description": "Two-pass robust standardization then integer binning. First pass identifies inliers within maxdev standard deviations, second pass re-centers using only inliers. Critical shared dependency for all discrete-domain features.",
+      "dejargonized_description": "Convert continuous values into discrete bins, ignoring extreme outliers so they don't distort the bin boundaries.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true},
+        {"name": "var_type", "type_desc": "str", "constraints": "continuous, discrete, or binary.", "required": true}
+      ],
+      "outputs": [
+        {"name": "binned", "type_desc": "NDArray[np.int64]", "constraints": "Integer bin indices.", "required": true}
+      ],
+      "preconditions": ["Input has at least 10 samples for meaningful binning."],
+      "guarantees": ["Output contains non-negative integer bin indices. Outlier-robust centering."],
+      "matched_primitive": "sciona.atoms.causal_inference.feature_primitives.discretize_and_bin"
+    },
+    {
+      "stage_id": "igci_asymmetry_score",
+      "name": "IGCI Asymmetry Score",
+      "description": "Information-Geometric Causal Inference. Sorts by X, computes log-ratio of consecutive X-deltas to Y-deltas. Under IGCI, if X causes Y, slope distribution is independent of cause distribution.",
+      "dejargonized_description": "Measure whether the relationship from A to B looks simpler than the reverse, using a geometric information theory test.",
+      "concept_type": "information_theory",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D cause candidate.", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "constraints": "1D effect candidate.", "required": true}
+      ],
+      "outputs": [
+        {"name": "score", "type_desc": "float", "constraints": "Asymmetry score. Positive suggests x→y.", "required": true}
+      ],
+      "preconditions": ["Both arrays have matching length. At least 10 samples."],
+      "guarantees": ["Output is finite."],
+      "matched_primitive": "sciona.atoms.causal_inference.feature_primitives.igci_asymmetry_score"
+    },
+    {
+      "stage_id": "hsic_independence_test",
+      "name": "HSIC Independence Test",
+      "description": "Hilbert-Schmidt Independence Criterion with RBF kernels and automatic median-distance bandwidth. Measures statistical dependence in kernel RKHS.",
+      "dejargonized_description": "Test whether two variables are statistically related using a kernel-based measure that can detect nonlinear relationships.",
+      "concept_type": "information_theory",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "statistic", "type_desc": "float", "constraints": "HSIC test statistic. Higher = more dependent.", "required": true}
+      ],
+      "preconditions": ["Both arrays have matching length."],
+      "guarantees": ["Output is non-negative and finite."],
+      "matched_primitive": "sciona.atoms.causal_inference.feature_primitives.hsic_independence_test"
+    },
+    {
+      "stage_id": "normalized_error_probability",
+      "name": "Normalized Error Probability",
+      "description": "Bayesian error rate of predicting Y from X using MAP rule on discretized joint, normalized by max possible error rate. Asymmetry provides causal signal.",
+      "dejargonized_description": "Measure how much knowing X helps predict Y, beyond what you could guess from Y alone.",
+      "concept_type": "information_theory",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "score", "type_desc": "float", "constraints": "Normalized prediction improvement.", "required": true}
+      ],
+      "preconditions": ["Discretized inputs available."],
+      "guarantees": ["Output in [0, 1]."],
+      "matched_primitive": "sciona.atoms.causal_inference.feature_primitives.normalized_error_probability"
+    },
+    {
+      "stage_id": "uniform_divergence",
+      "name": "Uniform Divergence",
+      "description": "KL-divergence-like measure between empirical distribution and uniform, using KNN density estimation. Under independence of cause and mechanism, cause distributions tend to be simpler (closer to uniform).",
+      "dejargonized_description": "Measure how far a variable's distribution is from perfectly uniform — cause variables tend to be more uniform than effect variables.",
+      "concept_type": "information_theory",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "divergence", "type_desc": "float", "constraints": "Non-negative divergence from uniform.", "required": true}
+      ],
+      "preconditions": ["Array has at least 10 samples."],
+      "guarantees": ["Output is non-negative and finite."],
+      "matched_primitive": "sciona.atoms.causal_inference.feature_primitives.uniform_divergence"
+    },
+    {
+      "stage_id": "knn_entropy_estimator",
+      "name": "KNN Entropy Estimator",
+      "description": "KNN differential entropy estimator (Kozachenko-Leonenko type) with digamma bias corrections, adapted for mixed discrete/continuous data.",
+      "dejargonized_description": "Estimate the randomness of a variable using nearest-neighbor distances.",
+      "concept_type": "information_theory",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "entropy", "type_desc": "float", "constraints": "Differential entropy estimate.", "required": true}
+      ],
+      "preconditions": ["Array has at least 10 samples."],
+      "guarantees": ["Output is finite."],
+      "matched_primitive": "sciona.atoms.causal_inference.feature_primitives.knn_entropy_estimator"
+    },
+    {
+      "stage_id": "polyfit_nonlinearity_asymmetry",
+      "name": "Polyfit Nonlinearity Asymmetry",
+      "description": "Fit degree-1 and degree-2 polynomials X→Y, return |2*a2| + |a2_1 - a1_0|. Quantifies deviation from linearity and instability of the linear coefficient under model order change.",
+      "dejargonized_description": "Measure how nonlinear the relationship is by comparing a straight line fit to a curved one.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "score", "type_desc": "float", "constraints": "Nonlinearity asymmetry score.", "required": true}
+      ],
+      "preconditions": ["Both arrays have matching length."],
+      "guarantees": ["Output is non-negative and finite."],
+      "matched_primitive": "sciona.atoms.causal_inference.feature_primitives.polyfit_nonlinearity_asymmetry"
+    },
+    {
+      "stage_id": "polyfit_residual_error",
+      "name": "Polyfit Residual Error",
+      "description": "Degree-m polynomial residual standard deviation. Type-aware: categorical X gets mean-of-Y encoding. Asymmetry fit_error(X→Y) - fit_error(Y→X) implements practical additive noise model test.",
+      "dejargonized_description": "Fit a polynomial from X to Y and measure how much error remains — the direction with less error is likely the causal direction.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "residual_std", "type_desc": "float", "constraints": "Standard deviation of polynomial residuals.", "required": true}
+      ],
+      "preconditions": ["Both arrays have matching length."],
+      "guarantees": ["Output is non-negative."],
+      "matched_primitive": "sciona.atoms.causal_inference.feature_primitives.polyfit_residual_error"
+    },
+    {
+      "stage_id": "conditional_noise_entropy_variance",
+      "name": "Conditional Noise Entropy Variance",
+      "description": "Discretize X into bins, compute entropy of Y within each bin, return std of conditional entropies. Under additive noise model Y=f(X)+N, if X causes Y, noise entropy should be constant across X values.",
+      "dejargonized_description": "Check whether the randomness of Y is equally spread across all ranges of X — if so, X is more likely the cause.",
+      "concept_type": "information_theory",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "variance", "type_desc": "float", "constraints": "Variance of conditional entropy across bins.", "required": true}
+      ],
+      "preconditions": ["Discretized X available. Sufficient samples per bin."],
+      "guarantees": ["Output is non-negative."],
+      "matched_primitive": "sciona.atoms.causal_inference.conditional_statistics.conditional_noise_entropy_variance"
+    },
+    {
+      "stage_id": "conditional_noise_skewness_variance",
+      "name": "Conditional Noise Skewness Variance",
+      "description": "Same binning as entropy variant, measures std of conditional skewness of Y|X=x. Higher-order diagnostic that detects asymmetries entropy misses.",
+      "dejargonized_description": "Check whether the shape of Y's distribution changes across ranges of X — changes suggest X is the effect, not the cause.",
+      "concept_type": "information_theory",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "variance", "type_desc": "float", "constraints": "Variance of conditional skewness.", "required": true}
+      ],
+      "preconditions": ["Discretized X available."],
+      "guarantees": ["Output is non-negative."],
+      "matched_primitive": "sciona.atoms.causal_inference.conditional_statistics.conditional_noise_skewness_variance"
+    },
+    {
+      "stage_id": "conditional_noise_kurtosis_variance",
+      "name": "Conditional Noise Kurtosis Variance",
+      "description": "Same pattern — std of conditional kurtosis. Captures fourth-moment structure; in causal direction, kurtosis should be stable.",
+      "dejargonized_description": "Check whether the tail heaviness of Y changes across ranges of X.",
+      "concept_type": "information_theory",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "variance", "type_desc": "float", "constraints": "Variance of conditional kurtosis.", "required": true}
+      ],
+      "preconditions": ["Discretized X available."],
+      "guarantees": ["Output is non-negative."],
+      "matched_primitive": "sciona.atoms.causal_inference.conditional_statistics.conditional_noise_kurtosis_variance"
+    },
+    {
+      "stage_id": "conditional_distribution_similarity",
+      "name": "Conditional Distribution Similarity",
+      "description": "For each bin of X, compute conditional histogram P(Y|X=x), measure std after mean-centering with cross-correlation alignment. Goes beyond moment-based comparisons.",
+      "dejargonized_description": "Check whether the full shape of Y's distribution stays the same across ranges of X, not just the average or spread.",
+      "concept_type": "information_theory",
+      "inputs": [
+        {"name": "x", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true},
+        {"name": "y", "type_desc": "NDArray[np.float64]", "constraints": "1D array.", "required": true}
+      ],
+      "outputs": [
+        {"name": "similarity", "type_desc": "float", "constraints": "Similarity score.", "required": true}
+      ],
+      "preconditions": ["Discretized X available."],
+      "guarantees": ["Output is non-negative and finite."],
+      "matched_primitive": "sciona.atoms.causal_inference.conditional_statistics.conditional_distribution_similarity"
+    },
+    {
+      "stage_id": "asymmetric_feature_difference",
+      "name": "Asymmetric Feature Difference",
+      "description": "Compute each feature in both directions (A→B and B→A) and take the difference: f(A,B) - f(B,A). This meta-pattern doubles effective data and enforces antisymmetry.",
+      "dejargonized_description": "Compute every measurement both ways and subtract — the difference tells you which direction is more likely causal.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "features_ab", "type_desc": "NDArray[np.float64]", "constraints": "Features computed in A→B direction.", "required": true},
+        {"name": "features_ba", "type_desc": "NDArray[np.float64]", "constraints": "Features computed in B→A direction.", "required": true}
+      ],
+      "outputs": [
+        {"name": "asymmetric_features", "type_desc": "NDArray[np.float64]", "constraints": "~42 asymmetric feature differences.", "required": true}
+      ],
+      "preconditions": ["Both feature vectors have matching shapes."],
+      "guarantees": ["Output enforces antisymmetry: f(A,B) = -f(B,A)."],
+      "family_notes": [
+        "This is a reusable meta-pattern: compute-both-directions-then-subtract. Appears in Connectomics (directivity) and any asymmetric inference problem."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "symmetrized_prediction_fusion",
+      "name": "Symmetrized Prediction Fusion",
+      "description": "Enforce antisymmetry: score(A→B) = (pred(A,B) - pred(B,A))/2. Not just averaging — enforces the physical constraint that causal scores are antisymmetric.",
+      "dejargonized_description": "Force the final scores to be exactly opposite for A→B vs B→A.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "predictions", "type_desc": "NDArray[np.float64]", "constraints": "Raw classifier predictions.", "required": true}
+      ],
+      "outputs": [
+        {"name": "symmetrized", "type_desc": "NDArray[np.float64]", "constraints": "Antisymmetric scores.", "required": true}
+      ],
+      "preconditions": ["Predictions available for both directions."],
+      "guarantees": ["score(A→B) = -score(B→A) exactly."],
+      "matched_primitive": "sciona.atoms.causal_inference.estimators.symmetrized_prediction_fusion"
+    },
+    {
+      "stage_id": "two_stage_independence_direction",
+      "name": "Two-Stage Independence+Direction Estimator",
+      "description": "Stage 1: independence classifier. Stage 2: direction classifier trained only on dependent pairs. Final: P(dependent) × direction_score. Multiplicative combination means independent pairs get ~0.",
+      "dejargonized_description": "First decide if the variables are related at all, then decide which direction the relationship goes — don't try to assign direction to unrelated variables.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "features", "type_desc": "NDArray[np.float64]", "constraints": "Asymmetric feature vector.", "required": true}
+      ],
+      "outputs": [
+        {"name": "score", "type_desc": "float", "constraints": "Causal score with independence gating.", "required": true}
+      ],
+      "preconditions": ["Feature vector includes independence-sensitive features (HSIC, mutual info)."],
+      "guarantees": ["Independent pairs score near zero regardless of direction signal."],
+      "matched_primitive": "sciona.atoms.causal_inference.estimators.two_stage_independence_direction"
+    },
+    {
+      "stage_id": "left_right_decomposed_prediction",
+      "name": "Left-Right Decomposed Estimator",
+      "description": "Two separate binary classifiers: 'is X→Y?' and 'is Y→X?'. Final: P(X→Y) - P(Y→X). Avoids forcing a single classifier to learn both boundaries.",
+      "dejargonized_description": "Train two separate detectors — one for each direction — and take the difference.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "features", "type_desc": "NDArray[np.float64]", "constraints": "Asymmetric feature vector.", "required": true}
+      ],
+      "outputs": [
+        {"name": "score", "type_desc": "float", "constraints": "Directional confidence score.", "required": true}
+      ],
+      "preconditions": ["Features available for both directions."],
+      "guarantees": ["Output in [-1, 1]."],
+      "matched_primitive": "sciona.atoms.causal_inference.estimators.left_right_decomposed_prediction"
+    },
+    {
+      "stage_id": "weighted_ensemble_combination",
+      "name": "Weighted Ensemble Combination",
+      "description": "Combine three estimators (ID, symmetric, one-step) with weights (0.383, 0.370, 0.247). Each is symmetrized before combination.",
+      "dejargonized_description": "Blend three different classifiers with learned weights to get the final causal score.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "estimator_scores", "type_desc": "list[NDArray[np.float64]]", "constraints": "Scores from 3 symmetrized estimators.", "required": true}
+      ],
+      "outputs": [
+        {"name": "causal_score", "type_desc": "float", "constraints": "Final score in [-1, +1].", "required": true}
+      ],
+      "preconditions": ["All estimators have been symmetrized."],
+      "guarantees": ["Output is antisymmetric and in [-1, +1]."],
+      "matched_primitive": "sciona.atoms.causal_inference.estimators.weighted_ensemble_combination"
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "discretize_and_bin",
+      "target_stage_id": "normalized_error_probability",
+      "output_name": "binned",
+      "input_name": "binned_x",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "discrete_index",
+      "provenance": "Shared binning scheme for all discrete-domain features.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "discretize_and_bin",
+      "target_stage_id": "conditional_noise_entropy_variance",
+      "output_name": "binned",
+      "input_name": "binned_x",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "discrete_index",
+      "provenance": "Shared binning dependency.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "discretize_and_bin",
+      "target_stage_id": "conditional_noise_skewness_variance",
+      "output_name": "binned",
+      "input_name": "binned_x",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "discrete_index",
+      "provenance": "Shared binning dependency.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "discretize_and_bin",
+      "target_stage_id": "conditional_noise_kurtosis_variance",
+      "output_name": "binned",
+      "input_name": "binned_x",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "discrete_index",
+      "provenance": "Shared binning dependency.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "discretize_and_bin",
+      "target_stage_id": "conditional_distribution_similarity",
+      "output_name": "binned",
+      "input_name": "binned_x",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "discrete_index",
+      "provenance": "Shared binning dependency.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "asymmetric_feature_difference",
+      "target_stage_id": "two_stage_independence_direction",
+      "output_name": "asymmetric_features",
+      "input_name": "features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "feature_vector",
+      "provenance": "Asymmetric features from all extractors.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "asymmetric_feature_difference",
+      "target_stage_id": "left_right_decomposed_prediction",
+      "output_name": "asymmetric_features",
+      "input_name": "features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "feature_vector",
+      "provenance": "Same feature vector to all estimators.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "two_stage_independence_direction",
+      "target_stage_id": "symmetrized_prediction_fusion",
+      "output_name": "score",
+      "input_name": "predictions",
+      "source_type": "float",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "Each estimator output is symmetrized before ensemble.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "left_right_decomposed_prediction",
+      "target_stage_id": "symmetrized_prediction_fusion",
+      "output_name": "score",
+      "input_name": "predictions",
+      "source_type": "float",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "Each estimator output is symmetrized.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "symmetrized_prediction_fusion",
+      "target_stage_id": "weighted_ensemble_combination",
+      "output_name": "symmetrized",
+      "input_name": "estimator_scores",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "prediction",
+      "provenance": "Three symmetrized estimator outputs combined.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "2nd place Kaggle Cause-Effect Pairs. Strongest test of atom retrieval — all 16 atoms are already ingested in sciona-atoms.",
+    "dejargonized_summary": "Figure out which variable causes which by computing many different statistical measurements in both directions and seeing which direction looks simpler.",
+    "provenance_notes": [
+      "Source: https://github.com/jarfo/cause-effect (Apache 2.0)",
+      "Local analysis: kaggle-solutions/docs/analysis-cause-effect-2nd.md",
+      "All 16 atoms ingested in sciona-atoms: causal_inference.feature_primitives (8), conditional_statistics (4), estimators (4)"
+    ],
+    "uncertainty_notes": [
+      "Ensemble weights (0.383, 0.370, 0.247) were tuned on the competition data and may not transfer.",
+      "The asymmetric-feature-difference meta-pattern is a reusable template but not itself an atom."
+    ],
+    "references": [
+      {
+        "title": "Daniusis et al. (2012)",
+        "citation": "Inferring deterministic causal relations, UAI 2012",
+        "note": "IGCI theoretical foundation."
+      },
+      {
+        "title": "Gretton et al. (2005)",
+        "citation": "Measuring Statistical Dependence with Hilbert-Schmidt Norms, ALT 2005",
+        "note": "HSIC foundation."
+      },
+      {
+        "title": "Guyon (2014)",
+        "citation": "Results and Analysis of the 2013 ChaLearn Cause-Effect Pair Challenge",
+        "note": "Competition analysis."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

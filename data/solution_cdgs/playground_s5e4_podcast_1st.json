@@ -1,0 +1,300 @@
+{
+  "asset_id": "solution.kaggle.playground_s5e4_podcast_1st",
+  "asset_version": "v1",
+  "family": "tabular_regression",
+  "paradigm": "neural_network",
+  "name": "Kaggle Playground S5E4: Podcast Listening Time - 1st Place (2025) - Pipeline Template",
+  "summary": "Tabular regression solution template for Kaggle Playground S5E4: Podcast Listening Time - 1st Place (2025), modeled as a 5-stage deterministic pipeline: Automated Data Ingestion, Target Definition, AutoML Search, Automated Stacking, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by Kaggle Playground S5E4: Podcast Listening Time - 1st Place (2025): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "tabular",
+    "regression"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Tabular regression task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Tabular regression.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Automated Data Ingestion creates the representation needed by Prediction Extraction, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "automated_data_ingestion",
+      "target_definition"
+    ],
+    "swappable_stages": {
+      "prediction_extraction": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://github.com/autogluon/autogluon/blob/master/AWESOME.md"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://github.com/autogluon/autogluon/blob/master/AWESOME.md"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "automated_data_ingestion",
+      "name": "Automated Data Ingestion",
+      "description": "Ingest raw tabular podcast listening data without any manual preprocessing or scaling (autogluon.tabular)",
+      "dejargonized_description": "This stage ingest raw tabular podcast listening data without any manual preprocessing or scaling (autogluon.tabular).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Kaggle Playground S5E4: Podcast Listening Time - 1st Place (2025).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "automated_data_ingestion_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "target_definition",
+      "name": "Target Definition",
+      "description": "Map the continuous listening time target variable for regression optimization",
+      "dejargonized_description": "This stage map the continuous listening time target variable for regression optimization.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "target_definition_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "target_definition_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "automl_search",
+      "name": "AutoML Search",
+      "description": "Execute the TabularPredictor.fit() framework utilizing the predefined \"best\" quality preset with a strict hardware time limit",
+      "dejargonized_description": "This stage execute the TabularPredictor.fit() framework utilizing the predefined \"best\" quality preset with a strict hardware time limit.",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "automl_search_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "automl_search_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "automated_stacking",
+      "name": "Automated Stacking",
+      "description": "Rely entirely on the framework's internal automated feature engineering, neural network/GBDT multi-layer stacking, and out-of-fold cross-validation, bypassing explicit stage-by-stage coding",
+      "dejargonized_description": "This stage rely entirely on the framework's internal automated feature engineering, neural network/GBDT multi-layer stacking, and out-of-fold cross-validation, bypassing explicit stage-by-stage coding.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "automated_stacking_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "automated_stacking_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "prediction_extraction",
+      "name": "Prediction Extraction",
+      "description": "Extract and format final regression outputs (pandas)",
+      "dejargonized_description": "This stage extract and format final regression outputs (pandas).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "prediction_extraction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "automated_data_ingestion",
+      "target_stage_id": "target_definition",
+      "output_name": "automated_data_ingestion_output",
+      "input_name": "target_definition_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Automated Data Ingestion output is consumed by Target Definition.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "target_definition",
+      "target_stage_id": "automl_search",
+      "output_name": "target_definition_output",
+      "input_name": "automl_search_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Target Definition output is consumed by AutoML Search.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "automl_search",
+      "target_stage_id": "automated_stacking",
+      "output_name": "automl_search_output",
+      "input_name": "automated_stacking_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "AutoML Search output is consumed by Automated Stacking.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "automated_stacking",
+      "target_stage_id": "prediction_extraction",
+      "output_name": "automated_stacking_output",
+      "input_name": "prediction_extraction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Automated Stacking output is consumed by Prediction Extraction.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Tabular regression.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://github.com/autogluon/autogluon/blob/master/AWESOME.md",
+      "Code URL: writeup only",
+      "Standard tools: autogluon, pandas"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Kaggle Playground S5E4: Podcast Listening Time - 1st Place (2025) solution writeup",
+        "citation": "https://github.com/autogluon/autogluon/blob/master/AWESOME.md",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

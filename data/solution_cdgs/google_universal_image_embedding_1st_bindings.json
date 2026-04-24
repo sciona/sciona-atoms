@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.google_universal_image_embedding_1st",
+  "solution_metadata": {
+    "competition": "Google Universal Image Embedding - 1st Place (2022)",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "multimodal_retrieval",
+    "source_url": "https://www.kaggle.com/competitions/google-universal-image-embedding/discussion/359331",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "image_resizing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "transformer_backbone",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "sub_center_arcface",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "pca_dimensionality_reduction",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.decomposition.pca_fit",
+      "binding_confidence": 0.78,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text maps to the closest existing decomposition primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "l2_normalization",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible related atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until embedding-backed binding or a more specific atom exists."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 1,
+    "atoms_used_by_repo": {
+      "ml": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "image_resizing"
+    ],
+    "orchestration_resolved": [
+      "l2_normalization",
+      "sub_center_arcface",
+      "transformer_backbone"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

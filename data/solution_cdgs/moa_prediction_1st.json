@@ -1,0 +1,364 @@
+{
+  "asset_id": "solution.kaggle.moa_prediction_1st",
+  "asset_version": "v1",
+  "family": "multilabel_tabular",
+  "paradigm": "neural_network",
+  "name": "MoA Prediction 1st Place — Multi-Label Tabular Classification with Deep Ensembles",
+  "summary": "Multi-label mechanism-of-action prediction from gene expression and cell viability features using PCA/UMAP-enriched deep tabular models (MLP, TabNet, 1D-CNN ResNet) with label smoothing, pseudo-labeling, and second-layer stacking.",
+  "dejargonized_summary": "Predict which biological mechanisms a drug activates by enriching gene and cell features with compressed representations, training multiple neural network architectures, and combining their predictions through a second-layer model.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "multi_label_classification",
+    "drug_mechanism_prediction",
+    "tabular_deep_learning",
+    "pseudo_labeling",
+    "stacking_ensemble",
+    "pca_umap_enrichment",
+    "label_smoothing",
+    "high_dimensional_tabular",
+    "semi_supervised",
+    "variance_thresholding",
+    "feature_importance_selection",
+    "logistic_regression_stacker",
+    "multi_architecture_diversity"
+  ],
+  "applicability": {
+    "use_when": [
+      "High-dimensional tabular data (>100 features) with many correlated columns where dimensionality reduction can extract latent structure",
+      "Multi-label binary targets where label correlations exist and can be exploited by shared representations",
+      "Unlabeled or test data is available for semi-supervised pseudo-labeling to expand effective training size",
+      "Multiple diverse model architectures are feasible and stacking can capture complementary learned patterns"
+    ],
+    "do_not_use_when": [
+      "Low-dimensional tabular data (<20 features): PCA/UMAP enrichment adds noise rather than signal on small feature spaces",
+      "Labels are mutually exclusive (single-label classification): the multi-label BCE + label smoothing setup is unnecessary overhead",
+      "Training data is very small (<500 rows): pseudo-labeling feedback loop amplifies errors and UMAP produces unstable embeddings",
+      "Interpretability is required: the PCA/UMAP features and stacked ensemble are opaque to domain experts"
+    ],
+    "key_insight": "The combination of PCA+UMAP dimensionality reduction with pseudo-labeling creates a feedback loop — reduced features help the pseudo-labeler produce cleaner soft labels, and pseudo-labels help the feature selector identify signal vs. noise columns. Label smoothing prevents the BCE loss from driving predictions to extreme 0/1 values, which is critical when most labels are negative and the model would otherwise become overconfident on the majority class.",
+    "critical_stages": ["dimensionality_reduction", "pseudo_label_feature_selection", "label_smoothing"],
+    "swappable_stages": {
+      "deep_tabular_models": "Any supervised model (GBM, MLP, TabNet, 1D-CNN) works as a base learner. Architectural diversity matters more than any specific architecture.",
+      "stacking": "Any meta-learner (Ridge, logistic regression, LightGBM) works as the stacker. Logistic regression is preferred for its regularization and simplicity.",
+      "variance_thresholding": "Any feature screening method (mutual information, correlation filter) can replace variance thresholding as the initial noise reduction step."
+    },
+    "failure_modes": [
+      "Label sparsity too extreme (>99.9% zeros): pseudo-labels are dominated by negatives and the feedback loop reinforces false negatives",
+      "Features are already low-dimensional and decorrelated: PCA/UMAP enrichment adds redundant columns that increase overfitting risk",
+      "Test distribution differs significantly from train: pseudo-labeling propagates distribution shift errors into the training loop"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "gene_expression",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N, 772). Gene expression features.",
+      "required": true
+    },
+    {
+      "name": "cell_viability",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N, 100). Cell viability features.",
+      "required": true
+    },
+    {
+      "name": "drug_metadata",
+      "type_desc": "DataFrame",
+      "constraints": "Drug ID, dose, treatment duration.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "moa_probabilities",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N, 206). Binary probabilities for each MoA target.",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "feature_enrichment_before_models",
+      "statement": "Variance thresholding and dimensionality reduction must precede model training.",
+      "rationale": "PCA and UMAP features provide compressed representations that improve model generalization on high-dimensional tabular data.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "label_smoothing_for_bce",
+      "statement": "Label smoothing should be applied before BCE loss computation.",
+      "rationale": "Hard binary labels cause overconfident predictions; smoothing to 0.001 prevents log(0) instabilities and improves calibration.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "variance_thresholding",
+      "name": "Variance Thresholding",
+      "description": "Remove extremely low variance features from gene expression and cell viability data using sklearn VarianceThreshold.",
+      "dejargonized_description": "Drop features that barely change across samples since they carry little useful information.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "gene_expression",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 772).",
+          "required": true
+        },
+        {
+          "name": "cell_viability",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 100).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "filtered_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, F_filtered). Reduced feature set after low-variance removal.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input features are numeric."],
+      "guarantees": ["Output contains only features above the variance threshold."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "dimensionality_reduction",
+      "name": "Dimensionality Reduction",
+      "description": "Calculate PCA and UMAP representations of the filtered features, then concatenate these compressed representations with the raw features to create an enriched feature matrix.",
+      "dejargonized_description": "Create compressed summaries of the data using two different methods and add them as extra columns alongside the original features.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "filtered_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, F_filtered).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "enriched_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, F_filtered + K_pca + K_umap). Concatenated raw + PCA + UMAP features.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Filtered features are available."],
+      "guarantees": ["Output preserves all original features and adds compressed representations."],
+      "family_notes": [
+        "PCA captures linear structure; UMAP captures nonlinear manifold structure. Both are complementary."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pseudo_label_feature_selection",
+      "name": "Pseudo-Label Feature Selection",
+      "description": "Perform pseudo-labeling on test data using initial model predictions, then use LightGBM feature importance on the pseudo-labeled dataset to identify and select the most informative features.",
+      "dejargonized_description": "Use preliminary predictions on the test set as if they were real labels, then train a tree model to figure out which features matter most.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "enriched_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, F_enriched). Train + test features.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "selected_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, F_selected). Features selected by importance.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Enriched features and initial pseudo-labels are available."],
+      "guarantees": ["Output contains only features deemed important by LightGBM."],
+      "family_notes": [
+        "Pseudo-labeling on test data is a semi-supervised technique that leverages unlabeled data for feature selection."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "deep_tabular_models",
+      "name": "Deep Tabular Models",
+      "description": "Train standard MLPs, TabNets, and 1D-CNN ResNets on the enriched and selected features. Each architecture provides diverse learned representations for the stacking layer.",
+      "dejargonized_description": "Train three different types of neural networks on the prepared features, each bringing a different learning style to the problem.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "selected_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, F_selected).",
+          "required": true
+        },
+        {
+          "name": "smoothed_targets",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 206). Label-smoothed binary targets.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "oof_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 206, M). Out-of-fold predictions from M model types.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Selected features and smoothed targets are available."],
+      "guarantees": ["OOF predictions are generated via cross-validation to avoid leakage."],
+      "family_notes": [
+        "MLP, TabNet, and 1D-CNN ResNet provide architectural diversity for robust stacking."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "label_smoothing",
+      "name": "Label Smoothing",
+      "description": "Apply label smoothing with epsilon=0.001 to binary MoA targets, transforming hard 0/1 labels to 0.001/0.999 to prevent overconfidence in BCE loss.",
+      "dejargonized_description": "Slightly soften the yes/no labels so the model does not become too certain, which helps it generalize better.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "binary_targets",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 206). Hard binary labels (0 or 1).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "smoothed_targets",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 206). Smoothed labels in [0.001, 0.999].",
+          "required": true
+        }
+      ],
+      "preconditions": ["Binary targets are available."],
+      "guarantees": ["No label is exactly 0 or 1, preventing log(0) in BCE loss."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "stacking",
+      "name": "Stacking",
+      "description": "Train a second-layer logistic regression on the out-of-fold predictions from all neural network models to produce the final MoA probabilities.",
+      "dejargonized_description": "Combine predictions from all neural networks using a simple model that learns the optimal weighting of each network's opinion.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "oof_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 206, M). OOF predictions from M models.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "moa_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 206). Final predicted MoA probabilities.",
+          "required": true
+        }
+      ],
+      "preconditions": ["OOF predictions from all base models are available."],
+      "guarantees": ["Output probabilities are calibrated via logistic regression."],
+      "family_notes": [
+        "Logistic regression stacker is simple and avoids overfitting on the meta-features."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "variance_thresholding",
+      "target_stage_id": "dimensionality_reduction",
+      "output_name": "filtered_features",
+      "input_name": "filtered_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "tabular",
+      "provenance": "Features after low-variance removal.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "dimensionality_reduction",
+      "target_stage_id": "pseudo_label_feature_selection",
+      "output_name": "enriched_features",
+      "input_name": "enriched_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "tabular",
+      "provenance": "Raw features concatenated with PCA and UMAP representations.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pseudo_label_feature_selection",
+      "target_stage_id": "deep_tabular_models",
+      "output_name": "selected_features",
+      "input_name": "selected_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "tabular",
+      "provenance": "Features selected by pseudo-label-guided importance.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "label_smoothing",
+      "target_stage_id": "deep_tabular_models",
+      "output_name": "smoothed_targets",
+      "input_name": "smoothed_targets",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "label",
+      "provenance": "Label-smoothed binary targets for BCE loss.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "deep_tabular_models",
+      "target_stage_id": "stacking",
+      "output_name": "oof_predictions",
+      "input_name": "oof_predictions",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "Out-of-fold predictions from diverse neural architectures.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place MoA Prediction solution. Multi-label tabular classification using PCA/UMAP feature enrichment, diverse deep tabular architectures, label smoothing, and logistic regression stacking.",
+    "dejargonized_summary": "Predict drug mechanisms by enriching gene and cell features with compressed representations, training multiple neural networks, and combining their predictions through a second-layer model.",
+    "provenance_notes": [
+      "Source: Kaggle Mechanisms of Action Prediction 1st place solution (2020)",
+      "Source: https://www.kaggle.com/c/lish-moa/discussion/202256",
+      "Code: https://github.com/chankhavu/moa-1st-place"
+    ],
+    "uncertainty_notes": [
+      "Pseudo-labeling on test data introduces potential distribution shift bias.",
+      "The optimal label smoothing epsilon (0.001) may vary for different target distributions."
+    ],
+    "references": [
+      {
+        "title": "MoA Prediction 1st Place Solution",
+        "citation": "Kaggle Mechanisms of Action Prediction, 1st place solution writeup (2020)",
+        "url": "https://www.kaggle.com/c/lish-moa/discussion/202256",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

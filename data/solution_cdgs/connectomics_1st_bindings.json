@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.connectomics_1st",
+  "solution_metadata": {
+    "competition": "Kaggle Connectomics",
+    "placement": "1st",
+    "team": "AAAGV",
+    "year": 2014,
+    "metric": "AUC",
+    "problem_domain": "graph_inference",
+    "source_url": "https://github.com/asutera/kaggle-connectomics",
+    "source_license": "BSD-3-Clause",
+    "paper_doi": "10.48550/arXiv.1406.7865"
+  },
+  "bindings": [
+    {
+      "stage_id": "calcium_lowpass_filter",
+      "bound_artifact_fqdn": "sciona.atoms.graph_inference.connectome.calcium_lowpass_filter",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "first_difference",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "trivial_inline",
+      "evidence_summary": {"resolved_reason": "TRIVIAL: np.diff(signal, axis=0). One-line numpy operation, does not warrant a standalone atom."}
+    },
+    {
+      "stage_id": "fluorescence_hard_threshold",
+      "bound_artifact_fqdn": "sciona.atoms.graph_inference.connectome.fluorescence_hard_threshold",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "global_activity_sample_reweighting",
+      "bound_artifact_fqdn": "sciona.atoms.graph_inference.connectome.global_activity_sample_reweighting",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "pca_precision_matrix",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.decomposition.pca_get_precision",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "search_attempted": true,
+        "concept_type_searched": "dimensionality_reduction",
+        "keywords_searched": ["pca", "precision_matrix", "inverse_covariance", "whiten"],
+        "candidates_found": [
+          "sciona.atoms.ml.sklearn.decomposition.pca_fit",
+          "sciona.atoms.ml.sklearn.decomposition.pca_transform"
+        ],
+        "binding_rationale": "pca_fit creates the PCA state with whiten=True and n_components. The solution then calls get_precision() on the fitted model. The fit atom exists; the get_precision step may require a state query atom that doesn't exist yet.",
+        "partial_coverage_note": "pca_fit covers the decomposition step. The precision matrix extraction (get_precision + negation) is a separate operation not covered by an existing atom. Binding confidence 0.7 because the core computation is covered but the output transformation is not."
+      },
+      "alternatives": [
+        {
+          "fqdn": "sciona.atoms.ml.sklearn.covariance.graphical_lasso_fit",
+          "why_rejected": "Graphical Lasso computes the same output (precision matrix) but via L1 penalization instead of rank reduction. The solution explicitly chose PCA over GraphicalLasso for computational reasons (O(N^2) vs O(N^3))."
+        }
+      ]
+    },
+    {
+      "stage_id": "score_matrix_normalization",
+      "bound_artifact_fqdn": "sciona.atoms.graph_inference.connectome.score_matrix_normalization",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "threshold_sweep_ensemble",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "orchestration",
+      "evidence_summary": {"resolved_reason": "MAP_OVER orchestration pattern. Skeleton exists in sciona-matcher. The sweep iterates existing atoms over a parameter grid — no new atom needed."}
+    },
+    {
+      "stage_id": "temporal_precedence_directivity",
+      "bound_artifact_fqdn": "sciona.atoms.graph_inference.connectome.temporal_precedence_directivity",
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "replace_stage"
+    },
+    {
+      "stage_id": "weighted_score_combination",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "trivial_inline",
+      "evidence_summary": {"resolved_reason": "TRIVIAL: 0.997 * symmetric + 0.003 * asymmetric. One-line weighted sum, does not warrant a standalone atom."}
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 9,
+    "bound_active": 9,
+    "bound_approximate": 0,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona-atoms-bio": 5,
+      "sciona-atoms-ml": 1
+    },
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
+    "trivial_resolved": ["first_difference", "weighted_score_combination"],
+    "orchestration_resolved": ["threshold_sweep_ensemble"]
+  },
+  "architect_test_expectations": {
+    "description": "What the architect should find when searching for atoms to bind to each stage, and what it should NOT find.",
+    "pca_precision_matrix": {
+      "should_find": "sciona.atoms.ml.sklearn.decomposition.pca_fit via concept_type=dimensionality_reduction search",
+      "should_also_consider": "sciona.atoms.ml.sklearn.covariance.graphical_lasso_fit as alternative (same output type)",
+      "should_not_bind": "Any preprocessing atom (wrong semantic level)"
+    },
+    "fluorescence_hard_threshold": {
+      "should_not_confuse_with": "sciona.atoms.ml.sklearn.variance_threshold.variance_threshold_fit (column-wise vs element-wise)",
+      "expected_gap": true
+    },
+    "threshold_sweep_ensemble": {
+      "should_recognize_as": "MAP_OVER or FIXED_POINT orchestration pattern, not a single atom",
+      "expected_gap": true
+    }
+  }
+}

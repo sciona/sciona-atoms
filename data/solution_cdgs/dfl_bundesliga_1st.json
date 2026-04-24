@@ -1,0 +1,304 @@
+{
+  "asset_id": "solution.kaggle.dfl_bundesliga_1st",
+  "asset_version": "v1",
+  "family": "video_understanding",
+  "paradigm": "neural_network",
+  "name": "DFL - Bundesliga Data Shootout - 1st Place (2022) - Pipeline Template",
+  "summary": "Video Action Detection solution template for DFL - Bundesliga Data Shootout - 1st Place (2022), modeled as a 5-stage deterministic pipeline: Frame extraction, 2.5D CNN extraction, SlowFast extraction, Sequence modeling, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by DFL - Bundesliga Data Shootout - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "transformer",
+    "cnn",
+    "efficientnet",
+    "video",
+    "action",
+    "detection"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Video Action Detection task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Video Action Detection.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Frame extraction creates the representation needed by Non-Maximum Suppression (NMS), so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "frame_extraction",
+      "2_5d_cnn_extraction"
+    ],
+    "swappable_stages": {
+      "non_maximum_suppression_nms": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/dfl-bundesliga-data-shootout/discussion/360236"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/dfl-bundesliga-data-shootout/discussion/360236"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "frame_extraction",
+      "name": "Frame extraction",
+      "description": "sample videos at 25 FPS and resize to 480p (OpenCV)",
+      "dejargonized_description": "This stage sample videos at 25 FPS and resize to 480p (OpenCV).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for DFL - Bundesliga Data Shootout - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "frame_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "2_5d_cnn_extraction",
+      "name": "2.5D CNN extraction",
+      "description": "stack 3 consecutive video frames into the RGB channels of a single image and pass through an EfficientNet to extract spatial features (PyTorch)",
+      "dejargonized_description": "This stage stack 3 consecutive video frames into the RGB channels of a single image and pass through an EfficientNet to extract spatial features (PyTorch).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "2_5d_cnn_extraction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "2_5d_cnn_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "slowfast_extraction",
+      "name": "SlowFast extraction",
+      "description": "run a SlowFast 3D-CNN directly on a window of video frames to extract temporal features (PyTorchVideo)",
+      "dejargonized_description": "This stage run a SlowFast 3D-CNN directly on a window of video frames to extract temporal features (PyTorchVideo).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "slowfast_extraction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "slowfast_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sequence_modeling",
+      "name": "Sequence modeling",
+      "description": "concatenate spatial and temporal features per frame, and pass the sequence through a 1D CNN / Transformer layer (PyTorch)",
+      "dejargonized_description": "This stage concatenate spatial and temporal features per frame, and pass the sequence through a 1D CNN / Transformer layer (PyTorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "sequence_modeling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sequence_modeling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "non_maximum_suppression_nms",
+      "name": "Non-Maximum Suppression (NMS)",
+      "description": "locate peaks in the 1D probability output to pinpoint the exact frame of the action (pass, foul, shot) (scipy)",
+      "dejargonized_description": "This stage locate peaks in the 1D probability output to pinpoint the exact frame of the action (pass, foul, shot) (scipy).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "non_maximum_suppression_nms_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "frame_extraction",
+      "target_stage_id": "2_5d_cnn_extraction",
+      "output_name": "frame_extraction_output",
+      "input_name": "2_5d_cnn_extraction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Frame extraction output is consumed by 2.5D CNN extraction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "2_5d_cnn_extraction",
+      "target_stage_id": "slowfast_extraction",
+      "output_name": "2_5d_cnn_extraction_output",
+      "input_name": "slowfast_extraction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "2.5D CNN extraction output is consumed by SlowFast extraction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "slowfast_extraction",
+      "target_stage_id": "sequence_modeling",
+      "output_name": "slowfast_extraction_output",
+      "input_name": "sequence_modeling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "SlowFast extraction output is consumed by Sequence modeling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "sequence_modeling",
+      "target_stage_id": "non_maximum_suppression_nms",
+      "output_name": "sequence_modeling_output",
+      "input_name": "non_maximum_suppression_nms_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Sequence modeling output is consumed by Non-Maximum Suppression (NMS).",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Video Action Detection.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_25-50.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/dfl-bundesliga-data-shootout/discussion/360236",
+      "Code URL: writeup only",
+      "Standard tools: OpenCV, PyTorch, PyTorchVideo, scipy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "DFL - Bundesliga Data Shootout - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/dfl-bundesliga-data-shootout/discussion/360236",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

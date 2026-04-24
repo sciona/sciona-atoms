@@ -1,0 +1,333 @@
+{
+  "asset_id": "solution.kaggle.adversarial_attacks_1st",
+  "asset_version": "v1",
+  "family": "adversarial",
+  "paradigm": "optimization",
+  "name": "NIPS 2017 Adversarial Attacks 1st Place -- Momentum Iterative FGSM",
+  "summary": "Iterative gradient-based adversarial attack using momentum-accumulated gradients across an ensemble of models with asymmetric weighting, auxiliary logit loss, and adaptive budget allocation for both non-targeted and targeted settings.",
+  "dejargonized_summary": "Repeatedly nudge an image so that multiple neural networks misclassify it, using a running average of past nudge directions to avoid getting stuck, and weighting some networks less than others to produce perturbations that transfer to unseen networks.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "mi_fgsm",
+    "momentum_iterative_fgsm",
+    "adversarial_attack_ensemble",
+    "targeted_adversarial_attack",
+    "non_targeted_adversarial_attack",
+    "transferable_adversarial_examples",
+    "l_infinity_perturbation",
+    "gradient_consensus",
+    "model_ensemble_attack",
+    "black_box_transfer",
+    "iterative_gradient_attack",
+    "auxiliary_logit_loss"
+  ],
+  "inputs": [
+    {
+      "name": "images",
+      "type_desc": "Tensor[B, H, W, 3]",
+      "constraints": "Clean input images, pixel values in [0, 255].",
+      "required": true
+    },
+    {
+      "name": "target_labels",
+      "type_desc": "Tensor[B] | None",
+      "constraints": "Target class indices for targeted attack; None for non-targeted.",
+      "required": false
+    },
+    {
+      "name": "max_epsilon",
+      "type_desc": "float",
+      "constraints": "Maximum L-infinity perturbation budget in pixel units.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "adversarial_images",
+      "type_desc": "Tensor[B, H, W, 3]",
+      "constraints": "Perturbed images within epsilon ball of originals, pixel values in [0, 255].",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Generating adversarial examples that must transfer to unknown/black-box models (not just fool the source model)",
+      "L-infinity perturbation budget is the constraint (pixel-level maximum change, not L2 norm)",
+      "Multiple source models are available for ensemble gradient computation",
+      "Both targeted and non-targeted attacks are needed with a shared framework"
+    ],
+    "do_not_use_when": [
+      "White-box attack where the target model is fully accessible (C&W or PGD with model-specific tuning is stronger)",
+      "Perturbation budget is measured in L2 or L1 norm rather than L-infinity (sign-based steps are suboptimal for L2)",
+      "Only a single source model is available (momentum still helps but ensemble diversity is the main transferability driver)",
+      "The target domain is non-image (text, audio) where gradient-based pixel perturbation does not apply directly"
+    ],
+    "key_insight": "Full momentum (mu=1.0) with L1-normalized gradients produces perturbations that transfer to unseen models because the accumulated gradient direction approximates the consensus gradient across model families. The L1 normalization prevents any single iteration's gradient magnitude from dominating, and full momentum ensures every iteration contributes equally to the final direction.",
+    "critical_stages": ["momentum_iterative_gradient_accumulation", "ensemble_logit_fusion_with_asymmetric_weights"],
+    "swappable_stages": {
+      "auxiliary_logit_loss_fusion": "Standard cross-entropy loss works without auxiliary heads. The auxiliary loss adds ~2% transfer rate improvement on Inception models.",
+      "adaptive_epsilon_attack_strategy": "Fixed configuration (5 models, 20 iterations) works for most budgets. The adaptive strategy optimizes for edge cases.",
+      "rounded_clipped_perturbation_step": "Standard sign-based stepping (FGSM-style) works for non-targeted attacks. The rounded multi-level step is mainly beneficial for targeted attacks."
+    },
+    "failure_modes": [
+      "Adversarially-trained target models: momentum helps but transfer rates drop significantly against robust models",
+      "Very tight perturbation budgets (epsilon < 4): too few effective iterations for momentum to accumulate a useful consensus direction",
+      "Source and target model families are architecturally very different (e.g., CNN source vs. vision transformer target): gradient consensus may not transfer across architectural paradigms"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "fixed_point_loop",
+      "statement": "The gradient accumulation and perturbation step must iterate within a fixed-point loop until the perturbation budget is exhausted.",
+      "rationale": "MI-FGSM is inherently iterative -- each step uses the accumulated momentum from all prior steps. Single-step attacks lose the transferability benefit of momentum.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Dong et al., Boosting Adversarial Attacks with Momentum, CVPR 2018"
+    },
+    {
+      "category": "stage",
+      "subject": "asymmetric_model_weighting",
+      "statement": "Adversarially-trained models must be downweighted in the ensemble logit fusion to avoid overfitting perturbations to their adversarial training distribution.",
+      "rationale": "adv_inception_v3 gets weight 0.25 while standard models get 1.0. Equal weighting degrades transferability.",
+      "confidence": 0.95,
+      "source_stage": "solution_analysis",
+      "source_reference": "attack_iter.py:170-175"
+    },
+    {
+      "category": "stage",
+      "subject": "label_inference_once",
+      "statement": "For non-targeted attacks, the attack label must be inferred from ensemble consensus on the FIRST iteration only, then frozen for all subsequent iterations.",
+      "rationale": "Re-inferring labels each iteration risks label leakage from competition infrastructure and causes unstable attack targets.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "attack_iter.py:162-168"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "ensemble_prediction_label_inference",
+      "name": "Ensemble Prediction Label Inference",
+      "description": "Infers true label from ensemble consensus on first iteration only, then freezes for subsequent iterations. Avoids label leakage from competition infrastructure.",
+      "dejargonized_description": "Ask all models what class the image is, take the majority vote as the true label, and keep that label fixed for the entire attack.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {"name": "predictions_list", "type_desc": "List[Tensor[B, C]]", "constraints": "Prediction logits from each model in ensemble.", "required": true},
+        {"name": "iteration_index", "type_desc": "int", "constraints": "Current iteration number.", "required": true},
+        {"name": "previous_labels", "type_desc": "Tensor[B]", "constraints": "Labels from prior iteration (ignored on iteration 0).", "required": false}
+      ],
+      "outputs": [
+        {"name": "attack_labels", "type_desc": "Tensor[B]", "constraints": "One-hot encoded labels for loss computation.", "required": true}
+      ],
+      "preconditions": ["At least one model prediction available."],
+      "guarantees": ["Labels are fixed after iteration 0."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "adaptive_epsilon_attack_strategy",
+      "name": "Adaptive Epsilon Attack Strategy",
+      "description": "Selects model count, iteration count, and step size based on perturbation budget. eps >= 8: 5 models, 20 iters, alpha=eps/12. eps < 8: 2 models, 40 iters, alpha=eps/28. With tight budget, precision matters more; with large budget, model diversity matters more.",
+      "dejargonized_description": "Choose how many models to use and how many steps to take based on how much room you have to change the image -- tight budgets need more precise, smaller steps with fewer models.",
+      "concept_type": "conditional_routing",
+      "inputs": [
+        {"name": "max_epsilon", "type_desc": "float", "constraints": "Maximum perturbation budget.", "required": true},
+        {"name": "threshold", "type_desc": "float", "constraints": "Budget threshold for strategy switch (default 8.0).", "required": false}
+      ],
+      "outputs": [
+        {"name": "config", "type_desc": "dict", "constraints": "Keys: num_models (int), num_iterations (int), step_size (float).", "required": true}
+      ],
+      "preconditions": ["max_epsilon > 0."],
+      "guarantees": ["step_size * num_iterations approximately covers epsilon budget."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "ensemble_logit_fusion_with_asymmetric_weights",
+      "name": "Ensemble Logit Fusion with Asymmetric Weights",
+      "description": "Weighted average of logits from multiple models. Adversarially-trained models (adv_inception_v3) get weight 0.25 while standard models get 1.0, preventing perturbations from overfitting to the adversarial training distribution.",
+      "dejargonized_description": "Average the raw predictions from all models, but give adversarially-hardened models less influence so the attack generalizes to new models.",
+      "concept_type": "optimization",
+      "inputs": [
+        {"name": "logits_dict", "type_desc": "Dict[str, Tensor[B, C]]", "constraints": "Model name to logits mapping.", "required": true},
+        {"name": "weights", "type_desc": "Dict[str, float]", "constraints": "Model name to weight mapping. Adversarially-trained models should be downweighted.", "required": true}
+      ],
+      "outputs": [
+        {"name": "fused_logits", "type_desc": "Tensor[B, C]", "constraints": "Weighted average logits.", "required": true}
+      ],
+      "preconditions": ["All logits have same shape [B, C]."],
+      "guarantees": ["Output shape matches input logit shape."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "auxiliary_logit_loss_fusion",
+      "name": "Auxiliary Logit Loss Fusion",
+      "description": "Backpropagates through both main and auxiliary classification heads with weight 0.4 on auxiliary. Produces richer gradients capturing feature sensitivity at multiple network depths. Correctly excludes models without auxiliary heads (e.g., ResNet).",
+      "dejargonized_description": "Compute the attack loss using both the final prediction and an intermediate prediction from each model, so the attack signal captures what the network cares about at multiple layers.",
+      "concept_type": "optimization",
+      "inputs": [
+        {"name": "main_logits", "type_desc": "Tensor[B, C]", "constraints": "Main classification head logits.", "required": true},
+        {"name": "aux_logits", "type_desc": "Tensor[B, C] | None", "constraints": "Auxiliary head logits (None for models without aux head).", "required": false},
+        {"name": "labels", "type_desc": "Tensor[B, C]", "constraints": "One-hot encoded target labels.", "required": true},
+        {"name": "aux_weight", "type_desc": "float", "constraints": "Weight for auxiliary loss (default 0.4).", "required": false}
+      ],
+      "outputs": [
+        {"name": "combined_loss", "type_desc": "Tensor[scalar]", "constraints": "Scalar loss for gradient computation.", "required": true}
+      ],
+      "preconditions": ["Main logits always available. Aux logits may be None."],
+      "guarantees": ["Loss is differentiable w.r.t. input images."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "momentum_iterative_gradient_accumulation",
+      "name": "Momentum Iterative Gradient Accumulation (MI-FGSM)",
+      "description": "L1-normalizes current gradient, accumulates with momentum mu=1.0. The paper's headline contribution. Full momentum means accumulated gradient has equal weight to new gradient. L1-normalization prevents any single iteration's gradient magnitude from dominating. Dramatically improves transferability to unseen models.",
+      "dejargonized_description": "Keep a running average of past attack directions, normalizing each new direction before adding it in, so the attack follows a smoother path that works on models it has never seen.",
+      "concept_type": "fixed_point",
+      "inputs": [
+        {"name": "gradient", "type_desc": "Tensor[B, H, W, 3]", "constraints": "Current iteration raw gradient.", "required": true},
+        {"name": "previous_accumulated", "type_desc": "Tensor[B, H, W, 3]", "constraints": "Accumulated gradient from prior iterations (zeros on first).", "required": true},
+        {"name": "momentum", "type_desc": "float", "constraints": "Momentum decay factor (mu=1.0 in paper).", "required": true}
+      ],
+      "outputs": [
+        {"name": "accumulated_gradient", "type_desc": "Tensor[B, H, W, 3]", "constraints": "Updated accumulated gradient.", "required": true}
+      ],
+      "preconditions": ["Gradient has been computed from ensemble loss."],
+      "guarantees": ["Output magnitude is controlled by L1 normalization."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "std_normalized_momentum_gradient",
+      "name": "Std-Normalized Momentum Gradient (Targeted Variant)",
+      "description": "Std-normalization applied TWICE: once to raw gradient before accumulation, once to accumulated result. Preserves relative spatial structure better than L1-mean, important for targeted attacks where perturbation must push toward a specific class boundary.",
+      "dejargonized_description": "A variant of the momentum accumulation that normalizes by standard deviation instead of average, applied twice to keep the attack signal stable when pushing toward a specific target class.",
+      "concept_type": "fixed_point",
+      "inputs": [
+        {"name": "gradient", "type_desc": "Tensor[B, H, W, 3]", "constraints": "Current iteration raw gradient.", "required": true},
+        {"name": "accumulated", "type_desc": "Tensor[B, H, W, 3]", "constraints": "Accumulated gradient from prior iterations.", "required": true},
+        {"name": "momentum", "type_desc": "float", "constraints": "Momentum decay factor.", "required": true}
+      ],
+      "outputs": [
+        {"name": "normalized_accumulated", "type_desc": "Tensor[B, H, W, 3]", "constraints": "Double-std-normalized accumulated gradient.", "required": true}
+      ],
+      "preconditions": ["Gradient computed from targeted loss (negated cross-entropy)."],
+      "guarantees": ["Output has controlled magnitude via std normalization."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "rounded_clipped_perturbation_step",
+      "name": "Rounded Clipped Perturbation Step",
+      "description": "Uses round(noise) clipped to [-2, 2] instead of sign(noise). Produces integer values {-2,-1,0,1,2}. Multi-level quantized step allows larger per-pixel moves where gradient is confident, zero-steps where near-zero. Exploits perturbation budget more efficiently for targeted attacks.",
+      "dejargonized_description": "Instead of nudging every pixel by the same amount, nudge confident pixels more and uncertain pixels less, using a 5-level scale instead of just plus/minus one.",
+      "concept_type": "optimization",
+      "inputs": [
+        {"name": "noise", "type_desc": "Tensor[B, H, W, 3]", "constraints": "Accumulated gradient signal.", "required": true},
+        {"name": "alpha", "type_desc": "float", "constraints": "Step size multiplier.", "required": true},
+        {"name": "clip_range", "type_desc": "int", "constraints": "Maximum absolute value after rounding (default 2).", "required": false}
+      ],
+      "outputs": [
+        {"name": "perturbation_delta", "type_desc": "Tensor[B, H, W, 3]", "constraints": "Quantized perturbation step in {-2,-1,0,1,2} * alpha.", "required": true}
+      ],
+      "preconditions": ["Accumulated gradient available."],
+      "guarantees": ["Each pixel delta is an integer multiple of alpha, bounded by clip_range."],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "ensemble_prediction_label_inference",
+      "target_stage_id": "auxiliary_logit_loss_fusion",
+      "output_name": "attack_labels",
+      "input_name": "labels",
+      "source_type": "Tensor[B, C]",
+      "target_type": "Tensor[B, C]",
+      "data_kind": "label",
+      "provenance": "Ensemble-inferred labels used as attack target for loss computation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "adaptive_epsilon_attack_strategy",
+      "target_stage_id": "ensemble_logit_fusion_with_asymmetric_weights",
+      "output_name": "config",
+      "input_name": "model_selection",
+      "source_type": "dict",
+      "target_type": "dict",
+      "data_kind": "configuration",
+      "provenance": "Strategy determines how many models participate in ensemble.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "ensemble_logit_fusion_with_asymmetric_weights",
+      "target_stage_id": "auxiliary_logit_loss_fusion",
+      "output_name": "fused_logits",
+      "input_name": "main_logits",
+      "source_type": "Tensor[B, C]",
+      "target_type": "Tensor[B, C]",
+      "data_kind": "logits",
+      "provenance": "Asymmetrically-weighted ensemble logits fed to loss.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "auxiliary_logit_loss_fusion",
+      "target_stage_id": "momentum_iterative_gradient_accumulation",
+      "output_name": "combined_loss",
+      "input_name": "gradient",
+      "source_type": "Tensor[scalar]",
+      "target_type": "Tensor[B, H, W, 3]",
+      "data_kind": "gradient",
+      "provenance": "Loss differentiated w.r.t. input to produce gradient (tf.gradients).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "auxiliary_logit_loss_fusion",
+      "target_stage_id": "std_normalized_momentum_gradient",
+      "output_name": "combined_loss",
+      "input_name": "gradient",
+      "source_type": "Tensor[scalar]",
+      "target_type": "Tensor[B, H, W, 3]",
+      "data_kind": "gradient",
+      "provenance": "Loss differentiated w.r.t. input for targeted variant.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "std_normalized_momentum_gradient",
+      "target_stage_id": "rounded_clipped_perturbation_step",
+      "output_name": "normalized_accumulated",
+      "input_name": "noise",
+      "source_type": "Tensor[B, H, W, 3]",
+      "target_type": "Tensor[B, H, W, 3]",
+      "data_kind": "gradient",
+      "provenance": "Std-normalized accumulated gradient feeds into multi-level quantized step.",
+      "loss_class": "lossy_but_allowed"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place in both NIPS 2017 Non-Targeted and Targeted Adversarial Attack competitions. MI-FGSM is a widely-cited technique (CVPR 2018 Spotlight). All atoms are novel and not yet ingested.",
+    "dejargonized_summary": "Create images that fool neural networks by iteratively adjusting pixels using a momentum-smoothed attack direction computed from multiple models, with special handling for targeted vs non-targeted attacks.",
+    "provenance_notes": [
+      "Source (non-targeted): https://github.com/dongyp13/Non-Targeted-Adversarial-Attacks (Apache 2.0)",
+      "Source (targeted): https://github.com/dongyp13/Targeted-Adversarial-Attack (Apache 2.0)",
+      "Paper: Dong et al., Boosting Adversarial Attacks with Momentum, CVPR 2018",
+      "Local analysis: kaggle-solutions/docs/analysis-adversarial-attacks-1st.md"
+    ],
+    "uncertainty_notes": [
+      "Hyperparameters (mu=1.0, aux_weight=0.4, adv_weight=0.25) are competition-tuned and may need adjustment for other settings.",
+      "The CDG merges both non-targeted and targeted pipelines; in practice they share atoms but differ in gradient direction and normalization strategy."
+    ],
+    "references": [
+      {
+        "title": "Dong et al. (2018)",
+        "citation": "Boosting Adversarial Attacks with Momentum, CVPR 2018 (Spotlight)",
+        "url": "https://arxiv.org/abs/1710.06081",
+        "note": "MI-FGSM foundational paper."
+      },
+      {
+        "title": "NIPS 2017 Adversarial Attacks Competition",
+        "citation": "Kaggle Competition, 2017",
+        "url": "https://www.kaggle.com/c/nips-2017-non-targeted-adversarial-attack",
+        "note": "Competition page."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

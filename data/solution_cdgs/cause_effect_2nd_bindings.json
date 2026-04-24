@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.cause_effect_2nd",
+  "solution_metadata": {
+    "competition": "Kaggle Cause-Effect Pairs",
+    "placement": "2nd",
+    "team": "jarfo (Jose A. R. Fonollosa)",
+    "year": 2013,
+    "metric": "Bidirectional AUC",
+    "problem_domain": "causal_inference",
+    "source_url": "https://github.com/jarfo/cause-effect",
+    "source_license": "Apache-2.0"
+  },
+  "bindings": [
+    {"stage_id": "discretize_and_bin", "bound_artifact_fqdn": "sciona.atoms.causal_inference.feature_primitives.discretize_and_bin", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "igci_asymmetry_score", "bound_artifact_fqdn": "sciona.atoms.causal_inference.feature_primitives.igci_asymmetry_score", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "hsic_independence_test", "bound_artifact_fqdn": "sciona.atoms.causal_inference.feature_primitives.hsic_independence_test", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "normalized_error_probability", "bound_artifact_fqdn": "sciona.atoms.causal_inference.feature_primitives.normalized_error_probability", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "uniform_divergence", "bound_artifact_fqdn": "sciona.atoms.causal_inference.feature_primitives.uniform_divergence", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "knn_entropy_estimator", "bound_artifact_fqdn": "sciona.atoms.causal_inference.feature_primitives.knn_entropy_estimator", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "polyfit_nonlinearity_asymmetry", "bound_artifact_fqdn": "sciona.atoms.causal_inference.feature_primitives.polyfit_nonlinearity_asymmetry", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "polyfit_residual_error", "bound_artifact_fqdn": "sciona.atoms.causal_inference.feature_primitives.polyfit_residual_error", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "conditional_noise_entropy_variance", "bound_artifact_fqdn": "sciona.atoms.causal_inference.conditional_statistics.conditional_noise_entropy_variance", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "conditional_noise_skewness_variance", "bound_artifact_fqdn": "sciona.atoms.causal_inference.conditional_statistics.conditional_noise_skewness_variance", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "conditional_noise_kurtosis_variance", "bound_artifact_fqdn": "sciona.atoms.causal_inference.conditional_statistics.conditional_noise_kurtosis_variance", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "conditional_distribution_similarity", "bound_artifact_fqdn": "sciona.atoms.causal_inference.conditional_statistics.conditional_distribution_similarity", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {
+      "stage_id": "asymmetric_feature_difference",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 1.0,
+      "binding_source": "manual_analysis",
+      "status": "active",
+      "action_class": "orchestration",
+      "evidence_summary": {"resolved_reason": "MAP_OVER orchestration: compute f(A,B) and f(B,A) then subtract. Skeleton exists in sciona-matcher. The inner function is an existing atom; the asymmetric application is a composition pattern."}
+    },
+    {"stage_id": "symmetrized_prediction_fusion", "bound_artifact_fqdn": "sciona.atoms.causal_inference.estimators.symmetrized_prediction_fusion", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "two_stage_independence_direction", "bound_artifact_fqdn": "sciona.atoms.causal_inference.estimators.two_stage_independence_direction", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "left_right_decomposed_prediction", "bound_artifact_fqdn": "sciona.atoms.causal_inference.estimators.left_right_decomposed_prediction", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "weighted_ensemble_combination", "bound_artifact_fqdn": "sciona.atoms.causal_inference.estimators.weighted_ensemble_combination", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"}
+  ],
+  "binding_summary": {
+    "total_stages": 17,
+    "bound_active": 17,
+    "bound_approximate": 0,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona-atoms": 16
+    },
+    "novel_atoms_needed": [],
+    "orchestration_resolved": ["asymmetric_feature_difference"]
+  },
+  "architect_test_expectations": {
+    "description": "All 16 domain atoms are ingested. The critical test is whether the architect can FIND them given concept_type and keyword search.",
+    "critical_finding": "All 16 causal inference atoms have concept_type='custom' in their CDGs. The architect's PrimitiveCatalog.search_by_category() will NOT find them via concept_type matching. It must fall through to keyword/embedding search. This is a retrieval quality issue that affects all Kaggle-ingested atoms.",
+    "expected_retrieval_path": "keyword search on atom name/description, NOT concept_type enumeration"
+  }
+}

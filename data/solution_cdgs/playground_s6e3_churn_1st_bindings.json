@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.playground_s6e3_churn_1st",
+  "solution_metadata": {
+    "competition": "Kaggle Playground S6E3: Customer Churn - 1st Place (2026)",
+    "placement": "1st",
+    "team": null,
+    "year": 2026,
+    "metric": null,
+    "problem_domain": "tabular_classification",
+    "source_url": "https://www.kaggle.com/competitions/playground-series-s6e3/writeups/1st-place-gpt54-gemini3-1-claudeopus4-6-kgm",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "data_split",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "gpu_feature_engineering",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until a more specific atom or embedding-backed binding is available."
+      }
+    },
+    {
+      "stage_id": "nearest_neighbor_extraction",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.neighbors.nearest_neighbors_fit",
+      "binding_confidence": 0.82,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "model_zoo_generation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "greedy_forward_selection",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "meta_stacking",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "ml": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [],
+    "orchestration_resolved": [
+      "data_split",
+      "gpu_feature_engineering",
+      "greedy_forward_selection",
+      "meta_stacking",
+      "model_zoo_generation"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

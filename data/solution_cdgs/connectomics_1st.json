@@ -1,0 +1,497 @@
+{
+  "asset_id": "solution.kaggle.connectomics_1st",
+  "asset_version": "v1",
+  "family": "graph_inference",
+  "paradigm": "graph_signal_processing",
+  "name": "Connectomics 1st Place — Graph Inference from Calcium Fluorescence",
+  "summary": "Unsupervised neural circuit reconstruction from calcium fluorescence time series via rank-reduced precision matrices with global burst deconfounding and hyperparameter-free threshold ensembling.",
+  "dejargonized_summary": "Figure out which neurons are connected by looking at when they fire together, after removing spurious correlations caused by whole-brain activity bursts, and averaging over many sensitivity settings instead of picking one.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "connectome_inference",
+    "calcium_imaging_graph",
+    "partial_correlation_network",
+    "precision_matrix_graph",
+    "multivariate_time_series_graph_inference",
+    "global_burst_confound",
+    "threshold_ensembling",
+    "unsupervised_graph_discovery",
+    "dense_time_series",
+    "correlated_noise_suppression",
+    "hyperparameter_free"
+  ],
+  "inputs": [
+    {
+      "name": "fluorescence",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (T, N): T timesteps, N neurons. Raw calcium fluorescence time series.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "connectivity_score",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N, N): pairwise connectivity scores in [0, 1]. Asymmetric (directional).",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Inferring pairwise graph structure from multivariate time series where nodes fire/activate simultaneously",
+      "Global confounding events (bursts, market shocks, weather fronts) create spurious pairwise correlations that must be suppressed",
+      "No labeled edges available — fully unsupervised graph inference from temporal co-activation patterns",
+      "Threshold hyperparameter is unknown and cross-validation is impractical (no ground-truth edges for tuning)"
+    ],
+    "do_not_use_when": [
+      "Graph structure must be inferred from static snapshots rather than time series (no temporal co-activation signal)",
+      "Edges have known directionality that must be recovered with high accuracy (this pipeline is 99.7% symmetric)",
+      "Node count exceeds ~1000 (precision matrix estimation via PCA becomes memory-bound and rank-deficient)",
+      "Time series are very short (T < 5*N) — insufficient samples for stable covariance estimation"
+    ],
+    "key_insight": "Burst deconfounding via nonlinear reweighting (x+1)^(1+1/S) suppresses global activity artifacts before precision matrix estimation. Dense threshold ensembling integrates out the threshold hyperparameter, equivalent to Bayesian model averaging under a uniform prior.",
+    "critical_stages": ["global_activity_sample_reweighting", "threshold_sweep_ensemble"],
+    "swappable_stages": {
+      "calcium_lowpass_filter": "Any causal smoothing filter (Savitzky-Golay, exponential moving average) works. The specific kernel shapes are not critical.",
+      "pca_precision_matrix": "Graphical Lasso or Ledoit-Wolf shrinkage can replace PCA-based rank reduction for regularized precision matrix estimation.",
+      "temporal_precedence_directivity": "Any asymmetric temporal lag measure works as a directional tiebreaker. The 0.3% weight means this stage has minimal impact."
+    },
+    "failure_modes": [
+      "Non-stationary time series where correlation structure changes over time: the single precision matrix averages over regimes",
+      "Networks with hub nodes that participate in many bursts: reweighting may suppress genuine hub connections along with confounds",
+      "Very sparse firing (most timesteps are zero for most neurons): covariance estimation is noisy even with threshold ensembling"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preprocessing_order",
+      "statement": "Lowpass filtering must precede differencing, which must precede thresholding.",
+      "rationale": "The derivative of the smoothed signal isolates rising edges (putative spikes). Thresholding the raw signal would discard baseline structure needed for the derivative.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Sutera et al. 2014, Section 2"
+    },
+    {
+      "category": "stage",
+      "subject": "burst_deconfounding",
+      "statement": "Global activity reweighting must precede precision matrix estimation.",
+      "rationale": "Whole-brain burst cascades produce spurious pairwise correlations. If not suppressed before covariance estimation, indirect connections contaminate the precision matrix.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Stetter et al. 2012; Sutera et al. 2014"
+    },
+    {
+      "category": "stage",
+      "subject": "hyperparameter_elimination",
+      "statement": "Sweep thresholds densely and average rather than selecting a single best threshold.",
+      "rationale": "Dense threshold ensembling integrates out the threshold hyperparameter, equivalent to Bayesian model averaging, avoiding overfitting to a single sensitivity setting.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "Sutera et al. 2014, Section 3"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "calcium_lowpass_filter",
+      "name": "Calcium Lowpass Filter",
+      "description": "Apply a causal/acausal weighted moving average using np.roll along the time axis. Multiple filter kernels (symmetric 3-point, causal 4-point, asymmetric) are applied independently and ensembled later.",
+      "dejargonized_description": "Smooth the raw fluorescence signal to suppress single-frame noise, using several different smoothing windows that will be combined later.",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "fluorescence",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). Raw calcium fluorescence.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "filtered_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). Smoothed fluorescence, same shape as input.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Input is a 2D array with T >= 3 timesteps and N >= 2 neurons."
+      ],
+      "guarantees": [
+        "Output shape matches input. Temporal alignment preserved (np.roll is circular)."
+      ],
+      "family_notes": [
+        "Uses np.roll for circular shift to avoid edge artifacts in correlation computation.",
+        "The calcium indicator itself is a low-pass filter of spike trains; this additional smoothing suppresses single-frame noise without full deconvolution."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "first_difference",
+      "name": "First Difference",
+      "description": "Compute the temporal first difference of the filtered signal to extract rising edges (putative spike events).",
+      "dejargonized_description": "Subtract each time step from the previous one to find moments when the signal increases rapidly.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "filtered_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). Smoothed fluorescence.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "derivative_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T-1, N) or (T, N) depending on implementation.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Filtered signal is temporally aligned."],
+      "guarantees": ["Output captures rate of change. Positive values indicate rising fluorescence."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "fluorescence_hard_threshold",
+      "name": "Fluorescence Hard Threshold",
+      "description": "Zero all values below a threshold, keeping values above unchanged. Applied after differencing, so it operates on the derivative — zeroing sub-threshold noise to focus on co-activation events.",
+      "dejargonized_description": "Discard small changes and keep only the sharp upward spikes that likely represent actual neural firing events.",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "derivative_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). First difference of smoothed fluorescence.",
+          "required": true
+        },
+        {
+          "name": "threshold",
+          "type_desc": "float",
+          "constraints": "Swept over 120 values from 0.100 to 0.210.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "thresholded_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). Sparse activation matrix.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Derivative signal is available."],
+      "guarantees": ["Output is non-negative. Zero where input was below threshold."],
+      "family_notes": [
+        "This is a sparse activation detector. The threshold is NOT selected by cross-validation — it is swept densely and all results are ensembled (see threshold_sweep_ensemble stage)."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "global_activity_sample_reweighting",
+      "name": "Global Activity Sample Reweighting",
+      "description": "Nonlinear per-timestep reweighting that suppresses samples during global burst periods and amplifies moderate-activity windows. For each timestep i, computes Sum4[i] = total activity across all neurons, then transforms: X[i,:] = (X[i,:] + 1)^(1 + 1/Sum4[i]). The exponent is further raised to a power (1.4, 1.6, or 1.9) depending on the regime of relative activity.",
+      "dejargonized_description": "When many neurons fire at once (a network-wide burst), reduce the influence of those time steps because the co-firing is due to the burst, not direct connections. Amplify time steps where only a few neurons are active.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "thresholded_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). Sparse activation matrix.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "reweighted_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). Burst-deconfounded activation matrix.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input is non-negative (post-threshold)."],
+      "guarantees": ["Output preserves relative structure within each timestep. Global burst periods are suppressed."],
+      "family_notes": [
+        "KEY WINNING TECHNIQUE. The (x+1)^(1+1/S) form with regime-dependent outer exponents is novel to this solution.",
+        "Credited to Stetter et al. (2012) for the general idea, but the specific nonlinear form is original.",
+        "Generalizes beyond calcium imaging to any 'infer graph from multivariate time series' problem where global events create spurious correlations."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pca_precision_matrix",
+      "name": "PCA Precision Matrix",
+      "description": "Fit sklearn PCA(whiten=True, n_components=0.8*N) on the preprocessed data, then call pca.get_precision() to obtain the precision matrix (inverse covariance), and negate it. Uses PCA with rank reduction to 80% of components as implicit spectral regularization instead of L1 penalization (Graphical Lasso).",
+      "dejargonized_description": "Compute which neurons are partially correlated (connected) by inverting the covariance matrix, using PCA to throw away the noisiest 20% of variation first so the inversion is stable.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "reweighted_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). Burst-deconfounded activation matrix.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "precision_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, N). Negated precision matrix (partial correlations). Symmetric.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input has T > N (more samples than neurons) for rank sufficiency."],
+      "guarantees": ["Output is symmetric (N, N). Diagonal removed downstream."],
+      "family_notes": [
+        "Retaining 80% of components filters out the noise subspace, acting as spectral shrinkage. Avoids the O(N^3) cost of Graphical Lasso on large matrices.",
+        "This stage binds to existing sklearn PCA atoms: pca_fit + get_precision."
+      ],
+      "matched_primitive": "sciona.atoms.ml.sklearn.decomposition.pca_fit"
+    },
+    {
+      "stage_id": "score_matrix_normalization",
+      "name": "Score Matrix Normalization",
+      "description": "Set diagonal to matrix minimum (removing self-connections), then apply min-max normalization to [0, 1].",
+      "dejargonized_description": "Remove self-connection scores and rescale everything to a 0-to-1 range.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "precision_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, N). Raw precision matrix.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "normalized_score",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, N). Scores in [0, 1], diagonal minimized.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input is a square matrix."],
+      "guarantees": ["Output is in [0, 1]. Diagonal values are the minimum."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "threshold_sweep_ensemble",
+      "name": "Threshold Sweep Ensemble",
+      "description": "Iterate over 120 threshold values × 2-4 filter types. For each combination, run the full preprocessing + PCA precision pipeline. Aggregate as weighted sum. This is hyperparameter-free Bayesian model averaging — rather than selecting a single best threshold, average over the dense grid.",
+      "dejargonized_description": "Instead of guessing the best sensitivity setting, try 120 different settings and average all the results, which reliably outperforms picking any single one.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "fluorescence",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). Raw input.",
+          "required": true
+        },
+        {
+          "name": "thresholds",
+          "type_desc": "list[float]",
+          "constraints": "120 values from 0.100 to 0.210.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ensemble_score",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, N). Aggregated connectivity score.",
+          "required": true
+        }
+      ],
+      "preconditions": ["All inner pipeline stages are available."],
+      "guarantees": ["Output is a smooth, hyperparameter-free connectivity estimate."],
+      "family_notes": [
+        "Meta-strategy, not a standalone primitive. Wraps the inner pipeline (filter → diff → threshold → reweight → PCA → normalize) in an outer loop.",
+        "Equivalent to integrating out the threshold hyperparameter under a uniform prior."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "temporal_precedence_directivity",
+      "name": "Temporal Precedence Directivity",
+      "description": "For each ordered pair (i, j), count timesteps where x_j[t+1] falls in [x_i[t]+0.2, x_i[t]+0.5]. Build asymmetric count matrix, compute count - count^T, scale to [0,1]. Combined at 0.3% weight as a directional tiebreaker.",
+      "dejargonized_description": "Detect which direction connections go by looking for a specific pattern: if neuron i fires at time t, neuron j should show a specific-sized increase at time t+1 if i connects to j.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "fluorescence",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (T, N). Preprocessed fluorescence.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "directivity_score",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, N). Asymmetric directivity score in [0, 1].",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input has sufficient temporal resolution for t+1 lag detection."],
+      "guarantees": ["Output is asymmetric (captures directionality). Scale [0, 1]."],
+      "family_notes": [
+        "The [+0.2, +0.5] interval is tuned to calcium indicator biophysics.",
+        "Used at only 0.3% weight — a minimal asymmetric tiebreaker on top of the symmetric precision matrix."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "weighted_score_combination",
+      "name": "Weighted Score Combination",
+      "description": "Combine the symmetric ensemble score (99.7% weight) with the asymmetric directivity score (0.3% weight) to produce the final connectivity matrix.",
+      "dejargonized_description": "Blend the main connection-strength scores with a tiny amount of direction information to break ties.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "ensemble_score",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, N). Symmetric connectivity score.",
+          "required": true
+        },
+        {
+          "name": "directivity_score",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, N). Asymmetric directivity score.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "connectivity_score",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, N). Final scored connectivity matrix.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Both score matrices have compatible shapes."],
+      "guarantees": ["Output is the final solution submission."],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "calcium_lowpass_filter",
+      "target_stage_id": "first_difference",
+      "output_name": "filtered_signal",
+      "input_name": "filtered_signal",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "time_series",
+      "provenance": "Smoothed fluorescence preserving temporal alignment.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "first_difference",
+      "target_stage_id": "fluorescence_hard_threshold",
+      "output_name": "derivative_signal",
+      "input_name": "derivative_signal",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "time_series",
+      "provenance": "Derivative isolates rising edges; T may decrease by 1.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "fluorescence_hard_threshold",
+      "target_stage_id": "global_activity_sample_reweighting",
+      "output_name": "thresholded_signal",
+      "input_name": "thresholded_signal",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "sparse_activation",
+      "provenance": "Sparse non-negative activation pattern from threshold.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "global_activity_sample_reweighting",
+      "target_stage_id": "pca_precision_matrix",
+      "output_name": "reweighted_signal",
+      "input_name": "reweighted_signal",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "time_series",
+      "provenance": "Burst-deconfounded activation preserving pairwise structure.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pca_precision_matrix",
+      "target_stage_id": "score_matrix_normalization",
+      "output_name": "precision_matrix",
+      "input_name": "precision_matrix",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "adjacency_matrix",
+      "provenance": "Negated precision matrix encoding partial correlations.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "score_matrix_normalization",
+      "target_stage_id": "threshold_sweep_ensemble",
+      "output_name": "normalized_score",
+      "input_name": "normalized_score",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "adjacency_matrix",
+      "provenance": "One score matrix per (threshold, filter) pair, aggregated by ensemble.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "threshold_sweep_ensemble",
+      "target_stage_id": "weighted_score_combination",
+      "output_name": "ensemble_score",
+      "input_name": "ensemble_score",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "adjacency_matrix",
+      "provenance": "Hyperparameter-free symmetric connectivity estimate.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "temporal_precedence_directivity",
+      "target_stage_id": "weighted_score_combination",
+      "output_name": "directivity_score",
+      "input_name": "directivity_score",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "adjacency_matrix",
+      "provenance": "Asymmetric temporal precedence at 0.3% weight.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Connectomics solution. Model-free graph inference from calcium fluorescence via rank-reduced precision matrices. Core innovation: nonlinear burst deconfounding and dense threshold ensembling.",
+    "dejargonized_summary": "Figure out which neurons are connected by looking at when they fire together, after removing misleading patterns from whole-brain activity bursts, and averaging over many sensitivity settings.",
+    "provenance_notes": [
+      "Source: https://github.com/asutera/kaggle-connectomics (BSD 3-Clause)",
+      "Paper: Sutera et al. 2014, arXiv:1406.7865",
+      "Local analysis: kaggle-solutions/docs/analysis-connectomics-1st.md"
+    ],
+    "uncertainty_notes": [
+      "The [+0.2, +0.5] temporal precedence interval is tuned to calcium indicator biophysics and may not transfer to other signal types.",
+      "The 80% PCA retention ratio is heuristic; optimal retention depends on noise structure.",
+      "The (x+1)^(1+1/S) reweighting form is empirically validated but not theoretically derived."
+    ],
+    "references": [
+      {
+        "title": "Sutera et al. (2014)",
+        "citation": "Simple connectome inference from partial correlation statistics in calcium imaging",
+        "url": "https://arxiv.org/abs/1406.7865",
+        "note": "1st place solution paper."
+      },
+      {
+        "title": "Stetter et al. (2012)",
+        "citation": "Model-Free Reconstruction of Excitatory Neuronal Connectivity from Calcium Imaging Signals",
+        "url": "https://doi.org/10.1371/journal.pcbi.1002653",
+        "note": "Origin of burst reweighting concept."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

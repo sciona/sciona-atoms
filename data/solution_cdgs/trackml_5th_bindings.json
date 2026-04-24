@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.trackml_5th",
+  "solution_metadata": {
+    "competition": "TrackML Particle Tracking Challenge",
+    "placement": "5th",
+    "team": "Edwin Steiner",
+    "year": 2018,
+    "metric": "TrackML score",
+    "problem_domain": "particle_tracking",
+    "source_url": "https://github.com/edwinst/trackml_solution",
+    "source_license": "BSD-2-Clause"
+  },
+  "bindings": [
+    {"stage_id": "detector_geometry_autodiscovery", "bound_artifact_fqdn": null, "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "orchestration",
+     "evidence_summary": {"resolved_reason": "Orchestration: composition of existing sklearn KMeans + MeanShift atoms into a layer-boundary discovery pipeline. Individual atoms exist; the composition is handled by the synthesizer."}},
+    {"stage_id": "coordinate_rescaling_for_knn", "bound_artifact_fqdn": "sciona.atoms.particle_tracking.detector_corrections.coordinate_rescaling_for_knn", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "per_layer_knn_search", "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.neighbors.nearest_neighbors_fit", "binding_confidence": 0.85, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage",
+     "evidence_summary": {"binding_rationale": "Direct use of sklearn NearestNeighbors per layer. nearest_neighbors_fit + nearest_neighbors_kneighbors cover the operation. Confidence 0.85 because the per-layer iteration is an orchestration concern."}},
+    {"stage_id": "circle_from_three_points", "bound_artifact_fqdn": "sciona.atoms.particle_tracking.helix_geometry.circle_from_three_points", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "helix_pitch_least_squares", "bound_artifact_fqdn": "sciona.atoms.particle_tracking.helix_geometry.helix_pitch_least_squares", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "helix_cylinder_intersection", "bound_artifact_fqdn": "sciona.atoms.particle_tracking.track_matching.helix_cylinder_intersection", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "helix_cap_intersection", "bound_artifact_fqdn": "sciona.atoms.particle_tracking.track_matching.helix_cap_intersection", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "perturbative_helix_correction", "bound_artifact_fqdn": "sciona.atoms.particle_tracking.detector_corrections.perturbative_cap_correction", "binding_confidence": 0.9, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage",
+     "evidence_summary": {"binding_rationale": "Cap and cylinder corrections split into two atoms (perturbative_cap_correction and perturbative_cylinder_correction). Both cover the CDG stage. Confidence 0.9 because the CDG stage combines both correction types."}},
+    {"stage_id": "helix_nearest_point_distance", "bound_artifact_fqdn": "sciona.atoms.particle_tracking.helix_geometry.helix_nearest_point_distance", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "bayesian_neighbor_evaluation", "bound_artifact_fqdn": "sciona.atoms.particle_tracking.track_matching.bayesian_neighbor_evaluation", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "gate_or_validate"},
+    {"stage_id": "greedy_track_commit", "bound_artifact_fqdn": "sciona.atoms.particle_tracking.track_matching.greedy_track_commit", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"}
+  ],
+  "binding_summary": {
+    "total_stages": 11,
+    "bound_active": 11,
+    "bound_approximate": 0,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona-atoms-physics": 10,
+      "sciona-atoms-ml": 1
+    },
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
+    "orchestration_resolved": ["detector_geometry_autodiscovery"]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Cross-repo binding: architect must search both sciona-atoms (helix_geometry) and sciona-atoms-ml (sklearn.neighbors) to find all matches.",
+      "per_layer_knn_search should bind to nearest_neighbors_fit via concept_type=searching OR keyword 'neighbors'. Both paths should work.",
+      "helix_geometry atoms have concept_type='custom' (same G-006 issue as causal_inference). Retrieval depends on keyword/embedding fallback."
+    ]
+  }
+}

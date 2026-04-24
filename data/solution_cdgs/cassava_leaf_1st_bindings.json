@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.cassava_leaf_1st",
+  "solution_metadata": {
+    "competition": "Cassava Leaf Disease Classification - 1st Place (2021)",
+    "placement": "1st",
+    "team": null,
+    "year": 2021,
+    "metric": null,
+    "problem_domain": "structured_prediction",
+    "source_url": "https://www.kaggle.com/c/cassava-leaf-disease-classification/discussion/218741",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "image_augmentation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "model_backbone",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "robust_loss",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "pseudo_labeling",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.semi_supervised.self_training_select_pseudo_labels",
+      "binding_confidence": 0.74,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "active",
+      "action_class": "gate_or_validate",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "ensembling",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "ml": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "ensembling",
+      "image_augmentation"
+    ],
+    "orchestration_resolved": [
+      "model_backbone",
+      "robust_loss"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

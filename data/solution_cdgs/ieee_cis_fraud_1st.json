@@ -1,0 +1,308 @@
+{
+  "asset_id": "solution.kaggle.ieee_cis_fraud_1st",
+  "asset_version": "v1",
+  "family": "tabular_classification",
+  "paradigm": "optimization",
+  "name": "IEEE-CIS Fraud Detection - 1st Place (2019) - Pipeline Template",
+  "summary": "Tabular Classification (Adversarial Validation / Time-split) solution template for IEEE-CIS Fraud Detection - 1st Place (2019), modeled as a 5-stage deterministic pipeline: Client-ID Reverse Engineering, Group K-Fold split, Target Encoding, Feature Aggregation, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by IEEE-CIS Fraud Detection - 1st Place (2019): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "xgboost",
+    "catboost",
+    "target_encoding",
+    "tabular",
+    "classification",
+    "adversarial",
+    "validation",
+    "split",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Tabular Classification (Adversarial Validation / Time-split) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Tabular Classification (Adversarial Validation / Time-split).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Client-ID Reverse Engineering creates the representation needed by GBDT modeling, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "client_id_reverse_engineering",
+      "group_k_fold_split"
+    ],
+    "swappable_stages": {
+      "gbdt_modeling": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/ieee-fraud-detection/discussion/111284"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/ieee-fraud-detection/discussion/111284"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "client_id_reverse_engineering",
+      "name": "Client-ID Reverse Engineering",
+      "description": "mathematically combine anonymized hardware specs (D-columns) and time deltas to successfully reconstruct unique user IDs without explicit PII (pandas)",
+      "dejargonized_description": "This stage mathematically combine anonymized hardware specs (D-columns) and time deltas to successfully reconstruct unique user IDs without explicit PII (pandas).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for IEEE-CIS Fraud Detection - 1st Place (2019).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "client_id_reverse_engineering_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "group_k_fold_split",
+      "name": "Group K-Fold split",
+      "description": "strictly split cross-validation by the generated User IDs and by Time, intentionally mimicking the train/test split to prevent overfitting (sklearn)",
+      "dejargonized_description": "This stage strictly split cross-validation by the generated User IDs and by Time, intentionally mimicking the train/test split to prevent overfitting (sklearn).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "group_k_fold_split_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "group_k_fold_split_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "target_encoding",
+      "name": "Target Encoding",
+      "description": "apply smoothed target encoding to high-cardinality categorical variables using only historical data relative to the current row (category_encoders)",
+      "dejargonized_description": "This stage apply smoothed target encoding to high-cardinality categorical variables using only historical data relative to the current row (category_encoders).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "target_encoding_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "target_encoding_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_aggregation",
+      "name": "Feature Aggregation",
+      "description": "calculate the rolling mean and standard deviation of transaction amounts per User ID over the last 30 days (pandas)",
+      "dejargonized_description": "This stage calculate the rolling mean and standard deviation of transaction amounts per User ID over the last 30 days (pandas).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "feature_aggregation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feature_aggregation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "gbdt_modeling",
+      "name": "GBDT modeling",
+      "description": "train massive XGBoost and CatBoost models on the engineered features, optimizing for AUC",
+      "dejargonized_description": "This stage train massive XGBoost and CatBoost models on the engineered features, optimizing for AUC.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "gbdt_modeling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "client_id_reverse_engineering",
+      "target_stage_id": "group_k_fold_split",
+      "output_name": "client_id_reverse_engineering_output",
+      "input_name": "group_k_fold_split_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Client-ID Reverse Engineering output is consumed by Group K-Fold split.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "group_k_fold_split",
+      "target_stage_id": "target_encoding",
+      "output_name": "group_k_fold_split_output",
+      "input_name": "target_encoding_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Group K-Fold split output is consumed by Target Encoding.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "target_encoding",
+      "target_stage_id": "feature_aggregation",
+      "output_name": "target_encoding_output",
+      "input_name": "feature_aggregation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Target Encoding output is consumed by Feature Aggregation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_aggregation",
+      "target_stage_id": "gbdt_modeling",
+      "output_name": "feature_aggregation_output",
+      "input_name": "gbdt_modeling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Feature Aggregation output is consumed by GBDT modeling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Tabular Classification (Adversarial Validation / Time-split).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/ieee-fraud-detection/discussion/111284",
+      "Code URL: writeup only",
+      "Standard tools: pandas, sklearn, XGBoost, CatBoost"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "IEEE-CIS Fraud Detection - 1st Place (2019) solution writeup",
+        "citation": "https://www.kaggle.com/c/ieee-fraud-detection/discussion/111284",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

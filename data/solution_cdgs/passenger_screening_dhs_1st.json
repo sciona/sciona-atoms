@@ -1,0 +1,306 @@
+{
+  "asset_id": "solution.kaggle.passenger_screening_dhs_1st",
+  "asset_version": "v1",
+  "family": "time_series_anomaly_detection",
+  "paradigm": "neural_network",
+  "name": "Passenger Screening Algorithm Challenge (DHS) - 1st Place (2018) - Pipeline Template",
+  "summary": "3D mmWave point cloud anomaly detection solution template for Passenger Screening Algorithm Challenge (DHS) - 1st Place (2018), modeled as a 5-stage deterministic pipeline: Format conversion, Multi-view 2D projection, Body zoning, CNN Feature Extraction, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Passenger Screening Algorithm Challenge (DHS) - 1st Place (2018): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "anomaly_detection",
+    "mmwave",
+    "point",
+    "cloud",
+    "anomaly",
+    "detection",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a 3D mmWave point cloud anomaly detection task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: 3D mmWave point cloud anomaly detection.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Format conversion creates the representation needed by Max Pooling Ensembling, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "format_conversion",
+      "multi_view_2d_projection"
+    ],
+    "swappable_stages": {
+      "max_pooling_ensembling": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/passenger-screening-algorithm-challenge/discussion/52254"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/passenger-screening-algorithm-challenge/discussion/52254"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "format_conversion",
+      "name": "Format conversion",
+      "description": "convert proprietary .a3d mmWave scanner files into dense 3D numpy arrays representing physical volumes (numpy)",
+      "dejargonized_description": "This stage convert proprietary .a3d mmWave scanner files into dense 3D numpy arrays representing physical volumes (numpy).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Passenger Screening Algorithm Challenge (DHS) - 1st Place (2018).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "format_conversion_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_view_2d_projection",
+      "name": "Multi-view 2D projection",
+      "description": "mathematically project the 3D volumes into 16 distinct 2D angle views (like an X-ray rotating around the body) (scipy/numpy)",
+      "dejargonized_description": "This stage mathematically project the 3D volumes into 16 distinct 2D angle views (like an X-ray rotating around the body) (scipy/numpy).",
+      "concept_type": "geometry",
+      "inputs": [
+        {
+          "name": "multi_view_2d_projection_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multi_view_2d_projection_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "body_zoning",
+      "name": "Body zoning",
+      "description": "segment the 2D projections into 17 specific anatomical zones (e.g., right bicep, left ankle) using a custom heuristic (Python)",
+      "dejargonized_description": "This stage segment the 2D projections into 17 specific anatomical zones (e.g., right bicep, left ankle) using a custom heuristic (Python).",
+      "concept_type": "geometry",
+      "inputs": [
+        {
+          "name": "body_zoning_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "body_zoning_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "cnn_feature_extraction",
+      "name": "CNN Feature Extraction",
+      "description": "train ResNet architectures on the specific body zones to predict the presence of concealed threats (PyTorch)",
+      "dejargonized_description": "This stage train ResNet architectures on the specific body zones to predict the presence of concealed threats (PyTorch).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "cnn_feature_extraction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cnn_feature_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "max_pooling_ensembling",
+      "name": "Max Pooling Ensembling",
+      "description": "aggregate the predictions across all 16 rotational views by simply taking the maximum probability for each anatomical zone",
+      "dejargonized_description": "This stage aggregate the predictions across all 16 rotational views by simply taking the maximum probability for each anatomical zone.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "max_pooling_ensembling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "format_conversion",
+      "target_stage_id": "multi_view_2d_projection",
+      "output_name": "format_conversion_output",
+      "input_name": "multi_view_2d_projection_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Format conversion output is consumed by Multi-view 2D projection.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_view_2d_projection",
+      "target_stage_id": "body_zoning",
+      "output_name": "multi_view_2d_projection_output",
+      "input_name": "body_zoning_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Multi-view 2D projection output is consumed by Body zoning.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "body_zoning",
+      "target_stage_id": "cnn_feature_extraction",
+      "output_name": "body_zoning_output",
+      "input_name": "cnn_feature_extraction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Body zoning output is consumed by CNN Feature Extraction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "cnn_feature_extraction",
+      "target_stage_id": "max_pooling_ensembling",
+      "output_name": "cnn_feature_extraction_output",
+      "input_name": "max_pooling_ensembling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "CNN Feature Extraction output is consumed by Max Pooling Ensembling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for 3D mmWave point cloud anomaly detection.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/passenger-screening-algorithm-challenge/discussion/52254",
+      "Code URL: writeup only",
+      "Standard tools: numpy, scipy, PyTorch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Passenger Screening Algorithm Challenge (DHS) - 1st Place (2018) solution writeup",
+        "citation": "https://www.kaggle.com/c/passenger-screening-algorithm-challenge/discussion/52254",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

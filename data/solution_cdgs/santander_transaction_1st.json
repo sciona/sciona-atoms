@@ -1,0 +1,381 @@
+{
+  "asset_id": "solution.kaggle.santander_transaction_1st",
+  "asset_version": "v1",
+  "family": "tabular_classification",
+  "paradigm": "optimization",
+  "name": "Santander Customer Transaction Prediction 1st Place — Synthetic Data Detection with Count Encoding",
+  "summary": "Tabular binary classification pipeline that detects and removes synthetic padding rows from the test set, replaces raw feature values with frequency-count encodings, applies shuffle augmentation within target classes, and trains LightGBM with heavy regularization.",
+  "dejargonized_summary": "Predict which bank customers will make a transaction by first figuring out which test-set rows are fake padding (added by the competition organizers), removing them so they do not corrupt frequency statistics, then counting how often each value appears and using those counts as features for a gradient-boosted tree model.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "tabular_binary_classification",
+    "count_encoding",
+    "synthetic_data_detection",
+    "frequency_feature",
+    "adversarial_test_set",
+    "test_set_data_leakage",
+    "fake_row_detection",
+    "value_frequency_encoding",
+    "anonymized_features",
+    "shuffle_augmentation",
+    "lightgbm_heavy_regularization"
+  ],
+  "applicability": {
+    "use_when": [
+      "Tabular binary classification with many anonymized numeric features where domain-specific feature engineering is impossible",
+      "Test set may contain synthetic or padded rows that corrupt frequency-based statistics if not removed",
+      "Features have discrete or semi-discrete value distributions where frequency counts carry discriminative signal"
+    ],
+    "do_not_use_when": [
+      "Features are continuous with no repeated values — count encoding produces all-ones and carries no signal",
+      "Test set is known to be clean (no synthetic padding) — the fake data identification stage adds unnecessary complexity",
+      "Feature space is small (<10 features) — count encoding on few columns provides insufficient signal and shuffle augmentation is less effective"
+    ],
+    "key_insight": "The real insight is detecting and removing synthetic padding rows from the test set. The competition organizers injected fake rows with unique values to prevent leakage-based solutions, but this injection itself leaks information: real rows share values with the training set while fake rows have values appearing exactly once. Removing fake rows before computing frequency counts ensures the count features reflect the true data distribution, and these clean counts become the dominant signal for the downstream classifier.",
+    "critical_stages": ["fake_data_identification", "real_data_filtering"],
+    "swappable_stages": {
+      "lightgbm_training": "Any gradient boosting framework (XGBoost, CatBoost) or even a neural network works here. The winning signal comes from the feature engineering, not the model architecture.",
+      "shuffle_augmentation": "Optional stage — provides marginal gains. Can be replaced with other augmentation strategies or omitted entirely.",
+      "count_encoding": "Count encoding is the primary feature transform, but target encoding or frequency-ratio encoding are viable alternatives once synthetic rows are removed."
+    },
+    "failure_modes": [
+      "No synthetic rows in the test set: the fake data identification stage finds nothing and the pipeline reduces to vanilla count encoding with no special advantage",
+      "Synthetic detection heuristic is wrong: misidentifying real rows as fake corrupts the count statistics and degrades performance",
+      "Features are truly continuous (no value repetition): count encoding maps everything to 1 and the model has no signal beyond raw values"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "features",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N, 200): 200 anonymized numeric features.",
+      "required": true
+    },
+    {
+      "name": "target",
+      "type_desc": "NDArray[np.int64]",
+      "constraints": "Shape (N,): binary target (0 or 1).",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "transaction_probability",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N_test,): predicted probability of transaction.",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "synthetic_detection_before_counts",
+      "statement": "Fake data identification and real data filtering must precede count encoding.",
+      "rationale": "Synthetic rows have unique values that would corrupt frequency counts if included. Removing them first ensures count features reflect the true data distribution.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "value_substitution_before_training",
+      "statement": "Value substitution must precede LightGBM training.",
+      "rationale": "The model trains on transformed (count-encoded) features, not raw values.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "count_encoding",
+      "name": "Count Encoding",
+      "description": "Count the frequency of every unique value across the entire dataset (train + real test) for each of the 200 features.",
+      "dejargonized_description": "For each feature column, count how many times each value appears in the data.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 200).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value_counts",
+          "type_desc": "Dict[int, Dict[float, int]]",
+          "constraints": "Per-column mapping from value to frequency count.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Synthetic rows have been removed from the test set."],
+      "guarantees": ["Every value in real data has a count >= 1."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "fake_data_identification",
+      "name": "Fake Data Identification",
+      "description": "Isolate test rows where feature values are completely unique (appear exactly once across the combined dataset), identifying them as synthetic padding rows injected by the competition organizers.",
+      "dejargonized_description": "Find test-set rows that have values appearing nowhere else in the data — these are artificial rows added as padding and should not be used.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 200): combined train and test features.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "synthetic_mask",
+          "type_desc": "NDArray[np.bool_]",
+          "constraints": "Shape (N_test,): True for synthetic/fake rows.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Combined train+test data is available."],
+      "guarantees": ["Synthetic rows are identified by having predominantly unique values."],
+      "family_notes": [
+        "KEY WINNING TECHNIQUE. Discovering and removing synthetic test rows was the critical insight.",
+        "The competition organizers padded the test set with fake rows to prevent leakage-based solutions."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "real_data_filtering",
+      "name": "Real Data Filtering",
+      "description": "Drop synthetic rows from the test set before creating frequency features, ensuring count statistics reflect only the true data distribution.",
+      "dejargonized_description": "Remove the fake rows from the test set so they do not pollute the frequency counts.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 200).",
+          "required": true
+        },
+        {
+          "name": "synthetic_mask",
+          "type_desc": "NDArray[np.bool_]",
+          "constraints": "Shape (N_test,).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "real_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_real, 200): only real (non-synthetic) rows.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Synthetic mask is computed."],
+      "guarantees": ["Output contains no synthetic rows."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "value_substitution",
+      "name": "Value Substitution",
+      "description": "Replace original numeric values with their frequency counts and concatenate raw value features, creating the final feature representation for model training.",
+      "dejargonized_description": "Swap each feature value for how often it appears in the data, and also keep the original values alongside.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "real_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_real, 200).",
+          "required": true
+        },
+        {
+          "name": "value_counts",
+          "type_desc": "Dict[int, Dict[float, int]]",
+          "constraints": "Per-column value-to-count mappings.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "transformed_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_real, D_transformed): count-encoded and raw features concatenated.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Value counts are computed from real data only."],
+      "guarantees": ["All values have valid count substitutions."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "lightgbm_training",
+      "name": "LightGBM Training",
+      "description": "Train an un-tuned LightGBM binary classifier with heavy feature fraction (colsample) and bagging (subsample) for regularization.",
+      "dejargonized_description": "Train a gradient-boosted tree model using only a random subset of features and data rows at each step to prevent overfitting.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "transformed_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_real, D_transformed).",
+          "required": true
+        },
+        {
+          "name": "target",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N_train,): binary target.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "transaction_probability",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_test,): predicted transaction probability.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Transformed features and targets are available."],
+      "guarantees": ["Output probabilities are in [0, 1]."],
+      "family_notes": [
+        "Deliberately un-tuned hyperparameters; the key performance driver is the feature engineering, not model tuning."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "shuffle_augmentation",
+      "name": "Shuffle Augmentation",
+      "description": "Randomly shuffle feature columns within same target class to create artificial training rows, augmenting the dataset for more robust training.",
+      "dejargonized_description": "Create extra training examples by randomly rearranging feature values among rows with the same label, giving the model more data to learn from.",
+      "concept_type": "randomized",
+      "inputs": [
+        {
+          "name": "transformed_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_real, D_transformed).",
+          "required": true
+        },
+        {
+          "name": "target",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N_train,).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "augmented_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_augmented, D_transformed): original + shuffled rows.",
+          "required": true
+        },
+        {
+          "name": "augmented_target",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N_augmented,).",
+          "required": true
+        }
+      ],
+      "preconditions": ["Features and targets are available."],
+      "guarantees": ["Augmented rows preserve within-class marginal distributions."],
+      "family_notes": [
+        "Shuffling within class preserves the marginal distribution of each feature conditioned on the target."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "fake_data_identification",
+      "target_stage_id": "real_data_filtering",
+      "output_name": "synthetic_mask",
+      "input_name": "synthetic_mask",
+      "source_type": "NDArray[np.bool_]",
+      "target_type": "NDArray[np.bool_]",
+      "data_kind": "mask",
+      "provenance": "Boolean mask identifying synthetic test rows.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "real_data_filtering",
+      "target_stage_id": "count_encoding",
+      "output_name": "real_features",
+      "input_name": "features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "tabular",
+      "provenance": "Real-only features for accurate frequency counting.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "count_encoding",
+      "target_stage_id": "value_substitution",
+      "output_name": "value_counts",
+      "input_name": "value_counts",
+      "source_type": "Dict[int, Dict[float, int]]",
+      "target_type": "Dict[int, Dict[float, int]]",
+      "data_kind": "lookup_table",
+      "provenance": "Per-column value frequency counts.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "real_data_filtering",
+      "target_stage_id": "value_substitution",
+      "output_name": "real_features",
+      "input_name": "real_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "tabular",
+      "provenance": "Real features to be transformed via count substitution.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "value_substitution",
+      "target_stage_id": "shuffle_augmentation",
+      "output_name": "transformed_features",
+      "input_name": "transformed_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "tabular",
+      "provenance": "Count-encoded features for augmentation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "shuffle_augmentation",
+      "target_stage_id": "lightgbm_training",
+      "output_name": "augmented_features",
+      "input_name": "transformed_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "tabular",
+      "provenance": "Augmented training features including shuffled rows.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Santander Customer Transaction Prediction solution. Core innovation: detecting and removing synthetic test-set padding rows to enable accurate count-based feature engineering.",
+    "dejargonized_summary": "Predict bank transactions by discovering that the test set contains fake rows, removing them to get accurate value frequency statistics, and using those frequencies as features for gradient boosting.",
+    "provenance_notes": [
+      "Source: Kaggle Santander Customer Transaction Prediction competition, 1st place (2019)",
+      "Source: https://www.kaggle.com/c/santander-customer-transaction-prediction/discussion/89003"
+    ],
+    "uncertainty_notes": [
+      "The synthetic data detection heuristic is specific to this competition's test-set construction.",
+      "Shuffle augmentation effectiveness depends on the independence assumption across features."
+    ],
+    "references": [
+      {
+        "title": "Santander Customer Transaction Prediction 1st Place Solution",
+        "citation": "Kaggle Santander Customer Transaction Prediction, 1st place solution writeup (2019)",
+        "url": "https://www.kaggle.com/c/santander-customer-transaction-prediction/discussion/89003",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

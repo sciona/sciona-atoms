@@ -1,0 +1,398 @@
+{
+  "asset_id": "solution.kaggle.jigsaw_toxicity_bias_1st",
+  "asset_version": "v1",
+  "family": "nlp_fairness",
+  "paradigm": "neural_network",
+  "name": "Jigsaw Unintended Bias in Toxicity Classification 1st Place — Bias-Aware Transformer Ensemble",
+  "summary": "Multi-transformer ensemble (BERT, XLNet, RoBERTa) with demographic-weighted BCE loss and multisample dropout, producing bias-aware toxicity probabilities through weighted averaging of model predictions.",
+  "dejargonized_summary": "Detect toxic comments while being fair across demographic groups by training multiple large language models with a custom loss function that pays extra attention to comments mentioning specific identities, applying a trick with multiple dropout masks to stabilize predictions, and averaging the results.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "toxicity_classification",
+    "bias_mitigation",
+    "transformer_ensemble",
+    "demographic_fairness",
+    "multisample_dropout",
+    "identity_weighted_loss",
+    "annotation_bias_correction",
+    "bert_xlnet_roberta",
+    "fairness_aware_training",
+    "demographic_weighted_bce",
+    "content_moderation"
+  ],
+  "applicability": {
+    "use_when": [
+      "Text classification task where evaluation explicitly penalizes bias against demographic subgroups (fairness-aware metric)",
+      "Training labels contain annotation bias — annotators systematically rate identity-mentioning text as more toxic regardless of actual toxicity",
+      "Multiple pre-trained transformer architectures are available and diversity in tokenization/pre-training improves ensemble robustness"
+    ],
+    "do_not_use_when": [
+      "No demographic identity annotations are available in the training data — the weighted BCE requires identity columns to compute per-sample weights",
+      "Evaluation metric is standard accuracy/AUC with no fairness component — the demographic weighting sacrifices overall accuracy for subgroup equity",
+      "Dataset is too small for fine-tuning multiple large transformers (<10k samples) — each model needs sufficient data to learn meaningful representations"
+    ],
+    "key_insight": "Demographic-weighted BCE explicitly prevents the model from learning that certain identity terms correlate with toxicity labels due to annotation bias. Without this correction, the model learns a spurious shortcut: 'comment mentions a demographic group' -> 'probably toxic,' because annotators disproportionately labeled identity-mentioning comments as toxic. The weighted loss upweights identity-mentioning samples during training, forcing the model to find the actual toxic signal rather than relying on the identity-toxicity correlation baked into the labels.",
+    "critical_stages": ["demographic_weighted_bce", "multisample_dropout"],
+    "swappable_stages": {
+      "text_cleaning": "Any text normalization pipeline works. The key requirement is consistent input across all tokenizers.",
+      "model_ensembling": "Weighted averaging can be replaced with stacking, blending, or learned combination. The value is in model diversity, not the specific ensembling method.",
+      "sequence_bucketing": "Optional efficiency optimization. Can be replaced with standard padding or dynamic batching."
+    },
+    "failure_modes": [
+      "Identity columns are noisy or incomplete: the weighting scheme amplifies errors on mislabeled identity samples, hurting rather than helping fairness",
+      "Annotation bias pattern differs from training data: if the test-set bias structure is different from training, the learned weights may not transfer",
+      "Over-weighting identity samples causes the model to under-perform on non-identity samples, reducing overall AUC while improving subgroup metrics"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "comment_text",
+      "type_desc": "str",
+      "constraints": "Raw comment text, variable length.",
+      "required": true
+    },
+    {
+      "name": "toxicity_label",
+      "type_desc": "float",
+      "constraints": "Binary toxicity label (0 or 1) for training.",
+      "required": true
+    },
+    {
+      "name": "identity_columns",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Columns indicating demographic identity mentions (e.g., male, female, black, white, etc.).",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "toxicity_probability",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N,): bias-aware toxicity probability in [0, 1].",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "cleaning_before_tokenization",
+      "statement": "Text cleaning must precede multi-tokenization.",
+      "rationale": "Cleaning normalizes the text before tokenizer-specific processing to ensure consistent input across all transformer models.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "all_models_before_ensemble",
+      "statement": "All individual transformer models must produce predictions before model ensembling.",
+      "rationale": "The ensemble averages predictions from BERT, XLNet, and RoBERTa, requiring all to complete first.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "text_cleaning",
+      "name": "Text Cleaning",
+      "description": "Remove custom URLs, fix common misspellings, isolate punctuation from words using regex and pandas string operations.",
+      "dejargonized_description": "Clean up the comment text by removing web links, fixing typos, and separating punctuation so the models can read it more easily.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "comment_text",
+          "type_desc": "str",
+          "constraints": "Raw comment text.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cleaned_text",
+          "type_desc": "str",
+          "constraints": "Normalized comment text.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Raw text is available."],
+      "guarantees": ["Output text has normalized formatting suitable for tokenization."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_tokenization",
+      "name": "Multi-Tokenization",
+      "description": "Map cleaned text to transformer input IDs using three separate tokenizers: BERT WordPiece, XLNet SentencePiece, and GPT-2 BPE (used for RoBERTa).",
+      "dejargonized_description": "Convert each comment into three different numeric representations, one for each transformer model, since each model uses a different way of breaking text into tokens.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "cleaned_text",
+          "type_desc": "str",
+          "constraints": "Normalized comment text.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bert_input_ids",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, max_len): BERT WordPiece token IDs.",
+          "required": true
+        },
+        {
+          "name": "xlnet_input_ids",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, max_len): XLNet SentencePiece token IDs.",
+          "required": true
+        },
+        {
+          "name": "gpt2_input_ids",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, max_len): GPT-2 BPE token IDs (for RoBERTa).",
+          "required": true
+        }
+      ],
+      "preconditions": ["Cleaned text is available."],
+      "guarantees": ["All tokenized sequences are padded/truncated to max_len."],
+      "family_notes": [
+        "Uses HuggingFace tokenizers for all three models."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sequence_bucketing",
+      "name": "Sequence Bucketing",
+      "description": "Group similar-length sequences into batches for training efficiency, minimizing padding waste within each batch.",
+      "dejargonized_description": "Sort comments by length and batch similar-length ones together so less time is wasted processing padding tokens.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "bert_input_ids",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, max_len).",
+          "required": true
+        },
+        {
+          "name": "xlnet_input_ids",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, max_len).",
+          "required": true
+        },
+        {
+          "name": "gpt2_input_ids",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, max_len).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bucketed_batches",
+          "type_desc": "DataLoader",
+          "constraints": "PyTorch DataLoader with length-bucketed batches.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Tokenized sequences are available for all models."],
+      "guarantees": ["Batches contain sequences of similar length, reducing padding overhead."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "demographic_weighted_bce",
+      "name": "Demographic-Weighted BCE",
+      "description": "Custom binary cross-entropy loss applying higher weights to training rows that mention specific demographic identities, ensuring the model learns to be fair across identity groups.",
+      "dejargonized_description": "Modify the training loss so that mistakes on comments mentioning demographic groups are penalized more heavily, encouraging the model to be equally accurate for all groups.",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "predictions",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B,): model output probabilities for a batch.",
+          "required": true
+        },
+        {
+          "name": "toxicity_label",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B,): ground truth labels.",
+          "required": true
+        },
+        {
+          "name": "identity_columns",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, K): demographic identity indicator columns.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "weighted_loss",
+          "type_desc": "Tensor",
+          "constraints": "Scalar: weighted BCE loss value.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Identity columns are available for weighting."],
+      "guarantees": ["Loss upweights identity-mentioning samples to improve fairness."],
+      "family_notes": [
+        "KEY WINNING TECHNIQUE. The demographic-aware weighting directly optimizes the competition's bias-aware metric."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multisample_dropout",
+      "name": "Multisample Dropout",
+      "description": "Apply multiple independent dropout masks to the final CLS token representation and average the resulting outputs, reducing variance and improving calibration.",
+      "dejargonized_description": "Instead of dropping random neurons once, drop them several different ways and average the results, making predictions more stable and reliable.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "cls_embedding",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, H): CLS token embedding from transformer.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "averaged_logits",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, 1): averaged prediction logits.",
+          "required": true
+        }
+      ],
+      "preconditions": ["CLS embedding is available from a trained transformer."],
+      "guarantees": ["Output variance is reduced compared to single-dropout prediction."],
+      "family_notes": [
+        "Applied independently within each transformer model (BERT, XLNet, RoBERTa).",
+        "Typically 5 dropout masks are averaged."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "model_ensembling",
+      "name": "Model Ensembling",
+      "description": "Simple weighted average of prediction probabilities from BERT, XLNet, and RoBERTa models to produce the final toxicity score.",
+      "dejargonized_description": "Combine the predictions from all three language models by taking a weighted average to get the final toxicity score.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "bert_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,): BERT toxicity probabilities.",
+          "required": true
+        },
+        {
+          "name": "xlnet_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,): XLNet toxicity probabilities.",
+          "required": true
+        },
+        {
+          "name": "roberta_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,): RoBERTa toxicity probabilities.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "toxicity_probability",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,): ensembled toxicity probability in [0, 1].",
+          "required": true
+        }
+      ],
+      "preconditions": ["All three model predictions are available."],
+      "guarantees": ["Output is a valid probability in [0, 1]."],
+      "family_notes": [
+        "Weights are typically tuned on validation set or set equally."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "text_cleaning",
+      "target_stage_id": "multi_tokenization",
+      "output_name": "cleaned_text",
+      "input_name": "cleaned_text",
+      "source_type": "str",
+      "target_type": "str",
+      "data_kind": "text",
+      "provenance": "Normalized text ready for tokenizer-specific processing.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "multi_tokenization",
+      "target_stage_id": "sequence_bucketing",
+      "output_name": "bert_input_ids",
+      "input_name": "bert_input_ids",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "token_ids",
+      "provenance": "BERT tokenized sequences for bucketing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_tokenization",
+      "target_stage_id": "sequence_bucketing",
+      "output_name": "xlnet_input_ids",
+      "input_name": "xlnet_input_ids",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "token_ids",
+      "provenance": "XLNet tokenized sequences for bucketing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_tokenization",
+      "target_stage_id": "sequence_bucketing",
+      "output_name": "gpt2_input_ids",
+      "input_name": "gpt2_input_ids",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "token_ids",
+      "provenance": "GPT-2/RoBERTa tokenized sequences for bucketing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multisample_dropout",
+      "target_stage_id": "model_ensembling",
+      "output_name": "averaged_logits",
+      "input_name": "bert_predictions",
+      "source_type": "Tensor",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "probabilities",
+      "provenance": "Per-model predictions after multisample dropout, fed to ensemble.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Jigsaw Unintended Bias in Toxicity Classification solution. Core innovations: demographic-weighted BCE loss for fairness optimization and multisample dropout for stable predictions across a BERT/XLNet/RoBERTa ensemble.",
+    "dejargonized_summary": "Detect toxic comments fairly across demographic groups by training multiple language models with extra penalties for mistakes on identity-mentioning comments, then averaging their predictions.",
+    "provenance_notes": [
+      "Source: Kaggle Jigsaw Unintended Bias in Toxicity Classification competition, 1st place (2019)",
+      "Source: https://www.kaggle.com/c/jigsaw-unintended-bias-in-toxicity-classification/discussion/100661",
+      "Code: https://github.com/bamps53/kaggle-jigsaw-2019"
+    ],
+    "uncertainty_notes": [
+      "Exact ensemble weights depend on validation set tuning.",
+      "The number of multisample dropout masks (typically 5) is a hyperparameter.",
+      "Demographic weighting strategy is tailored to the competition metric."
+    ],
+    "references": [
+      {
+        "title": "Jigsaw Unintended Bias in Toxicity Classification 1st Place Solution",
+        "citation": "Kaggle Jigsaw Unintended Bias in Toxicity Classification, 1st place solution writeup (2019)",
+        "url": "https://www.kaggle.com/c/jigsaw-unintended-bias-in-toxicity-classification/discussion/100661",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.dsb2017_1st",
+  "solution_metadata": {
+    "competition": "Data Science Bowl 2017",
+    "placement": "1st",
+    "team": "Fangzhou Liao et al.",
+    "year": 2017,
+    "metric": "LogLoss",
+    "problem_domain": "medical_imaging_3d",
+    "source_url": "https://github.com/lfz/DSB2017",
+    "source_license": "MIT",
+    "paper_doi": "10.48550/arXiv.1711.08324"
+  },
+  "bindings": [
+    {"stage_id": "lung_mask_with_bone_removal", "bound_artifact_fqdn": "sciona.atoms.dl.detection.lung_mask_with_bone_removal", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "volume_split_combine", "bound_artifact_fqdn": null, "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "orchestration",
+     "evidence_summary": {"resolved_reason": "MAP_OVER orchestration: overlapping 3D tiling with margin stripping. Skeleton exists in sciona-matcher (map_window_size, map_hop_size). No new atom needed."}},
+    {"stage_id": "coordinate_aware_3d_unet", "bound_artifact_fqdn": "sciona.atoms.dl.detection.coordinate_aware_3d_unet", "binding_confidence": 0.8, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage",
+     "evidence_summary": {"binding_rationale": "Opaque conceptual node (is_opaque=true). Documents architecture spec but has no runnable atom code. Confidence 0.8 because it captures the architecture but not the weights."}},
+    {"stage_id": "anchor_label_mapping_with_iou_dilation", "bound_artifact_fqdn": "sciona.atoms.dl.detection.anchor_label_mapping_with_iou_dilation", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "online_hard_negative_mining", "bound_artifact_fqdn": "sciona.atoms.dl.training.online_hard_negative_mining", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "size_aware_nodule_oversampling", "bound_artifact_fqdn": "sciona.atoms.dl.training.size_aware_nodule_oversampling", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "softmax_temperature_proposal_sampling", "bound_artifact_fqdn": "sciona.atoms.dl.training.softmax_temperature_proposal_sampling", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "center_feature_extraction_3d", "bound_artifact_fqdn": "sciona.atoms.dl.detection.center_feature_extraction_3d", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "noisy_or_pooling", "bound_artifact_fqdn": "sciona.atoms.medical_imaging_3d.aggregation.case_probability_from_nodule_scores", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage"},
+    {"stage_id": "miss_penalty_loss", "bound_artifact_fqdn": "sciona.atoms.dl.loss.miss_penalty_loss", "binding_confidence": 1.0, "binding_source": "manual_analysis", "status": "active", "action_class": "replace_stage",
+     "evidence_summary": {"binding_rationale": "loss_function atom with callable_injection edge to training loop. Torch port available for differentiable backprop.", "edge_kind": "callable_injection"}}
+  ],
+  "binding_summary": {
+    "total_stages": 10,
+    "bound_active": 10,
+    "bound_approximate": 0,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona-atoms-dl": 7,
+      "sciona-atoms-bio": 1
+    },
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
+    "meta_patterns": ["volume_split_combine resolved as MAP_OVER orchestration"]
+  }
+}

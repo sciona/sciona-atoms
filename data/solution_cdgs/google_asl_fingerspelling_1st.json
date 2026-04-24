@@ -1,0 +1,305 @@
+{
+  "asset_id": "solution.kaggle.google_asl_fingerspelling_1st",
+  "asset_version": "v1",
+  "family": "structured_prediction",
+  "paradigm": "loss_function",
+  "name": "Google American Sign Language Fingerspelling - 1st Place (2023) - Pipeline Template",
+  "summary": "Sequence-to-Sequence (Spatial Landmarks to Text) solution template for Google American Sign Language Fingerspelling - 1st Place (2023), modeled as a 5-stage deterministic pipeline: Landmark interpolation, Affine Augmentation, Feature engineering, CNN + Transformer Architecture, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Google American Sign Language Fingerspelling - 1st Place (2023): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "transformer",
+    "ctc",
+    "sequence",
+    "spatial",
+    "landmarks",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Sequence-to-Sequence (Spatial Landmarks to Text) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Sequence-to-Sequence (Spatial Landmarks to Text).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Landmark interpolation creates the representation needed by CTC Loss Translation, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "landmark_interpolation",
+      "affine_augmentation"
+    ],
+    "swappable_stages": {
+      "ctc_loss_translation": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/asl-fingerspelling/discussion/434588"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/asl-fingerspelling/discussion/434588"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "landmark_interpolation",
+      "name": "Landmark interpolation",
+      "description": "fill dropped MediaPipe 3D coordinate frames using linear interpolation to ensure a continuous time series (pandas)",
+      "dejargonized_description": "This stage fill dropped MediaPipe 3D coordinate frames using linear interpolation to ensure a continuous time series (pandas).",
+      "concept_type": "geometry",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Google American Sign Language Fingerspelling - 1st Place (2023).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "landmark_interpolation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "affine_augmentation",
+      "name": "Affine Augmentation",
+      "description": "apply random 3D rotations, scaling, and sheer to the skeletal coordinates to simulate different camera angles during training (numpy)",
+      "dejargonized_description": "This stage apply random 3D rotations, scaling, and sheer to the skeletal coordinates to simulate different camera angles during training (numpy).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "affine_augmentation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "affine_augmentation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_engineering",
+      "name": "Feature engineering",
+      "description": "calculate Euclidean distance, velocity, and angles between specific finger joints (thumb to index, wrist to pinky) explicitly (numpy)",
+      "dejargonized_description": "This stage calculate Euclidean distance, velocity, and angles between specific finger joints (thumb to index, wrist to pinky) explicitly (numpy).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "feature_engineering_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feature_engineering_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "cnn_transformer_architecture",
+      "name": "CNN + Transformer Architecture",
+      "description": "pass the coordinates through a 1D CNN to extract local temporal features, followed by a Transformer Encoder for global sequence context (PyTorch)",
+      "dejargonized_description": "This stage pass the coordinates through a 1D CNN to extract local temporal features, followed by a Transformer Encoder for global sequence context (PyTorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "cnn_transformer_architecture_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cnn_transformer_architecture_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "ctc_loss_translation",
+      "name": "CTC Loss Translation",
+      "description": "decode the sequence into raw text tokens using Connectionist Temporal Classification (CTC) loss to handle the misalignment between sequence length and text length (PyTorch)",
+      "dejargonized_description": "This stage decode the sequence into raw text tokens using Connectionist Temporal Classification (CTC) loss to handle the misalignment between sequence length and text length (PyTorch).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "ctc_loss_translation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "landmark_interpolation",
+      "target_stage_id": "affine_augmentation",
+      "output_name": "landmark_interpolation_output",
+      "input_name": "affine_augmentation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Landmark interpolation output is consumed by Affine Augmentation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "affine_augmentation",
+      "target_stage_id": "feature_engineering",
+      "output_name": "affine_augmentation_output",
+      "input_name": "feature_engineering_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Affine Augmentation output is consumed by Feature engineering.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_engineering",
+      "target_stage_id": "cnn_transformer_architecture",
+      "output_name": "feature_engineering_output",
+      "input_name": "cnn_transformer_architecture_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Feature engineering output is consumed by CNN + Transformer Architecture.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "cnn_transformer_architecture",
+      "target_stage_id": "ctc_loss_translation",
+      "output_name": "cnn_transformer_architecture_output",
+      "input_name": "ctc_loss_translation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "CNN + Transformer Architecture output is consumed by CTC Loss Translation.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Sequence-to-Sequence (Spatial Landmarks to Text).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/asl-fingerspelling/discussion/434588",
+      "Code URL: writeup only",
+      "Standard tools: pandas, numpy, PyTorch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Google American Sign Language Fingerspelling - 1st Place (2023) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/asl-fingerspelling/discussion/434588",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

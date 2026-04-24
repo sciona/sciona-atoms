@@ -1,0 +1,386 @@
+{
+  "asset_id": "solution.kaggle.rsna_pneumonia_1st",
+  "asset_version": "v1",
+  "family": "medical_detection_2d",
+  "paradigm": "neural_network",
+  "name": "RSNA Pneumonia Detection 1st Place — Dual-Detector Box Ensemble",
+  "summary": "Two-detector pipeline combining RetinaNet (ResNet-50) and Mask R-CNN (ResNet-101) trained on augmented chest X-rays converted from DICOM, with per-model NMS followed by cross-model IoU-based box ensemble voting.",
+  "dejargonized_summary": "Find pneumonia in chest X-rays by running two different object detection models (RetinaNet and Mask R-CNN) on the same images, removing duplicate detections within each model, then merging their bounding boxes based on how much they overlap.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "pneumonia_detection",
+    "chest_xray_detection",
+    "retinanet_maskrcnn_ensemble",
+    "medical_object_detection",
+    "dicom_processing",
+    "dual_detector_ensemble",
+    "iou_box_voting",
+    "focal_loss",
+    "single_stage_two_stage_fusion",
+    "nms_box_ensemble",
+    "medical_imaging_2d",
+    "conservative_augmentation"
+  ],
+  "applicability": {
+    "use_when": [
+      "2D medical image detection where targets are diffuse opacities with poorly defined boundaries, benefiting from detector diversity",
+      "Single-class or few-class detection task where two complementary architectures (single-stage + two-stage) can be trained with available compute",
+      "DICOM inputs requiring careful windowing and conservative augmentation to preserve diagnostic content"
+    ],
+    "do_not_use_when": [
+      "Multi-class detection with >10 categories — the IoU-based box ensemble becomes ambiguous when merging boxes of different classes across models",
+      "Real-time inference required — running two full detectors plus NMS plus box ensemble exceeds latency budgets for clinical deployment",
+      "3D volumetric data (CT/MRI) — this pipeline is designed for 2D projections and does not handle slice-level consistency or 3D bounding boxes"
+    ],
+    "key_insight": "Single-stage detectors (RetinaNet) and two-stage detectors (Mask R-CNN) make systematically different errors: RetinaNet is faster but produces more false positives on ambiguous regions, while Mask R-CNN is more precise but may miss subtle findings. The IoU-based box ensemble exploits this complementarity — detections agreed upon by both models receive boosted confidence, while single-model detections are penalized, effectively using inter-model agreement as a proxy for detection reliability.",
+    "critical_stages": ["retinanet_detector", "mask_rcnn_detector", "box_ensemble"],
+    "swappable_stages": {
+      "retinanet_detector": "Any single-stage detector (YOLO, SSD, FCOS) can substitute. The key requirement is a complementary error profile to the two-stage detector.",
+      "mask_rcnn_detector": "Any two-stage detector (Faster R-CNN, Cascade R-CNN) works. The mask head is unused for detection-only tasks.",
+      "xray_augmentation": "Augmentation strategy can vary, but must remain conservative for medical imaging — aggressive augmentations create unrealistic artifacts that degrade performance.",
+      "dicom_extraction": "Any DICOM-to-image pipeline works. The critical detail is correct windowing (window center/width) for the target anatomy."
+    },
+    "failure_modes": [
+      "Both detectors make the same systematic error (e.g., both miss small opacities): the ensemble cannot recover from shared failure modes",
+      "Aggressive augmentation: medical images have specific physical properties and over-augmentation creates unrealistic training samples that hurt generalization",
+      "Incorrect DICOM windowing: wrong window/level settings destroy diagnostic contrast, causing both detectors to fail on the same images"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "dicom_images",
+      "type_desc": "List[pydicom.Dataset]",
+      "constraints": "16-bit DICOM chest X-ray images.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "pneumonia_boxes",
+      "type_desc": "List[Dict]",
+      "constraints": "List of bounding boxes with keys: x, y, width, height, confidence. Confidence in [0, 1].",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "dicom_before_augmentation",
+      "statement": "DICOM extraction must precede X-ray augmentation.",
+      "rationale": "Augmentation operates on 8-bit images; DICOM conversion must happen first to produce the correct format.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "nms_before_ensemble",
+      "statement": "NMS postprocessing must precede box ensemble.",
+      "rationale": "Each model's redundant detections must be suppressed before cross-model merging to avoid double-counting.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "dicom_extraction",
+      "name": "DICOM Extraction",
+      "description": "Convert 16-bit DICOM medical images to 8-bit PNG format using pydicom for reading and OpenCV for windowing and bit-depth conversion.",
+      "dejargonized_description": "Convert the raw medical image files from their specialized hospital format into standard image files that the detection models can process.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "dicom_images",
+          "type_desc": "List[pydicom.Dataset]",
+          "constraints": "16-bit DICOM chest X-ray images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "png_images",
+          "type_desc": "List[NDArray[np.uint8]]",
+          "constraints": "8-bit grayscale or pseudo-RGB images.",
+          "required": true
+        }
+      ],
+      "preconditions": ["DICOM files are valid and contain pixel data."],
+      "guarantees": ["Output images are 8-bit with appropriate windowing applied."],
+      "family_notes": [
+        "Window/level settings affect contrast and can significantly impact detection performance on medical images."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "xray_augmentation",
+      "name": "X-ray Augmentation",
+      "description": "Apply geometric (scale, rotation) and photometric (brightness, contrast shifts) augmentations suited for chest X-ray images using the Albumentations library.",
+      "dejargonized_description": "Create variations of each X-ray by slightly rotating, zooming, and adjusting brightness so the models learn to handle natural variation in how X-rays are taken.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "png_images",
+          "type_desc": "List[NDArray[np.uint8]]",
+          "constraints": "8-bit images from DICOM extraction.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "List[NDArray[np.uint8]]",
+          "constraints": "Augmented 8-bit images with corresponding transformed bounding boxes.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Images are in 8-bit format."],
+      "guarantees": ["Augmentations preserve diagnostic content. Bounding boxes are transformed consistently."],
+      "family_notes": [
+        "Augmentation parameters are conservative for medical imaging to avoid creating unrealistic artifacts."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "retinanet_detector",
+      "name": "RetinaNet Detector",
+      "description": "Train a RetinaNet single-stage object detector with a ResNet-50 backbone and focal loss to detect pneumonia opacities in chest X-rays.",
+      "dejargonized_description": "Train a fast object detection model using a special loss function that focuses on hard-to-detect cases, producing bounding boxes around suspected pneumonia regions.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "List[NDArray[np.uint8]]",
+          "constraints": "Augmented training images with bounding box annotations.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "retinanet_boxes",
+          "type_desc": "List[Dict]",
+          "constraints": "Raw detections: x, y, width, height, confidence per image.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Augmented images and annotations are available."],
+      "guarantees": ["Output contains all detections above a low confidence threshold."],
+      "family_notes": [
+        "Uses Keras RetinaNet implementation.",
+        "Focal loss addresses class imbalance between pneumonia and background regions."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "mask_rcnn_detector",
+      "name": "Mask R-CNN Detector",
+      "description": "Train a Mask R-CNN two-stage detector with a ResNet-101 backbone to detect pneumonia opacities, running in parallel with RetinaNet.",
+      "dejargonized_description": "Train a second, more thorough object detection model that first proposes candidate regions then classifies them, providing a complementary set of detections.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "List[NDArray[np.uint8]]",
+          "constraints": "Augmented training images with bounding box annotations.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maskrcnn_boxes",
+          "type_desc": "List[Dict]",
+          "constraints": "Raw detections: x, y, width, height, confidence per image.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Augmented images and annotations are available."],
+      "guarantees": ["Output contains all detections above a low confidence threshold."],
+      "family_notes": [
+        "Uses Matterport Mask R-CNN implementation.",
+        "Mask head output is not used for this detection-only task but the two-stage architecture provides complementary detections."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "nms_postprocessing",
+      "name": "NMS Postprocessing",
+      "description": "Apply Non-Maximum Suppression independently to each model's detections to remove overlapping boxes, keeping only the highest-confidence detection in each cluster.",
+      "dejargonized_description": "When a model detects the same pneumonia region multiple times with slightly different boxes, keep only the most confident one and discard the rest.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "retinanet_boxes",
+          "type_desc": "List[Dict]",
+          "constraints": "Raw RetinaNet detections.",
+          "required": true
+        },
+        {
+          "name": "maskrcnn_boxes",
+          "type_desc": "List[Dict]",
+          "constraints": "Raw Mask R-CNN detections.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nms_retinanet_boxes",
+          "type_desc": "List[Dict]",
+          "constraints": "NMS-filtered RetinaNet detections.",
+          "required": true
+        },
+        {
+          "name": "nms_maskrcnn_boxes",
+          "type_desc": "List[Dict]",
+          "constraints": "NMS-filtered Mask R-CNN detections.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Raw detections from both models are available."],
+      "guarantees": ["No two remaining boxes within a model overlap above the IoU threshold."],
+      "family_notes": [
+        "NMS is applied per-model before cross-model ensemble."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "box_ensemble",
+      "name": "Box Ensemble",
+      "description": "Merge bounding boxes from both models using intersection-over-union (IoU) based voting. Boxes from different models that overlap sufficiently are averaged; unmatched boxes are kept at reduced confidence.",
+      "dejargonized_description": "Combine the detections from both models: if both models found a pneumonia region in the same spot, merge them into one high-confidence box; if only one model found it, keep it at lower confidence.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "nms_retinanet_boxes",
+          "type_desc": "List[Dict]",
+          "constraints": "NMS-filtered RetinaNet detections.",
+          "required": true
+        },
+        {
+          "name": "nms_maskrcnn_boxes",
+          "type_desc": "List[Dict]",
+          "constraints": "NMS-filtered Mask R-CNN detections.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pneumonia_boxes",
+          "type_desc": "List[Dict]",
+          "constraints": "Final merged bounding boxes with confidence scores.",
+          "required": true
+        }
+      ],
+      "preconditions": ["NMS-filtered detections from both models are available."],
+      "guarantees": ["Output boxes are non-redundant across models. Confidence reflects agreement between detectors."],
+      "family_notes": [
+        "IoU threshold for matching boxes across models is a tuned hyperparameter.",
+        "Agreed-upon detections receive boosted confidence; single-model detections are penalized."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "dicom_extraction",
+      "target_stage_id": "xray_augmentation",
+      "output_name": "png_images",
+      "input_name": "png_images",
+      "source_type": "List[NDArray[np.uint8]]",
+      "target_type": "List[NDArray[np.uint8]]",
+      "data_kind": "image",
+      "provenance": "8-bit images converted from 16-bit DICOM.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "xray_augmentation",
+      "target_stage_id": "retinanet_detector",
+      "output_name": "augmented_images",
+      "input_name": "augmented_images",
+      "source_type": "List[NDArray[np.uint8]]",
+      "target_type": "List[NDArray[np.uint8]]",
+      "data_kind": "image",
+      "provenance": "Augmented training images for RetinaNet.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "xray_augmentation",
+      "target_stage_id": "mask_rcnn_detector",
+      "output_name": "augmented_images",
+      "input_name": "augmented_images",
+      "source_type": "List[NDArray[np.uint8]]",
+      "target_type": "List[NDArray[np.uint8]]",
+      "data_kind": "image",
+      "provenance": "Augmented training images for Mask R-CNN.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "retinanet_detector",
+      "target_stage_id": "nms_postprocessing",
+      "output_name": "retinanet_boxes",
+      "input_name": "retinanet_boxes",
+      "source_type": "List[Dict]",
+      "target_type": "List[Dict]",
+      "data_kind": "bounding_boxes",
+      "provenance": "Raw RetinaNet detections before NMS.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "mask_rcnn_detector",
+      "target_stage_id": "nms_postprocessing",
+      "output_name": "maskrcnn_boxes",
+      "input_name": "maskrcnn_boxes",
+      "source_type": "List[Dict]",
+      "target_type": "List[Dict]",
+      "data_kind": "bounding_boxes",
+      "provenance": "Raw Mask R-CNN detections before NMS.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "nms_postprocessing",
+      "target_stage_id": "box_ensemble",
+      "output_name": "nms_retinanet_boxes",
+      "input_name": "nms_retinanet_boxes",
+      "source_type": "List[Dict]",
+      "target_type": "List[Dict]",
+      "data_kind": "bounding_boxes",
+      "provenance": "NMS-filtered RetinaNet detections.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "nms_postprocessing",
+      "target_stage_id": "box_ensemble",
+      "output_name": "nms_maskrcnn_boxes",
+      "input_name": "nms_maskrcnn_boxes",
+      "source_type": "List[Dict]",
+      "target_type": "List[Dict]",
+      "data_kind": "bounding_boxes",
+      "provenance": "NMS-filtered Mask R-CNN detections.",
+      "loss_class": "lossy_but_allowed"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle RSNA Pneumonia Detection Challenge solution. Dual-detector ensemble (RetinaNet + Mask R-CNN) with IoU-based box voting for robust pneumonia localization in chest X-rays.",
+    "dejargonized_summary": "Detect pneumonia in chest X-rays by running two complementary detection models and merging their bounding box predictions based on spatial overlap agreement.",
+    "provenance_notes": [
+      "Source: Kaggle RSNA Pneumonia Detection Challenge, 1st place (2018)",
+      "Source: https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/discussion/70421",
+      "Code: https://github.com/ianpan870622/RSNA-Pneumonia-Detection-Challenge"
+    ],
+    "uncertainty_notes": [
+      "DICOM windowing parameters affect image contrast and may need tuning for different scanner manufacturers.",
+      "IoU threshold for cross-model box matching is a tuned hyperparameter.",
+      "Augmentation parameters are conservative for medical imaging but exact values are implementation-specific."
+    ],
+    "references": [
+      {
+        "title": "RSNA Pneumonia Detection Challenge 1st Place Solution",
+        "citation": "Kaggle RSNA Pneumonia Detection Challenge, 1st place solution writeup (2018)",
+        "url": "https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/discussion/70421",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

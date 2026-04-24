@@ -1,7 +1,7 @@
 # Solution CDG Authoring Guide
 
 This guide defines the structure and quality bar for solution CDG JSON files
-stored in `sciona-atoms-ml/data/solution_cdgs/`. These CDGs serve as
+stored in `sciona-atoms/data/solution_cdgs/`. These CDGs serve as
 **deterministic pipeline templates** that the architect matches against when
 decomposing new problems.
 

@@ -1,0 +1,346 @@
+{
+  "asset_id": "solution.kaggle.rsna_cervical_spine_1st",
+  "asset_version": "v1",
+  "family": "semantic_segmentation",
+  "paradigm": "neural_network",
+  "name": "RSNA Cervical Spine Fracture Detection - 1st Place (2022) - Pipeline Template",
+  "summary": "Semantic segmentation / Structured prediction solution template for RSNA Cervical Spine Fracture Detection - 1st Place (2022), modeled as a 6-stage deterministic pipeline: Voxel Preprocessing, 3D Semantic Segmentation, Mask Generation, 2.5D Cropping, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by RSNA Cervical Spine Fracture Detection - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "cnn",
+    "lstm",
+    "efficientnet",
+    "segmentation",
+    "semantic",
+    "structured",
+    "prediction"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Semantic segmentation / Structured prediction task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Semantic segmentation / Structured prediction.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Voxel Preprocessing creates the representation needed by Multi-Objective Blending, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "voxel_preprocessing",
+      "3d_semantic_segmentation"
+    ],
+    "swappable_stages": {
+      "multi_objective_blending": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection/writeups/qishen-ha-1st-place-solution"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection/writeups/qishen-ha-1st-place-solution"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "voxel_preprocessing",
+      "name": "Voxel Preprocessing",
+      "description": "Load massive 3D medical scans and resize them via interpolation to a uniform, memory-efficient 128x128x128 volume (nibabel, scipy.ndimage)",
+      "dejargonized_description": "This stage load massive 3D medical scans and resize them via interpolation to a uniform, memory-efficient 128x128x128 volume (nibabel, scipy.ndimage).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for RSNA Cervical Spine Fracture Detection - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "voxel_preprocessing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "3d_semantic_segmentation",
+      "name": "3D Semantic Segmentation",
+      "description": "Train a 3D U-Net (utilizing a ResNet18d or EfficientNetV2s backbone) to segment the C1-C7 vertebrae into 7 distinct spatial channels (monai, torch)",
+      "dejargonized_description": "This stage train a 3D U-Net (utilizing a ResNet18d or EfficientNetV2s backbone) to segment the C1-C7 vertebrae into 7 distinct spatial channels (monai, torch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "3d_semantic_segmentation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "3d_semantic_segmentation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "mask_generation",
+      "name": "Mask Generation",
+      "description": "Predict and cache the 3D masks for all 2,000 samples in the training set using the trained segmentation network",
+      "dejargonized_description": "This stage predict and cache the 3D masks for all 2,000 samples in the training set using the trained segmentation network.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "mask_generation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mask_generation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "2_5d_cropping",
+      "name": "2.5D Cropping",
+      "description": "Extract individual 2D slice sequences for each localized vertebra based precisely on the generated 3D masks, reducing the computational burden for the next phase (numpy)",
+      "dejargonized_description": "This stage extract individual 2D slice sequences for each localized vertebra based precisely on the generated 3D masks, reducing the computational burden for the next phase (numpy).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "2_5d_cropping_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "2_5d_cropping_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "sequential_classification",
+      "name": "Sequential Classification",
+      "description": "Pass the sequential 2.5D slices through a CNN+LSTM classifier to detect micro-fractures across the spatial slices (torch.nn.LSTM, timm)",
+      "dejargonized_description": "This stage pass the sequential 2.5D slices through a CNN+LSTM classifier to detect micro-fractures across the spatial slices (torch.nn.LSTM, timm).",
+      "concept_type": "sequential_filter",
+      "inputs": [
+        {
+          "name": "sequential_classification_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sequential_classification_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_objective_blending",
+      "name": "Multi-Objective Blending",
+      "description": "Linearly combine the final probabilistic predictions from two different types of Stage-2 classification architectures",
+      "dejargonized_description": "This stage linearly combine the final probabilistic predictions from two different types of Stage-2 classification architectures.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "multi_objective_blending_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "voxel_preprocessing",
+      "target_stage_id": "3d_semantic_segmentation",
+      "output_name": "voxel_preprocessing_output",
+      "input_name": "3d_semantic_segmentation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Voxel Preprocessing output is consumed by 3D Semantic Segmentation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "3d_semantic_segmentation",
+      "target_stage_id": "mask_generation",
+      "output_name": "3d_semantic_segmentation_output",
+      "input_name": "mask_generation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "3D Semantic Segmentation output is consumed by Mask Generation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "mask_generation",
+      "target_stage_id": "2_5d_cropping",
+      "output_name": "mask_generation_output",
+      "input_name": "2_5d_cropping_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Mask Generation output is consumed by 2.5D Cropping.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "2_5d_cropping",
+      "target_stage_id": "sequential_classification",
+      "output_name": "2_5d_cropping_output",
+      "input_name": "sequential_classification_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "2.5D Cropping output is consumed by Sequential Classification.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "sequential_classification",
+      "target_stage_id": "multi_objective_blending",
+      "output_name": "sequential_classification_output",
+      "input_name": "multi_objective_blending_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Sequential Classification output is consumed by Multi-Objective Blending.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Semantic segmentation / Structured prediction.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection/writeups/qishen-ha-1st-place-solution",
+      "Code URL: writeup only",
+      "Standard tools: nibabel, scipy, monai, torch, numpy, timm"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "RSNA Cervical Spine Fracture Detection - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection/writeups/qishen-ha-1st-place-solution",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

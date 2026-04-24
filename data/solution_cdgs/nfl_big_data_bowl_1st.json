@@ -1,0 +1,307 @@
+{
+  "asset_id": "solution.kaggle.nfl_big_data_bowl_1st",
+  "asset_version": "v1",
+  "family": "trajectory_prediction",
+  "paradigm": "optimization",
+  "name": "NFL Big Data Bowl - 1st Place (2020) - Pipeline Template",
+  "summary": "Spatial Trajectory / 1D CNN solution template for NFL Big Data Bowl - 1st Place (2020), modeled as a 5-stage deterministic pipeline: Spatial normalization, Relative coordinate mapping, Spatial tensor formatting, 1D CNN Architecture, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by NFL Big Data Bowl - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "spatial",
+    "trajectory",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Spatial Trajectory / 1D CNN task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Spatial Trajectory / 1D CNN.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Spatial normalization creates the representation needed by Continuous Ranked Probability Score (CRPS), so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "spatial_normalization",
+      "relative_coordinate_mapping"
+    ],
+    "swappable_stages": {
+      "continuous_ranked_probability_score_crps": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/nfl-big-data-bowl-2020/discussion/119400"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/nfl-big-data-bowl-2020/discussion/119400"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "spatial_normalization",
+      "name": "Spatial normalization",
+      "description": "strictly flip all player X/Y coordinates and velocities so the offensive team is always moving left-to-right (numpy)",
+      "dejargonized_description": "This stage strictly flip all player X/Y coordinates and velocities so the offensive team is always moving left-to-right (numpy).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for NFL Big Data Bowl - 1st Place (2020).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "spatial_normalization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "relative_coordinate_mapping",
+      "name": "Relative coordinate mapping",
+      "description": "recalculate all 21 players' X/Y positions relative to the exact X/Y position of the ball carrier (pandas)",
+      "dejargonized_description": "This stage recalculate all 21 players' X/Y positions relative to the exact X/Y position of the ball carrier (pandas).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "relative_coordinate_mapping_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "relative_coordinate_mapping_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "spatial_tensor_formatting",
+      "name": "Spatial tensor formatting",
+      "description": "flatten the 22 players' features into a 1D sequence and sort them deterministically (e.g., offense first, defense second, sorted by distance to ball) (numpy)",
+      "dejargonized_description": "This stage flatten the 22 players' features into a 1D sequence and sort them deterministically (e.g., offense first, defense second, sorted by distance to ball) (numpy).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "spatial_tensor_formatting_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "spatial_tensor_formatting_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "1d_cnn_architecture",
+      "name": "1D CNN Architecture",
+      "description": "pass the 1D sequence through a 1D Convolutional Neural Network (instead of an MLP) to naturally capture localized spatial relationships between adjacent players (Keras)",
+      "dejargonized_description": "This stage pass the 1D sequence through a 1D Convolutional Neural Network (instead of an MLP) to naturally capture localized spatial relationships between adjacent players (Keras).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "1d_cnn_architecture_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "1d_cnn_architecture_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "continuous_ranked_probability_score_crps",
+      "name": "Continuous Ranked Probability Score (CRPS)",
+      "description": "output a cumulative distribution function (CDF) of expected yards gained, strictly optimizing for CRPS loss (Keras)",
+      "dejargonized_description": "This stage output a cumulative distribution function (CDF) of expected yards gained, strictly optimizing for CRPS loss (Keras).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "continuous_ranked_probability_score_crps_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "spatial_normalization",
+      "target_stage_id": "relative_coordinate_mapping",
+      "output_name": "spatial_normalization_output",
+      "input_name": "relative_coordinate_mapping_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Spatial normalization output is consumed by Relative coordinate mapping.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "relative_coordinate_mapping",
+      "target_stage_id": "spatial_tensor_formatting",
+      "output_name": "relative_coordinate_mapping_output",
+      "input_name": "spatial_tensor_formatting_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Relative coordinate mapping output is consumed by Spatial tensor formatting.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "spatial_tensor_formatting",
+      "target_stage_id": "1d_cnn_architecture",
+      "output_name": "spatial_tensor_formatting_output",
+      "input_name": "1d_cnn_architecture_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Spatial tensor formatting output is consumed by 1D CNN Architecture.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "1d_cnn_architecture",
+      "target_stage_id": "continuous_ranked_probability_score_crps",
+      "output_name": "1d_cnn_architecture_output",
+      "input_name": "continuous_ranked_probability_score_crps_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "1D CNN Architecture output is consumed by Continuous Ranked Probability Score (CRPS).",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Spatial Trajectory / 1D CNN.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/nfl-big-data-bowl-2020/discussion/119400",
+      "Code URL: https://github.com/TheZoo-NFL/TheZoo",
+      "Standard tools: pandas, numpy, Keras"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "NFL Big Data Bowl - 1st Place (2020) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/nfl-big-data-bowl-2020/discussion/119400",
+        "note": "Primary source listed in the source PDF."
+      },
+      {
+        "title": "NFL Big Data Bowl - 1st Place (2020) code repository",
+        "citation": "https://github.com/TheZoo-NFL/TheZoo",
+        "note": "Code URL listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

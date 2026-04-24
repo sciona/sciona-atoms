@@ -1,0 +1,410 @@
+{
+  "asset_id": "solution.kaggle.hubmap_kidney_1st",
+  "asset_version": "v1",
+  "family": "gigapixel_segmentation",
+  "paradigm": "neural_network",
+  "name": "HuBMAP Hacking the Kidney 1st Place — Gigapixel Glomeruli Segmentation (2021)",
+  "summary": "Gigapixel whole-slide image segmentation pipeline using Macenko stain normalization, DeepLabV3+ with ResNeSt-50 backbone trained with Lovasz-BCE loss, 8x TTA on overlapping tiles, and gigapixel mask reconstruction via prediction averaging.",
+  "dejargonized_summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized loss function, and stitching the predictions back together into a full-resolution mask.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "whole_slide_image",
+    "histopathology_segmentation",
+    "glomeruli_detection",
+    "tile_based_inference",
+    "stain_normalization",
+    "deeplabv3_plus",
+    "lovasz_loss",
+    "iou_optimization",
+    "gigapixel_inference",
+    "overlapping_tiles",
+    "macenko_normalization",
+    "resnest_backbone",
+    "dihedral_tta",
+    "medical_imaging",
+    "binary_segmentation"
+  ],
+  "applicability": {
+    "use_when": [
+      "Input images are gigapixel-scale (>10,000x10,000 pixels) and cannot fit in GPU memory whole, requiring tile-based processing",
+      "Histopathology or microscopy images with variable staining intensity across slides/scanners, requiring color normalization for generalization",
+      "Binary or few-class segmentation where IoU is the evaluation metric and a surrogate IoU loss (Lovasz) can directly optimize it",
+      "Target structures (e.g., glomeruli) are small relative to the full image but large enough to be captured within a single tile"
+    ],
+    "do_not_use_when": [
+      "Target structures span many tiles (e.g., organ-level segmentation) — tile-based inference loses the global context needed to segment large structures",
+      "Images are standard resolution (<4096x4096) — tiling adds unnecessary complexity and overlap overhead when the image fits in memory",
+      "Staining protocol is consistent across all samples (e.g., single-scanner studies) — Macenko normalization adds preprocessing cost without generalization benefit"
+    ],
+    "key_insight": "The three-part combination of Macenko stain normalization, Lovasz-BCE loss, and overlapping-tile stitching addresses the three core challenges of gigapixel histopathology: cross-scanner color variation, metric-loss mismatch for IoU evaluation, and memory-constrained inference on images too large to process whole. Each component is individually well-known, but their specific combination is what makes this pipeline robust for gigapixel medical segmentation.",
+    "critical_stages": ["tiling", "stain_normalization", "lovasz_bce_loss", "gigapixel_stitching"],
+    "swappable_stages": {
+      "segmentation_architecture": "Any encoder-decoder segmentation architecture (U-Net, FPN, HRNet) works here. DeepLabV3+ was chosen for its ASPP multi-scale context, but the pipeline value lies in tiling + stain norm + Lovasz loss, not the specific architecture.",
+      "tta_on_tiles": "TTA can be reduced to 4x (rotations only) or removed entirely for faster inference at some accuracy cost. Histopathology images have no preferred orientation, so dihedral TTA is well-justified."
+    },
+    "failure_modes": [
+      "Structures larger than the tile size: the model cannot see enough context to segment structures spanning multiple tiles, leading to fragmented predictions",
+      "Non-H&E stained tissue: Macenko normalization assumes hematoxylin-eosin staining and will produce artifacts on immunohistochemistry or special stains",
+      "Very sparse targets (e.g., rare cells): the extreme class imbalance within tiles causes most tiles to be all-background, wasting compute and biasing the model toward predicting background"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "wsi_images",
+      "type_desc": "list[Path]",
+      "constraints": "Gigapixel whole-slide TIFF images of kidney tissue. Typically 30,000+ x 30,000+ pixels.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "segmentation_mask",
+      "type_desc": "NDArray[np.uint8]",
+      "constraints": "Per-pixel binary mask at full resolution. 1 = glomerulus, 0 = background.",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "tiling_before_normalization",
+      "statement": "Tiling must precede stain normalization and all downstream processing.",
+      "rationale": "Gigapixel images cannot be loaded into memory whole. Tiling into 1024x1024 patches is required before any per-patch processing.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle HuBMAP 2021"
+    },
+    {
+      "category": "stage",
+      "subject": "loss_function_design",
+      "statement": "Lovasz-BCE combination loss must be used during training, not standard BCE alone.",
+      "rationale": "Lovasz-Softmax directly optimizes IoU (the competition metric), while BCE provides stable gradients. The combination outperforms either loss alone for imbalanced segmentation.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle HuBMAP 2021"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "tiling",
+      "name": "Tiling",
+      "description": "Slice gigapixel TIFF whole-slide images into 1024x1024 overlapping patches using rasterio for memory-efficient reading. Overlap ensures boundary regions are covered by multiple tiles.",
+      "dejargonized_description": "Cut the enormous microscope image into small overlapping squares that can fit in memory, so each square can be processed independently.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "wsi_images",
+          "type_desc": "list[Path]",
+          "constraints": "Gigapixel TIFF files.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tiles",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "List of 1024x1024x3 RGB patches with known spatial coordinates.",
+          "required": true
+        },
+        {
+          "name": "tile_coordinates",
+          "type_desc": "list[tuple[int, int]]",
+          "constraints": "Top-left (x, y) coordinate of each tile in the original image.",
+          "required": true
+        }
+      ],
+      "preconditions": ["TIFF files are readable by rasterio."],
+      "guarantees": ["Every pixel in the original image is covered by at least one tile. Overlap regions are included."],
+      "family_notes": [
+        "Rasterio enables windowed reading of gigapixel TIFFs without loading the entire image into memory.",
+        "Overlap is critical for avoiding boundary artifacts during stitching."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "stain_normalization",
+      "name": "Stain Normalization",
+      "description": "Apply Macenko stain normalization to standardize histology dye intensities across different tissue preparations and scanners. Decomposes the optical density into stain vectors and normalizes to a reference image.",
+      "dejargonized_description": "Adjust the colors of each tissue tile so that all images look like they were stained and scanned the same way, since different labs use slightly different dye concentrations.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "tiles",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "1024x1024x3 RGB tiles with variable staining intensity.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "normalized_tiles",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "1024x1024x3 RGB tiles with standardized staining.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Tiles contain H&E stained tissue (not blank background)."],
+      "guarantees": ["Stain intensity distribution matches the reference image. Tissue structure preserved."],
+      "family_notes": [
+        "Macenko method uses SVD to find stain vectors in optical density space.",
+        "Critical for generalization across different tissue preparation protocols and scanner hardware."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "segmentation_architecture",
+      "name": "Segmentation Architecture",
+      "description": "Train DeepLabV3+ with ResNeSt-50 backbone using the segmentation_models_pytorch (smp) library. ResNeSt adds split-attention blocks to ResNet, improving feature representation for dense prediction tasks.",
+      "dejargonized_description": "Train a segmentation neural network that labels each pixel as glomerulus or background, using a modern backbone architecture with attention mechanisms.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "normalized_tiles",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "1024x1024x3 stain-normalized RGB tiles.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trained_segmentation_model",
+          "type_desc": "torch.nn.Module",
+          "constraints": "DeepLabV3+ with ResNeSt-50 backbone, trained for binary segmentation.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Stain-normalized tiles and corresponding pixel-level masks are available."],
+      "guarantees": ["Model outputs per-pixel sigmoid probabilities for glomerulus class."],
+      "family_notes": [
+        "ResNeSt (split-attention networks) outperformed standard ResNet and EfficientNet backbones for this histopathology task.",
+        "DeepLabV3+ uses atrous spatial pyramid pooling (ASPP) for multi-scale context."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "lovasz_bce_loss",
+      "name": "Lovasz-BCE Loss",
+      "description": "Train using a combination of Lovasz-Softmax loss and binary cross-entropy loss. Lovasz-Softmax is a convex surrogate for the IoU metric, providing direct optimization of the evaluation metric, while BCE provides stable per-pixel gradients.",
+      "dejargonized_description": "Use a specialized training objective that directly optimizes the competition scoring metric (overlap between predicted and true masks) combined with a standard pixel-by-pixel loss for training stability.",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "predictions",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Per-pixel sigmoid probabilities from the model.",
+          "required": true
+        },
+        {
+          "name": "ground_truth",
+          "type_desc": "NDArray[np.uint8]",
+          "constraints": "Binary ground truth masks.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loss_value",
+          "type_desc": "torch.Tensor",
+          "constraints": "Scalar loss combining Lovasz-Softmax and BCE terms.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Predictions and ground truth have matching spatial dimensions."],
+      "guarantees": ["Loss directly correlates with IoU metric improvement."],
+      "family_notes": [
+        "Lovasz-Softmax provides a tight convex surrogate for the Jaccard (IoU) loss.",
+        "The BCE term prevents degenerate solutions early in training when Lovasz gradients can be noisy."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tta_on_tiles",
+      "name": "TTA on Tiles",
+      "description": "Predict on each tile using 8x test-time augmentation: 4 rotations (0, 90, 180, 270 degrees) times 2 flips (original, horizontal flip). Average the de-augmented predictions per tile.",
+      "dejargonized_description": "For each tile, predict the segmentation mask on the original plus 7 rotated/flipped versions, then average all predictions to get a more reliable mask.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "normalized_tiles",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "1024x1024x3 stain-normalized test tiles.",
+          "required": true
+        },
+        {
+          "name": "trained_segmentation_model",
+          "type_desc": "torch.nn.Module",
+          "constraints": "Trained DeepLabV3+ model.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tile_predictions",
+          "type_desc": "list[NDArray[np.float32]]",
+          "constraints": "1024x1024 probability maps per tile, averaged over 8 TTA views.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Trained model is available. Test tiles are stain-normalized."],
+      "guarantees": ["Each prediction is the mean of 8 augmented views. Probability values in [0, 1]."],
+      "family_notes": [
+        "The 8x TTA corresponds to the dihedral group D4 (all symmetries of a square).",
+        "Histopathology images have no preferred orientation, making all 8 augmentations equally valid."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "gigapixel_stitching",
+      "name": "Gigapixel Stitching",
+      "description": "Reconstruct the full gigapixel segmentation mask by placing tile predictions back at their original coordinates, averaging overlapping regions, and thresholding at 0.5 to produce a binary mask.",
+      "dejargonized_description": "Put all the small predicted masks back together into one giant mask matching the original image size, averaging where tiles overlap, and converting probabilities to yes/no predictions.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "tile_predictions",
+          "type_desc": "list[NDArray[np.float32]]",
+          "constraints": "1024x1024 probability maps per tile.",
+          "required": true
+        },
+        {
+          "name": "tile_coordinates",
+          "type_desc": "list[tuple[int, int]]",
+          "constraints": "Top-left coordinates for each tile.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "segmentation_mask",
+          "type_desc": "NDArray[np.uint8]",
+          "constraints": "Full-resolution binary mask. Shape matches original WSI dimensions.",
+          "required": true
+        }
+      ],
+      "preconditions": ["All tile predictions and coordinates are available."],
+      "guarantees": ["Output covers the full image. Overlap regions are averaged. Binary threshold at 0.5."],
+      "family_notes": [
+        "Averaging overlapping predictions smooths boundary artifacts between tiles.",
+        "The 0.5 threshold is standard for binary segmentation but could be tuned on validation data."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "tiling",
+      "target_stage_id": "stain_normalization",
+      "output_name": "tiles",
+      "input_name": "tiles",
+      "source_type": "list[NDArray[np.uint8]]",
+      "target_type": "list[NDArray[np.uint8]]",
+      "data_kind": "image_patches",
+      "provenance": "1024x1024 overlapping tiles from gigapixel WSI.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "stain_normalization",
+      "target_stage_id": "segmentation_architecture",
+      "output_name": "normalized_tiles",
+      "input_name": "normalized_tiles",
+      "source_type": "list[NDArray[np.uint8]]",
+      "target_type": "list[NDArray[np.uint8]]",
+      "data_kind": "image_patches",
+      "provenance": "Stain-normalized tiles for training.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "stain_normalization",
+      "target_stage_id": "tta_on_tiles",
+      "output_name": "normalized_tiles",
+      "input_name": "normalized_tiles",
+      "source_type": "list[NDArray[np.uint8]]",
+      "target_type": "list[NDArray[np.uint8]]",
+      "data_kind": "image_patches",
+      "provenance": "Stain-normalized test tiles for inference.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "segmentation_architecture",
+      "target_stage_id": "tta_on_tiles",
+      "output_name": "trained_segmentation_model",
+      "input_name": "trained_segmentation_model",
+      "source_type": "torch.nn.Module",
+      "target_type": "torch.nn.Module",
+      "data_kind": "model_weights",
+      "provenance": "Trained DeepLabV3+ with ResNeSt-50 backbone.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tta_on_tiles",
+      "target_stage_id": "gigapixel_stitching",
+      "output_name": "tile_predictions",
+      "input_name": "tile_predictions",
+      "source_type": "list[NDArray[np.float32]]",
+      "target_type": "list[NDArray[np.float32]]",
+      "data_kind": "probability_maps",
+      "provenance": "TTA-averaged per-tile probability maps.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tiling",
+      "target_stage_id": "gigapixel_stitching",
+      "output_name": "tile_coordinates",
+      "input_name": "tile_coordinates",
+      "source_type": "list[tuple[int, int]]",
+      "target_type": "list[tuple[int, int]]",
+      "data_kind": "metadata",
+      "provenance": "Spatial coordinates for placing tiles back into full-resolution mask.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle HuBMAP Hacking the Kidney 2021. Gigapixel segmentation pipeline with Macenko stain normalization, DeepLabV3+/ResNeSt-50, Lovasz-BCE loss, and tile-based inference with stitching.",
+    "dejargonized_summary": "Segment kidney structures from enormous microscope images by cutting them into overlapping tiles, normalizing staining colors, training a segmentation network with a metric-aware loss, and stitching predictions back together.",
+    "provenance_notes": [
+      "Source: Kaggle HuBMAP Hacking the Kidney competition, 1st place solution writeup (2021)",
+      "Source: https://www.kaggle.com/c/hubmap-kidney-segmentation/discussion/238198",
+      "Code: https://github.com/tomizawa-kin/hubmap-kidney-segmentation-1st-place"
+    ],
+    "uncertainty_notes": [
+      "Tile size (1024x1024) and overlap ratio are tuned to this dataset's resolution and glomeruli size.",
+      "Macenko normalization assumes H&E staining; other stain types would require different approaches.",
+      "The Lovasz-BCE loss weight ratio is not specified in the solution writeup."
+    ],
+    "references": [
+      {
+        "title": "DeepLabV3+",
+        "citation": "Chen et al. (2018). Encoder-Decoder with Atrous Separable Convolution for Semantic Image Segmentation.",
+        "url": "https://arxiv.org/abs/1802.02611",
+        "note": "Segmentation architecture."
+      },
+      {
+        "title": "ResNeSt",
+        "citation": "Zhang et al. (2020). ResNeSt: Split-Attention Networks.",
+        "url": "https://arxiv.org/abs/2004.08955",
+        "note": "Backbone with split-attention blocks."
+      },
+      {
+        "title": "Lovasz-Softmax",
+        "citation": "Berman et al. (2018). The Lovasz-Softmax Loss: A Tractable Surrogate for the Optimization of the Intersection-Over-Union Measure in Neural Networks.",
+        "url": "https://arxiv.org/abs/1705.08790",
+        "note": "IoU surrogate loss."
+      },
+      {
+        "title": "Macenko Stain Normalization",
+        "citation": "Macenko et al. (2009). A Method for Normalizing Histology Slides for Quantitative Analysis.",
+        "url": "https://doi.org/10.1109/ISBI.2009.5193250",
+        "note": "Stain normalization method."
+      },
+      {
+        "title": "HuBMAP Hacking the Kidney 1st Place Solution",
+        "citation": "Kaggle HuBMAP Hacking the Kidney, 1st place solution writeup (2021)",
+        "url": "https://www.kaggle.com/c/hubmap-kidney-segmentation/discussion/238198",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

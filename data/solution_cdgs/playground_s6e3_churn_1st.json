@@ -1,0 +1,348 @@
+{
+  "asset_id": "solution.kaggle.playground_s6e3_churn_1st",
+  "asset_version": "v1",
+  "family": "tabular_classification",
+  "paradigm": "graph_signal_processing",
+  "name": "Kaggle Playground S6E3: Customer Churn - 1st Place (2026) - Pipeline Template",
+  "summary": "Tabular classification solution template for Kaggle Playground S6E3: Customer Churn - 1st Place (2026), modeled as a 6-stage deterministic pipeline: Data Split, GPU Feature Engineering, Nearest Neighbor Extraction, Model Zoo Generation, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by Kaggle Playground S6E3: Customer Churn - 1st Place (2026): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "xgboost",
+    "catboost",
+    "transformer",
+    "nearest_neighbor",
+    "graph",
+    "target_encoding",
+    "tabular",
+    "classification"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Tabular classification task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Tabular classification.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Data Split creates the representation needed by Meta-Stacking, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "data_split",
+      "gpu_feature_engineering"
+    ],
+    "swappable_stages": {
+      "meta_stacking": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/playground-series-s6e3/writeups/1st-place-gpt54-gemini3-1-claudeopus4-6-kgm"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/playground-series-s6e3/writeups/1st-place-gpt54-gemini3-1-claudeopus4-6-kgm"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "data_split",
+      "name": "Data Split",
+      "description": "Configure a strict 5-fold Stratified K-Fold setup utilizing a fixed seed to ensure absolute parity across the subsequent 150 models (sklearn.model_selection)",
+      "dejargonized_description": "This stage configure a strict 5-fold Stratified K-Fold setup utilizing a fixed seed to ensure absolute parity across the subsequent 150 models (sklearn.model_selection).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Kaggle Playground S6E3: Customer Churn - 1st Place (2026).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_split_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "gpu_feature_engineering",
+      "name": "GPU Feature Engineering",
+      "description": "Generate anchor target encodings, digit extraction features, radix interactions, and apply TF-IDF transformations specifically on numerical features utilizing GPU dataframes (cuml, rapids)",
+      "dejargonized_description": "This stage generate anchor target encodings, digit extraction features, radix interactions, and apply TF-IDF transformations specifically on numerical features utilizing GPU dataframes (cuml, rapids).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "gpu_feature_engineering_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gpu_feature_engineering_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "nearest_neighbor_extraction",
+      "name": "Nearest Neighbor Extraction",
+      "description": "Perform high-speed KDTree lookups to generate proximity-based tabular features, effectively translating spatial relationships into tabular columns (scipy.spatial)",
+      "dejargonized_description": "This stage perform high-speed KDTree lookups to generate proximity-based tabular features, effectively translating spatial relationships into tabular columns (scipy.spatial).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "nearest_neighbor_extraction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nearest_neighbor_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "model_zoo_generation",
+      "name": "Model Zoo Generation",
+      "description": "Train a massive ensemble of 150 diverse models spanning 4 GBDT libraries (XGBoost, LightGBM, CatBoost, HistGradientBoosting) and 25 deep learning architectures (Transformers, Graph networks, Multiplicative modules) automatically tuned via Optuna",
+      "dejargonized_description": "This stage train a massive ensemble of 150 diverse models spanning 4 GBDT libraries (XGBoost, LightGBM, CatBoost, HistGradientBoosting) and 25 deep learning architectures (Transformers, Graph networks, Multiplicative modules) automatically tuned via Optuna.",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "model_zoo_generation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model_zoo_generation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "greedy_forward_selection",
+      "name": "Greedy Forward Selection",
+      "description": "Execute a hill-climbing algorithm on the Out-Of-Fold (OOF) AUC metrics to iteratively greedily select the highest-contributing models for the final ensemble (numpy, sklearn.metrics)",
+      "dejargonized_description": "This stage execute a hill-climbing algorithm on the Out-Of-Fold (OOF) AUC metrics to iteratively greedily select the highest-contributing models for the final ensemble (numpy, sklearn.metrics).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "greedy_forward_selection_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "greedy_forward_selection_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "meta_stacking",
+      "name": "Meta-Stacking",
+      "description": "Train a final Logistic Regression stacker model to learn the specific regional trust weights across the selected ensemble, allowing the system to depend on different sub-models in different regions of the feature space (sklearn.linear_model)",
+      "dejargonized_description": "This stage train a final Logistic Regression stacker model to learn the specific regional trust weights across the selected ensemble, allowing the system to depend on different sub-models in different regions of the feature space (sklearn.linear_model).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "meta_stacking_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "data_split",
+      "target_stage_id": "gpu_feature_engineering",
+      "output_name": "data_split_output",
+      "input_name": "gpu_feature_engineering_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Data Split output is consumed by GPU Feature Engineering.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "gpu_feature_engineering",
+      "target_stage_id": "nearest_neighbor_extraction",
+      "output_name": "gpu_feature_engineering_output",
+      "input_name": "nearest_neighbor_extraction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "GPU Feature Engineering output is consumed by Nearest Neighbor Extraction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "nearest_neighbor_extraction",
+      "target_stage_id": "model_zoo_generation",
+      "output_name": "nearest_neighbor_extraction_output",
+      "input_name": "model_zoo_generation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Nearest Neighbor Extraction output is consumed by Model Zoo Generation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "model_zoo_generation",
+      "target_stage_id": "greedy_forward_selection",
+      "output_name": "model_zoo_generation_output",
+      "input_name": "greedy_forward_selection_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Model Zoo Generation output is consumed by Greedy Forward Selection.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "greedy_forward_selection",
+      "target_stage_id": "meta_stacking",
+      "output_name": "greedy_forward_selection_output",
+      "input_name": "meta_stacking_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Greedy Forward Selection output is consumed by Meta-Stacking.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Tabular classification.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/playground-series-s6e3/writeups/1st-place-gpt54-gemini3-1-claudeopus4-6-kgm",
+      "Code URL: writeup only",
+      "Standard tools: sklearn, cuml, scipy, xgboost, lightgbm, catboost, optuna, torch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Kaggle Playground S6E3: Customer Churn - 1st Place (2026) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/playground-series-s6e3/writeups/1st-place-gpt54-gemini3-1-claudeopus4-6-kgm",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

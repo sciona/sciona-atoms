@@ -1,0 +1,396 @@
+{
+  "asset_id": "solution.kaggle.alaska2_steganalysis_1st",
+  "asset_version": "v1",
+  "family": "image_forensics",
+  "paradigm": "neural_network",
+  "name": "ALASKA2 Image Steganalysis 1st Place — JPEG Forensics via DCT-Aware CNNs (2020)",
+  "summary": "Steganography detection pipeline that bypasses standard JPEG decompression by directly parsing DCT coefficients and YCbCr channels, stacking them into 6-channel inputs for EfficientNet/MixNet backbones with dihedral TTA and fold ensembling.",
+  "dejargonized_summary": "Detect hidden messages in JPEG photos by extracting the raw compressed data (DCT coefficients and color channels) instead of the normal image pixels, feeding this richer representation into neural networks, and averaging predictions across image rotations and multiple training runs.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "steganalysis",
+    "jpeg_forensics",
+    "dct_features",
+    "image_classification",
+    "tta_ensemble",
+    "cross_validation_ensemble",
+    "frequency_domain_analysis",
+    "ycbcr_color_space",
+    "jpeg_artifact_preservation",
+    "binary_forensics",
+    "compression_domain",
+    "dihedral_augmentation",
+    "multi_backbone_ensemble",
+    "steganography_detection"
+  ],
+  "applicability": {
+    "use_when": [
+      "Task requires detecting subtle modifications to JPEG images where the signal lives in the frequency/compression domain, not the pixel domain",
+      "Input images are JPEG-compressed and the forensic signal is embedded in DCT coefficients (e.g., steganography, double-compression detection, tampering localization)",
+      "Standard image classification pipelines (load-as-RGB, pretrained backbone) have plateaued because the pixel-space representation destroys the relevant signal"
+    ],
+    "do_not_use_when": [
+      "Input images are PNG, TIFF, or other non-JPEG formats — there are no DCT coefficients to extract",
+      "The forensic signal is purely spatial (e.g., copy-move detection, splicing with visible boundaries) — standard RGB inputs suffice",
+      "Real-time inference is required — custom DCT parsing and 6-channel inputs add significant preprocessing overhead compared to standard image loading"
+    ],
+    "key_insight": "Reading DCT coefficients directly from JPEG files (bypassing standard decompression) preserves the subtle statistical artifacts that steganography introduces in the frequency domain. Standard pixel-space loading through PIL/OpenCV applies dequantization, IDCT, chroma upsampling, and color clipping — each step destroys part of the forensic signal. The dual RGB+YCbCr 6-channel representation gives the network access to both perceptual and compression-domain features.",
+    "critical_stages": ["dct_coefficient_parsing", "spatial_decompression", "feature_stacking"],
+    "swappable_stages": {
+      "model_training": "Any image classification backbone works (EfficientNet, ResNet, ConvNeXt). The value is in the 6-channel input representation, not the specific backbone. First conv layer must be adapted to 6 input channels.",
+      "fold_ensembling": "Any ensembling strategy (stacking, blending, rank averaging) works. Simple arithmetic mean was sufficient here.",
+      "tta_inference": "The dihedral TTA is effective because steganographic artifacts are orientation-invariant, but could be replaced with fewer augmentations at some accuracy cost."
+    },
+    "failure_modes": [
+      "Non-JPEG inputs: the entire DCT-parsing pipeline is inapplicable to PNG/TIFF/raw formats, producing no useful signal",
+      "Heavily re-compressed JPEGs: multiple rounds of JPEG compression introduce quantization noise that masks the steganographic signal",
+      "Very high JPEG quality factors (>98): DCT coefficients are nearly unquantized, reducing the statistical footprint of embedding algorithms"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "jpeg_images",
+      "type_desc": "list[bytes]",
+      "constraints": "JPEG files, potentially containing steganographic modifications (JMiPOD, JUNIWARD, UERD algorithms).",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "stego_probability",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N,). Probability of steganographic content per image, in [0, 1].",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "dct_before_spatial",
+      "statement": "DCT coefficient parsing must precede spatial decompression.",
+      "rationale": "The spatial representation is derived from the DCT coefficients via custom decompression. Standard JPEG decoding would destroy the forensic signal through dequantization and color-space conversion artifacts.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle ALASKA2 2020"
+    },
+    {
+      "category": "stage",
+      "subject": "stacking_before_training",
+      "statement": "Feature stacking must precede model training to provide 6-channel inputs.",
+      "rationale": "The backbone architectures expect fixed-channel inputs. The 6-channel representation (3 spatial + 3 YCbCr) must be assembled before being fed to the network.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup, Kaggle ALASKA2 2020"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "dct_coefficient_parsing",
+      "name": "DCT Coefficient Parsing",
+      "description": "Extract raw DCT coefficients and YCbCr channels directly from JPEG files using jpegio or custom C code, bypassing standard JPEG decompression. Preserves the quantized frequency-domain representation where steganographic modifications are embedded.",
+      "dejargonized_description": "Read the compressed data directly from JPEG files instead of opening them normally, because hidden messages are embedded in the compressed data and would be harder to detect after normal decompression.",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "jpeg_images",
+          "type_desc": "list[bytes]",
+          "constraints": "Raw JPEG file bytes.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "dct_coefficients",
+          "type_desc": "NDArray[np.int16]",
+          "constraints": "Shape (H/8, W/8, 64) per image. Quantized DCT coefficients per 8x8 block.",
+          "required": true
+        },
+        {
+          "name": "ycbcr_channels",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (H, W, 3). Y, Cb, Cr channels extracted from JPEG structure.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input files are valid JPEG images."],
+      "guarantees": ["DCT coefficients are unmodified from the JPEG bitstream. No dequantization applied."],
+      "family_notes": [
+        "KEY TECHNIQUE. Standard image libraries (PIL, OpenCV) apply dequantization, IDCT, and color conversion which destroy subtle steganographic modifications.",
+        "jpegio provides direct access to quantized DCT coefficients without any processing."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "spatial_decompression",
+      "name": "Spatial Decompression",
+      "description": "Decompress DCT coefficients into raw spatial pixel representations using custom numpy IDCT implementation, avoiding standard JPEG decoder artifacts like chroma upsampling and color clipping.",
+      "dejargonized_description": "Convert the compressed frequency data back into pixel values using a custom method that preserves subtle details that standard image viewers would discard.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "dct_coefficients",
+          "type_desc": "NDArray[np.int16]",
+          "constraints": "Shape (H/8, W/8, 64). Quantized DCT coefficients.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "spatial_rgb",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (H, W, 3). Spatial RGB representation without JPEG decoder artifacts.",
+          "required": true
+        }
+      ],
+      "preconditions": ["DCT coefficients have been extracted without dequantization artifacts."],
+      "guarantees": ["Spatial representation preserves forensic signal. No clipping or chroma upsampling applied."],
+      "family_notes": [
+        "Custom IDCT avoids the lossy steps in standard JPEG decoders that would mask steganographic perturbations."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_stacking",
+      "name": "Feature Stacking",
+      "description": "Create 6-channel input by concatenating 3 spatial RGB channels with 3 YCbCr channels along the channel dimension using numpy.",
+      "dejargonized_description": "Combine the pixel colors and the raw color-space channels into a single 6-layer image that gives the neural network more information to detect tampering.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "spatial_rgb",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (H, W, 3). Spatial RGB channels.",
+          "required": true
+        },
+        {
+          "name": "ycbcr_channels",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (H, W, 3). Y, Cb, Cr channels.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "stacked_input",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (H, W, 6). Concatenated RGB + YCbCr channels.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Both channel sets have matching spatial dimensions."],
+      "guarantees": ["Output has exactly 6 channels. Channel order is consistent."],
+      "family_notes": [
+        "The dual-representation gives the network access to both perceptual (RGB) and compression-domain (YCbCr) features, improving steganalysis sensitivity."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "model_training",
+      "name": "Model Training",
+      "description": "Train EfficientNet-B3 and MixNet backbone classifiers on 6-channel inputs using PyTorch. First convolutional layer is modified to accept 6 input channels. Models are trained with 5-fold cross-validation.",
+      "dejargonized_description": "Train image classification neural networks to distinguish clean images from images containing hidden messages, using both backbone architectures across multiple training splits.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "stacked_input",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (H, W, 6). Training images with 6-channel representation.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trained_models",
+          "type_desc": "list[torch.nn.Module]",
+          "constraints": "Multiple models: EfficientNet-B3 and MixNet, each with 5 folds.",
+          "required": true
+        }
+      ],
+      "preconditions": ["6-channel inputs are available. Labels (cover/stego) are provided."],
+      "guarantees": ["Models are trained on non-overlapping folds for unbiased ensembling."],
+      "family_notes": [
+        "First conv layer weight initialization: the 3 extra channels are initialized by copying the pretrained RGB weights, preserving transfer learning benefit."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tta_inference",
+      "name": "TTA Inference",
+      "description": "Run predictions on original, dihedral rotated (90/180/270 degrees), and horizontally flipped versions of each image using PyTorch. Average predictions across all augmented views.",
+      "dejargonized_description": "Predict on each image in its original orientation plus rotated and flipped versions, then average the predictions to get a more reliable answer.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "stacked_input",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (H, W, 6). Test images.",
+          "required": true
+        },
+        {
+          "name": "trained_models",
+          "type_desc": "list[torch.nn.Module]",
+          "constraints": "Trained model(s) for inference.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tta_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, F). Predictions per image per fold, averaged over TTA augmentations.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Trained models are available. Test images are in 6-channel format."],
+      "guarantees": ["Predictions are averaged over dihedral group augmentations (8x TTA)."],
+      "family_notes": [
+        "Steganographic artifacts are orientation-invariant, so TTA is particularly effective for steganalysis."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "fold_ensembling",
+      "name": "Fold Ensembling",
+      "description": "Compute arithmetic mean of TTA predictions across all 5-fold cross-validation models and both backbone architectures using numpy.",
+      "dejargonized_description": "Average the predictions from all the different models (trained on different data splits and with different architectures) to get a single final prediction per image.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "tta_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, F). Per-fold TTA-averaged predictions.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "stego_probability",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). Final ensembled probability per image.",
+          "required": true
+        }
+      ],
+      "preconditions": ["All fold predictions are available."],
+      "guarantees": ["Output is in [0, 1]. Arithmetic mean across folds and architectures."],
+      "family_notes": [
+        "Simple arithmetic mean outperformed more complex ensembling strategies for this task."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "dct_coefficient_parsing",
+      "target_stage_id": "spatial_decompression",
+      "output_name": "dct_coefficients",
+      "input_name": "dct_coefficients",
+      "source_type": "NDArray[np.int16]",
+      "target_type": "NDArray[np.int16]",
+      "data_kind": "frequency_domain",
+      "provenance": "Raw quantized DCT coefficients from JPEG bitstream.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "spatial_decompression",
+      "target_stage_id": "feature_stacking",
+      "output_name": "spatial_rgb",
+      "input_name": "spatial_rgb",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "image",
+      "provenance": "Custom-decompressed spatial RGB preserving forensic signal.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "dct_coefficient_parsing",
+      "target_stage_id": "feature_stacking",
+      "output_name": "ycbcr_channels",
+      "input_name": "ycbcr_channels",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "image",
+      "provenance": "YCbCr channels extracted directly from JPEG structure.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_stacking",
+      "target_stage_id": "model_training",
+      "output_name": "stacked_input",
+      "input_name": "stacked_input",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "multichannel_image",
+      "provenance": "6-channel RGB+YCbCr representation for training.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_stacking",
+      "target_stage_id": "tta_inference",
+      "output_name": "stacked_input",
+      "input_name": "stacked_input",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "multichannel_image",
+      "provenance": "6-channel test images for TTA inference.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "model_training",
+      "target_stage_id": "tta_inference",
+      "output_name": "trained_models",
+      "input_name": "trained_models",
+      "source_type": "list[torch.nn.Module]",
+      "target_type": "list[torch.nn.Module]",
+      "data_kind": "model_weights",
+      "provenance": "Trained EfficientNet-B3 and MixNet models.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tta_inference",
+      "target_stage_id": "fold_ensembling",
+      "output_name": "tta_predictions",
+      "input_name": "tta_predictions",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "predictions",
+      "provenance": "Per-fold TTA-averaged predictions for ensembling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle ALASKA2 Image Steganalysis 2020. Key innovation is bypassing standard JPEG decompression to preserve forensic signal via direct DCT coefficient extraction and dual RGB+YCbCr representation.",
+    "dejargonized_summary": "Detect hidden messages in JPEG photos by extracting the raw compressed data instead of normal pixels, feeding this richer representation into neural networks, and averaging predictions across image orientations and multiple training runs.",
+    "provenance_notes": [
+      "Source: Kaggle ALASKA2 Image Steganalysis competition, 1st place solution writeup (2020)",
+      "Source: https://www.kaggle.com/c/alaska2-image-steganalysis/discussion/168512",
+      "Code: https://github.com/alaska2-1st-place"
+    ],
+    "uncertainty_notes": [
+      "The effectiveness of the 6-channel representation depends on the steganographic algorithm. JMiPOD, JUNIWARD, and UERD operate in different domains.",
+      "The custom spatial decompression may not generalize to all JPEG encoder implementations."
+    ],
+    "references": [
+      {
+        "title": "EfficientNet",
+        "citation": "Tan & Le (2019). EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks.",
+        "url": "https://arxiv.org/abs/1905.11946",
+        "note": "Primary backbone architecture."
+      },
+      {
+        "title": "MixNet",
+        "citation": "Tan & Le (2019). MixConv: Mixed Depthwise Convolutional Kernels.",
+        "url": "https://arxiv.org/abs/1907.09595",
+        "note": "Secondary backbone architecture."
+      },
+      {
+        "title": "ALASKA2 Image Steganalysis 1st Place Solution",
+        "citation": "Kaggle ALASKA2 Image Steganalysis, 1st place solution writeup (2020)",
+        "url": "https://www.kaggle.com/c/alaska2-image-steganalysis/discussion/168512",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

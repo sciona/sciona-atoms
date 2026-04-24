@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.icecube_neutrinos_1st",
+  "solution_metadata": {
+    "competition": "IceCube - Neutrinos in Deep Ice - 1st Place (2023)",
+    "placement": "1st",
+    "team": null,
+    "year": 2023,
+    "metric": null,
+    "problem_domain": "graph_regression",
+    "source_url": "https://www.kaggle.com/competitions/icecube-neutrinos-in-deep-ice/discussion/402882",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "point_cloud_processing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "graph_definition",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until a more specific atom or embedding-backed binding is available."
+      }
+    },
+    {
+      "stage_id": "graph_neural_network",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "transformer_block",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "directional_loss",
+      "bound_artifact_fqdn": "sciona.atoms.geo.losses.circular_direction_loss",
+      "binding_confidence": 0.84,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 3,
+    "atoms_used_by_repo": {
+      "geo": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "graph_neural_network",
+      "point_cloud_processing",
+      "transformer_block"
+    ],
+    "orchestration_resolved": [
+      "graph_definition"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

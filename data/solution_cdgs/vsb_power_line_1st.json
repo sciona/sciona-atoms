@@ -1,0 +1,433 @@
+{
+  "asset_id": "solution.kaggle.vsb_power_line_1st",
+  "asset_version": "v1",
+  "family": "signal_classification",
+  "paradigm": "signal_transform",
+  "name": "VSB Power Line Fault Detection 1st Place — Signal Processing + Hybrid Model Blend",
+  "summary": "Binary fault detection from high-frequency power line signals using wavelet denoising, peak detection feature engineering, and a weighted blend of LightGBM on handcrafted features with 1D CNN+LSTM on raw denoised signals.",
+  "dejargonized_summary": "Detect electrical faults in power lines by cleaning up noisy voltage signals, finding discharge spikes, and combining a tree-based model on spike statistics with a neural network on the cleaned raw signal.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "fault_detection",
+    "power_line_monitoring",
+    "wavelet_denoising",
+    "peak_detection",
+    "hybrid_model_blend",
+    "signal_to_matrix",
+    "1d_to_2d_transform",
+    "corona_discharge",
+    "high_frequency_signal",
+    "dwt_thresholding",
+    "transient_event_detection",
+    "spectrogram_like",
+    "domain_feature_engineering",
+    "cnn_lstm_hybrid"
+  ],
+  "applicability": {
+    "use_when": [
+      "High-frequency 1D signals contain transient events (spikes, discharges, anomalies) embedded in a noisy baseline",
+      "Domain knowledge can identify meaningful signal features (peaks, frequency bands) but end-to-end models may discover additional patterns",
+      "Signal length is large enough (>10k samples) that reshaping into a 2D matrix creates meaningful spatial structure across cycles or frequency bands",
+      "Both interpretable feature engineering and learned representations are desired for complementary coverage"
+    ],
+    "do_not_use_when": [
+      "Signal events are purely frequency-domain phenomena with no localized transient structure (FFT-based approaches are simpler and sufficient)",
+      "Signal is short (<1000 samples) or low-frequency: the 1D-to-2D reshape produces a matrix too small for meaningful 2D pattern detection",
+      "Real-time streaming classification is required: wavelet denoising + peak detection + CNN+LSTM pipeline has high latency",
+      "The noise characteristics are non-stationary and change across measurements: a fixed wavelet threshold will either over-denoise or under-denoise"
+    ],
+    "key_insight": "Transforming 1D high-frequency signals into 2D matrices (spectrogram-like representations) allows image-based deep learning models to detect spatial patterns in the frequency-time domain that 1D models miss. The wavelet denoising is critical because corona discharge events are transient and time-localized — DWT preserves their temporal structure while FFT-based methods would smear them. The hybrid blend of handcrafted peak features with end-to-end neural features captures both known physics and unknown patterns.",
+    "critical_stages": ["wavelet_denoising", "signal_to_matrix_transform", "peak_detection"],
+    "swappable_stages": {
+      "tabular_model": "Any tabular classifier (XGBoost, CatBoost, random forest) works on the handcrafted peak features. LightGBM is chosen for speed.",
+      "dl_model": "Any sequence model (1D CNN, LSTM, Transformer, TCN) or 2D CNN on the reshaped matrix can replace the CNN+LSTM. The value is in the denoising and reshaping, not the specific architecture.",
+      "weighted_blend": "Any ensembling strategy (stacking, rank averaging, learned blend weights) can combine the two model families."
+    },
+    "failure_modes": [
+      "Wavelet threshold too aggressive: discharge events are removed along with noise, destroying the signal",
+      "Signal has no periodic structure: the 1D-to-2D reshape produces a meaningless matrix when there are no repeating cycles to align as rows",
+      "Class imbalance is extreme and discharge events are very rare: peak detection misses subtle events and the neural model overfits to the majority class"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "voltage_signal",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (800000,). High-frequency power line voltage signal per measurement.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "fault_probability",
+      "type_desc": "float",
+      "constraints": "Binary fault probability in [0, 1].",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "denoising_first",
+      "statement": "Wavelet denoising must precede peak detection and feature extraction.",
+      "rationale": "High-voltage base noise creates false peaks; denoising removes the noise floor so that corona discharge events can be reliably detected.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "hybrid_complementarity",
+      "statement": "Both LightGBM on handcrafted features and CNN+LSTM on raw signal should be trained independently and blended.",
+      "rationale": "Handcrafted peak features capture domain knowledge while the neural network discovers patterns not captured by manual feature engineering.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "wavelet_denoising",
+      "name": "Wavelet Denoising",
+      "description": "Apply discrete wavelet transform (DWT) using PyWavelets to filter out high-voltage base noise from the raw power line signal. Threshold wavelet coefficients to remove noise while preserving corona discharge events.",
+      "dejargonized_description": "Clean up the noisy voltage signal by decomposing it into frequency layers and removing the noise, keeping only the meaningful discharge patterns.",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "voltage_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (800000,). Raw voltage signal.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "denoised_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (800000,). Denoised voltage signal.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input is a 1D high-frequency voltage signal."],
+      "guarantees": ["Output preserves corona discharge events while suppressing base noise."],
+      "family_notes": [
+        "DWT is preferred over FFT-based denoising because discharge events are transient and localized in time."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "peak_detection",
+      "name": "Peak Detection",
+      "description": "Locate corona discharge peaks in the denoised signal using scipy.signal.find_peaks with tuned height and distance parameters.",
+      "dejargonized_description": "Find the sharp spikes in the cleaned signal that indicate electrical discharge events.",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "denoised_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (800000,). Denoised voltage signal.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "peak_indices",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N_peaks,). Indices of detected peaks.",
+          "required": true
+        },
+        {
+          "name": "peak_properties",
+          "type_desc": "dict",
+          "constraints": "Peak heights, widths, prominences from find_peaks.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Denoised signal is available."],
+      "guarantees": ["Detected peaks correspond to putative discharge events."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "peak_feature_extraction",
+      "name": "Peak Feature Extraction",
+      "description": "Compute statistical features from detected peaks (height, width, count) plus raw statistical moments (mean, std, skewness, kurtosis) of the denoised signal.",
+      "dejargonized_description": "Calculate summary statistics about the spikes (how tall, how wide, how many) and overall signal properties to describe each measurement as a set of numbers.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "peak_indices",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N_peaks,).",
+          "required": true
+        },
+        {
+          "name": "peak_properties",
+          "type_desc": "dict",
+          "constraints": "Peak heights, widths, prominences.",
+          "required": true
+        },
+        {
+          "name": "denoised_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (800000,).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "peak_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (F,). Feature vector summarizing peaks and signal statistics.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Peaks have been detected and their properties computed."],
+      "guarantees": ["Feature vector captures domain-relevant signal characteristics."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "signal_to_matrix_transform",
+      "name": "Signal to Matrix Transform",
+      "description": "Slice the 1D high-frequency signal into a 2D matrix (spectrogram-like) by reshaping into fixed-width segments, creating a representation suitable for 2D pattern recognition.",
+      "dejargonized_description": "Chop the long signal into equal-length segments and stack them as rows to create a 2D image-like representation.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "denoised_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (800000,). Denoised voltage signal.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "signal_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (R, C). 2D representation of the 1D signal.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Signal length is divisible by segment width or is padded."],
+      "guarantees": ["Output is a 2D matrix preserving temporal structure in rows."],
+      "family_notes": [
+        "This spectrogram-like transform enables detection of periodic discharge patterns across power cycles."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tabular_model",
+      "name": "Tabular Model",
+      "description": "Train a LightGBM classifier on the extracted peak features and statistical moments for binary fault classification.",
+      "dejargonized_description": "Train a tree-based model on the hand-designed spike statistics to predict whether a fault is present.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "peak_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, F). Feature matrix for all measurements.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "lgbm_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). Fault probabilities from LightGBM.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Peak features are computed for all samples."],
+      "guarantees": ["Output probabilities reflect fault likelihood based on handcrafted features."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "dl_model",
+      "name": "Deep Learning Model",
+      "description": "Train a 1D CNN + LSTM network on the raw denoised signal for binary fault classification. The CNN extracts local patterns while the LSTM captures temporal dependencies.",
+      "dejargonized_description": "Train a neural network that reads the cleaned signal directly, using convolutional layers to find local patterns and recurrent layers to understand long-range structure.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "denoised_signal",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 800000). Denoised signals for all measurements.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nn_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). Fault probabilities from CNN+LSTM.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Denoised signals are available."],
+      "guarantees": ["Output probabilities capture patterns beyond handcrafted features."],
+      "family_notes": [
+        "The 1D CNN + LSTM architecture can discover discharge patterns not captured by peak detection."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "weighted_blend",
+      "name": "Weighted Blend",
+      "description": "Compute a weighted average of LightGBM and neural network fault probabilities to produce the final prediction.",
+      "dejargonized_description": "Combine the tree model and neural network predictions using a weighted average for a more reliable final answer.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "lgbm_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). LightGBM predictions.",
+          "required": true
+        },
+        {
+          "name": "nn_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). CNN+LSTM predictions.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fault_probability",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). Final blended fault probabilities.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Both model predictions are available."],
+      "guarantees": ["Output is a weighted combination of both models."],
+      "family_notes": [],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "wavelet_denoising",
+      "target_stage_id": "peak_detection",
+      "output_name": "denoised_signal",
+      "input_name": "denoised_signal",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "time_series",
+      "provenance": "Denoised voltage signal with base noise removed.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "peak_detection",
+      "target_stage_id": "peak_feature_extraction",
+      "output_name": "peak_indices",
+      "input_name": "peak_indices",
+      "source_type": "NDArray[np.int64]",
+      "target_type": "NDArray[np.int64]",
+      "data_kind": "indices",
+      "provenance": "Locations of detected discharge peaks.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "peak_detection",
+      "target_stage_id": "peak_feature_extraction",
+      "output_name": "peak_properties",
+      "input_name": "peak_properties",
+      "source_type": "dict",
+      "target_type": "dict",
+      "data_kind": "metadata",
+      "provenance": "Peak height, width, prominence properties.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "wavelet_denoising",
+      "target_stage_id": "peak_feature_extraction",
+      "output_name": "denoised_signal",
+      "input_name": "denoised_signal",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "time_series",
+      "provenance": "Denoised signal for statistical moment computation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "wavelet_denoising",
+      "target_stage_id": "signal_to_matrix_transform",
+      "output_name": "denoised_signal",
+      "input_name": "denoised_signal",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "time_series",
+      "provenance": "Denoised signal for 2D matrix reshaping.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "peak_feature_extraction",
+      "target_stage_id": "tabular_model",
+      "output_name": "peak_features",
+      "input_name": "peak_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "tabular",
+      "provenance": "Handcrafted peak and statistical features.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "wavelet_denoising",
+      "target_stage_id": "dl_model",
+      "output_name": "denoised_signal",
+      "input_name": "denoised_signal",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "time_series",
+      "provenance": "Denoised signal for end-to-end deep learning.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tabular_model",
+      "target_stage_id": "weighted_blend",
+      "output_name": "lgbm_probabilities",
+      "input_name": "lgbm_probabilities",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "LightGBM fault probabilities from handcrafted features.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "dl_model",
+      "target_stage_id": "weighted_blend",
+      "output_name": "nn_probabilities",
+      "input_name": "nn_probabilities",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "CNN+LSTM fault probabilities from raw denoised signal.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place VSB Power Line Fault Detection solution. Hybrid approach combining wavelet-denoised peak feature engineering with end-to-end deep learning on raw signals.",
+    "dejargonized_summary": "Detect power line faults by cleaning noisy voltage signals, finding discharge spikes, and combining a tree model on spike statistics with a neural network on the raw cleaned signal.",
+    "provenance_notes": [
+      "Source: Kaggle VSB Power Line Fault Detection 1st place solution (2019)",
+      "Source: https://www.kaggle.com/c/vsb-power-line-fault-detection/discussion/86619"
+    ],
+    "uncertainty_notes": [
+      "Wavelet denoising parameters are tuned to the specific noise characteristics of the competition data.",
+      "The weighted blend ratio between LightGBM and CNN+LSTM may not generalize to other signal types."
+    ],
+    "references": [
+      {
+        "title": "VSB Power Line Fault Detection 1st Place Solution",
+        "citation": "Kaggle VSB Power Line Fault Detection, 1st place solution writeup (2019)",
+        "url": "https://www.kaggle.com/c/vsb-power-line-fault-detection/discussion/86619",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

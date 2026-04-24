@@ -1,0 +1,346 @@
+{
+  "asset_id": "solution.kaggle.trackml_5th",
+  "asset_version": "v1",
+  "family": "particle_tracking",
+  "paradigm": "geometry",
+  "name": "TrackML Particle Tracking 5th Place — Physics-Geometric Track Reconstruction",
+  "summary": "Reconstruct charged particle trajectories from 3D hit positions using analytic helix geometry, adaptive Bayesian neighbor matching, and perturbative learned corrections. No neural networks — pure geometry plus interpolated lookup tables.",
+  "dejargonized_summary": "Find which detector hits belong to the same particle track by fitting helical curves through groups of hits, using physics to predict where the next hit should be, and learning small corrections for real-world imperfections.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "particle_tracking",
+    "helix_fitting",
+    "track_reconstruction",
+    "hit_matching",
+    "physics_geometric_tracking",
+    "kepler_equation",
+    "analytic_intersection",
+    "layered_detector_geometry",
+    "high_hit_density",
+    "magnetic_field_trajectories",
+    "perturbative_correction",
+    "greedy_assignment"
+  ],
+  "inputs": [
+    {
+      "name": "hits",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N_hits, 3): x, y, z coordinates of detector hits. ~100k hits per event.",
+      "required": true
+    },
+    {
+      "name": "detector_geometry",
+      "type_desc": "DataFrame",
+      "constraints": "Module positions, rotations, and layer assignments from detectors.csv.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "track_assignments",
+      "type_desc": "NDArray[np.int64]",
+      "constraints": "Shape (N_hits,): track ID per hit. 0 = unassigned.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Reconstructing trajectories from 3D point hits in a layered detector geometry with known magnetic field",
+      "Trajectories follow approximately helical paths (charged particles in uniform B-field, orbits under gravity, etc.)",
+      "Hit density is high enough that nearest-neighbor matching alone is ambiguous — physics-based prediction is needed",
+      "Real-time or near-real-time processing is required (analytic intersections are O(1) per query, no iterative solvers)"
+    ],
+    "do_not_use_when": [
+      "Trajectories are not approximately helical (e.g., neutral particles, complex force fields with no analytic trajectory model)",
+      "Detector geometry is unstructured (no layered cylinders/caps) — the intersection prediction stages assume known surfaces",
+      "Very low hit density where simple nearest-neighbor suffices without physics-based prediction",
+      "Track multiplicity is extremely high (>10k simultaneous tracks) — greedy commit becomes suboptimal vs. global optimization"
+    ],
+    "key_insight": "The Kepler-equation reduction for helix-point distance connects particle physics tracking to orbital mechanics, enabling O(1) nearest-point queries instead of iterative root-finding. Three hits uniquely determine a helix, and analytic cylinder/cap intersections predict next-layer hits without numerical integration.",
+    "critical_stages": ["circle_from_three_points", "helix_pitch_least_squares", "helix_cylinder_intersection", "helix_nearest_point_distance"],
+    "swappable_stages": {
+      "perturbative_helix_correction": "Any learned residual correction (neural net, polynomial, spline) that maps predicted-to-actual displacement works. The physics-informed q/p scaling is valuable but not required.",
+      "bayesian_neighbor_evaluation": "Any adaptive thresholding (density-based, fixed-radius with local scaling) can replace the Bayesian signal-vs-background model.",
+      "greedy_track_commit": "Global optimization (Hungarian, ILP) can replace greedy commit for higher accuracy at the cost of runtime."
+    },
+    "failure_modes": [
+      "Strong B-field inhomogeneity: perfect-helix assumption breaks down and perturbative corrections become large and unreliable",
+      "Very low momentum particles with large energy loss per layer: helix parameters change significantly between layers",
+      "Detector with large gaps between layers: helix extrapolation error accumulates and predicted intersections miss real hits"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "geometry_before_matching",
+      "statement": "Detector geometry autodiscovery and coordinate transforms must precede neighbor search.",
+      "rationale": "kNN in raw Euclidean coordinates produces wrong neighbors — azimuthal and longitudinal separations must be balanced via layer-specific coordinate rescaling.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "neighbors.py coordinate transforms"
+    },
+    {
+      "category": "stage",
+      "subject": "seed_then_extend",
+      "statement": "Track reconstruction proceeds by seeding from 3-hit triples then extending via predicted intersections.",
+      "rationale": "Three hits uniquely determine a helix (circle in x-y, linear in z-vs-phi). Extension uses analytic intersection predictions corrected by learned displacement maps.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "algorithm.py main loop"
+    },
+    {
+      "category": "stage",
+      "subject": "greedy_commit_order",
+      "statement": "Tracks must be committed in descending quality order with overlap resolution.",
+      "rationale": "Greedy commit prevents low-quality tracks from claiming hits that belong to better-fit tracks. reserve_skipped prevents cascade pollution.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "candidates.py:44-99"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "detector_geometry_autodiscovery",
+      "name": "Detector Geometry Autodiscovery",
+      "description": "Discover detector structure from module positions using KMeans (radial rings) and MeanShift (z-layers). Compute layer radii, z-positions, ring gap boundaries, and monotonic z-coverage for O(1) reachability queries.",
+      "dejargonized_description": "Figure out the detector's layered structure automatically from the positions of its modules.",
+      "concept_type": "clustering",
+      "inputs": [
+        {"name": "detector_geometry", "type_desc": "DataFrame", "constraints": "Module positions.", "required": true}
+      ],
+      "outputs": [
+        {"name": "layer_spec", "type_desc": "dict", "constraints": "Layer radii, z-positions, ring gaps, z-coverage.", "required": true}
+      ],
+      "preconditions": ["Module position data is available."],
+      "guarantees": ["Output provides O(1) layer reachability queries."],
+      "family_notes": [
+        "Uses sklearn KMeans for radial ring discovery and MeanShift for z-layer detection.",
+        "This is a structural preprocessing step, not part of the per-event tracking loop."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "coordinate_rescaling_for_knn",
+      "name": "Coordinate Rescaling for kNN",
+      "description": "Project hits to mean cylinder radius, scale x,y by zscale to create elliptical neighborhoods matching the detector's natural metric. Separate transforms for cylinder and cap layers.",
+      "dejargonized_description": "Warp the coordinate system so that nearby hits in the detector sense are also nearby in the math sense, enabling standard nearest-neighbor search.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {"name": "hits", "type_desc": "NDArray[np.float64]", "constraints": "Shape (N, 3). Raw hit coordinates.", "required": true},
+        {"name": "layer_spec", "type_desc": "dict", "constraints": "Layer geometry from autodiscovery.", "required": true}
+      ],
+      "outputs": [
+        {"name": "transformed_hits", "type_desc": "NDArray[np.float64]", "constraints": "Shape (N, 2 or 3). Rescaled coordinates per layer.", "required": true}
+      ],
+      "preconditions": ["Layer geometry is available."],
+      "guarantees": ["Transformed coordinates balance azimuthal and longitudinal separation."],
+      "family_notes": [
+        "Avoids custom distance functions by warping coordinates instead — enables use of standard sklearn NearestNeighbors."
+      ],
+      "matched_primitive": "sciona.atoms.particle_tracking.detector_corrections.coordinate_rescaling_for_knn"
+    },
+    {
+      "stage_id": "per_layer_knn_search",
+      "name": "Per-Layer kNN Search",
+      "description": "Build sklearn NearestNeighbors index per detector layer on the rescaled coordinates. Query for k nearest neighbors within radius, returning candidate hit indices and distances.",
+      "dejargonized_description": "For each detector layer, find the closest hits to a predicted position using a standard nearest-neighbor search.",
+      "concept_type": "searching",
+      "inputs": [
+        {"name": "transformed_hits", "type_desc": "NDArray[np.float64]", "constraints": "Rescaled per-layer coordinates.", "required": true}
+      ],
+      "outputs": [
+        {"name": "neighbor_indices", "type_desc": "NDArray[np.int64]", "constraints": "Indices of k nearest neighbors.", "required": true},
+        {"name": "neighbor_distances", "type_desc": "NDArray[np.float64]", "constraints": "Distances to neighbors.", "required": true}
+      ],
+      "preconditions": ["Rescaled coordinates available for target layer."],
+      "guarantees": ["Returns k nearest hits within search radius."],
+      "matched_primitive": "sciona.atoms.ml.sklearn.neighbors.nearest_neighbors_fit"
+    },
+    {
+      "stage_id": "circle_from_three_points",
+      "name": "Circle From Three Points",
+      "description": "Fit a circumscribed circle through three x-y hit positions. The x,y-projection of a charged particle helix in uniform B-field is a circle. Handles degenerate cases (collinear/coincident) by constructing large tangent circles.",
+      "dejargonized_description": "Find the circle that passes through three detector hits, which represents the particle's curved path through the magnetic field.",
+      "concept_type": "geometry",
+      "inputs": [
+        {"name": "points", "type_desc": "NDArray[np.float64]", "constraints": "Shape (3, 2): three x,y positions.", "required": true}
+      ],
+      "outputs": [
+        {"name": "circle", "type_desc": "tuple[float, float, float]", "constraints": "(center_x, center_y, radius).", "required": true}
+      ],
+      "preconditions": ["Three distinct hit positions available."],
+      "guarantees": ["Returns valid circle. Degenerate triples produce large-radius fallback."],
+      "matched_primitive": "sciona.atoms.particle_tracking.helix_geometry.circle_from_three_points"
+    },
+    {
+      "stage_id": "helix_pitch_least_squares",
+      "name": "Helix Pitch Least Squares",
+      "description": "Given circle center, z-coordinate is linear in phase angle phi. Linear regression of z vs phi for three points with careful phase-unwrapping. Sum-of-squared-residuals serves as track quality signal.",
+      "dejargonized_description": "Once you know the circular path, figure out the pitch (how much the particle climbs per revolution) by fitting a line to the z-coordinates.",
+      "concept_type": "geometry",
+      "inputs": [
+        {"name": "points_3d", "type_desc": "NDArray[np.float64]", "constraints": "Shape (3, 3): three x,y,z positions.", "required": true},
+        {"name": "circle", "type_desc": "tuple[float, float, float]", "constraints": "Circle from previous stage.", "required": true}
+      ],
+      "outputs": [
+        {"name": "pitch", "type_desc": "float", "constraints": "Helix pitch (dz/dphi).", "required": true},
+        {"name": "quality", "type_desc": "float", "constraints": "Sum of squared residuals.", "required": true}
+      ],
+      "preconditions": ["Circle center is available from circle_from_three_points."],
+      "guarantees": ["Phase unwrapping prevents 2pi ambiguity errors."],
+      "matched_primitive": "sciona.atoms.particle_tracking.helix_geometry.helix_pitch_least_squares"
+    },
+    {
+      "stage_id": "helix_cylinder_intersection",
+      "name": "Helix-Cylinder Intersection",
+      "description": "Exploit that r^2 = x^2 + y^2 is a harmonic function of helix phase, so cylinder crossings reduce to solving cos(phi)=C analytically (up to 4 candidates). Pick closest forward-moving solution. Recursive miss-and-retry for lateral misses.",
+      "dejargonized_description": "Predict exactly where a helical track will cross a cylindrical detector layer, using a closed-form geometric formula.",
+      "concept_type": "geometry",
+      "inputs": [
+        {"name": "helix_params", "type_desc": "tuple", "constraints": "Center, radius, pitch, initial position.", "required": true},
+        {"name": "cylinder_radius", "type_desc": "float", "constraints": "Target detector layer radius.", "required": true}
+      ],
+      "outputs": [
+        {"name": "intersection", "type_desc": "NDArray[np.float64]", "constraints": "Predicted (x, y, z) on cylinder.", "required": true}
+      ],
+      "preconditions": ["Helix parameters from circle + pitch fit."],
+      "guarantees": ["Analytic solution — no iterative root-finding. O(1) per query."],
+      "family_notes": ["Pure analytic geometry. No iterative root-finding needed."],
+      "matched_primitive": "sciona.atoms.particle_tracking.track_matching.helix_cylinder_intersection"
+    },
+    {
+      "stage_id": "helix_cap_intersection",
+      "name": "Helix-Cap Intersection",
+      "description": "Intersect helix with planar disk detector layers (z=constant). Simpler than cylinder case but includes recursive miss-and-retry for radial gaps between cap module rings.",
+      "dejargonized_description": "Predict where a helical track will cross a flat disk-shaped detector layer.",
+      "concept_type": "geometry",
+      "inputs": [
+        {"name": "helix_params", "type_desc": "tuple", "constraints": "Same as cylinder intersection.", "required": true},
+        {"name": "cap_z", "type_desc": "float", "constraints": "Target detector layer z-position.", "required": true}
+      ],
+      "outputs": [
+        {"name": "intersection", "type_desc": "NDArray[np.float64]", "constraints": "Predicted (x, y, z) on cap.", "required": true}
+      ],
+      "preconditions": ["Helix parameters available."],
+      "guarantees": ["Handles radial gaps via recursive retry."],
+      "matched_primitive": "sciona.atoms.particle_tracking.track_matching.helix_cap_intersection"
+    },
+    {
+      "stage_id": "perturbative_helix_correction",
+      "name": "Perturbative Helix Correction",
+      "description": "Real trajectories deviate from perfect helices due to energy loss, scattering, and B-field inhomogeneity. Apply learned displacement maps (per-layer RegularGridInterpolator) scaled by q/momentum for physics-informed transfer across momenta.",
+      "dejargonized_description": "Correct the predicted hit positions for real-world imperfections using learned correction maps that scale correctly with particle speed.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "predicted_intersection", "type_desc": "NDArray[np.float64]", "constraints": "Predicted hit position.", "required": true},
+        {"name": "helix_params", "type_desc": "tuple", "constraints": "Helix parameters for scaling.", "required": true},
+        {"name": "correction_maps", "type_desc": "dict", "constraints": "Per-layer RegularGridInterpolator displacement maps.", "required": true}
+      ],
+      "outputs": [
+        {"name": "corrected_intersection", "type_desc": "NDArray[np.float64]", "constraints": "Corrected (x, y, z).", "required": true}
+      ],
+      "preconditions": ["Correction maps learned from training data."],
+      "guarantees": ["Corrections scale with q/momentum — transfer across particle types."],
+      "family_notes": [
+        "Pattern: approximate analytic model + learned residual maps. Reusable in any domain with approximate physics models.",
+        "Physics-informed scaling (q/p for caps, q/r for cylinders) is the key to transferability."
+      ],
+      "matched_primitive": "sciona.atoms.particle_tracking.detector_corrections.perturbative_cap_correction"
+    },
+    {
+      "stage_id": "helix_nearest_point_distance",
+      "name": "Helix Nearest Point (Newton/Kepler)",
+      "description": "Compute nearest point on helix to a reference point. Recognizes this is equivalent to Kepler's equation E - e*sin(E) = M. Solved via Newton's method (3 iterations).",
+      "dejargonized_description": "Find the closest point on the predicted helical track to an actual detector hit, using a connection to orbital mechanics.",
+      "concept_type": "geometry",
+      "inputs": [
+        {"name": "helix_params", "type_desc": "tuple", "constraints": "Helix center, radius, pitch.", "required": true},
+        {"name": "point", "type_desc": "NDArray[np.float64]", "constraints": "Reference point (x, y, z).", "required": true}
+      ],
+      "outputs": [
+        {"name": "nearest_point", "type_desc": "NDArray[np.float64]", "constraints": "Closest point on helix.", "required": true},
+        {"name": "distance", "type_desc": "float", "constraints": "Distance to nearest point.", "required": true}
+      ],
+      "preconditions": ["Helix parameters available."],
+      "guarantees": ["3 Newton iterations sufficient for convergence in all practical cases."],
+      "family_notes": ["Deeply non-obvious: helix-point distance reduces to Kepler's equation."],
+      "matched_primitive": "sciona.atoms.particle_tracking.helix_geometry.helix_nearest_point_distance"
+    },
+    {
+      "stage_id": "bayesian_neighbor_evaluation",
+      "name": "Bayesian Neighbor Evaluation",
+      "description": "Cut-off derived from Bayesian signal-vs-background likelihood ratio. Dense regions get tighter cuts, sparse regions get looser cuts. Adaptive thresholding based on local hit density.",
+      "dejargonized_description": "Decide whether a nearby hit is a real match or random background, using Bayesian statistics that automatically adapt to how crowded each detector region is.",
+      "concept_type": "analysis",
+      "inputs": [
+        {"name": "neighbor_distances", "type_desc": "NDArray[np.float64]", "constraints": "Distances from predicted position to candidate hits.", "required": true},
+        {"name": "background_density", "type_desc": "float", "constraints": "Per-layer background hit density.", "required": true}
+      ],
+      "outputs": [
+        {"name": "accepted", "type_desc": "NDArray[bool]", "constraints": "Boolean mask: which neighbors are signal.", "required": true}
+      ],
+      "preconditions": ["Background density estimated from training data."],
+      "guarantees": ["Adaptive: dense regions → tight cuts, sparse → loose."],
+      "family_notes": ["Generalizes to any variable-density point cloud matching problem."],
+      "matched_primitive": "sciona.atoms.particle_tracking.track_matching.bayesian_neighbor_evaluation"
+    },
+    {
+      "stage_id": "greedy_track_commit",
+      "name": "Greedy Track Commit with Overlap Resolution",
+      "description": "Process tracks in descending quality order. Discard tracks exceeding max_nloss of already-claimed hits. reserve_skipped prevents cascade pollution.",
+      "dejargonized_description": "Assign hits to tracks starting with the best-quality tracks first, resolving conflicts when two tracks claim the same hit.",
+      "concept_type": "greedy",
+      "inputs": [
+        {"name": "candidate_tracks", "type_desc": "NDArray[np.int64]", "constraints": "N tracks × M hit slots.", "required": true},
+        {"name": "quality_scores", "type_desc": "NDArray[np.float64]", "constraints": "Per-track quality from pitch fit.", "required": true}
+      ],
+      "outputs": [
+        {"name": "track_assignments", "type_desc": "NDArray[np.int64]", "constraints": "Final hit-to-track assignments.", "required": true}
+      ],
+      "preconditions": ["Candidate tracks sorted by quality."],
+      "guarantees": ["No hit assigned to more than one track."],
+      "matched_primitive": "sciona.atoms.particle_tracking.track_matching.greedy_track_commit"
+    }
+  ],
+  "edges": [
+    {"source_stage_id": "detector_geometry_autodiscovery", "target_stage_id": "coordinate_rescaling_for_knn", "output_name": "layer_spec", "input_name": "layer_spec", "source_type": "dict", "target_type": "dict", "data_kind": "geometry", "provenance": "Layer structure for coordinate transforms.", "loss_class": "preserving"},
+    {"source_stage_id": "coordinate_rescaling_for_knn", "target_stage_id": "per_layer_knn_search", "output_name": "transformed_hits", "input_name": "transformed_hits", "source_type": "NDArray", "target_type": "NDArray", "data_kind": "spatial_coordinates", "provenance": "Balanced metric for kNN.", "loss_class": "preserving"},
+    {"source_stage_id": "per_layer_knn_search", "target_stage_id": "circle_from_three_points", "output_name": "neighbor_indices", "input_name": "seed_triple", "source_type": "NDArray", "target_type": "NDArray", "data_kind": "index", "provenance": "Three-hit seed triples from kNN.", "loss_class": "preserving"},
+    {"source_stage_id": "circle_from_three_points", "target_stage_id": "helix_pitch_least_squares", "output_name": "circle", "input_name": "circle", "source_type": "tuple", "target_type": "tuple", "data_kind": "geometric_primitive", "provenance": "Circle determines helix xy-projection.", "loss_class": "preserving"},
+    {"source_stage_id": "helix_pitch_least_squares", "target_stage_id": "helix_cylinder_intersection", "output_name": "pitch", "input_name": "helix_params", "source_type": "float", "target_type": "tuple", "data_kind": "geometric_primitive", "provenance": "Complete helix parameters.", "loss_class": "preserving"},
+    {"source_stage_id": "helix_pitch_least_squares", "target_stage_id": "helix_cap_intersection", "output_name": "pitch", "input_name": "helix_params", "source_type": "float", "target_type": "tuple", "data_kind": "geometric_primitive", "provenance": "Complete helix parameters.", "loss_class": "preserving"},
+    {"source_stage_id": "helix_cylinder_intersection", "target_stage_id": "perturbative_helix_correction", "output_name": "intersection", "input_name": "predicted_intersection", "source_type": "NDArray", "target_type": "NDArray", "data_kind": "spatial_coordinates", "provenance": "Analytic prediction to be corrected.", "loss_class": "preserving"},
+    {"source_stage_id": "helix_cap_intersection", "target_stage_id": "perturbative_helix_correction", "output_name": "intersection", "input_name": "predicted_intersection", "source_type": "NDArray", "target_type": "NDArray", "data_kind": "spatial_coordinates", "provenance": "Cap intersection prediction.", "loss_class": "preserving"},
+    {"source_stage_id": "perturbative_helix_correction", "target_stage_id": "helix_nearest_point_distance", "output_name": "corrected_intersection", "input_name": "point", "source_type": "NDArray", "target_type": "NDArray", "data_kind": "spatial_coordinates", "provenance": "Corrected prediction for distance computation.", "loss_class": "preserving"},
+    {"source_stage_id": "helix_nearest_point_distance", "target_stage_id": "bayesian_neighbor_evaluation", "output_name": "distance", "input_name": "neighbor_distances", "source_type": "float", "target_type": "NDArray", "data_kind": "distance", "provenance": "Helix-point distances for Bayesian evaluation.", "loss_class": "preserving"},
+    {"source_stage_id": "bayesian_neighbor_evaluation", "target_stage_id": "greedy_track_commit", "output_name": "accepted", "input_name": "candidate_tracks", "source_type": "NDArray[bool]", "target_type": "NDArray[np.int64]", "data_kind": "track_candidates", "provenance": "Accepted neighbors form track candidates.", "loss_class": "lossy_but_allowed"}
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "5th place TrackML (score 0.86395). Pure geometry+physics, no ML. Tests binding across two repos (helix_geometry in sciona-atoms, neighbors in sciona-atoms-ml).",
+    "dejargonized_summary": "Reconstruct particle tracks by fitting helical curves through detector hits, predicting where each track goes next, and adaptively deciding which hits are real matches versus random noise.",
+    "provenance_notes": [
+      "Source: https://github.com/edwinst/trackml_solution (BSD 2-Clause)",
+      "Local analysis: kaggle-solutions/docs/analysis-trackml-particle-tracking.md",
+      "5 helix_geometry atoms ingested in sciona-atoms; 8 stages remain unbound."
+    ],
+    "uncertainty_notes": [
+      "Perturbative corrections are learned per-layer from training data and may not transfer to different detector geometries.",
+      "Bayesian neighbor evaluation assumes uniform background density per layer."
+    ],
+    "references": [
+      {
+        "title": "Amrouche et al. (2019)",
+        "citation": "The Tracking Machine Learning challenge: Accuracy phase",
+        "note": "Competition description."
+      },
+      {
+        "title": "Fruhwirth et al. (2000)",
+        "citation": "Data Analysis Techniques for High-Energy Physics",
+        "note": "Helix tracking theory."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

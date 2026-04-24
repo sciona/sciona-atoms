@@ -1,0 +1,377 @@
+{
+  "asset_id": "solution.kaggle.toxic_comment_1st",
+  "asset_version": "v1",
+  "family": "nlp_classification",
+  "paradigm": "neural_network",
+  "name": "Toxic Comment Classification 1st Place — Back-Translation Augmented BiRNN Ensemble",
+  "summary": "Multi-label toxic comment classification using back-translation augmentation, pre-trained word embeddings, bidirectional GRU/LSTM with dual pooling, and a LightGBM meta-model trained on out-of-fold neural network predictions.",
+  "dejargonized_summary": "Classify online comments into six toxicity categories by generating extra training data through round-trip translation, feeding word embeddings through bidirectional recurrent networks with parallel pooling strategies, and combining multiple models with a gradient boosting meta-learner.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "back_translation_augmentation",
+    "bidirectional_rnn",
+    "dual_pooling",
+    "multi_label_text_classification",
+    "stacking_ensemble",
+    "highly_imbalanced",
+    "multi_label",
+    "noisy_user_generated_text",
+    "short_text",
+    "content_moderation"
+  ],
+  "inputs": [
+    {
+      "name": "raw_text",
+      "type_desc": "list[str]",
+      "constraints": "List of raw comment strings in English.",
+      "required": true
+    },
+    {
+      "name": "multi_label_targets",
+      "type_desc": "NDArray[np.int64]",
+      "constraints": "Shape (N, 6). Binary matrix for 6 toxicity categories.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "class_probabilities",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N, 6). Predicted probability for each of 6 toxicity classes in [0, 1].",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Multi-label text classification with severe per-label class imbalance (some labels <5% prevalence)",
+      "Noisy, user-generated short text (comments, reviews, social media) where spelling and grammar vary widely",
+      "Moderate dataset size (10K-500K samples) where augmentation provides meaningful gains but pre-trained LLMs are not yet dominant",
+      "Multiple correlated labels where a stacking meta-model can learn inter-label dependencies"
+    ],
+    "do_not_use_when": [
+      "Long-form documents (>512 tokens) where RNN sequential processing becomes a bottleneck — transformer-based approaches are more effective",
+      "Single-label classification with balanced classes — back-translation augmentation adds complexity without proportional gain",
+      "Languages without high-quality machine translation models available for back-translation",
+      "Production systems requiring sub-10ms latency — the multi-seed NN ensemble with LightGBM stacking is inference-heavy"
+    ],
+    "key_insight": "Back-translation generates semantically equivalent but lexically diverse paraphrases, which acts as a form of invariance training: the model learns to classify based on meaning rather than surface-level word patterns. This is especially powerful for imbalanced multi-label problems because it selectively upsamples minority labels without duplicating exact examples, avoiding the overfitting trap of naive oversampling.",
+    "critical_stages": ["back_translation_augmentation", "bidirectional_rnn_features", "dual_pooling"],
+    "swappable_stages": {
+      "tokenization_and_embedding": "Any pre-trained word embedding (Word2Vec, ELMo) or subword tokenizer (BPE) works. FastText's subword handling is particularly valuable for noisy text with OOV words.",
+      "meta_model_ensemble": "Any meta-learner (logistic regression, simple averaging, learned weighted average) works. LightGBM is preferred because it can learn nonlinear combinations across seeds and architectures.",
+      "classification_head": "Standard dense + sigmoid head. Could also use attention-based pooling before the head."
+    },
+    "failure_modes": [
+      "Back-translation with low-quality MT models introduces label noise — translated text may lose or alter the toxic signal (e.g., sarcasm or slang lost in translation)",
+      "Very small datasets (<5K samples): multi-seed RNN ensemble overfits even with augmentation, and the meta-model has insufficient OOF signal to learn from",
+      "Adversarial or obfuscated text (leet-speak, Unicode tricks): character-level patterns that back-translation cannot generate and word embeddings cannot represent"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "augmentation_before_training",
+      "statement": "Back-translation augmentation must precede tokenization and model training.",
+      "rationale": "Augmented samples must be tokenized and embedded alongside original data to expand the training set before any model sees the data.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "embedding_before_rnn",
+      "statement": "Tokenization and embedding must precede the bidirectional RNN layers.",
+      "rationale": "RNN layers operate on dense embedding sequences, not raw text.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "meta_model_on_oof",
+      "statement": "The meta-model must be trained on out-of-fold predictions to avoid overfitting.",
+      "rationale": "Training the meta-model on in-fold predictions would leak information and overfit the ensemble.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "back_translation_augmentation",
+      "name": "Back-Translation Augmentation",
+      "description": "Translate English text to French, German, and Spanish, then translate back to English to generate paraphrased training samples. Applied primarily to minority-label examples to address class imbalance.",
+      "dejargonized_description": "Create extra training examples by translating comments to other languages and back, producing slightly different wordings of the same meaning, especially for rare toxicity types.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "raw_text",
+          "type_desc": "list[str]",
+          "constraints": "Original English comment strings.",
+          "required": true
+        },
+        {
+          "name": "multi_label_targets",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, 6). Labels for selecting minority samples.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "augmented_text",
+          "type_desc": "list[str]",
+          "constraints": "Original + back-translated comment strings.",
+          "required": true
+        },
+        {
+          "name": "augmented_labels",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N+M, 6). Labels including augmented samples.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Translation models or APIs are available for En→Fr, En→De, En→Es."],
+      "guarantees": ["Augmented dataset is larger than original. Label distribution is more balanced."],
+      "family_notes": [
+        "Back-translation was a key innovation for NLP data augmentation at the time (2018).",
+        "Quality depends on translation model accuracy; noisy translations can introduce label noise."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tokenization_and_embedding",
+      "name": "Tokenization and Embedding",
+      "description": "Tokenize text, pad sequences to fixed length, and map tokens to pre-trained FastText and GloVe embedding vectors. Multiple embedding sources are used to improve coverage.",
+      "dejargonized_description": "Break comments into words, convert each word into a numeric vector using pre-trained word dictionaries (FastText and GloVe), and pad all comments to the same length.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "augmented_text",
+          "type_desc": "list[str]",
+          "constraints": "Augmented comment strings.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "embedding_sequences",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, L, E). Padded embedding sequences of length L with embedding dimension E.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Pre-trained FastText and GloVe embeddings are available."],
+      "guarantees": ["All sequences padded to uniform length. OOV tokens handled via FastText subword fallback."],
+      "family_notes": [
+        "Concatenating or averaging FastText and GloVe embeddings improves vocabulary coverage.",
+        "FastText handles out-of-vocabulary words via subword embeddings, which is critical for noisy user-generated text."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "bidirectional_rnn_features",
+      "name": "Bidirectional RNN Features",
+      "description": "Pass embedding sequences through bidirectional GRU or LSTM layers with spatial dropout applied to the embedding input. Produces a sequence of hidden states capturing forward and backward context.",
+      "dejargonized_description": "Process each comment in both forward and backward direction using a recurrent neural network, with random dropout to prevent overfitting, producing a sequence of context-aware representations.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "embedding_sequences",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, L, E). Padded embedding sequences.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rnn_hidden_states",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, L, 2H). Bidirectional hidden states (forward + backward concatenated).",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input is a 3D tensor of embedding sequences."],
+      "guarantees": ["Output captures bidirectional contextual information at each timestep."],
+      "family_notes": [
+        "Spatial dropout (dropping entire embedding channels) is more effective than standard dropout for sequential models.",
+        "GRU and LSTM variants produce similar quality; both are used for ensemble diversity."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "dual_pooling",
+      "name": "Dual Pooling",
+      "description": "Apply global max-pooling and global average-pooling in parallel over the sequence dimension of the RNN hidden states, then concatenate the results into a single fixed-length vector.",
+      "dejargonized_description": "Summarize the variable-length sequence output into a fixed-size vector by taking both the maximum and average values across all positions, then combining them.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "rnn_hidden_states",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, L, 2H). Bidirectional hidden states.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pooled_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 4H). Concatenated max-pool and avg-pool vectors.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input is a 3D tensor from the RNN layer."],
+      "guarantees": ["Output is a fixed-length vector regardless of input sequence length."],
+      "family_notes": [
+        "Max-pooling captures the strongest signal for each feature dimension, while average-pooling captures overall distributional information.",
+        "The combination consistently outperforms either pooling strategy alone."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "classification_head",
+      "name": "Classification Head",
+      "description": "Dense layer with sigmoid activation to produce 6 independent probability outputs, one per toxicity category. Trained end-to-end with binary cross-entropy loss.",
+      "dejargonized_description": "A final layer that converts the pooled features into 6 probability scores, one for each type of toxicity.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "pooled_features",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 4H). Concatenated pooling output.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nn_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 6). Per-class probability predictions in [0, 1].",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input is a 2D feature matrix."],
+      "guarantees": ["Each output is an independent probability in [0, 1]. Multi-label compatible."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "meta_model_ensemble",
+      "name": "Meta-Model Ensemble",
+      "description": "Train a LightGBM meta-model on out-of-fold predictions from multiple NN seeds and architectures. The meta-model learns to optimally combine diverse base learner predictions.",
+      "dejargonized_description": "Train a gradient boosting model to combine predictions from many different neural network runs, learning which models to trust more for each type of toxicity.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "nn_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 6*K). Out-of-fold predictions from K different NN seeds/architectures.",
+          "required": true
+        },
+        {
+          "name": "multi_label_targets",
+          "type_desc": "NDArray[np.int64]",
+          "constraints": "Shape (N, 6). Ground truth labels.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "class_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 6). Final ensembled predictions in [0, 1].",
+          "required": true
+        }
+      ],
+      "preconditions": ["OOF predictions are available from cross-validation. No data leakage."],
+      "guarantees": ["Meta-model output is calibrated and generalizes better than any single base model."],
+      "family_notes": [
+        "Stacking with LightGBM as meta-learner is a common Kaggle pattern.",
+        "Using OOF predictions prevents overfitting the meta-model to training set noise."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "back_translation_augmentation",
+      "target_stage_id": "tokenization_and_embedding",
+      "output_name": "augmented_text",
+      "input_name": "augmented_text",
+      "source_type": "list[str]",
+      "target_type": "list[str]",
+      "data_kind": "text",
+      "provenance": "Augmented training text for tokenization.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tokenization_and_embedding",
+      "target_stage_id": "bidirectional_rnn_features",
+      "output_name": "embedding_sequences",
+      "input_name": "embedding_sequences",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "embedding_sequence",
+      "provenance": "Padded embedding sequences from pre-trained word vectors.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "bidirectional_rnn_features",
+      "target_stage_id": "dual_pooling",
+      "output_name": "rnn_hidden_states",
+      "input_name": "rnn_hidden_states",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "hidden_states",
+      "provenance": "Bidirectional hidden states for pooling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "dual_pooling",
+      "target_stage_id": "classification_head",
+      "output_name": "pooled_features",
+      "input_name": "pooled_features",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "feature_vector",
+      "provenance": "Fixed-length feature vector from dual pooling.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "classification_head",
+      "target_stage_id": "meta_model_ensemble",
+      "output_name": "nn_predictions",
+      "input_name": "nn_predictions",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "predictions",
+      "provenance": "Out-of-fold predictions from multiple NN seeds for meta-learning.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Toxic Comment Classification solution. Key innovations include back-translation for data augmentation, dual pooling over bidirectional RNNs, and LightGBM meta-model stacking.",
+    "dejargonized_summary": "Classify toxic comments by creating extra training data through round-trip translation, processing text with bidirectional neural networks, and combining many model predictions with a gradient boosting meta-learner.",
+    "provenance_notes": [
+      "Source: Kaggle Toxic Comment Classification Challenge, 1st place solution (2018)",
+      "Discussion: https://www.kaggle.com/competitions/jigsaw-toxic-comment-classification-challenge/discussion",
+      "Source: https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/discussion/52557",
+      "Code: https://github.com/neptune-ml/kaggle-toxic-starter"
+    ],
+    "uncertainty_notes": [
+      "Back-translation quality depends on the translation models available at the time.",
+      "The optimal number of NN seeds and architectures for the meta-model is dataset-dependent."
+    ],
+    "references": [
+      {
+        "title": "Toxic Comment 1st Place Solution",
+        "citation": "1st place solution writeup, Jigsaw Toxic Comment Classification Challenge",
+        "url": "https://www.kaggle.com/competitions/jigsaw-toxic-comment-classification-challenge/discussion/52557",
+        "note": "1st place solution description."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

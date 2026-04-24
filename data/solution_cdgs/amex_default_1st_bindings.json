@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.amex_default_1st",
+  "solution_metadata": {
+    "competition": "American Express - Default Prediction - 1st Place (2022)",
+    "placement": "1st",
+    "team": null,
+    "year": 2022,
+    "metric": null,
+    "problem_domain": "time_series_classification",
+    "source_url": "https://www.kaggle.com/competitions/amex-default-prediction/discussion/349780",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "memory_optimization",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "time_series_aggregation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "difference_features",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "model_training",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "blending",
+      "bound_artifact_fqdn": "sciona.atoms.riemannian_bci.signal_processing.ranked_prediction_blend",
+      "binding_confidence": 0.78,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 3,
+    "atoms_used_by_repo": {
+      "riemannian_bci": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "difference_features",
+      "memory_optimization",
+      "time_series_aggregation"
+    ],
+    "orchestration_resolved": [
+      "model_training"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

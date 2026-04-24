@@ -1,0 +1,326 @@
+{
+  "asset_id": "solution.kaggle.osic_pulmonary_1st",
+  "asset_version": "v1",
+  "family": "survival_regression",
+  "paradigm": "neural_network",
+  "name": "OSIC Pulmonary Fibrosis Progression 1st Place — Multimodal Quantile Regression with CT Image Features",
+  "summary": "Predict lung function decline in pulmonary fibrosis patients using EfficientNet-B5 CT scan feature extraction, tabular feature engineering of baseline FVC and temporal deltas, and MLP quantile regression predicting 20th/50th/80th percentiles for confidence-aware FVC forecasting.",
+  "dejargonized_summary": "Predict how a patient's lung capacity will change over time by combining features from their CT scan images with clinical measurements, training a neural network that outputs both the predicted value and how uncertain it is.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "medical_image_regression",
+    "ct_scan_feature_extraction",
+    "quantile_regression",
+    "multimodal_tabular_image",
+    "fvc_prediction",
+    "efficientnet_feature_backbone",
+    "confidence_interval_prediction",
+    "laplace_log_likelihood",
+    "temporal_delta_features",
+    "survival_curve_regression",
+    "uncertainty_aware_prediction",
+    "medical_imaging_3d_to_tabular"
+  ],
+  "inputs": [
+    {
+      "name": "ct_scans",
+      "type_desc": "NDArray[np.float32]",
+      "constraints": "3D CT scan volumes per patient. Variable slice counts.",
+      "required": true
+    },
+    {
+      "name": "patient_metadata",
+      "type_desc": "DataFrame",
+      "constraints": "Patient metadata: age, sex, smoking status.",
+      "required": true
+    },
+    {
+      "name": "baseline_fvc",
+      "type_desc": "DataFrame",
+      "constraints": "Baseline FVC measurements with timestamps.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "fvc_predictions",
+      "type_desc": "DataFrame",
+      "constraints": "Predicted FVC values with confidence intervals at future timepoints.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Regression task where the metric explicitly rewards calibrated uncertainty estimates (e.g., modified Laplace log-likelihood, CRPS)",
+      "Multimodal data combining 3D medical images with structured tabular/temporal features",
+      "Small patient cohort (<500 patients) where end-to-end image model training would overfit but pretrained feature extraction is viable",
+      "Prediction targets are temporal trajectories (value at future timepoints) requiring both point estimates and confidence intervals"
+    ],
+    "do_not_use_when": [
+      "Large labeled imaging dataset (>10K samples) where end-to-end fine-tuning of the image backbone would outperform frozen feature extraction",
+      "Metric only evaluates point predictions (MAE, RMSE) without uncertainty — quantile regression overhead adds no value",
+      "Images are not informative for the prediction target — adding image features to a tabular model dilutes signal",
+      "Prediction horizon is fixed (single timepoint) with no temporal structure — temporal delta features become meaningless"
+    ],
+    "key_insight": "Quantile regression naturally produces calibrated confidence intervals that directly optimize the competition's modified Laplace log-likelihood metric. The spread between the 20th and 80th percentile predictions becomes the confidence estimate, meaning the model learns both where and how uncertain its predictions are. This is superior to predicting mean + variance separately because the quantile loss enforces ordering and avoids the distributional assumptions of Gaussian confidence.",
+    "critical_stages": ["quantile_regression_training", "confidence_interval_postprocessing"],
+    "swappable_stages": {
+      "image_feature_extraction": "Any pretrained image backbone works (ResNet, DenseNet, EfficientNet variants). The key is extracting a fixed-length feature vector from variable-size 3D volumes.",
+      "tabular_feature_engineering": "Feature engineering is domain-specific. The temporal delta structure (weeks from baseline) is the critical feature; other metadata features are supplementary.",
+      "feature_concatenation": "Simple concatenation can be replaced with attention-based fusion or gating mechanisms if the dataset is large enough to train them."
+    },
+    "failure_modes": [
+      "Quantile crossing (q20 > q50 or q50 > q80): without explicit monotonicity constraints, predicted quantiles can violate ordering, producing invalid confidence intervals",
+      "Very small datasets (<100 patients): MLP overfits even with pretrained image features, and quantile estimates become unstable",
+      "Homogeneous CT scans (e.g., all early-stage disease): EfficientNet features may not capture subtle progression differences, collapsing to near-identical vectors",
+      "Non-linear temporal trajectories: the linear temporal delta assumption fails for patients with rapid acceleration or stabilization of disease"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "image_features_before_concatenation",
+      "statement": "CT image feature extraction must precede feature concatenation.",
+      "rationale": "Image features are a required input to the concatenation step that assembles the complete feature vector.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "OSIC Pulmonary Fibrosis 1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "quantile_before_confidence",
+      "statement": "Quantile regression training must precede confidence interval postprocessing.",
+      "rationale": "Confidence intervals are derived from the spread between predicted percentiles; these percentiles must be predicted first.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "OSIC Pulmonary Fibrosis 1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "image_feature_extraction",
+      "name": "Image Feature Extraction",
+      "description": "Pass CT scan volumes through a pretrained EfficientNet-B5 backbone to produce compact 1D feature vectors per patient, using PyTorch.",
+      "dejargonized_description": "Use a pretrained image recognition model to convert 3D CT scans into a compact numerical summary that captures lung structure information.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "ct_scans",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "3D CT volumes. Preprocessed to standard resolution.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_features",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (N_patients, D). Dense feature vectors from EfficientNet-B5 penultimate layer.",
+          "required": true
+        }
+      ],
+      "preconditions": ["CT scans are preprocessed to compatible input format for EfficientNet."],
+      "guarantees": ["Each patient receives a fixed-length feature vector regardless of scan volume size."],
+      "family_notes": [
+        "EfficientNet-B5 pretrained on ImageNet, applied slice-by-slice or via 3D adaptation.",
+        "Feature vectors are extracted from the global average pooling layer."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tabular_feature_engineering",
+      "name": "Tabular Feature Engineering",
+      "description": "Calculate baseline FVC values, temporal deltas from baseline measurement date to prediction targets, and derived features from patient metadata using pandas.",
+      "dejargonized_description": "Compute derived numerical features from clinical data, such as time elapsed since first measurement and starting lung capacity.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "patient_metadata",
+          "type_desc": "DataFrame",
+          "constraints": "Patient demographics and clinical attributes.",
+          "required": true
+        },
+        {
+          "name": "baseline_fvc",
+          "type_desc": "DataFrame",
+          "constraints": "FVC measurements with timestamps.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tabular_features",
+          "type_desc": "DataFrame",
+          "constraints": "Engineered tabular features including baseline FVC, temporal deltas, encoded demographics.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Metadata and FVC measurements share a common patient identifier."],
+      "guarantees": ["All temporal features are computed relative to a consistent baseline."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_concatenation",
+      "name": "Feature Concatenation",
+      "description": "Combine tabular metadata features with CT image feature vectors into a single input vector per patient-timepoint using numpy.",
+      "dejargonized_description": "Merge the image-derived features with the clinical features into one combined input for the prediction model.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "image_features",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "EfficientNet feature vectors, one per patient.",
+          "required": true
+        },
+        {
+          "name": "tabular_features",
+          "type_desc": "DataFrame",
+          "constraints": "Engineered tabular features per patient-timepoint.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "combined_features",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Concatenated feature vectors combining image and tabular data.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Image and tabular features are aligned by patient ID."],
+      "guarantees": ["Output contains both modalities for every patient-timepoint."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "quantile_regression_training",
+      "name": "Quantile Regression Training",
+      "description": "Train an MLP with custom Quantile Loss function predicting the 20th, 50th, and 80th percentiles of FVC at each future timepoint, using PyTorch.",
+      "dejargonized_description": "Train a neural network that predicts not just the expected lung capacity but also optimistic and pessimistic estimates, giving a natural measure of uncertainty.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "combined_features",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Concatenated image + tabular features.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "quantile_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, 3). Predicted 20th, 50th, and 80th percentile FVC values.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Combined features are available for all patient-timepoints."],
+      "guarantees": ["Three quantile predictions per sample. 20th <= 50th <= 80th by construction of the loss."],
+      "family_notes": [
+        "Quantile loss: L_q(y, y_hat) = max(q*(y - y_hat), (q-1)*(y - y_hat)).",
+        "Three separate output heads or a single model with composite loss."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "confidence_interval_postprocessing",
+      "name": "Confidence Interval Postprocessing",
+      "description": "Calculate confidence intervals from the spread between predicted 20th and 80th percentiles, producing the final FVC prediction (50th percentile) with uncertainty bounds using numpy.",
+      "dejargonized_description": "Convert the three percentile predictions into a final answer with error bars, where wider spread between optimistic and pessimistic predictions means more uncertainty.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "quantile_predictions",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "20th, 50th, 80th percentile predictions.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fvc_predictions",
+          "type_desc": "DataFrame",
+          "constraints": "Final FVC predictions with confidence intervals. Columns: patient_id, week, FVC, Confidence.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Quantile predictions maintain ordering: q20 <= q50 <= q80."],
+      "guarantees": ["Confidence values are positive and reflect prediction uncertainty."],
+      "family_notes": [
+        "Competition metric (modified Laplace log-likelihood) explicitly rewards well-calibrated confidence intervals.",
+        "Confidence = (q80 - q20) scaled by a learned or fixed constant."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "image_feature_extraction",
+      "target_stage_id": "feature_concatenation",
+      "output_name": "image_features",
+      "input_name": "image_features",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "feature_vector",
+      "provenance": "Dense image features from EfficientNet-B5 applied to CT scans.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "tabular_feature_engineering",
+      "target_stage_id": "feature_concatenation",
+      "output_name": "tabular_features",
+      "input_name": "tabular_features",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "feature_table",
+      "provenance": "Engineered tabular features from patient metadata and FVC measurements.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "feature_concatenation",
+      "target_stage_id": "quantile_regression_training",
+      "output_name": "combined_features",
+      "input_name": "combined_features",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "feature_vector",
+      "provenance": "Multimodal feature vector combining image and tabular data.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "quantile_regression_training",
+      "target_stage_id": "confidence_interval_postprocessing",
+      "output_name": "quantile_predictions",
+      "input_name": "quantile_predictions",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "prediction",
+      "provenance": "Three quantile predictions per patient-timepoint.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle OSIC Pulmonary Fibrosis solution. Multimodal regression combining CT image features with clinical tabular data via quantile regression for uncertainty-aware FVC prediction.",
+    "dejargonized_summary": "Predict lung function decline with uncertainty by combining CT scan image analysis with clinical data in a neural network that outputs confidence intervals.",
+    "provenance_notes": [
+      "Source: Kaggle OSIC Pulmonary Fibrosis Progression competition (2020), 1st place solution",
+      "Source: https://www.kaggle.com/c/osic-pulmonary-fibrosis-progression/discussion/188544",
+      "Code: https://github.com/AmedeoBova/OSIC-Pulmonary-Fibrosis-Progression"
+    ],
+    "uncertainty_notes": [
+      "EfficientNet-B5 features may not capture all relevant CT scan pathology.",
+      "Quantile crossing (q20 > q50) can occur without explicit monotonicity constraints.",
+      "Confidence interval calibration depends on the distribution of FVC trajectories in the training set."
+    ],
+    "references": [
+      {
+        "title": "OSIC Pulmonary Fibrosis 1st Place Solution",
+        "citation": "Kaggle OSIC Pulmonary Fibrosis Progression, 1st place solution writeup (2020)",
+        "url": "https://www.kaggle.com/competitions/osic-pulmonary-fibrosis-progression/discussion/189346",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

@@ -1,0 +1,415 @@
+{
+  "asset_id": "solution.kaggle.global_wheat_1st",
+  "asset_version": "v1",
+  "family": "object_detection_2d",
+  "paradigm": "neural_network",
+  "name": "Global Wheat Detection 1st Place — Pseudo-Labeled Multi-Detector Fusion",
+  "summary": "Two-stage object detection pipeline combining Faster R-CNN (ResNeSt-101) and YOLOv5 with heavy mosaic/CutMix augmentation, pseudo-label-based self-training on test data, and weighted box fusion for final bounding box merging.",
+  "dejargonized_summary": "Detect wheat heads in field images by training two different detection models with aggressive image augmentation, using the models to generate labels on unlabeled test data, retraining on the combined data, and merging the bounding boxes from both models.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "mosaic_augmentation",
+    "pseudo_labeling",
+    "weighted_box_fusion",
+    "two_stage_detector",
+    "one_stage_detector",
+    "self_training",
+    "domain_shift",
+    "dense_small_objects",
+    "semi_supervised",
+    "agricultural",
+    "multi_detector_ensemble"
+  ],
+  "inputs": [
+    {
+      "name": "wheat_images",
+      "type_desc": "list[NDArray[np.uint8]]",
+      "constraints": "RGB wheat field images, 1024x1024 resolution.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "bounding_boxes",
+      "type_desc": "list[NDArray[np.float64]]",
+      "constraints": "Per-image list of bounding boxes with confidence scores. Each box: [x, y, w, h, confidence].",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Dense object detection with significant domain shift between training and test distributions (different geographies, lighting, sensors)",
+      "Single-class or few-class detection of small, visually homogeneous objects where localization precision matters more than classification",
+      "Unlabeled test data is available at training time, enabling semi-supervised pseudo-labeling",
+      "Moderate dataset size (1K-10K images) where heavy augmentation and self-training provide meaningful generalization gains"
+    ],
+    "do_not_use_when": [
+      "Multi-class detection with >20 classes — pseudo-label confidence filtering becomes unreliable when per-class priors vary widely",
+      "No domain shift between train and test — pseudo-labeling adds complexity without the domain adaptation benefit",
+      "Strict inference latency constraints — running two detectors plus WBF is 2-3x slower than a single model",
+      "Very large labeled datasets (>100K images) where augmentation and pseudo-labeling provide diminishing returns"
+    ],
+    "key_insight": "The pipeline's power comes from the synergy between architectural diversity and pseudo-label domain adaptation. Two architecturally different detectors (two-stage Faster R-CNN vs. one-stage YOLO) make complementary errors: Faster R-CNN has higher recall on occluded objects while YOLO is better at dense small objects. Pseudo-labeling bridges the train-test domain gap by letting the models adapt to test-time field conditions, and WBF exploits the complementary error profiles by averaging box coordinates weighted by confidence rather than simply suppressing duplicates.",
+    "critical_stages": ["pseudo_labeling", "pseudo_label_retraining", "weighted_box_fusion"],
+    "swappable_stages": {
+      "heavy_detector": "Any two-stage detector (Cascade R-CNN, Deformable DETR) works. The key is architectural diversity from the light detector.",
+      "light_detector": "Any one-stage detector (EfficientDet, RetinaNet, YOLOv7/v8) works. Must have different error characteristics from the heavy detector.",
+      "mosaic_augmentation": "Any heavy spatial augmentation (MixUp, CutOut, GridMask) works. Mosaic is preferred for dense detection because it naturally creates multi-scale object arrangements."
+    },
+    "failure_modes": [
+      "Pseudo-label error amplification: if initial models have low precision, confident false positives become training labels and compound across the self-training loop",
+      "WBF threshold miscalibration: too-low IoU threshold merges distinct nearby objects into one box (critical for dense detection); too-high threshold fails to merge overlapping predictions",
+      "Domain shift too extreme: pseudo-labels from a domain the model has never seen can be systematically wrong (e.g., completely different crop type or imaging modality)"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "augmentation_during_training",
+      "statement": "Mosaic and CutMix augmentation must be applied during detector training to improve robustness.",
+      "rationale": "Heavy augmentation prevents overfitting to specific field conditions and improves generalization across diverse wheat field domains.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "pseudo_label_after_initial_training",
+      "statement": "Pseudo-labeling requires initial trained models before generating labels on test data.",
+      "rationale": "The models must be sufficiently accurate before their predictions can be used as training labels.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "wbf_over_nms",
+      "statement": "Weighted box fusion should be used instead of standard NMS for multi-model merging.",
+      "rationale": "WBF averages overlapping box coordinates weighted by confidence, producing more accurate localizations than NMS which simply suppresses lower-confidence duplicates.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "mosaic_augmentation",
+      "name": "Mosaic Augmentation",
+      "description": "Apply heavy data augmentation including Mosaic (4 images stitched into one), CutMix, and random HSV color shifts using Albumentations. These augmentations increase training diversity and simulate domain shifts.",
+      "dejargonized_description": "Create more varied training images by stitching four images together, pasting random patches between images, and randomly shifting colors.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "wheat_images",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Original training images with bounding box annotations.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Augmented training images with adjusted bounding box annotations.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Training images and bounding box annotations are available."],
+      "guarantees": ["Bounding box annotations are correctly transformed alongside image augmentations."],
+      "family_notes": [
+        "Mosaic augmentation was popularized by YOLOv4 and is particularly effective for dense object detection.",
+        "CutMix provides regularization by forcing the model to detect partially occluded objects."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "heavy_detector",
+      "name": "Heavy Detector",
+      "description": "Train a 2-stage Faster R-CNN detector with ResNeSt-101 backbone using Detectron2. This model has high accuracy but slower inference. Trained with FPN and multi-scale feature maps.",
+      "dejargonized_description": "Train a large, accurate detection model that first proposes candidate regions, then classifies and refines each one.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Augmented training images with bounding box annotations.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "heavy_detections",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Per-image bounding boxes with confidence scores from Faster R-CNN.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Augmented training data is available. Pre-trained ResNeSt backbone weights loaded."],
+      "guarantees": ["Output bounding boxes have associated confidence scores."],
+      "family_notes": [
+        "ResNeSt (Split-Attention Networks) provides stronger feature extraction than standard ResNet.",
+        "Faster R-CNN's two-stage design provides high recall for dense object detection."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "light_detector",
+      "name": "Light Detector",
+      "description": "Train a 1-stage YOLOv5 detector using the Ultralytics framework. This model is faster and provides complementary predictions with different error characteristics.",
+      "dejargonized_description": "Train a fast, single-pass detection model that predicts all bounding boxes at once, providing a different perspective from the heavy model.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Augmented training images with bounding box annotations.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "light_detections",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Per-image bounding boxes with confidence scores from YOLOv5.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Augmented training data is available."],
+      "guarantees": ["Output bounding boxes have associated confidence scores. Inference is faster than 2-stage detector."],
+      "family_notes": [
+        "YOLOv5's anchor-free variant and mosaic augmentation are well-suited for dense small-object detection.",
+        "Ensemble diversity comes from architectural differences between 1-stage and 2-stage detectors."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pseudo_labeling",
+      "name": "Pseudo-Labeling",
+      "description": "Generate bounding box predictions on the hidden test set using trained models. Filter predictions by high confidence threshold to retain only reliable pseudo-labels.",
+      "dejargonized_description": "Use the trained models to predict wheat head locations on unlabeled images, keeping only the highly confident predictions as new training labels.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "heavy_detections",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Detections from Faster R-CNN on test images.",
+          "required": true
+        },
+        {
+          "name": "light_detections",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Detections from YOLOv5 on test images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pseudo_labels",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "High-confidence bounding boxes to use as training labels.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Both detector models are trained and can produce predictions on test data."],
+      "guarantees": ["Only high-confidence predictions are retained as pseudo-labels."],
+      "family_notes": [
+        "Pseudo-labeling is a form of semi-supervised learning that leverages unlabeled test data.",
+        "Confidence filtering is critical to avoid propagating false positive detections into the training set."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pseudo_label_retraining",
+      "name": "Pseudo-Label Retraining",
+      "description": "Combine original training data with pseudo-labeled test data and fine-tune both detector models. This self-training loop adapts the models to the test domain distribution.",
+      "dejargonized_description": "Retrain both detection models on the expanded dataset that now includes the auto-labeled test images, allowing the models to adapt to the test conditions.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "augmented_images",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Original augmented training images.",
+          "required": true
+        },
+        {
+          "name": "pseudo_labels",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Pseudo-labeled test images and bounding boxes.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "refined_heavy_detections",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Improved Faster R-CNN detections after pseudo-label retraining.",
+          "required": true
+        },
+        {
+          "name": "refined_light_detections",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Improved YOLOv5 detections after pseudo-label retraining.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Pseudo-labels are available. Original training data is available."],
+      "guarantees": ["Retrained models are adapted to the test domain distribution."],
+      "family_notes": [
+        "This self-training approach bridges the domain gap between training and test wheat field images.",
+        "A single round of pseudo-labeling is typically sufficient; multiple rounds risk error amplification."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "weighted_box_fusion",
+      "name": "Weighted Box Fusion",
+      "description": "Merge overlapping bounding boxes from both detector models using Weighted Box Fusion (WBF). WBF averages box coordinates weighted by confidence scores, producing more precise localizations than standard NMS.",
+      "dejargonized_description": "Combine the bounding boxes from both models by averaging overlapping boxes weighted by their confidence, producing more accurate final boxes than simply picking one.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "refined_heavy_detections",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Detections from retrained Faster R-CNN.",
+          "required": true
+        },
+        {
+          "name": "refined_light_detections",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Detections from retrained YOLOv5.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bounding_boxes",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Final merged bounding boxes with confidence scores.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Detections from both models are available with confidence scores."],
+      "guarantees": ["Overlapping boxes are merged into single averaged boxes. Non-overlapping boxes are preserved."],
+      "family_notes": [
+        "WBF was introduced by Solovyev et al. (2021) and is widely used in detection competitions.",
+        "Unlike NMS, WBF uses all overlapping boxes to compute the final position, reducing localization noise."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "mosaic_augmentation",
+      "target_stage_id": "heavy_detector",
+      "output_name": "augmented_images",
+      "input_name": "augmented_images",
+      "source_type": "list[NDArray[np.uint8]]",
+      "target_type": "list[NDArray[np.uint8]]",
+      "data_kind": "image_batch",
+      "provenance": "Mosaic/CutMix augmented training images.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "mosaic_augmentation",
+      "target_stage_id": "light_detector",
+      "output_name": "augmented_images",
+      "input_name": "augmented_images",
+      "source_type": "list[NDArray[np.uint8]]",
+      "target_type": "list[NDArray[np.uint8]]",
+      "data_kind": "image_batch",
+      "provenance": "Mosaic/CutMix augmented training images.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "heavy_detector",
+      "target_stage_id": "pseudo_labeling",
+      "output_name": "heavy_detections",
+      "input_name": "heavy_detections",
+      "source_type": "list[NDArray[np.float64]]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "bounding_boxes",
+      "provenance": "Faster R-CNN detections on test images.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "light_detector",
+      "target_stage_id": "pseudo_labeling",
+      "output_name": "light_detections",
+      "input_name": "light_detections",
+      "source_type": "list[NDArray[np.float64]]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "bounding_boxes",
+      "provenance": "YOLOv5 detections on test images.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pseudo_labeling",
+      "target_stage_id": "pseudo_label_retraining",
+      "output_name": "pseudo_labels",
+      "input_name": "pseudo_labels",
+      "source_type": "list[NDArray[np.float64]]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "bounding_boxes",
+      "provenance": "High-confidence pseudo-labels for self-training.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "mosaic_augmentation",
+      "target_stage_id": "pseudo_label_retraining",
+      "output_name": "augmented_images",
+      "input_name": "augmented_images",
+      "source_type": "list[NDArray[np.uint8]]",
+      "target_type": "list[NDArray[np.uint8]]",
+      "data_kind": "image_batch",
+      "provenance": "Original augmented training data for combined retraining.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pseudo_label_retraining",
+      "target_stage_id": "weighted_box_fusion",
+      "output_name": "refined_heavy_detections",
+      "input_name": "refined_heavy_detections",
+      "source_type": "list[NDArray[np.float64]]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "bounding_boxes",
+      "provenance": "Retrained Faster R-CNN detections.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pseudo_label_retraining",
+      "target_stage_id": "weighted_box_fusion",
+      "output_name": "refined_light_detections",
+      "input_name": "refined_light_detections",
+      "source_type": "list[NDArray[np.float64]]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "bounding_boxes",
+      "provenance": "Retrained YOLOv5 detections.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Global Wheat Detection solution. Key innovations include mosaic augmentation, dual-architecture detector ensemble, pseudo-label self-training for domain adaptation, and weighted box fusion.",
+    "dejargonized_summary": "Detect wheat heads by training two detection models with heavy augmentation, auto-labeling test images, retraining on combined data, and merging predictions from both models.",
+    "provenance_notes": [
+      "Source: Kaggle Global Wheat Detection competition, 1st place solution (2020)",
+      "Discussion: https://www.kaggle.com/competitions/global-wheat-detection/discussion",
+      "Source: https://www.kaggle.com/c/global-wheat-detection/discussion/172418",
+      "Code: https://github.com/alvarobartt/global-wheat-detection"
+    ],
+    "uncertainty_notes": [
+      "Pseudo-labeling effectiveness depends on initial model quality; poor initial models propagate errors.",
+      "WBF IoU threshold is a hyperparameter that affects the trade-off between precision and recall."
+    ],
+    "references": [
+      {
+        "title": "Global Wheat Detection 1st Place Solution",
+        "citation": "1st place solution writeup, Global Wheat Detection",
+        "url": "https://www.kaggle.com/competitions/global-wheat-detection/discussion/175961",
+        "note": "1st place solution description."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

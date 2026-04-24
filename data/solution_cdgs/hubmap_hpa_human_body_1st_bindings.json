@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.hubmap_hpa_human_body_1st",
+  "solution_metadata": {
+    "competition": "HuBMAP + HPA - Hacking the Human Body - 1st Place (2022)",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "semantic_segmentation",
+    "source_url": "https://www.kaggle.com/competitions/hubmap-organ-segmentation/discussion/352994",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "stain_translation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "pseudo_labeling",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.semi_supervised.self_training_select_pseudo_labels",
+      "binding_confidence": 0.74,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "active",
+      "action_class": "gate_or_validate",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "multi_organ_backbone",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "organ_specific_thresholds",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "A plausible related atom exists, but deterministic keyword retrieval did not rank it reliably; leave this stage as orchestration until embedding-backed binding or a more specific atom exists."
+      }
+    },
+    {
+      "stage_id": "contour_smoothing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_fast_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "ml": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "contour_smoothing",
+      "stain_translation"
+    ],
+    "orchestration_resolved": [
+      "multi_organ_backbone",
+      "organ_specific_thresholds"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

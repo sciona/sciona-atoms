@@ -1,0 +1,306 @@
+{
+  "asset_id": "solution.kaggle.amex_default_1st",
+  "asset_version": "v1",
+  "family": "time_series_classification",
+  "paradigm": "optimization",
+  "name": "American Express - Default Prediction - 1st Place (2022) - Pipeline Template",
+  "summary": "Tabular classification (Panel data / Time series) solution template for American Express - Default Prediction - 1st Place (2022), modeled as a 5-stage deterministic pipeline: Memory optimization, Time series aggregation, Difference features, Model training, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by American Express - Default Prediction - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "lightgbm",
+    "xgboost",
+    "catboost",
+    "rag",
+    "tabular",
+    "classification",
+    "panel",
+    "series"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Tabular classification (Panel data / Time series) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Tabular classification (Panel data / Time series).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Memory optimization creates the representation needed by Blending, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "memory_optimization",
+      "time_series_aggregation"
+    ],
+    "swappable_stages": {
+      "blending": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/amex-default-prediction/discussion/349780"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/amex-default-prediction/discussion/349780"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "memory_optimization",
+      "name": "Memory optimization",
+      "description": "downcast float64 data to float16 and int8 formats to handle massive data size (pandas/numpy)",
+      "dejargonized_description": "This stage downcast float64 data to float16 and int8 formats to handle massive data size (pandas/numpy).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for American Express - Default Prediction - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "memory_optimization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "time_series_aggregation",
+      "name": "Time series aggregation",
+      "description": "group customer statement histories to calculate mean, std, min, max, and last-value features per column (pandas)",
+      "dejargonized_description": "This stage group customer statement histories to calculate mean, std, min, max, and last-value features per column (pandas).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "time_series_aggregation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "time_series_aggregation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "difference_features",
+      "name": "Difference features",
+      "description": "calculate the delta between the last statement and the second-to-last statement to capture momentum (pandas)",
+      "dejargonized_description": "This stage calculate the delta between the last statement and the second-to-last statement to capture momentum (pandas).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "difference_features_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "difference_features_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "model_training",
+      "name": "Model training",
+      "description": "train LightGBM, XGBoost, and CatBoost models on the flattened 1000+ feature array",
+      "dejargonized_description": "This stage train LightGBM, XGBoost, and CatBoost models on the flattened 1000+ feature array.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "model_training_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model_training_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "blending",
+      "name": "Blending",
+      "description": "compute a weighted rank average of predictions across the tree-based models (scipy)",
+      "dejargonized_description": "This stage compute a weighted rank average of predictions across the tree-based models (scipy).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "blending_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "memory_optimization",
+      "target_stage_id": "time_series_aggregation",
+      "output_name": "memory_optimization_output",
+      "input_name": "time_series_aggregation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Memory optimization output is consumed by Time series aggregation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "time_series_aggregation",
+      "target_stage_id": "difference_features",
+      "output_name": "time_series_aggregation_output",
+      "input_name": "difference_features_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Time series aggregation output is consumed by Difference features.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "difference_features",
+      "target_stage_id": "model_training",
+      "output_name": "difference_features_output",
+      "input_name": "model_training_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Difference features output is consumed by Model training.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "model_training",
+      "target_stage_id": "blending",
+      "output_name": "model_training_output",
+      "input_name": "blending_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Model training output is consumed by Blending.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Tabular classification (Panel data / Time series).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_25-50.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/amex-default-prediction/discussion/349780",
+      "Code URL: writeup only",
+      "Standard tools: pandas, numpy, LightGBM, XGBoost, CatBoost"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "American Express - Default Prediction - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/amex-default-prediction/discussion/349780",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

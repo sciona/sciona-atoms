@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.rsna_cervical_spine_1st",
+  "solution_metadata": {
+    "competition": "RSNA Cervical Spine Fracture Detection - 1st Place (2022)",
+    "placement": "1st",
+    "team": null,
+    "year": 2022,
+    "metric": null,
+    "problem_domain": "semantic_segmentation",
+    "source_url": "https://www.kaggle.com/competitions/rsna-2022-cervical-spine-fracture-detection/writeups/qishen-ha-1st-place-solution",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "voxel_preprocessing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "3d_semantic_segmentation",
+      "bound_artifact_fqdn": "sciona.atoms.dl.detection.coordinate_aware_3d_unet",
+      "binding_confidence": 0.74,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "mask_generation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "2_5d_cropping",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "sequential_classification",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "multi_objective_blending",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "dl": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "2_5d_cropping",
+      "voxel_preprocessing"
+    ],
+    "orchestration_resolved": [
+      "mask_generation",
+      "multi_objective_blending",
+      "sequential_classification"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

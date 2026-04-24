@@ -1,0 +1,305 @@
+{
+  "asset_id": "solution.kaggle.cassava_leaf_1st",
+  "asset_version": "v1",
+  "family": "structured_prediction",
+  "paradigm": "loss_function",
+  "name": "Cassava Leaf Disease Classification - 1st Place (2021) - Pipeline Template",
+  "summary": "Image classification (Noisy labels) solution template for Cassava Leaf Disease Classification - 1st Place (2021), modeled as a 5-stage deterministic pipeline: Image augmentation, Model backbone, Robust Loss, Pseudo-labeling, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by Cassava Leaf Disease Classification - 1st Place (2021): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "transformer",
+    "rag",
+    "test_time_augmentation",
+    "image",
+    "classification",
+    "noisy",
+    "labels"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Image classification (Noisy labels) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Image classification (Noisy labels).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Image augmentation creates the representation needed by Ensembling, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "image_augmentation",
+      "model_backbone"
+    ],
+    "swappable_stages": {
+      "ensembling": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/cassava-leaf-disease-classification/discussion/218741"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/cassava-leaf-disease-classification/discussion/218741"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "image_augmentation",
+      "name": "Image augmentation",
+      "description": "heavy random cropping, flipping, and CutMix to prevent overfitting (Albumentations)",
+      "dejargonized_description": "This stage heavy random cropping, flipping, and CutMix to prevent overfitting (Albumentations).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Cassava Leaf Disease Classification - 1st Place (2021).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_augmentation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "model_backbone",
+      "name": "Model backbone",
+      "description": "train Vision Transformers (ViT) and ResNeXt models (PyTorch/HuggingFace)",
+      "dejargonized_description": "This stage train Vision Transformers (ViT) and ResNeXt models (PyTorch/HuggingFace).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "model_backbone_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model_backbone_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "robust_loss",
+      "name": "Robust Loss",
+      "description": "utilize Bi-Tempered Logistic Loss and Label Smoothing to prevent the model from confidently fitting the mislabeled dataset images",
+      "dejargonized_description": "This stage utilize Bi-Tempered Logistic Loss and Label Smoothing to prevent the model from confidently fitting the mislabeled dataset images.",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "robust_loss_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "robust_loss_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pseudo_labeling",
+      "name": "Pseudo-labeling",
+      "description": "generate soft labels for the 2019 dataset and merge with the 2020 dataset for retraining",
+      "dejargonized_description": "This stage generate soft labels for the 2019 dataset and merge with the 2020 dataset for retraining.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "pseudo_labeling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pseudo_labeling_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "ensembling",
+      "name": "Ensembling",
+      "description": "average predictions across 5-folds using Test Time Augmentation (TTA) (numpy)",
+      "dejargonized_description": "This stage average predictions across 5-folds using Test Time Augmentation (TTA) (numpy).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "ensembling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "image_augmentation",
+      "target_stage_id": "model_backbone",
+      "output_name": "image_augmentation_output",
+      "input_name": "model_backbone_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Image augmentation output is consumed by Model backbone.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "model_backbone",
+      "target_stage_id": "robust_loss",
+      "output_name": "model_backbone_output",
+      "input_name": "robust_loss_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Model backbone output is consumed by Robust Loss.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "robust_loss",
+      "target_stage_id": "pseudo_labeling",
+      "output_name": "robust_loss_output",
+      "input_name": "pseudo_labeling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Robust Loss output is consumed by Pseudo-labeling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pseudo_labeling",
+      "target_stage_id": "ensembling",
+      "output_name": "pseudo_labeling_output",
+      "input_name": "ensembling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Pseudo-labeling output is consumed by Ensembling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Image classification (Noisy labels).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_25-50.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/cassava-leaf-disease-classification/discussion/218741",
+      "Code URL: writeup only",
+      "Standard tools: Albumentations, PyTorch, HuggingFace, numpy"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Cassava Leaf Disease Classification - 1st Place (2021) solution writeup",
+        "citation": "https://www.kaggle.com/c/cassava-leaf-disease-classification/discussion/218741",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

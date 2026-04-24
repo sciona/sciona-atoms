@@ -1,0 +1,313 @@
+{
+  "asset_id": "solution.kaggle.facebook_image_similarity_1st",
+  "asset_version": "v1",
+  "family": "multimodal_retrieval",
+  "paradigm": "optimization",
+  "name": "Facebook AI Image Similarity Challenge - 1st Place (2021) - Pipeline Template",
+  "summary": "Metric Learning / Image Retrieval solution template for Facebook AI Image Similarity Challenge - 1st Place (2021), modeled as a 5-stage deterministic pipeline: Contrastive Augmentation, Backbone architecture, FAISS Indexing, Database-Side Augmentation (Query Expansion), and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Facebook AI Image Similarity Challenge - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "faiss",
+    "arcface",
+    "metric_learning",
+    "transformer",
+    "metric",
+    "learning",
+    "image",
+    "retrieval",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Metric Learning / Image Retrieval task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Metric Learning / Image Retrieval.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Contrastive Augmentation creates the representation needed by Spatial Verification, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "contrastive_augmentation",
+      "backbone_architecture"
+    ],
+    "swappable_stages": {
+      "spatial_verification": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://github.com/lyakaap/ISC2021-1st-place"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://github.com/lyakaap/ISC2021-1st-place"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "contrastive_augmentation",
+      "name": "Contrastive Augmentation",
+      "description": "heavily apply cropping, color jitter, blur, and overlaid text/emojis during training to mimic highly manipulated social media images (Albumentations)",
+      "dejargonized_description": "This stage heavily apply cropping, color jitter, blur, and overlaid text/emojis during training to mimic highly manipulated social media images (Albumentations).",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Facebook AI Image Similarity Challenge - 1st Place (2021).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "contrastive_augmentation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "backbone_architecture",
+      "name": "Backbone architecture",
+      "description": "train a massive EfficientNet-V2 / Swin Transformer architecture using ArcFace loss and GeM pooling to output robust 256D representations (PyTorch)",
+      "dejargonized_description": "This stage train a massive EfficientNet-V2 / Swin Transformer architecture using ArcFace loss and GeM pooling to output robust 256D representations (PyTorch).",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "backbone_architecture_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "backbone_architecture_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "faiss_indexing",
+      "name": "FAISS Indexing",
+      "description": "project all 1 million reference images into the 256D embedding space and load them into an exact L2 distance FAISS index",
+      "dejargonized_description": "This stage project all 1 million reference images into the 256D embedding space and load them into an exact L2 distance FAISS index.",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "faiss_indexing_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "faiss_indexing_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "database_side_augmentation_query_expansion",
+      "name": "Database-Side Augmentation (Query Expansion)",
+      "description": "query the database using the test image; extract the top 3 results, average their embeddings with the test image embedding, and query the database a second time to pull deeply hidden matches (numpy)",
+      "dejargonized_description": "This stage query the database using the test image; extract the top 3 results, average their embeddings with the test image embedding, and query the database a second time to pull deeply hidden matches (numpy).",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "database_side_augmentation_query_expansion_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "database_side_augmentation_query_expansion_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "spatial_verification",
+      "name": "Spatial Verification",
+      "description": "run an exact geometry check on the top returned pairs to confirm actual overlap, reranking the final output (OpenCV)",
+      "dejargonized_description": "This stage run an exact geometry check on the top returned pairs to confirm actual overlap, reranking the final output (OpenCV).",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "spatial_verification_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "contrastive_augmentation",
+      "target_stage_id": "backbone_architecture",
+      "output_name": "contrastive_augmentation_output",
+      "input_name": "backbone_architecture_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Contrastive Augmentation output is consumed by Backbone architecture.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "backbone_architecture",
+      "target_stage_id": "faiss_indexing",
+      "output_name": "backbone_architecture_output",
+      "input_name": "faiss_indexing_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Backbone architecture output is consumed by FAISS Indexing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "faiss_indexing",
+      "target_stage_id": "database_side_augmentation_query_expansion",
+      "output_name": "faiss_indexing_output",
+      "input_name": "database_side_augmentation_query_expansion_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "FAISS Indexing output is consumed by Database-Side Augmentation (Query Expansion).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "database_side_augmentation_query_expansion",
+      "target_stage_id": "spatial_verification",
+      "output_name": "database_side_augmentation_query_expansion_output",
+      "input_name": "spatial_verification_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Database-Side Augmentation (Query Expansion) output is consumed by Spatial Verification.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "drivendata_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Metric Learning / Image Retrieval.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: DrivenData",
+      "Writeup URL: https://github.com/lyakaap/ISC2021-1st-place",
+      "Code URL: https://github.com/lyakaap/ISC2021-1st-place",
+      "Standard tools: Albumentations, PyTorch, FAISS, OpenCV"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Facebook AI Image Similarity Challenge - 1st Place (2021) solution writeup",
+        "citation": "https://github.com/lyakaap/ISC2021-1st-place",
+        "note": "Primary source listed in the source PDF."
+      },
+      {
+        "title": "Facebook AI Image Similarity Challenge - 1st Place (2021) code repository",
+        "citation": "https://github.com/lyakaap/ISC2021-1st-place",
+        "note": "Code URL listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

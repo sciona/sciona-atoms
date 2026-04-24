@@ -1,0 +1,341 @@
+{
+  "asset_id": "solution.kaggle.severstal_steel_1st",
+  "asset_version": "v1",
+  "family": "semantic_segmentation",
+  "paradigm": "neural_network",
+  "name": "Severstal Steel Defect Detection 1st Place — Classifier-Gated Segmentation with Area Thresholding",
+  "summary": "Multi-label semantic segmentation pipeline using a ResNet classifier to filter negative images, FPN and U-Net segmentation models with EfficientNet backbones on positive images only, two-stage conditional inference routing, and area-based postprocessing to remove spurious small predictions.",
+  "dejargonized_summary": "Detect steel defects by first using a classifier to decide if an image has any defect at all, then applying detailed segmentation models only to images likely containing defects, and finally removing tiny predicted regions that are probably noise.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "classifier_gated_segmentation",
+    "fpn_unet_ensemble",
+    "efficientnet_backbone",
+    "conditional_inference",
+    "area_thresholding",
+    "highly_imbalanced",
+    "mostly_negative_images",
+    "multi_class_segmentation",
+    "industrial_defect_detection",
+    "high_resolution_images",
+    "manufacturing"
+  ],
+  "inputs": [
+    {
+      "name": "steel_images",
+      "type_desc": "list[NDArray[np.uint8]]",
+      "constraints": "Grayscale or RGB steel sheet images, large resolution.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "defect_masks",
+      "type_desc": "list[NDArray[np.uint8]]",
+      "constraints": "Per-image pixel-level defect masks. Shape (H, W, 4) for 4 defect classes. Binary per class.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Semantic segmentation where the majority of images (>70%) contain no target objects — high negative rate",
+      "Multi-class pixel-level defect detection on high-resolution industrial images requiring tiling",
+      "False positive reduction is as important as recall — downstream decisions (e.g., production line stops) have high cost",
+      "Defect regions are small relative to total image area, making area-based postprocessing effective"
+    ],
+    "do_not_use_when": [
+      "Most images contain the target object — the classifier gate provides no filtering benefit and adds latency",
+      "Single defect class with abundant positive examples — direct segmentation without gating is simpler and equally effective",
+      "Defects span large image regions (>30% of pixels) — area thresholding is inapplicable and the gating classifier adds no value",
+      "Real-time video stream processing — the two-stage classifier + segmentation pipeline doubles inference latency vs. a single model"
+    ],
+    "key_insight": "The classifier gate exploits a base-rate asymmetry: when most images are defect-free, segmentation models produce false positives on surface textures and noise that are hard to suppress with pixel-level thresholds alone. By routing known-negative images to an empty mask, the pipeline converts a pixel-level precision problem into a much easier image-level binary classification problem. The area thresholding then handles the residual false positives on positive images, which are predominantly small isolated clusters that real defects never produce.",
+    "critical_stages": ["classifier_filtering", "multistage_inference", "postprocessing"],
+    "swappable_stages": {
+      "segmentation_models": "Any encoder-decoder architecture (DeepLabV3+, HRNet, SegFormer) works. FPN and U-Net are chosen for complementary multi-scale handling, but the key is using multiple architectures for ensemble diversity.",
+      "tile_preprocessing": "Any tiling or sliding-window strategy works. Tile size is a memory-performance tradeoff. Overlap-tile with blending at seams is preferred for inference.",
+      "classifier_filtering": "Any image-level classifier (EfficientNet, ResNet, ViT) works. The key is high recall — a few false positives passing through to segmentation are acceptable."
+    },
+    "failure_modes": [
+      "Classifier recall drop: if the classifier misses defective images (false negatives), those defects are irrecoverably lost — the segmentation model never sees them",
+      "Tile boundary artifacts: defects spanning tile boundaries may be split into two sub-threshold fragments, both removed by area thresholding",
+      "Class-specific threshold sensitivity: optimal area and probability thresholds differ significantly across defect types — using a single global threshold degrades performance on minority defect classes"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "classifier_before_segmentation",
+      "statement": "The binary classifier must run before segmentation to filter out defect-free images.",
+      "rationale": "Running segmentation on all images wastes compute and produces false positives on clean steel surfaces. The classifier acts as a gating mechanism.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "postprocessing_after_segmentation",
+      "statement": "Area thresholding must be applied after segmentation to remove small spurious predictions.",
+      "rationale": "Segmentation models produce noisy probability maps; small isolated pixel clusters are almost always false positives for steel defect detection.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    },
+    {
+      "category": "stage",
+      "subject": "tile_based_training",
+      "statement": "Large images should be tiled for training to fit in GPU memory and increase effective batch size.",
+      "rationale": "Steel sheet images are large; tiling allows training at higher effective resolution and provides natural data augmentation through varied crop positions.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place Kaggle discussion post"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "tile_preprocessing",
+      "name": "Tile Preprocessing",
+      "description": "Crop large steel sheet images into smaller tiles with horizontal and vertical flips using Albumentations. Tiling increases effective training samples and enables GPU-friendly batch sizes.",
+      "dejargonized_description": "Cut large steel images into smaller overlapping patches and apply random flips to create more training examples that fit in GPU memory.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "steel_images",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Full-resolution steel sheet images.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image_tiles",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Smaller image tiles with augmentation applied.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input images are larger than the target tile size."],
+      "guarantees": ["Tiles cover the full image area. Augmentation transforms are applied consistently to images and masks."],
+      "family_notes": [
+        "Tile size is typically 256x256 or 512x512 depending on GPU memory.",
+        "At inference time, tiles must be reassembled with proper handling of overlap regions."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "classifier_filtering",
+      "name": "Classifier Filtering",
+      "description": "Train a ResNet binary classifier to predict whether an image contains any defect. Images predicted as defect-free receive an empty mask, bypassing the expensive segmentation stage.",
+      "dejargonized_description": "Train a simple yes/no classifier to quickly decide if a steel image has any defect at all. Clean images get an empty output immediately without running the slower segmentation models.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "image_tiles",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Preprocessed image tiles.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "has_defect",
+          "type_desc": "NDArray[np.bool_]",
+          "constraints": "Shape (N,). Boolean array indicating whether each tile likely contains a defect.",
+          "required": true
+        },
+        {
+          "name": "positive_tiles",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Subset of tiles predicted to contain defects.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Image tiles are available for classification."],
+      "guarantees": ["High recall: very few defective images are misclassified as clean. Some clean images may pass through (acceptable for downstream segmentation)."],
+      "family_notes": [
+        "The classifier is optimized for high recall to avoid missing defects, accepting some false positives that segmentation will resolve.",
+        "This two-stage approach significantly reduces false positives compared to running segmentation on all images."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "segmentation_models",
+      "name": "Segmentation Models",
+      "description": "Train FPN (Feature Pyramid Network) and U-Net segmentation models with EfficientNet backbones on positive tiles only. Models predict per-pixel probability maps for 4 defect classes. Multiple architectures provide ensemble diversity.",
+      "dejargonized_description": "Train two types of pixel-level prediction models, both using EfficientNet as a feature extractor, only on images known to contain defects.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "positive_tiles",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Image tiles predicted to contain defects.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "probability_masks",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Shape (H, W, 4). Per-pixel probability maps for 4 defect classes.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Only positive (defect-containing) tiles are used for training and inference."],
+      "guarantees": ["Output probability maps cover all 4 defect classes. Values in [0, 1]."],
+      "family_notes": [
+        "FPN and U-Net provide complementary multi-scale feature handling: FPN uses top-down pathways while U-Net uses skip connections.",
+        "EfficientNet backbones provide strong features with fewer parameters than ResNet equivalents.",
+        "Using segmentation-models-pytorch (smp) library for implementation."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multistage_inference",
+      "name": "Multistage Inference",
+      "description": "Conditional routing: first pass each image through the classifier. If predicted negative (no defect), output an empty mask immediately. If predicted positive, pass through the segmentation models to obtain detailed defect masks.",
+      "dejargonized_description": "A two-step decision process: first check if there is any defect, and only if yes, run the detailed segmentation to find exactly where the defects are.",
+      "concept_type": "conditional_routing",
+      "inputs": [
+        {
+          "name": "has_defect",
+          "type_desc": "NDArray[np.bool_]",
+          "constraints": "Shape (N,). Classifier predictions.",
+          "required": true
+        },
+        {
+          "name": "probability_masks",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Shape (H, W, 4). Segmentation probability maps for positive tiles.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "routed_masks",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Shape (H, W, 4). Combined masks: empty for classifier-negative, segmentation output for classifier-positive.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Classifier predictions and segmentation outputs are available."],
+      "guarantees": ["Negative images receive empty masks. Positive images receive segmentation output."],
+      "family_notes": [
+        "This conditional routing pattern is common in industrial defect detection where the majority of images are defect-free.",
+        "Reduces both computation cost and false positive rate."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "postprocessing",
+      "name": "Postprocessing",
+      "description": "Apply area-thresholding to remove small pixel clusters below a minimum area, and pixel-probability thresholding to binarize the probability maps. Connected component analysis identifies individual defect regions.",
+      "dejargonized_description": "Clean up the predictions by removing tiny predicted defect regions that are almost certainly noise, and converting probability scores into final yes/no defect masks.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "routed_masks",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "Shape (H, W, 4). Probability masks after conditional routing.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "defect_masks",
+          "type_desc": "list[NDArray[np.uint8]]",
+          "constraints": "Shape (H, W, 4). Final binary defect masks after area and probability thresholding.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Probability masks are available from the routing stage."],
+      "guarantees": ["Small spurious regions are removed. Output is binary (0 or 1) per pixel per class."],
+      "family_notes": [
+        "Area thresholding is critical for this competition: steel surface texture can cause small false positive clusters.",
+        "Optimal area and probability thresholds are tuned per defect class on the validation set."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "tile_preprocessing",
+      "target_stage_id": "classifier_filtering",
+      "output_name": "image_tiles",
+      "input_name": "image_tiles",
+      "source_type": "list[NDArray[np.uint8]]",
+      "target_type": "list[NDArray[np.uint8]]",
+      "data_kind": "image_batch",
+      "provenance": "Preprocessed image tiles for classification.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "classifier_filtering",
+      "target_stage_id": "segmentation_models",
+      "output_name": "positive_tiles",
+      "input_name": "positive_tiles",
+      "source_type": "list[NDArray[np.uint8]]",
+      "target_type": "list[NDArray[np.uint8]]",
+      "data_kind": "image_batch",
+      "provenance": "Tiles predicted to contain defects, filtered by classifier.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "classifier_filtering",
+      "target_stage_id": "multistage_inference",
+      "output_name": "has_defect",
+      "input_name": "has_defect",
+      "source_type": "NDArray[np.bool_]",
+      "target_type": "NDArray[np.bool_]",
+      "data_kind": "binary_flags",
+      "provenance": "Classifier predictions for conditional routing.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "segmentation_models",
+      "target_stage_id": "multistage_inference",
+      "output_name": "probability_masks",
+      "input_name": "probability_masks",
+      "source_type": "list[NDArray[np.float64]]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "probability_maps",
+      "provenance": "Per-pixel probability maps from segmentation models.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multistage_inference",
+      "target_stage_id": "postprocessing",
+      "output_name": "routed_masks",
+      "input_name": "routed_masks",
+      "source_type": "list[NDArray[np.float64]]",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "probability_maps",
+      "provenance": "Conditionally routed probability masks.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle Severstal Steel Defect Detection solution. Key innovations include classifier-gated segmentation to reduce false positives, EfficientNet-backed FPN/U-Net ensemble, and area-based postprocessing.",
+    "dejargonized_summary": "Detect steel defects by first filtering out clean images with a classifier, then running detailed segmentation only on likely-defective images, and removing tiny noisy predictions.",
+    "provenance_notes": [
+      "Source: Kaggle Severstal Steel Defect Detection competition, 1st place solution (2019)",
+      "Discussion: https://www.kaggle.com/competitions/severstal-steel-defect-detection/discussion",
+      "Source: https://www.kaggle.com/c/severstal-steel-defect-detection/discussion/114331",
+      "Code: https://github.com/simonmeister/kaggle-severstal"
+    ],
+    "uncertainty_notes": [
+      "Classifier recall threshold trades off between computation savings and missed defects.",
+      "Area thresholds are specific to the defect types and image resolution in this dataset."
+    ],
+    "references": [
+      {
+        "title": "Severstal Steel 1st Place Solution",
+        "citation": "1st place solution writeup, Severstal Steel Defect Detection",
+        "url": "https://www.kaggle.com/competitions/severstal-steel-defect-detection/discussion/114254",
+        "note": "1st place solution description."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

@@ -1,0 +1,302 @@
+{
+  "asset_id": "solution.kaggle.hubmap_vasculature_1st",
+  "asset_version": "v1",
+  "family": "semantic_segmentation",
+  "paradigm": "optimization",
+  "name": "HuBMAP Hacking the Human Vasculature - 1st Place (2023) - Pipeline Template",
+  "summary": "Semantic/instance segmentation solution template for HuBMAP Hacking the Human Vasculature - 1st Place (2023), modeled as a 5-stage deterministic pipeline: Data Concatenation, Model Initialization, Weight Averaging, Mask Prediction, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by HuBMAP Hacking the Human Vasculature - 1st Place (2023): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "rag",
+    "segmentation",
+    "semantic",
+    "instance"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Semantic/instance segmentation task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Semantic/instance segmentation.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Data Concatenation creates the representation needed by Post-Processing Dilation, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "data_concatenation",
+      "model_initialization"
+    ],
+    "swappable_stages": {
+      "post_processing_dilation": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/hubmap-hacking-the-human-vasculature/writeups/tascj-1st-place-solution"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/hubmap-hacking-the-human-vasculature/writeups/tascj-1st-place-solution"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "data_concatenation",
+      "name": "Data Concatenation",
+      "description": "Merge multiple disparate origin datasets (dataset1 and dataset2) to maximize sample size and force the model to learn invariant representations (pandas)",
+      "dejargonized_description": "This stage merge multiple disparate origin datasets (dataset1 and dataset2) to maximize sample size and force the model to learn invariant representations (pandas).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for HuBMAP Hacking the Human Vasculature - 1st Place (2023).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_concatenation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "model_initialization",
+      "name": "Model Initialization",
+      "description": "Initialize an RTMDet-x baseline architecture tailored for instance segmentation over bounding box prediction (mmdetection)",
+      "dejargonized_description": "This stage initialize an RTMDet-x baseline architecture tailored for instance segmentation over bounding box prediction (mmdetection).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "model_initialization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "model_initialization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "weight_averaging",
+      "name": "Weight Averaging",
+      "description": "Apply Exponential Moving Average (EMA) to the model weights continuously during training. This technique acts as a regularizer and heavily stabilizes convergence in noisy medical imagery (torch.optim.swa_utils)",
+      "dejargonized_description": "This stage apply Exponential Moving Average (EMA) to the model weights continuously during training. This technique acts as a regularizer and heavily stabilizes convergence in noisy medical imagery (torch.optim.swa_utils).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "weight_averaging_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "weight_averaging_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "mask_prediction",
+      "name": "Mask Prediction",
+      "description": "Generate baseline mask predictions using the standard segmentation head operating on the spatial features",
+      "dejargonized_description": "This stage generate baseline mask predictions using the standard segmentation head operating on the spatial features.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "mask_prediction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mask_prediction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "post_processing_dilation",
+      "name": "Post-Processing Dilation",
+      "description": "Apply morphological dilation to the predicted binary masks to uniformly expand boundaries. This purely algorithmic stage significantly boosts the evaluation metric without requiring further network training (scipy.ndimage or cv2)",
+      "dejargonized_description": "This stage apply morphological dilation to the predicted binary masks to uniformly expand boundaries. This purely algorithmic stage significantly boosts the evaluation metric without requiring further network training (scipy.ndimage or cv2).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "post_processing_dilation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "data_concatenation",
+      "target_stage_id": "model_initialization",
+      "output_name": "data_concatenation_output",
+      "input_name": "model_initialization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Data Concatenation output is consumed by Model Initialization.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "model_initialization",
+      "target_stage_id": "weight_averaging",
+      "output_name": "model_initialization_output",
+      "input_name": "weight_averaging_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Model Initialization output is consumed by Weight Averaging.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "weight_averaging",
+      "target_stage_id": "mask_prediction",
+      "output_name": "weight_averaging_output",
+      "input_name": "mask_prediction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Weight Averaging output is consumed by Mask Prediction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "mask_prediction",
+      "target_stage_id": "post_processing_dilation",
+      "output_name": "mask_prediction_output",
+      "input_name": "post_processing_dilation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Mask Prediction output is consumed by Post-Processing Dilation.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Semantic/instance segmentation.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/hubmap-hacking-the-human-vasculature/writeups/tascj-1st-place-solution",
+      "Code URL: writeup only",
+      "Standard tools: pandas, mmdetection, torch, scipy, cv2"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "HuBMAP Hacking the Human Vasculature - 1st Place (2023) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/hubmap-hacking-the-human-vasculature/writeups/tascj-1st-place-solution",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

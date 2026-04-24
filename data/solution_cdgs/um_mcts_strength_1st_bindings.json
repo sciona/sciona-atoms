@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.um_mcts_strength_1st",
+  "solution_metadata": {
+    "competition": "UM Game Playing Strength of MCTS - 1st Place (2024)",
+    "placement": "1st",
+    "team": null,
+    "year": 2024,
+    "metric": null,
+    "problem_domain": "tabular_regression",
+    "source_url": "https://www.kaggle.com/competitions/um-game-playing-strength-of-mcts-variants/writeups/james-day-1st-place-solution",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "feature_augmentation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "target_smoothing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "quantile_regression_training_lower",
+      "bound_artifact_fqdn": "sciona.atoms.dl.time_series.pinball_loss",
+      "binding_confidence": 0.74,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "quantile_regression_training_upper",
+      "bound_artifact_fqdn": "sciona.atoms.dl.time_series.pinball_loss",
+      "binding_confidence": 0.74,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Stage text matches an available atom primitive in the expanded local catalog."
+      }
+    },
+    {
+      "stage_id": "directional_ensembling",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    },
+    {
+      "stage_id": "8_0_2_weighting_schema_numpy",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_rule_from_wave2_pdf",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 2,
+    "bound_approximate": 0,
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "dl": 2
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "8_0_2_weighting_schema_numpy",
+      "target_smoothing"
+    ],
+    "orchestration_resolved": [
+      "directional_ensembling",
+      "feature_augmentation"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

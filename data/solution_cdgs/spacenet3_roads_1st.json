@@ -1,0 +1,309 @@
+{
+  "asset_id": "solution.kaggle.spacenet3_roads_1st",
+  "asset_version": "v1",
+  "family": "geospatial_segmentation",
+  "paradigm": "graph_signal_processing",
+  "name": "SpaceNet 3: Road Network Extraction - 1st Place (2018) - Pipeline Template",
+  "summary": "Geospatial / Graph Extraction solution template for SpaceNet 3: Road Network Extraction - 1st Place (2018), modeled as a 5-stage deterministic pipeline: Multispectral stacking, Multi-class segmentation, Skeletonization, Graph generation, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by SpaceNet 3: Road Network Extraction - 1st Place (2018): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "segmentation",
+    "geospatial",
+    "graph",
+    "extraction",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Geospatial / Graph Extraction task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Geospatial / Graph Extraction.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Multispectral stacking creates the representation needed by Path routing, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "multispectral_stacking",
+      "multi_class_segmentation"
+    ],
+    "swappable_stages": {
+      "path_routing": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://medium.com/the-spacennet-catalog/spacennet-3-road-network-extraction-challenge-winning-solution-albu-862d7c57c427"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://medium.com/the-spacennet-catalog/spacennet-3-road-network-extraction-challenge-winning-solution-albu-862d7c57c427"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "multispectral_stacking",
+      "name": "Multispectral stacking",
+      "description": "stack panchromatic and multi-spectral GeoTIFF bands into a single 8-channel image tensor (rasterio)",
+      "dejargonized_description": "This stage stack panchromatic and multi-spectral GeoTIFF bands into a single 8-channel image tensor (rasterio).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for SpaceNet 3: Road Network Extraction - 1st Place (2018).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multispectral_stacking_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_class_segmentation",
+      "name": "Multi-class segmentation",
+      "description": "train a deep U-Net (ResNet34 backbone) to predict 3 distinct spatial masks: roads, intersections, and background (PyTorch)",
+      "dejargonized_description": "This stage train a deep U-Net (ResNet34 backbone) to predict 3 distinct spatial masks: roads, intersections, and background (PyTorch).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "multi_class_segmentation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multi_class_segmentation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "skeletonization",
+      "name": "Skeletonization",
+      "description": "pass the binary road mask through a morphological skeletonization algorithm to reduce roads to 1-pixel wide continuous lines (skimage.morphology)",
+      "dejargonized_description": "This stage pass the binary road mask through a morphological skeletonization algorithm to reduce roads to 1-pixel wide continuous lines (skimage.morphology).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "skeletonization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "skeletonization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "graph_generation",
+      "name": "Graph generation",
+      "description": "trace the skeletonized pixels to define nodes (intersections) and edges (road segments) (NetworkX)",
+      "dejargonized_description": "This stage trace the skeletonized pixels to define nodes (intersections) and edges (road segments) (NetworkX).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "graph_generation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "graph_generation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "path_routing",
+      "name": "Path routing",
+      "description": "implement an A* search heuristic to bridge small pixel gaps in the graph caused by tree cover or cloud shadows (Python)",
+      "dejargonized_description": "This stage implement an A* search heuristic to bridge small pixel gaps in the graph caused by tree cover or cloud shadows (Python).",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "path_routing_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "multispectral_stacking",
+      "target_stage_id": "multi_class_segmentation",
+      "output_name": "multispectral_stacking_output",
+      "input_name": "multi_class_segmentation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Multispectral stacking output is consumed by Multi-class segmentation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_class_segmentation",
+      "target_stage_id": "skeletonization",
+      "output_name": "multi_class_segmentation_output",
+      "input_name": "skeletonization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Multi-class segmentation output is consumed by Skeletonization.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "skeletonization",
+      "target_stage_id": "graph_generation",
+      "output_name": "skeletonization_output",
+      "input_name": "graph_generation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Skeletonization output is consumed by Graph generation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "graph_generation",
+      "target_stage_id": "path_routing",
+      "output_name": "graph_generation_output",
+      "input_name": "path_routing_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Graph generation output is consumed by Path routing.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "drivendata_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Geospatial / Graph Extraction.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: DrivenData",
+      "Writeup URL: https://medium.com/the-spacennet-catalog/spacennet-3-road-network-extraction-challenge-winning-solution-albu-862d7c57c427",
+      "Code URL: https://github.com/SpaceNetChallenge/SpaceNet_Roads_Competition",
+      "Standard tools: rasterio, PyTorch, skimage, NetworkX"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "SpaceNet 3: Road Network Extraction - 1st Place (2018) solution writeup",
+        "citation": "https://medium.com/the-spacennet-catalog/spacennet-3-road-network-extraction-challenge-winning-solution-albu-862d7c57c427",
+        "note": "Primary source listed in the source PDF."
+      },
+      {
+        "title": "SpaceNet 3: Road Network Extraction - 1st Place (2018) code repository",
+        "citation": "https://github.com/SpaceNetChallenge/SpaceNet_Roads_Competition",
+        "note": "Code URL listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

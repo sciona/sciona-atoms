@@ -1,0 +1,305 @@
+{
+  "asset_id": "solution.kaggle.lyft_3d_object_detection_1st",
+  "asset_version": "v1",
+  "family": "object_detection_2d",
+  "paradigm": "neural_network",
+  "name": "Lyft 3D Object Detection for Autonomous Vehicles - 1st Place (2019) - Pipeline Template",
+  "summary": "3D Object Detection (LiDAR Point Clouds) solution template for Lyft 3D Object Detection for Autonomous Vehicles - 1st Place (2019), modeled as a 5-stage deterministic pipeline: Voxelization, PointPillars encoding, Multi-modal fusion, 2D CNN Backbone, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Lyft 3D Object Detection for Autonomous Vehicles - 1st Place (2019): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "object",
+    "detection",
+    "lidar",
+    "point",
+    "clouds",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a 3D Object Detection (LiDAR Point Clouds) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: 3D Object Detection (LiDAR Point Clouds).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Voxelization creates the representation needed by Box-NMS, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "voxelization",
+      "pointpillars_encoding"
+    ],
+    "swappable_stages": {
+      "box_nms": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/119958"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/119958"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "voxelization",
+      "name": "Voxelization",
+      "description": "discretize the continuous LiDAR point cloud into a structured 3D grid of voxels (custom C++ / numpy)",
+      "dejargonized_description": "This stage discretize the continuous LiDAR point cloud into a structured 3D grid of voxels (custom C++ / numpy).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Lyft 3D Object Detection for Autonomous Vehicles - 1st Place (2019).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "voxelization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pointpillars_encoding",
+      "name": "PointPillars encoding",
+      "description": "project the voxels vertically to convert the 3D space into a dense 2D pseudo-image (Bird's Eye View) (PyTorch)",
+      "dejargonized_description": "This stage project the voxels vertically to convert the 3D space into a dense 2D pseudo-image (Bird's Eye View) (PyTorch).",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "pointpillars_encoding_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pointpillars_encoding_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multi_modal_fusion",
+      "name": "Multi-modal fusion",
+      "description": "project the 2D bounding boxes from camera images onto the 3D LiDAR space to \"paint\" the point cloud with RGB features (OpenCV)",
+      "dejargonized_description": "This stage project the 2D bounding boxes from camera images onto the 3D LiDAR space to \"paint\" the point cloud with RGB features (OpenCV).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "multi_modal_fusion_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "multi_modal_fusion_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "2d_cnn_backbone",
+      "name": "2D CNN Backbone",
+      "description": "pass the BEV pseudo-image through a standard 2D CNN (ResNet/FPN) to predict 3D bounding box dimensions, rotation, and class (PyTorch)",
+      "dejargonized_description": "This stage pass the BEV pseudo-image through a standard 2D CNN (ResNet/FPN) to predict 3D bounding box dimensions, rotation, and class (PyTorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "2d_cnn_backbone_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "2d_cnn_backbone_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "box_nms",
+      "name": "Box-NMS",
+      "description": "apply Non-Maximum Suppression specifically designed for rotated 3D boxes to drop overlapping predictions (numpy)",
+      "dejargonized_description": "This stage apply Non-Maximum Suppression specifically designed for rotated 3D boxes to drop overlapping predictions (numpy).",
+      "concept_type": "signal_filter",
+      "inputs": [
+        {
+          "name": "box_nms_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "voxelization",
+      "target_stage_id": "pointpillars_encoding",
+      "output_name": "voxelization_output",
+      "input_name": "pointpillars_encoding_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Voxelization output is consumed by PointPillars encoding.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pointpillars_encoding",
+      "target_stage_id": "multi_modal_fusion",
+      "output_name": "pointpillars_encoding_output",
+      "input_name": "multi_modal_fusion_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "PointPillars encoding output is consumed by Multi-modal fusion.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multi_modal_fusion",
+      "target_stage_id": "2d_cnn_backbone",
+      "output_name": "multi_modal_fusion_output",
+      "input_name": "2d_cnn_backbone_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Multi-modal fusion output is consumed by 2D CNN Backbone.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "2d_cnn_backbone",
+      "target_stage_id": "box_nms",
+      "output_name": "2d_cnn_backbone_output",
+      "input_name": "box_nms_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "2D CNN Backbone output is consumed by Box-NMS.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for 3D Object Detection (LiDAR Point Clouds).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/119958",
+      "Code URL: writeup only",
+      "Standard tools: numpy, OpenCV, PyTorch, mmdetection3d"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Lyft 3D Object Detection for Autonomous Vehicles - 1st Place (2019) solution writeup",
+        "citation": "https://www.kaggle.com/c/3d-object-detection-for-autonomous-vehicles/discussion/119958",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

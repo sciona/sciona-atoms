@@ -1,0 +1,306 @@
+{
+  "asset_id": "solution.kaggle.march_mania_benchmark",
+  "asset_version": "v1",
+  "family": "tabular_classification",
+  "paradigm": "graph_signal_processing",
+  "name": "March Machine Learning Mania - High Tier Benchmark Topology - Pipeline Template",
+  "summary": "Sports Analytics (Graph Centrality / Elo) solution template for March Machine Learning Mania - High Tier Benchmark Topology, modeled as a 5-stage deterministic pipeline: Season aggregation, Graph centralities, Elo Ratings, Pairwise concatenation, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by March Machine Learning Mania - High Tier Benchmark Topology: prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "xgboost",
+    "sports",
+    "analytics",
+    "graph",
+    "centrality",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Sports Analytics (Graph Centrality / Elo) task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Sports Analytics (Graph Centrality / Elo).",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Season aggregation creates the representation needed by Logistic Regression, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "season_aggregation",
+      "graph_centralities"
+    ],
+    "swappable_stages": {
+      "logistic_regression": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "Common benchmark solution across years"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "Common benchmark solution across years"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "season_aggregation",
+      "name": "Season aggregation",
+      "description": "aggregate regular-season box scores into team-level offensive and defensive efficiency metrics (points per possession, turnover rate) (pandas)",
+      "dejargonized_description": "This stage aggregate regular-season box scores into team-level offensive and defensive efficiency metrics (points per possession, turnover rate) (pandas).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for March Machine Learning Mania - High Tier Benchmark Topology.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "season_aggregation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "graph_centralities",
+      "name": "Graph centralities",
+      "description": "construct a directed graph where nodes are teams and edges are games won/lost. Calculate PageRank to determine true strength-of-schedule (NetworkX)",
+      "dejargonized_description": "This stage construct a directed graph where nodes are teams and edges are games won/lost. Calculate PageRank to determine true strength-of-schedule (NetworkX).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "graph_centralities_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "graph_centralities_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "elo_ratings",
+      "name": "Elo Ratings",
+      "description": "simulate the regular season chronologically to generate continuous Elo ratings for all teams entering the tournament (custom Python)",
+      "dejargonized_description": "This stage simulate the regular season chronologically to generate continuous Elo ratings for all teams entering the tournament (custom Python).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "elo_ratings_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "elo_ratings_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "pairwise_concatenation",
+      "name": "Pairwise concatenation",
+      "description": "for every possible tournament matchup, concatenate Team A features with Team B features, alongside the difference between their features (pandas)",
+      "dejargonized_description": "This stage for every possible tournament matchup, concatenate Team A features with Team B features, alongside the difference between their features (pandas).",
+      "concept_type": "graph_traversal",
+      "inputs": [
+        {
+          "name": "pairwise_concatenation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pairwise_concatenation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "logistic_regression",
+      "name": "Logistic Regression",
+      "description": "train a calibrated Logistic Regression model (or XGBoost with log-loss objective) to strictly output the probability that Team A beats Team B",
+      "dejargonized_description": "This stage train a calibrated Logistic Regression model (or XGBoost with log-loss objective) to strictly output the probability that Team A beats Team B.",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "logistic_regression_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "season_aggregation",
+      "target_stage_id": "graph_centralities",
+      "output_name": "season_aggregation_output",
+      "input_name": "graph_centralities_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Season aggregation output is consumed by Graph centralities.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "graph_centralities",
+      "target_stage_id": "elo_ratings",
+      "output_name": "graph_centralities_output",
+      "input_name": "elo_ratings_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Graph centralities output is consumed by Elo Ratings.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "elo_ratings",
+      "target_stage_id": "pairwise_concatenation",
+      "output_name": "elo_ratings_output",
+      "input_name": "pairwise_concatenation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Elo Ratings output is consumed by Pairwise concatenation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "pairwise_concatenation",
+      "target_stage_id": "logistic_regression",
+      "output_name": "pairwise_concatenation_output",
+      "input_name": "logistic_regression_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Pairwise concatenation output is consumed by Logistic Regression.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Sports Analytics (Graph Centrality / Elo).",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_75-100.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: Common benchmark solution across years",
+      "Code URL: writeup only",
+      "Standard tools: pandas, NetworkX, sklearn, XGBoost",
+      "Reference URL: https://www.kaggle.com/"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "March Machine Learning Mania - High Tier Benchmark Topology source PDF entry",
+        "citation": "https://www.kaggle.com/",
+        "note": "Local source PDF entry; exact writeup URL was not specified as an HTTP URL."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

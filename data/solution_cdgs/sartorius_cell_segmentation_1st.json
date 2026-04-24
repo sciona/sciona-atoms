@@ -1,0 +1,385 @@
+{
+  "asset_id": "solution.kaggle.sartorius_cell_segmentation_1st",
+  "asset_version": "v1",
+  "family": "object_detection_2d",
+  "paradigm": "optimization",
+  "name": "Sartorius Cell Instance Segmentation - 1st Place (2022) - Pipeline Template",
+  "summary": "Object detection (2D) / Instance Segmentation solution template for Sartorius Cell Instance Segmentation - 1st Place (2022), modeled as a 7-stage deterministic pipeline: Data Loading, Label Harmonization, Bounding Box Generation, Detection Stage, and downstream competition-specific post-processing.",
+  "dejargonized_summary": "This template captures the ordered steps used by Sartorius Cell Instance Segmentation - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "rag",
+    "segmentation",
+    "object",
+    "detection",
+    "instance"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Object detection (2D) / Instance Segmentation task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Object detection (2D) / Instance Segmentation.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Data Loading creates the representation needed by Ensemble & TTA, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "critical_stages": [
+      "data_loading",
+      "label_harmonization"
+    ],
+    "swappable_stages": {
+      "ensemble_tta": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, post-processing rules, or validation-derived weights.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, or cross-validation folds.",
+      "A weak first-stage recall step cannot be recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/hubmap-hacking-the-human-vasculature/discussion/428447"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/c/hubmap-hacking-the-human-vasculature/discussion/428447"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "data_loading",
+      "name": "Data Loading",
+      "description": "Ingest microscopy imagery and corresponding bounding box/mask annotations (pandas, PIL)",
+      "dejargonized_description": "This stage ingest microscopy imagery and corresponding bounding box/mask annotations (pandas, PIL).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Sartorius Cell Instance Segmentation - 1st Place (2022).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_loading_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "label_harmonization",
+      "name": "Label Harmonization",
+      "description": "Intentionally include low-confidence \"unsure\" labels during the training phase to maximize data volume, establishing that pipeline robustness benefits more from dataset scale than from absolute label purity",
+      "dejargonized_description": "This stage intentionally include low-confidence \"unsure\" labels during the training phase to maximize data volume, establishing that pipeline robustness benefits more from dataset scale than from absolute label purity.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "label_harmonization_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "label_harmonization_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "bounding_box_generation",
+      "name": "Bounding Box Generation",
+      "description": "Convert irregular instance masks into tightly bounded box coordinates to serve as targets for the initial detection stage (scikit-image)",
+      "dejargonized_description": "This stage convert irregular instance masks into tightly bounded box coordinates to serve as targets for the initial detection stage (scikit-image).",
+      "concept_type": "geometry",
+      "inputs": [
+        {
+          "name": "bounding_box_generation_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bounding_box_generation_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "detection_stage",
+      "name": "Detection Stage",
+      "description": "Train a standard 2D object detector to locate broader cell clusters across the slide (torchvision.models.detection)",
+      "dejargonized_description": "This stage train a standard 2D object detector to locate broader cell clusters across the slide (torchvision.models.detection).",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "detection_stage_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "detection_stage_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "crop_extraction",
+      "name": "Crop Extraction",
+      "description": "Extract highly specific regions of interest (ROIs) based entirely on the detector's coordinate predictions (torch.tensor)",
+      "dejargonized_description": "This stage extract highly specific regions of interest (ROIs) based entirely on the detector's coordinate predictions (torch.tensor).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "crop_extraction_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "crop_extraction_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "segmentation_stage",
+      "name": "Segmentation Stage",
+      "description": "Train a semantic segmentation model (U-Net architecture) exclusively on the localized crops to output pixel-precise biological masks (segmentation_models_pytorch)",
+      "dejargonized_description": "This stage train a semantic segmentation model (U-Net architecture) exclusively on the localized crops to output pixel-precise biological masks (segmentation_models_pytorch).",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "segmentation_stage_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "segmentation_stage_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "ensemble_tta",
+      "name": "Ensemble & TTA",
+      "description": "Average the mask probabilities across multiple spatial scales and horizontal/vertical flips (Test-Time Augmentation)",
+      "dejargonized_description": "This stage average the mask probabilities across multiple spatial scales and horizontal/vertical flips (Test-Time Augmentation).",
+      "concept_type": "sampler",
+      "inputs": [
+        {
+          "name": "ensemble_tta_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "data_loading",
+      "target_stage_id": "label_harmonization",
+      "output_name": "data_loading_output",
+      "input_name": "label_harmonization_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Data Loading output is consumed by Label Harmonization.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "label_harmonization",
+      "target_stage_id": "bounding_box_generation",
+      "output_name": "label_harmonization_output",
+      "input_name": "bounding_box_generation_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Label Harmonization output is consumed by Bounding Box Generation.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "bounding_box_generation",
+      "target_stage_id": "detection_stage",
+      "output_name": "bounding_box_generation_output",
+      "input_name": "detection_stage_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Bounding Box Generation output is consumed by Detection Stage.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "detection_stage",
+      "target_stage_id": "crop_extraction",
+      "output_name": "detection_stage_output",
+      "input_name": "crop_extraction_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Detection Stage output is consumed by Crop Extraction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "crop_extraction",
+      "target_stage_id": "segmentation_stage",
+      "output_name": "crop_extraction_output",
+      "input_name": "segmentation_stage_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Crop Extraction output is consumed by Segmentation Stage.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "segmentation_stage",
+      "target_stage_id": "ensemble_tta",
+      "output_name": "segmentation_stage_output",
+      "input_name": "ensemble_tta_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Segmentation Stage output is consumed by Ensemble & TTA.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of wave 2 solution CDG ingestion for Object detection (2D) / Instance Segmentation.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_deep.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/c/hubmap-hacking-the-human-vasculature/discussion/428447",
+      "Code URL: writeup only",
+      "Standard tools: pandas, PIL, scikit-image, torch, segmentation_models_pytorch"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Sartorius Cell Instance Segmentation - 1st Place (2022) solution writeup",
+        "citation": "https://www.kaggle.com/c/hubmap-hacking-the-human-vasculature/discussion/428447",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

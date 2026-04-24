@@ -1,0 +1,307 @@
+{
+  "asset_id": "solution.kaggle.halite_two_sigma_1st",
+  "asset_version": "v1",
+  "family": "reinforcement_learning",
+  "paradigm": "searching",
+  "name": "Halite by Two Sigma - 1st Place (2020) - Pipeline Template",
+  "summary": "Reinforcement Learning / Board Games solution template for Halite by Two Sigma - 1st Place (2020), modeled as a 5-stage deterministic pipeline: Top-bot scraping, Value Network training, Policy Network training, Monte Carlo Tree Search (MCTS), and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures the ordered steps used by Halite by Two Sigma - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "reinforcement_learning",
+    "behavioral_cloning",
+    "mcts",
+    "reinforcement",
+    "learning",
+    "board",
+    "games",
+    "competition_solution",
+    "pipeline_template"
+  ],
+  "inputs": [
+    {
+      "name": "raw_competition_data",
+      "type_desc": "CompetitionDataset",
+      "constraints": "Raw data for a Reinforcement Learning / Board Games task.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "solution_predictions",
+      "type_desc": "SubmissionArtifact",
+      "constraints": "Final predictions formatted for the benchmark metric.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "The new task has the same broad problem type: Reinforcement Learning / Board Games.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+    ],
+    "do_not_use_when": [
+      "The target task lacks the modality or metadata required by the early pipeline stages.",
+      "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
+      "The evaluation metric rewards a fundamentally different output structure than the source competition."
+    ],
+    "key_insight": "The load-bearing idea is the pipeline topology: Top-bot scraping creates the representation needed by Inference compiling, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "critical_stages": [
+      "top_bot_scraping",
+      "value_network_training"
+    ],
+    "swappable_stages": {
+      "inference_compiling": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+    },
+    "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
+    "failure_modes": [
+      "Distribution shift breaks handcrafted thresholds, validation-derived weights, or post-processing rules.",
+      "Missing metadata prevents faithful construction of candidates, groups, windows, graphs, or cross-validation folds.",
+      "A weak first-stage recall, search, or representation step cannot be fully recovered by downstream rescoring or ensembling."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "preserve_stage_order",
+      "statement": "Pipeline stages must execute in the documented order unless a replacement stage preserves the same input/output artifact contract.",
+      "rationale": "Downstream stages assume artifacts produced by earlier transformations.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/halite/discussion/183499"
+    },
+    {
+      "category": "data",
+      "subject": "validation_leakage_guard",
+      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "https://www.kaggle.com/competitions/halite/discussion/183499"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "top_bot_scraping",
+      "name": "Top-bot scraping",
+      "description": "constantly scrape replays of the top 50 bots off the competition leaderboard to serve as dynamic training data (requests)",
+      "dejargonized_description": "This stage constantly scrape replays of the top 50 bots off the competition leaderboard to serve as dynamic training data (requests).",
+      "concept_type": "data_extraction",
+      "inputs": [
+        {
+          "name": "raw_competition_data",
+          "type_desc": "CompetitionDataset",
+          "constraints": "Raw inputs for Halite by Two Sigma - 1st Place (2020).",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "top_bot_scraping_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "value_network_training",
+      "name": "Value Network training",
+      "description": "train a ResNet architecture to input the Halite board state and output the final expected win probability of the game (PyTorch)",
+      "dejargonized_description": "This stage train a ResNet architecture to input the Halite board state and output the final expected win probability of the game (PyTorch).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "value_network_training_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value_network_training_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "policy_network_training",
+      "name": "Policy Network training",
+      "description": "train a separate architecture to predict the exact next move of the expert bots (Behavioral Cloning)",
+      "dejargonized_description": "This stage train a separate architecture to predict the exact next move of the expert bots (Behavioral Cloning).",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "policy_network_training_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "policy_network_training_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "monte_carlo_tree_search_mcts",
+      "name": "Monte Carlo Tree Search (MCTS)",
+      "description": "implement a highly optimized MCTS in a low-level language. Use the Policy network to guide the search tree and the Value network to evaluate terminal states (custom C++)",
+      "dejargonized_description": "This stage implement a highly optimized MCTS in a low-level language. Use the Policy network to guide the search tree and the Value network to evaluate terminal states (custom C++).",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "monte_carlo_tree_search_mcts_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "monte_carlo_tree_search_mcts_output",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Artifact consumed by downstream stages in the solution pipeline.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "inference_compiling",
+      "name": "Inference compiling",
+      "description": "compile the C++ MCTS algorithm into a .so file executable by the Python competition environment",
+      "dejargonized_description": "This stage compile the C++ MCTS algorithm into a .so file executable by the Python competition environment.",
+      "concept_type": "searching",
+      "inputs": [
+        {
+          "name": "inference_compiling_input",
+          "type_desc": "PipelineArtifact",
+          "constraints": "Output from the previous pipeline stage or raw competition data for the first stage.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "solution_predictions",
+          "type_desc": "SubmissionArtifact",
+          "constraints": "Final predictions or structured outputs for the competition metric.",
+          "required": true
+        }
+      ],
+      "preconditions": [
+        "Upstream stage artifacts are available and aligned to the competition split."
+      ],
+      "guarantees": [
+        "Produces the documented intermediate artifact for the next pipeline stage."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "top_bot_scraping",
+      "target_stage_id": "value_network_training",
+      "output_name": "top_bot_scraping_output",
+      "input_name": "value_network_training_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Top-bot scraping output is consumed by Value Network training.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "value_network_training",
+      "target_stage_id": "policy_network_training",
+      "output_name": "value_network_training_output",
+      "input_name": "policy_network_training_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Value Network training output is consumed by Policy Network training.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "policy_network_training",
+      "target_stage_id": "monte_carlo_tree_search_mcts",
+      "output_name": "policy_network_training_output",
+      "input_name": "monte_carlo_tree_search_mcts_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Policy Network training output is consumed by Monte Carlo Tree Search (MCTS).",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "monte_carlo_tree_search_mcts",
+      "target_stage_id": "inference_compiling",
+      "output_name": "monte_carlo_tree_search_mcts_output",
+      "input_name": "inference_compiling_input",
+      "source_type": "PipelineArtifact",
+      "target_type": "PipelineArtifact",
+      "data_kind": "pipeline_artifact",
+      "provenance": "Monte Carlo Tree Search (MCTS) output is consumed by Inference compiling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "Converted from local PDF source material as part of fast CDG batch ingestion for Reinforcement Learning / Board Games.",
+    "dejargonized_summary": "This file turns the source writeup summary into a reusable ordered pipeline template.",
+    "provenance_notes": [
+      "Source PDF: cdg_fast_50-75.pdf",
+      "Platform: Kaggle",
+      "Writeup URL: https://www.kaggle.com/competitions/halite/discussion/183499",
+      "Code URL: writeup only",
+      "Standard tools: requests, PyTorch, custom C++"
+    ],
+    "uncertainty_notes": [
+      "Generated from PDF summaries; verify exact hyperparameters and repository license before treating bindings as production-ready."
+    ],
+    "references": [
+      {
+        "title": "Halite by Two Sigma - 1st Place (2020) solution writeup",
+        "citation": "https://www.kaggle.com/competitions/halite/discussion/183499",
+        "note": "Primary source listed in the source PDF."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms-ml"
+    ]
+  }
+}

@@ -1,0 +1,378 @@
+{
+  "asset_id": "solution.kaggle.commonlit_readability_1st",
+  "asset_version": "v1",
+  "family": "nlp_regression",
+  "paradigm": "neural_network",
+  "name": "CommonLit Readability Prize 1st Place — Domain-Adapted Transformers with SWA and SVR Calibration",
+  "summary": "Text readability regression using domain-adapted RoBERTa and DeBERTa transformers with attention pooling, stochastic weight averaging, and SVR/Ridge calibration heads on extracted embeddings.",
+  "dejargonized_summary": "Predict how easy a text passage is to read by first teaching language models on similar literature, then using attention-based feature extraction and model averaging to produce stable readability scores, with a final calibration step using simpler models.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "readability_prediction",
+    "text_regression",
+    "domain_adaptation",
+    "transformer_finetuning",
+    "stochastic_weight_averaging",
+    "svr_calibration",
+    "small_dataset_nlp",
+    "mlm_pretraining",
+    "attention_pooling",
+    "roberta",
+    "deberta",
+    "ridge_regression",
+    "embedding_extraction",
+    "flat_minima",
+    "dynamic_padding"
+  ],
+  "applicability": {
+    "use_when": [
+      "NLP regression task with a small labeled dataset (<5000 samples) where fine-tuned transformers are prone to overfitting and miscalibration",
+      "A large unlabeled in-domain corpus is available for continued MLM pre-training to adapt transformer representations before fine-tuning",
+      "Prediction target is a continuous score where calibration matters (RMSE metric) and raw transformer outputs tend to be poorly calibrated",
+      "Multiple transformer architectures (RoBERTa, DeBERTa) are available for ensembling to reduce variance"
+    ],
+    "do_not_use_when": [
+      "Large labeled dataset (>50k samples): domain adaptation and SVR calibration provide diminishing returns when the fine-tuning set is large enough to learn good representations directly",
+      "Classification task with discrete labels: the SVR calibration head is designed for continuous regression and adds unnecessary complexity for classification",
+      "No in-domain unlabeled text is available: domain adaptation without relevant text may degrade representations compared to the original pre-trained model",
+      "Real-time inference at very low latency is required: SWA model extraction + SVR head adds overhead compared to a single fine-tuned transformer"
+    ],
+    "key_insight": "The SVR calibration head on top of transformer embeddings corrects for the known miscalibration of fine-tuned transformers on small regression datasets — the transformer learns good representations but its linear head overfits to the small label set. SWA stabilizes the embedding space so the SVR sees consistent features across folds, preventing the calibration head from fitting to noise in any single checkpoint's representation.",
+    "critical_stages": ["domain_adaptation", "stochastic_weight_averaging", "svr_calibration_head"],
+    "swappable_stages": {
+      "attention_pooling": "Mean pooling, CLS token, or weighted-layer pooling can replace attention pooling. Attention pooling is preferred for regression because it learns task-specific token importance.",
+      "regression_head": "The linear regression head is a training-time component; at inference the SVR calibration head replaces it. Any differentiable head works during training.",
+      "tokenization": "Any HuggingFace-compatible tokenizer works. Dynamic padding is an efficiency optimization, not architecturally critical."
+    },
+    "failure_modes": [
+      "Domain adaptation corpus is too dissimilar to target text: continued MLM degrades the pre-trained representations rather than adapting them",
+      "SWA averaging window is too wide: averaging checkpoints from very different training phases produces a blurred model worse than any individual checkpoint",
+      "Very short texts (<20 tokens): attention pooling degenerates when there are too few tokens to learn meaningful importance weights over"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "text_passages",
+      "type_desc": "list[str]",
+      "constraints": "Text passages of varying length.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "readability_score",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N,). Continuous readability scores.",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "domain_adaptation_before_finetuning",
+      "statement": "Domain-adaptive MLM pre-training on external literature must precede supervised fine-tuning.",
+      "rationale": "The competition texts are from a specific literary domain; continued pre-training on similar texts adapts the language model's representations before the small labeled dataset is used.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "swa_for_stability",
+      "statement": "Stochastic weight averaging should be applied during the final training epochs.",
+      "rationale": "SWA reduces variance in the loss landscape and produces flatter minima, which is critical for the small training set (~2800 samples).",
+      "confidence": 0.9,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "domain_adaptation",
+      "name": "Domain Adaptation",
+      "description": "Pre-train RoBERTa and DeBERTa on a large external corpus of similar literature using masked language modeling (MLM) to adapt the transformer representations to the target text domain.",
+      "dejargonized_description": "Continue training the language models on lots of similar texts so they better understand the style and vocabulary of the competition passages.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "external_corpus",
+          "type_desc": "list[str]",
+          "constraints": "Large collection of literature texts similar to competition domain.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "adapted_model",
+          "type_desc": "PreTrainedModel",
+          "constraints": "Domain-adapted RoBERTa or DeBERTa checkpoint.",
+          "required": true
+        }
+      ],
+      "preconditions": ["External corpus is available and pre-processed."],
+      "guarantees": ["Model representations are adapted to the target literary domain."],
+      "family_notes": [
+        "Domain-adaptive pre-training is especially valuable when the fine-tuning dataset is small."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "tokenization",
+      "name": "Tokenization",
+      "description": "Tokenize competition texts using the model's tokenizer with dynamic padding during batching to minimize wasted computation on shorter sequences.",
+      "dejargonized_description": "Convert text passages into sequences of token IDs that the model can process, padding each batch to the longest sequence rather than a fixed maximum.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "text_passages",
+          "type_desc": "list[str]",
+          "constraints": "Raw text passages.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "token_ids",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, L). Padded token ID sequences.",
+          "required": true
+        },
+        {
+          "name": "attention_mask",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, L). Mask indicating real vs. padding tokens.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Text passages are available."],
+      "guarantees": ["Token sequences are compatible with the adapted model's vocabulary."],
+      "family_notes": [
+        "Dynamic padding reduces training time significantly compared to fixed max-length padding."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "attention_pooling",
+      "name": "Attention Pooling",
+      "description": "Pool transformer hidden states using a custom Attention Head or Mean Pooling strategy to create a fixed-length representation from variable-length token sequences.",
+      "dejargonized_description": "Summarize the model's understanding of the entire text into a single fixed-size vector by learning which parts of the text matter most.",
+      "concept_type": "dimensionality_reduction",
+      "inputs": [
+        {
+          "name": "hidden_states",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, L, H). Transformer hidden states from all layers.",
+          "required": true
+        },
+        {
+          "name": "attention_mask",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, L). Mask for real tokens.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pooled_embedding",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, H). Fixed-length text representation.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Transformer hidden states are available."],
+      "guarantees": ["Output is a fixed-length vector regardless of input length."],
+      "family_notes": [
+        "Attention pooling learns task-specific importance weights over tokens, outperforming CLS token pooling for regression."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "regression_head",
+      "name": "Regression Head",
+      "description": "Add a linear layer on top of the pooled embedding to predict the continuous readability score, trained with MSE loss.",
+      "dejargonized_description": "A simple final layer that converts the text representation into a single readability number, trained to minimize prediction error.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "pooled_embedding",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N, H). Pooled text embedding.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "predicted_score",
+          "type_desc": "Tensor",
+          "constraints": "Shape (N,). Predicted readability score.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Pooled embedding is available."],
+      "guarantees": ["Output is a continuous scalar prediction."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "stochastic_weight_averaging",
+      "name": "Stochastic Weight Averaging",
+      "description": "Average model weights during the final training epochs to stabilize predictions and find flatter minima in the loss landscape.",
+      "dejargonized_description": "Average the model's internal parameters across several late training checkpoints to get a more stable and reliable model.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "model_checkpoints",
+          "type_desc": "list[dict]",
+          "constraints": "State dictionaries from final K training epochs.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "swa_model",
+          "type_desc": "PreTrainedModel",
+          "constraints": "Model with averaged weights.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Multiple checkpoints from late training epochs are available."],
+      "guarantees": ["SWA model generalizes better than any single checkpoint."],
+      "family_notes": [
+        "SWA is particularly effective for small datasets where individual checkpoints may overfit."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "svr_calibration_head",
+      "name": "SVR Calibration Head",
+      "description": "Extract embeddings from the trained (SWA-averaged) transformers, then fit Ridge regression or SVR on top of these embeddings to produce calibrated final predictions.",
+      "dejargonized_description": "Take the text representations from the trained language models and train a simple regression model on top for more calibrated final scores.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "pooled_embedding",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N, H). Embeddings from SWA-averaged transformer.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "readability_score",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N,). Calibrated readability predictions.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Transformer embeddings are extracted from frozen SWA model."],
+      "guarantees": ["SVR/Ridge provides calibrated predictions with regularization."],
+      "family_notes": [
+        "SVR head acts as a calibration layer that smooths transformer predictions and provides additional regularization."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "domain_adaptation",
+      "target_stage_id": "tokenization",
+      "output_name": "adapted_model",
+      "input_name": "adapted_model",
+      "source_type": "PreTrainedModel",
+      "target_type": "PreTrainedModel",
+      "data_kind": "model",
+      "provenance": "Domain-adapted transformer checkpoint with updated vocabulary statistics.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tokenization",
+      "target_stage_id": "attention_pooling",
+      "output_name": "token_ids",
+      "input_name": "token_ids",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "sequence",
+      "provenance": "Tokenized text sequences with dynamic padding.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "tokenization",
+      "target_stage_id": "attention_pooling",
+      "output_name": "attention_mask",
+      "input_name": "attention_mask",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "mask",
+      "provenance": "Attention mask for real vs. padding tokens.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "attention_pooling",
+      "target_stage_id": "regression_head",
+      "output_name": "pooled_embedding",
+      "input_name": "pooled_embedding",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "embedding",
+      "provenance": "Fixed-length text representation from attention pooling.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "regression_head",
+      "target_stage_id": "stochastic_weight_averaging",
+      "output_name": "predicted_score",
+      "input_name": "model_checkpoints",
+      "source_type": "Tensor",
+      "target_type": "list[dict]",
+      "data_kind": "model",
+      "provenance": "Model checkpoints collected during final training epochs.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "stochastic_weight_averaging",
+      "target_stage_id": "svr_calibration_head",
+      "output_name": "swa_model",
+      "input_name": "swa_model",
+      "source_type": "PreTrainedModel",
+      "target_type": "PreTrainedModel",
+      "data_kind": "model",
+      "provenance": "SWA-averaged model used to extract final embeddings.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "attention_pooling",
+      "target_stage_id": "svr_calibration_head",
+      "output_name": "pooled_embedding",
+      "input_name": "pooled_embedding",
+      "source_type": "Tensor",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "embedding",
+      "provenance": "Embeddings extracted from SWA-averaged transformer for SVR input.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place CommonLit Readability Prize solution. Domain-adapted transformers with attention pooling, SWA for stability, and SVR calibration heads.",
+    "dejargonized_summary": "Predict text readability by adapting language models to similar literature, using attention-based pooling, stabilizing with weight averaging, and calibrating with simple regression models.",
+    "provenance_notes": [
+      "Source: Kaggle CommonLit Readability Prize 1st place solution (2021)",
+      "Source: https://www.kaggle.com/c/commonlitreadabilityprize/discussion/260744",
+      "Code: https://github.com/AmedeoBova/CommonLit-Readability"
+    ],
+    "uncertainty_notes": [
+      "Domain adaptation corpus selection significantly affects final performance; the specific corpus used may not be publicly available.",
+      "SWA hyperparameters (learning rate schedule, number of epochs to average) require tuning."
+    ],
+    "references": [
+      {
+        "title": "CommonLit Readability Prize 1st Place Solution",
+        "citation": "Kaggle CommonLit Readability Prize, 1st place solution writeup (2021)",
+        "url": "https://www.kaggle.com/c/commonlitreadabilityprize/discussion/260744",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

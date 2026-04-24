@@ -1,0 +1,420 @@
+{
+  "asset_id": "solution.kaggle.lyft_motion_1st",
+  "asset_version": "v1",
+  "family": "trajectory_prediction",
+  "paradigm": "neural_network",
+  "name": "Lyft Motion Prediction 1st Place — Multi-Modal Trajectory Forecasting from BEV Rasterization",
+  "summary": "Multi-modal trajectory prediction from bird's-eye-view rasterized scene representations using EfficientNet/ResNet backbones with a custom 3-mode prediction head trained via negative log-likelihood loss.",
+  "dejargonized_summary": "Predict where nearby cars will drive by converting road maps and vehicle histories into overhead images, feeding them through image-recognition neural networks that output three possible future paths with confidence scores.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "motion_prediction",
+    "autonomous_driving",
+    "bev_rasterization",
+    "multimodal_trajectory",
+    "ego_vehicle_forecasting",
+    "heterogeneous_input_fusion",
+    "multi_mode_output",
+    "nll_loss",
+    "winner_take_all_loss",
+    "channel_stacking",
+    "vector_to_raster",
+    "imagenet_transfer"
+  ],
+  "applicability": {
+    "use_when": [
+      "Inputs are heterogeneous (vector maps, agent state histories, ego pose) and need to be fused into a uniform representation for a standard backbone",
+      "The prediction target is inherently multi-modal — multiple distinct future outcomes are plausible (e.g., turn left vs. turn right vs. go straight)",
+      "Pre-trained ImageNet backbones are available and the team wants to leverage transfer learning without designing a custom encoder",
+      "Spatial context (road geometry, lane topology, relative agent positions) is critical to the prediction"
+    ],
+    "do_not_use_when": [
+      "Fine-grained vector map topology matters (rasterization loses connectivity and lane-level semantics that graph-based approaches preserve)",
+      "The number of agents is highly variable and their interactions are the primary signal (attention-based or graph-based encoders handle variable-size sets more naturally)",
+      "Real-time inference at >30 Hz is required (rasterizing per-agent BEV images is expensive at scale)",
+      "Single-mode prediction suffices (the multi-modal NLL loss adds complexity that is wasted when there is only one plausible future)"
+    ],
+    "key_insight": "BEV rasterization converts heterogeneous inputs (vector maps, agent histories, ego pose) into a uniform image tensor where standard CNNs work out of the box. The multi-modal NLL loss handles the inherent multi-modality of future trajectories — the car could turn left OR right — by only penalizing the closest mode, preventing the mode-averaging problem that plagues single-output regression.",
+    "critical_stages": ["bev_rasterization", "multimodal_nll_loss"],
+    "swappable_stages": {
+      "cnn_backbone": "Any ImageNet-pretrained CNN (EfficientNet, ResNet, ConvNeXt) works. The value is in the rasterization and loss, not the specific backbone.",
+      "temporal_stacking": "Temporal encoding can alternatively use recurrent layers, temporal convolutions, or positional embeddings rather than channel stacking.",
+      "trajectory_ensembling": "Any ensembling strategy (NMS over modes, weighted average, trajectory clustering) can replace simple averaging."
+    },
+    "failure_modes": [
+      "Sparse scenes with few agents: the rasterized image is mostly empty, wasting CNN capacity on blank pixels",
+      "Very long prediction horizons (>10s): BEV rasterization captures a fixed spatial window; distant future states may fall outside the rasterized region",
+      "High-speed scenarios where small angular errors compound: the 3-mode output may not cover the true trajectory if modes are too spread out or too clustered"
+    ]
+  },
+  "inputs": [
+    {
+      "name": "hd_map_vectors",
+      "type_desc": "dict",
+      "constraints": "HD map vector data including lane boundaries, crosswalks, and traffic signals.",
+      "required": true
+    },
+    {
+      "name": "ego_trajectory_history",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (T_hist, 2+). Ego-vehicle past positions and headings.",
+      "required": true
+    },
+    {
+      "name": "agent_histories",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N_agents, T_hist, 2+). Surrounding agents' past positions and headings.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "predicted_trajectories",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (3, T_future, 2). Three predicted future trajectories (X/Y coordinates).",
+      "required": true
+    },
+    {
+      "name": "confidence_scores",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (3,). Confidence score for each predicted trajectory, summing to 1.",
+      "required": true
+    }
+  ],
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "rasterization_before_cnn",
+      "statement": "BEV rasterization must precede CNN backbone ingestion.",
+      "rationale": "The CNN expects a fixed-size image tensor; vector map data must be rasterized into a BEV image first.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "L5Kit rasterization pipeline"
+    },
+    {
+      "category": "stage",
+      "subject": "multimodal_head_design",
+      "statement": "The prediction head must output multiple trajectory modes with associated confidences.",
+      "rationale": "Single-mode prediction averages over possible futures, producing unrealistic trajectories. Multi-modal output allows the model to represent distinct maneuvers.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "bev_rasterization",
+      "name": "BEV Rasterization",
+      "description": "Convert vector map data, ego-vehicle history, and agent history into a 3D bird's-eye-view image tensor using L5Kit rasterization. Each semantic layer (lanes, crosswalks, agents, ego) is rendered into separate channels.",
+      "dejargonized_description": "Draw an overhead picture of the road, nearby cars, and the ego vehicle's past path, encoding each element as a separate color channel in an image.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "hd_map_vectors",
+          "type_desc": "dict",
+          "constraints": "HD map vector data.",
+          "required": true
+        },
+        {
+          "name": "ego_trajectory_history",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Ego-vehicle past positions.",
+          "required": true
+        },
+        {
+          "name": "agent_histories",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Surrounding agents' past positions.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bev_image",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (C, H, W). Multi-channel BEV image tensor.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Map data and trajectory histories are available and spatially aligned."],
+      "guarantees": ["Output is a fixed-size image tensor suitable for CNN input."],
+      "family_notes": [
+        "Uses L5Kit's semantic rasterizer which renders each map element type into a separate channel."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "temporal_stacking",
+      "name": "Temporal Stacking",
+      "description": "Stack multiple temporal frames of rasterized BEV images along the channel dimension to encode motion history in a single tensor.",
+      "dejargonized_description": "Layer overhead images from several consecutive time steps on top of each other so the network can see how things have been moving.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "bev_image",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (C, H, W). Single-frame BEV image.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "stacked_bev",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (C * T_frames, H, W). Multi-frame BEV tensor with temporal channels.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Multiple consecutive BEV frames are available."],
+      "guarantees": ["Output encodes temporal context via channel stacking."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "cnn_backbone",
+      "name": "CNN Backbone",
+      "description": "Pass the stacked BEV tensor through an EfficientNet-B7 or ResNet-50 backbone pretrained on ImageNet. The first convolutional layer is adapted to accept the expanded channel count.",
+      "dejargonized_description": "Run the layered overhead image through a powerful image-recognition network to extract meaningful spatial features.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "stacked_bev",
+          "type_desc": "NDArray[np.float32]",
+          "constraints": "Shape (C * T_frames, H, W). Multi-frame BEV tensor.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "backbone_features",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, D). Pooled feature vector from backbone.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Input channels match the adapted first conv layer."],
+      "guarantees": ["Output is a fixed-length feature vector per sample."],
+      "family_notes": [
+        "EfficientNet-B7 and ResNet-50 are used as complementary backbones for ensembling."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multimodal_prediction_head",
+      "name": "Multimodal Prediction Head",
+      "description": "Custom output layer that takes backbone features and predicts 3 possible future trajectories (X/Y coordinates for each future timestep) and 3 associated confidence scores via softmax.",
+      "dejargonized_description": "A final layer that produces three candidate future paths for the vehicle along with how likely each path is.",
+      "concept_type": "neural_network",
+      "inputs": [
+        {
+          "name": "backbone_features",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, D). Pooled feature vector.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "predicted_trajectories",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, 3, T_future, 2). Three trajectory modes.",
+          "required": true
+        },
+        {
+          "name": "confidence_scores",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, 3). Softmax confidence per mode.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Backbone features are available."],
+      "guarantees": ["Confidences sum to 1 per sample. Three distinct trajectory modes produced."],
+      "family_notes": [],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "multimodal_nll_loss",
+      "name": "Multimodal NLL Loss",
+      "description": "Custom negative log-likelihood loss that selects the predicted trajectory closest to ground truth and penalizes the model for not assigning high confidence to that mode. Encourages mode specialization.",
+      "dejargonized_description": "A training objective that rewards the model for making at least one of its three predictions close to reality and for being confident about the right one.",
+      "concept_type": "loss_function",
+      "inputs": [
+        {
+          "name": "predicted_trajectories",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, 3, T_future, 2).",
+          "required": true
+        },
+        {
+          "name": "confidence_scores",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, 3).",
+          "required": true
+        },
+        {
+          "name": "ground_truth_trajectory",
+          "type_desc": "Tensor",
+          "constraints": "Shape (B, T_future, 2). Actual future trajectory.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "loss",
+          "type_desc": "Tensor",
+          "constraints": "Scalar loss value.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Predictions and ground truth are temporally aligned."],
+      "guarantees": ["Loss is differentiable and encourages mode diversity."],
+      "family_notes": [
+        "This winner-take-all loss prevents mode collapse by only backpropagating through the best-matching mode."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "trajectory_ensembling",
+      "name": "Trajectory Ensembling",
+      "description": "Average the trajectories of the highest-confidence predicted paths across multiple trained models (different backbones and seeds). Confidence scores are also averaged.",
+      "dejargonized_description": "Combine predictions from multiple trained models by averaging their best guesses to get a more reliable final prediction.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "predicted_trajectories",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "List of (3, T_future, 2) trajectory arrays from each model.",
+          "required": true
+        },
+        {
+          "name": "confidence_scores",
+          "type_desc": "list[NDArray[np.float64]]",
+          "constraints": "List of (3,) confidence arrays from each model.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ensembled_trajectories",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (3, T_future, 2). Final ensembled trajectories.",
+          "required": true
+        },
+        {
+          "name": "ensembled_confidences",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (3,). Final ensembled confidence scores.",
+          "required": true
+        }
+      ],
+      "preconditions": ["All models produce compatible output shapes."],
+      "guarantees": ["Ensembled output is smoother and more robust than any single model."],
+      "family_notes": [],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "bev_rasterization",
+      "target_stage_id": "temporal_stacking",
+      "output_name": "bev_image",
+      "input_name": "bev_image",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "image",
+      "provenance": "Single-frame BEV rasterized image.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "temporal_stacking",
+      "target_stage_id": "cnn_backbone",
+      "output_name": "stacked_bev",
+      "input_name": "stacked_bev",
+      "source_type": "NDArray[np.float32]",
+      "target_type": "NDArray[np.float32]",
+      "data_kind": "image",
+      "provenance": "Multi-frame BEV tensor with temporal channels stacked.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "cnn_backbone",
+      "target_stage_id": "multimodal_prediction_head",
+      "output_name": "backbone_features",
+      "input_name": "backbone_features",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "embedding",
+      "provenance": "Pooled spatial features from CNN backbone.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "multimodal_prediction_head",
+      "target_stage_id": "multimodal_nll_loss",
+      "output_name": "predicted_trajectories",
+      "input_name": "predicted_trajectories",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "trajectory",
+      "provenance": "Three predicted future trajectory modes.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multimodal_prediction_head",
+      "target_stage_id": "multimodal_nll_loss",
+      "output_name": "confidence_scores",
+      "input_name": "confidence_scores",
+      "source_type": "Tensor",
+      "target_type": "Tensor",
+      "data_kind": "score",
+      "provenance": "Confidence scores for each trajectory mode.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multimodal_prediction_head",
+      "target_stage_id": "trajectory_ensembling",
+      "output_name": "predicted_trajectories",
+      "input_name": "predicted_trajectories",
+      "source_type": "Tensor",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "trajectory",
+      "provenance": "Per-model trajectory predictions collected for ensembling.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "multimodal_prediction_head",
+      "target_stage_id": "trajectory_ensembling",
+      "output_name": "confidence_scores",
+      "input_name": "confidence_scores",
+      "source_type": "Tensor",
+      "target_type": "list[NDArray[np.float64]]",
+      "data_kind": "score",
+      "provenance": "Per-model confidence scores collected for ensembling.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Lyft Motion Prediction solution. BEV rasterization approach with multi-modal trajectory prediction using EfficientNet/ResNet backbones and custom NLL loss for mode diversity.",
+    "dejargonized_summary": "Predict where cars will drive by converting road maps and vehicle histories into overhead images, running them through image-recognition networks that output three possible paths with confidence scores.",
+    "provenance_notes": [
+      "Source: Kaggle Lyft Motion Prediction 1st place solution (2020)",
+      "Uses L5Kit for BEV rasterization",
+      "Source: https://www.kaggle.com/c/lyft-motion-prediction-autonomous-vehicles/discussion/199022",
+      "Code: https://github.com/lyft/l5kit"
+    ],
+    "uncertainty_notes": [
+      "The number of predicted modes (3) is fixed by competition rules; more modes may improve real-world performance.",
+      "BEV rasterization loses fine-grained vector map structure; vectorized approaches may outperform for some scenarios."
+    ],
+    "references": [
+      {
+        "title": "Lyft Motion Prediction 1st Place Solution",
+        "citation": "Kaggle Lyft Motion Prediction for Autonomous Vehicles, 1st place solution writeup (2020)",
+        "url": "https://www.kaggle.com/c/lyft-motion-prediction-autonomous-vehicles/discussion/199022",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}

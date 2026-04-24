@@ -1,0 +1,391 @@
+{
+  "asset_id": "solution.kaggle.plasticc_1st",
+  "asset_version": "v1",
+  "family": "time_series_classification",
+  "paradigm": "optimization",
+  "name": "PLAsTiCC Astronomical Classification 1st Place — Time Series Classification via GP Interpolation and Gradient Boosting",
+  "summary": "Multi-class astronomical object classification from irregularly-sampled light curves using red-shift flux correction, tsfresh/cesium feature extraction, Gaussian Process interpolation for smooth curve parameters, and an ensemble of LightGBM and custom MLPs with Platt-calibrated probabilities.",
+  "dejargonized_summary": "Classify astronomical objects by extracting statistical features from their brightness measurements over time, smoothing the irregular measurements with Gaussian Processes, and combining gradient boosting with neural networks to predict object type probabilities.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "light_curve_classification",
+    "astronomical_transient_classification",
+    "irregular_time_series_features",
+    "gp_interpolated_features",
+    "multi_passband_classification",
+    "tsfresh_feature_extraction",
+    "cesium_features",
+    "redshift_flux_correction",
+    "platt_calibration",
+    "minority_class_augmentation",
+    "irregularly_sampled",
+    "multi_channel_time_series",
+    "lightgbm_mlp_ensemble"
+  ],
+  "inputs": [
+    {
+      "name": "light_curves",
+      "type_desc": "DataFrame",
+      "constraints": "Irregularly-sampled flux vs time measurements across multiple passbands. Columns: object_id, mjd, passband, flux, flux_err.",
+      "required": true
+    },
+    {
+      "name": "object_metadata",
+      "type_desc": "DataFrame",
+      "constraints": "Per-object metadata including redshift, galactic coordinates, host galaxy properties.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "class_probabilities",
+      "type_desc": "NDArray[np.float64]",
+      "constraints": "Shape (N_objects, 14). Calibrated probability distribution over 14 astronomical object types.",
+      "required": true
+    }
+  ],
+  "applicability": {
+    "use_when": [
+      "Irregularly-sampled multi-channel time series where observations are sparse and unevenly spaced across channels",
+      "Classification task where domain-specific feature engineering (tsfresh, cesium) is well-established for the signal type",
+      "Severe class imbalance (>100:1 for rare classes) requiring explicit augmentation and calibrated probability outputs",
+      "Metric is log-loss or another proper scoring rule that rewards well-calibrated probabilities over hard classifications"
+    ],
+    "do_not_use_when": [
+      "Time series are regularly sampled with fixed intervals — GP interpolation adds cost without benefit when data is already on a uniform grid",
+      "Number of classes is small (<5) with balanced classes — minority augmentation and Platt calibration add unnecessary complexity",
+      "Sequence length is very long (>10K points per object) — GP fitting is O(n^3) per object and becomes prohibitive",
+      "Real-time streaming classification needed — GP fitting and tsfresh extraction are batch-oriented and computationally expensive"
+    ],
+    "key_insight": "GP interpolation converts irregularly-sampled light curves into a uniform feature space where tabular models work, while preserving uncertainty information that raw interpolation discards. The GP kernel hyperparameters (length-scale, amplitude, noise variance) themselves become discriminative features that encode the timescale and smoothness of variability -- information that summary statistics alone cannot capture.",
+    "critical_stages": ["gaussian_process_interpolation", "flux_correction"],
+    "swappable_stages": {
+      "model_training": "Any supervised classifier works here (XGBoost, CatBoost, deep MLP). LightGBM and MLP ensemble provides diversity but the value is in the feature engineering, not the model.",
+      "time_series_feature_extraction": "tsfresh can be replaced with catch22, ROCKET, or manual feature engineering. The key is producing a fixed-length feature vector per object.",
+      "platt_calibration": "Any probability calibration method (isotonic regression, temperature scaling) works. Platt scaling is simple and effective for log-loss optimization."
+    },
+    "failure_modes": [
+      "Objects with very few observations (<5 data points): GP fits are underdetermined and produce unreliable hyperparameters",
+      "Uniformly sampled data: GP interpolation degenerates to simple smoothing, and kernel hyperparameters carry little discriminative information",
+      "High-dimensional feature space from tsfresh (>1000 features) without selection: LightGBM handles this well but MLP may overfit",
+      "Extreme class imbalance beyond augmentation capacity: rarest classes may still have too few examples for stable GP fitting and feature extraction"
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "flux_correction_first",
+      "statement": "Flux correction based on redshift must precede feature extraction.",
+      "rationale": "Redshift distorts observed flux values; correcting first ensures features reflect intrinsic object properties rather than distance artifacts.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "PLAsTiCC 1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "features_before_models",
+      "statement": "All feature extraction stages must complete before model training.",
+      "rationale": "The model consumes the concatenated flat feature matrix; incomplete features would degrade classification.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "PLAsTiCC 1st place solution writeup"
+    },
+    {
+      "category": "stage",
+      "subject": "calibration_after_training",
+      "statement": "Platt calibration must follow model training and use held-out predictions.",
+      "rationale": "Calibrating on training predictions would overfit the probability adjustment; held-out data provides unbiased calibration.",
+      "confidence": 1.0,
+      "source_stage": "solution_analysis",
+      "source_reference": "PLAsTiCC 1st place solution writeup"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "flux_correction",
+      "name": "Flux Correction",
+      "description": "Correct astronomical flux measurements based on red-shift metadata to account for cosmological distance effects, normalizing flux to rest-frame values using pandas and numpy.",
+      "dejargonized_description": "Adjust brightness measurements to remove the effect of how far away each object is, so objects of the same type look similar regardless of distance.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "light_curves",
+          "type_desc": "DataFrame",
+          "constraints": "Raw flux measurements with passband and time columns.",
+          "required": true
+        },
+        {
+          "name": "object_metadata",
+          "type_desc": "DataFrame",
+          "constraints": "Must contain redshift values per object.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "corrected_curves",
+          "type_desc": "DataFrame",
+          "constraints": "Flux values corrected for redshift. Same schema as input.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Redshift values are available for all objects."],
+      "guarantees": ["Output flux reflects intrinsic object brightness independent of distance."],
+      "family_notes": [
+        "Standard astronomical practice but critical for this competition since objects span a wide redshift range."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "time_series_feature_extraction",
+      "name": "Time Series Feature Extraction",
+      "description": "Extract summary statistics, slopes, peaks, and other descriptive features for every passband using tsfresh and cesium libraries.",
+      "dejargonized_description": "Compute numerical summaries of each brightness curve such as average, variability, peak brightness, and rate of change.",
+      "concept_type": "signal_transform",
+      "inputs": [
+        {
+          "name": "corrected_curves",
+          "type_desc": "DataFrame",
+          "constraints": "Redshift-corrected flux time series per passband.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ts_features",
+          "type_desc": "DataFrame",
+          "constraints": "Flat feature matrix with one row per object and columns for each extracted statistic.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Flux correction has been applied."],
+      "guarantees": ["Each object has a fixed-length feature vector regardless of original time series length."],
+      "family_notes": [
+        "Uses tsfresh for automated feature extraction and cesium for domain-specific astronomical features.",
+        "Per-passband features allow the model to learn color-dependent behavior."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "gaussian_process_interpolation",
+      "name": "Gaussian Process Interpolation",
+      "description": "Fit Gaussian Processes to irregularly sampled light curves to produce smooth interpolated curves, extracting GP hyperparameters (length-scale, amplitude, noise) as additional features.",
+      "dejargonized_description": "Fit smooth curves through the sparse brightness measurements and use the curve shape parameters as additional features describing each object.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "corrected_curves",
+          "type_desc": "DataFrame",
+          "constraints": "Redshift-corrected irregularly sampled light curves.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "gp_features",
+          "type_desc": "DataFrame",
+          "constraints": "GP kernel hyperparameters and interpolated curve statistics per object.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Corrected curves have sufficient data points for GP fitting."],
+      "guarantees": ["Each object gets GP-derived features even with irregular sampling."],
+      "family_notes": [
+        "George and scikit-learn GP implementations used.",
+        "GP hyperparameters encode information about time scale and amplitude of variability."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "feature_merging",
+      "name": "Feature Merging",
+      "description": "Concatenate raw time series statistics, GP-derived features, and object metadata into a single flat tabular feature matrix using pandas.",
+      "dejargonized_description": "Combine all the different types of features into one wide table where each row is an object and each column is a feature.",
+      "concept_type": "data_assembly",
+      "inputs": [
+        {
+          "name": "ts_features",
+          "type_desc": "DataFrame",
+          "constraints": "Time series summary statistics.",
+          "required": true
+        },
+        {
+          "name": "gp_features",
+          "type_desc": "DataFrame",
+          "constraints": "Gaussian Process derived features.",
+          "required": true
+        },
+        {
+          "name": "object_metadata",
+          "type_desc": "DataFrame",
+          "constraints": "Raw metadata fields.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feature_matrix",
+          "type_desc": "DataFrame",
+          "constraints": "Flat tabular feature matrix, one row per object, all columns numeric.",
+          "required": true
+        }
+      ],
+      "preconditions": ["All feature DataFrames share a common object_id index."],
+      "guarantees": ["Output has one row per object with all features concatenated."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "model_training",
+      "name": "Model Training",
+      "description": "Train an ensemble of LightGBM gradient boosted trees and custom MLP neural networks with minority class augmentation to handle severe class imbalance.",
+      "dejargonized_description": "Train multiple prediction models that each learn to classify objects, oversampling rare object types so the models do not ignore them.",
+      "concept_type": "optimization",
+      "inputs": [
+        {
+          "name": "feature_matrix",
+          "type_desc": "DataFrame",
+          "constraints": "Complete flat feature matrix.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "raw_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_objects, 14). Uncalibrated ensemble probability predictions.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Feature matrix contains no missing critical features."],
+      "guarantees": ["Each object receives a 14-class probability prediction."],
+      "family_notes": [
+        "LightGBM provides the bulk of predictive power; MLPs add diversity.",
+        "Minority class augmentation critical due to extreme class imbalance (some classes have < 1% representation)."
+      ],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "platt_calibration",
+      "name": "Platt Calibration",
+      "description": "Adjust predicted probabilities using Platt Scaling (sigmoid calibration) on held-out predictions to optimize the competition log-loss metric.",
+      "dejargonized_description": "Fine-tune the predicted probabilities so they better reflect true likelihoods, using a simple adjustment learned on held-out data.",
+      "concept_type": "analysis",
+      "inputs": [
+        {
+          "name": "raw_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Uncalibrated probability predictions from the ensemble.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "class_probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "Shape (N_objects, 14). Calibrated probability distribution over 14 classes.",
+          "required": true
+        }
+      ],
+      "preconditions": ["Raw probabilities are available from held-out (not training) predictions."],
+      "guarantees": ["Output probabilities are better calibrated for log-loss optimization. Rows sum to 1."],
+      "family_notes": [
+        "sklearn CalibratedClassifierCV or equivalent used.",
+        "Platt scaling fits a logistic regression on top of raw model outputs."
+      ],
+      "matched_primitive": ""
+    }
+  ],
+  "edges": [
+    {
+      "source_stage_id": "flux_correction",
+      "target_stage_id": "time_series_feature_extraction",
+      "output_name": "corrected_curves",
+      "input_name": "corrected_curves",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "time_series",
+      "provenance": "Redshift-corrected light curves for feature extraction.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "flux_correction",
+      "target_stage_id": "gaussian_process_interpolation",
+      "output_name": "corrected_curves",
+      "input_name": "corrected_curves",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "time_series",
+      "provenance": "Redshift-corrected light curves for GP fitting.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "time_series_feature_extraction",
+      "target_stage_id": "feature_merging",
+      "output_name": "ts_features",
+      "input_name": "ts_features",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "feature_table",
+      "provenance": "Summary statistics from time series analysis.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "gaussian_process_interpolation",
+      "target_stage_id": "feature_merging",
+      "output_name": "gp_features",
+      "input_name": "gp_features",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "feature_table",
+      "provenance": "GP kernel hyperparameters and interpolation-derived features.",
+      "loss_class": "lossy_but_allowed"
+    },
+    {
+      "source_stage_id": "feature_merging",
+      "target_stage_id": "model_training",
+      "output_name": "feature_matrix",
+      "input_name": "feature_matrix",
+      "source_type": "DataFrame",
+      "target_type": "DataFrame",
+      "data_kind": "feature_table",
+      "provenance": "Complete flat feature matrix combining all feature sources.",
+      "loss_class": "preserving"
+    },
+    {
+      "source_stage_id": "model_training",
+      "target_stage_id": "platt_calibration",
+      "output_name": "raw_probabilities",
+      "input_name": "raw_probabilities",
+      "source_type": "NDArray[np.float64]",
+      "target_type": "NDArray[np.float64]",
+      "data_kind": "probability_distribution",
+      "provenance": "Uncalibrated ensemble predictions on held-out data.",
+      "loss_class": "preserving"
+    }
+  ],
+  "audit": {
+    "source_kind": "kaggle_solution",
+    "review_status": "draft",
+    "rationale": "1st place Kaggle PLAsTiCC solution. Multi-class astronomical classification from irregular light curves via GP interpolation, tsfresh feature extraction, and calibrated LightGBM/MLP ensemble.",
+    "dejargonized_summary": "Classify astronomical objects from their brightness time series by extracting features, fitting smooth curves, and training an ensemble of models with calibrated probability outputs.",
+    "provenance_notes": [
+      "Source: Kaggle PLAsTiCC Astronomical Classification competition (2018), 1st place solution",
+      "Source: https://www.kaggle.com/c/PLAsTiCC-2018/discussion/75033",
+      "Code: https://github.com/kyle-n-brown/PLAsTiCC-1st-place"
+    ],
+    "uncertainty_notes": [
+      "GP kernel choice affects interpolation quality for different object types.",
+      "tsfresh feature selection may include redundant features.",
+      "Platt calibration effectiveness depends on held-out set size and class balance."
+    ],
+    "references": [
+      {
+        "title": "PLAsTiCC 1st Place Solution",
+        "citation": "Kaggle PLAsTiCC Astronomical Classification, 1st place solution writeup (2018)",
+        "url": "https://www.kaggle.com/competitions/PLAsTiCC-2018/discussion/75033",
+        "note": "1st place solution discussion."
+      }
+    ],
+    "maintainers": ["sciona-atoms-ml"]
+  }
+}
