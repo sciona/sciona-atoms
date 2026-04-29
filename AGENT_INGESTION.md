@@ -171,6 +171,28 @@ yet publishable. **Follow [PUBLISHING.md](PUBLISHING.md)** to complete the
 five publishability pillars (IO specs, parameters, descriptions, audit rollups,
 references). This should be done in the same session.
 
+### Phase 9: Verify Publishability
+
+After creating the review bundle, references, and CDG, run the publishability
+check to confirm all five pillars are satisfied:
+
+```bash
+PYTHONPATH=src:/Users/conrad/personal/sciona-atoms/src \
+  /Users/conrad/personal/sciona-matcher/.venv/bin/python \
+  /Users/conrad/personal/sciona-atoms/scripts/verify_publishability.py \
+  src/sciona/atoms/<domain>/<family>
+```
+
+This checks source structure, CDG inputs/outputs, references with registry
+resolution, and review bundle coverage — without creating or reading an
+`audit_manifest.json`. The manifest is generated ephemerally at Supabase
+seed time; it is **not** checked into git.
+
+Fix all reported issues and re-run until the script reports zero issues.
+
+**Do not run `apply_audit_review_bundles.py`** as a verification step.
+That script is only used by the Supabase backfill pipeline.
+
 ## Quality Bar
 
 ### Acceptable atom (all must be true)
@@ -185,9 +207,10 @@ references). This should be done in the same session.
 - [ ] No `Any` in public interface without explicit justification
 - [ ] `run_contribution_check` passes with zero errors for the new atoms
 - [ ] `run_dejargon_check` passes with zero errors for the new atoms
+- [ ] `verify_publishability.py` passes with zero issues for the new family
 - [ ] `references.json` uses schema v1.1 with `ref_id` keys
 - [ ] Global registry entries added for all cited papers and upstream repos
-- [ ] Publishing checklist in PUBLISHING.md satisfied
+- [ ] Review bundle created with justified verdicts and concrete limitations
 
 ### Poisonous atom (reject immediately)
 
