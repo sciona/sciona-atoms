@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from sciona.atoms.provider_inventory import (
+    _AUDIT_REVIEW_BUNDLE_DIRS,
     discover_audit_manifest_path,
     discover_audit_review_bundle_paths,
 )
@@ -74,6 +75,40 @@ _REVIEW_DIR_HINTS = (
     Path("data/review_bundles"),
     Path("docs/review-bundles"),
 )
+
+
+def _repo_root_from_manifest(manifest_path: Path) -> Path | None:
+    """Derive the repo root from a manifest path like .../sciona-atoms-ml/data/audit_manifest.json."""
+    resolved = manifest_path.resolve()
+    for parent in resolved.parents:
+        if parent.name == "sciona-atoms" or parent.name.startswith("sciona-atoms-"):
+            return parent
+    return None
+
+
+def _discover_repo_local_bundle_paths(repo_root: Path) -> tuple[Path, ...]:
+    """Discover review bundles within a single repo root only."""
+    bundle_paths: list[Path] = []
+    for relative in _AUDIT_REVIEW_BUNDLE_DIRS:
+        review_dir = (repo_root / relative).resolve()
+        if not review_dir.is_dir():
+            continue
+        for path in sorted(review_dir.rglob("*.json")):
+            if path.is_file():
+                bundle_paths.append(path.resolve())
+    src_root = (repo_root / "src").resolve()
+    if src_root.is_dir():
+        for path in sorted(src_root.rglob("review_bundle.json")):
+            if path.is_file():
+                bundle_paths.append(path.resolve())
+    # Deduplicate
+    seen: set[Path] = set()
+    result: list[Path] = []
+    for p in bundle_paths:
+        if p not in seen:
+            seen.add(p)
+            result.append(p)
+    return tuple(result)
 
 
 @dataclass(frozen=True)
@@ -607,10 +642,26 @@ def merge_audit_manifest_with_review_bundles(
     review_bundle_paths: Iterable[Path] | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Apply provider review bundle files to the audit manifest."""
+    """Apply provider review bundle files to the audit manifest.
+
+    When *manifest_path* is given, bundle discovery is automatically scoped to
+    that manifest's own repo so that atoms from sibling repos are never merged
+    into the wrong manifest.  Pass explicit *review_bundle_paths* to override
+    this scoping.  *base_dir* only affects the fallback manifest discovery when
+    *manifest_path* is ``None``.
+    """
     resolved_manifest_path = manifest_path or discover_audit_manifest_path(base_dir)
     manifest = load_audit_manifest(resolved_manifest_path)
-    bundle_paths = tuple(review_bundle_paths) if review_bundle_paths is not None else discover_review_bundle_paths(base_dir)
+    if review_bundle_paths is not None:
+        bundle_paths = tuple(review_bundle_paths)
+    else:
+        # Scope bundle discovery to the manifest's own repo to prevent
+        # cross-repo pollution when a manifest_path is provided.
+        repo_root = _repo_root_from_manifest(resolved_manifest_path)
+        if repo_root is not None:
+            bundle_paths = _discover_repo_local_bundle_paths(repo_root)
+        else:
+            bundle_paths = discover_review_bundle_paths(base_dir)
     review_entries: list[ReviewBundleEntry] = []
     for path in bundle_paths:
         review_entries.extend(load_review_bundle_entries(path))
@@ -662,7 +713,16 @@ def main(argv: Sequence[str] | None = None) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Merge provider audit review bundles into the audit manifest.")
     parser.add_argument("--manifest", type=Path, default=None, help="Path to data/audit_manifest.json")
-    parser.add_argument("--base-dir", type=Path, default=None, help="Workspace root containing sibling provider repos")
+    parser.add_argument(
+        "--base-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Workspace root for fallback manifest discovery only. "
+            "When --manifest is given, bundle discovery is scoped to that "
+            "manifest's own repo regardless of --base-dir."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true", help="Do not write the manifest, only report the summary")
     return parser
 
