@@ -206,25 +206,24 @@ Lightweight behavioral checks (not exhaustive parity):
 
 Follow the test style used in existing test files in the repo.
 
-## Step 4: Merge Review Bundle into Audit Manifest
+## Step 4: Validate Review Bundle Merge (Local Only)
 
-If `data/audit_manifest.json` does not exist in the target repo (common for
-sibling repos that haven't had atoms published before), create an empty one:
+**`audit_manifest.json` is no longer checked into git.** The manifest is
+generated ephemerally at backfill time from review bundles by
+`sciona-infra/scripts/backfill_from_review_bundles.py`. You do not need to
+create or maintain `data/audit_manifest.json` in any repo.
 
-```json
-{"schema_version": "1.1", "metadata": {}, "atoms": []}
-```
-
-Then run the merge script. For the base `sciona-atoms` repo:
+The `apply_audit_review_bundles.py` script can still be used locally to
+validate that the merge produces the expected entries, but its output should
+**not** be committed:
 
 ```bash
 cd /Users/conrad/personal/sciona-atoms
 PYTHONPATH=src /Users/conrad/personal/sciona-matcher/.venv/bin/python \
-  scripts/apply_audit_review_bundles.py
+  scripts/apply_audit_review_bundles.py --dry-run
 ```
 
-For a sibling repo, pass `--base-dir` so the script discovers all repos and
-point `--manifest` at the local manifest:
+For a sibling repo:
 
 ```bash
 cd /Users/conrad/personal/<sibling-repo>
@@ -232,11 +231,12 @@ PYTHONPATH=src:/Users/conrad/personal/sciona-atoms/src \
   /Users/conrad/personal/sciona-matcher/.venv/bin/python \
   /Users/conrad/personal/sciona-atoms/scripts/apply_audit_review_bundles.py \
   --manifest data/audit_manifest.json \
-  --base-dir /Users/conrad/personal
+  --base-dir /Users/conrad/personal \
+  --dry-run
 ```
 
-Then confirm:
-- `data/audit_manifest.json` contains all atom FQDNs from the new family
+Then confirm from the dry-run output:
+- All atom FQDNs from the new family are present
 - Entries have argument details, return annotation, source paths, review
   status, reference status, and audit rollup metadata
 - No unresolved/skipped atoms are reported
@@ -268,23 +268,31 @@ If local Supabase is available, verify the atoms are fully publishable:
 supabase db reset --local --yes
 
 # From sciona-atoms:
-export SCIONA_SUPABASE_URL=http://127.0.0.1:54321
-export SCIONA_SUPABASE_SERVICE_KEY=<local service role key>
+export SUPABASE_URL=http://127.0.0.1:54321
+export SUPABASE_SERVICE_ROLE_KEY=<local service role key>
 export SUPABASE_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 
 PYTHONPATH=src /Users/conrad/personal/sciona-matcher/.venv/bin/python \
   scripts/supabase_seed.py --apply --ensure-owner
-PYTHONPATH=src /Users/conrad/personal/sciona-matcher/.venv/bin/python \
-  scripts/supabase_backfill.py all-file-backed
+
+# Audit rollups and evidence are now generated ephemerally from review bundles:
+PYTHONPATH=src:/Users/conrad/personal/sciona-atoms/src \
+  /Users/conrad/personal/sciona-matcher/.venv/bin/python \
+  /Users/conrad/personal/sciona-infra/scripts/backfill_from_review_bundles.py \
+  --base-dir /Users/conrad/personal
+
+# Or for just rollups or evidence:
+PYTHONPATH=src:/Users/conrad/personal/sciona-atoms/src \
+  /Users/conrad/personal/sciona-matcher/.venv/bin/python \
+  /Users/conrad/personal/sciona-infra/scripts/backfill_from_review_bundles.py \
+  --base-dir /Users/conrad/personal --only rollups
 ```
 
-The backfill automatically discovers `data/audit_manifest.json` and
-`data/references/registry.json` in all sibling repos. Provider-owned audit
-manifests override stale shared rows only for namespaces actually present in
-that provider repo, so sibling repos can publish independently without the
-base `sciona-atoms` manifest becoming a gate. No `--audit-manifest` or
-`--registry-path` flag is needed unless you want to override to a specific
-file.
+The backfill script discovers review bundles in all sibling `sciona-atoms*`
+repos, merges them into an ephemeral manifest in memory, and runs the rollup
+and evidence backfills against it. No `data/audit_manifest.json` file needs
+to exist in any repo. Provider-owned review bundles remain the single source
+of truth for audit metadata.
 
 Then verify with SQL:
 
@@ -329,8 +337,8 @@ Tests:
   [ ] test_review_bundles.py passes
   [ ] test_audit_review_bundles.py passes
 
-Manifest:
-  [ ] apply_audit_review_bundles.py ran without errors
-  [ ] audit_manifest.json contains all atom FQDNs
+Manifest (local validation only — do not commit audit_manifest.json):
+  [ ] apply_audit_review_bundles.py --dry-run ran without errors
+  [ ] Dry-run output contains all atom FQDNs
   [ ] No unresolved or skipped atoms
 ```
