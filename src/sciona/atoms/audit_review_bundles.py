@@ -644,16 +644,18 @@ def merge_audit_manifest_with_review_bundles(
 ) -> dict[str, Any]:
     """Apply provider review bundle files to the audit manifest.
 
-    When *manifest_path* is given, bundle discovery is automatically scoped to
-    that manifest's own repo so that atoms from sibling repos are never merged
-    into the wrong manifest.  Pass explicit *review_bundle_paths* to override
-    this scoping.  *base_dir* only affects the fallback manifest discovery when
-    *manifest_path* is ``None``.
+    When *manifest_path* is given without an explicit *base_dir*, bundle
+    discovery is scoped to that manifest's own repo so default CLI use does not
+    merge sibling-provider atoms into the wrong manifest.  Passing *base_dir*
+    intentionally opts into workspace-wide provider discovery, which is useful
+    for tests and batch manifest refreshes.
     """
     resolved_manifest_path = manifest_path or discover_audit_manifest_path(base_dir)
     manifest = load_audit_manifest(resolved_manifest_path)
     if review_bundle_paths is not None:
         bundle_paths = tuple(review_bundle_paths)
+    elif base_dir is not None:
+        bundle_paths = discover_review_bundle_paths(base_dir)
     else:
         # Scope bundle discovery to the manifest's own repo to prevent
         # cross-repo pollution when a manifest_path is provided.
