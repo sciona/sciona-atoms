@@ -27,11 +27,13 @@
       "stage_id": "multi_resolution_concatenation",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_fast_pdf",
+      "binding_source": "generic_data_ops_policy_2026_04_30",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "orchestration",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "Generic pipeline wiring: combines, aligns, groups, or routes upstream artifacts and should be handled by the architect as orchestration, not as an atom.",
+        "candidate_artifact_fqdn": "sciona.atoms.medical_imaging_3d.preprocessing.resample_volume",
+        "binding_note": "Upsampling sub-step may use resample_volume; final concatenation remains orchestration."
       }
     },
     {
@@ -72,18 +74,20 @@
     "total_stages": 5,
     "bound_active": 0,
     "bound_approximate": 0,
-    "gaps": 3,
+    "gaps": 5,
     "atoms_used_by_repo": {},
     "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "conditional_random_fields_crf",
-      "multi_resolution_concatenation",
-      "vector_rasterization"
-    ],
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
+      "multi_resolution_concatenation",
       "u_net_segmentation",
       "vectorization"
-    ]
+    ],
+    "external_knowledge_resolved": [
+      "conditional_random_fields_crf",
+      "vector_rasterization"
+    ],
+    "trivial_inline_resolved": []
   },
   "architect_test_expectations": {
     "critical_findings": [

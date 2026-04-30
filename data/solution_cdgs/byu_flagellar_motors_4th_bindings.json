@@ -16,11 +16,12 @@
       "stage_id": "data_ingestion",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "generic_data_ops_policy_2026_04_30",
       "status": "gap",
       "action_class": "external_knowledge",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "External data loading/parsing or file-format integration; atoms remain pure functions and should not own dataset I/O.",
+        "format": "cryo-ET + supplements"
       }
     },
     {
@@ -83,19 +84,21 @@
     "total_stages": 6,
     "bound_active": 0,
     "bound_approximate": 0,
-    "gaps": 3,
+    "gaps": 6,
     "atoms_used_by_repo": {},
     "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "data_ingestion",
-      "ensembling",
-      "medical_augmentation"
-    ],
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "classification_feature_extraction",
       "model_export_acceleration",
       "object_detection"
-    ]
+    ],
+    "external_knowledge_resolved": [
+      "data_ingestion",
+      "ensembling",
+      "medical_augmentation"
+    ],
+    "trivial_inline_resolved": []
   },
   "architect_test_expectations": {
     "critical_findings": [

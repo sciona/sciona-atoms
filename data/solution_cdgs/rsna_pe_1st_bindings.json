@@ -14,13 +14,13 @@
   "bindings": [
     {
       "stage_id": "dicom_windowing",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.medical_imaging_3d.preprocessing.dicom_window",
+      "binding_confidence": 0.9,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "active",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "Existing atom covers the algorithmic part of this stage; prior gap was retrieval vocabulary mismatch."
       }
     },
     {
@@ -70,20 +70,23 @@
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 0,
+    "bound_active": 1,
     "bound_approximate": 0,
-    "gaps": 3,
-    "atoms_used_by_repo": {},
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "dicom_windowing",
-      "post_processing_logic",
-      "spatial_feature_extraction"
-    ],
+    "gaps": 4,
+    "atoms_used_by_repo": {
+      "sciona.atoms.medical_imaging_3d": 1
+    },
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "multi_head_output",
       "sequence_modeling"
-    ]
+    ],
+    "external_knowledge_resolved": [
+      "post_processing_logic",
+      "spatial_feature_extraction"
+    ],
+    "trivial_inline_resolved": []
   },
   "architect_test_expectations": {
     "critical_findings": [

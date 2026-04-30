@@ -47,13 +47,13 @@
     },
     {
       "stage_id": "feature_aggregation",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_fast_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.time_series_features.rolling_window_features",
+      "binding_confidence": 0.78,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "active",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "Rolling transaction aggregates map to the existing rolling_window_features atom; wider feature-table assembly remains orchestration."
       }
     },
     {
@@ -70,20 +70,23 @@
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 0,
+    "bound_active": 1,
     "bound_approximate": 0,
-    "gaps": 2,
-    "atoms_used_by_repo": {},
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "client_id_reverse_engineering",
-      "feature_aggregation"
-    ],
+    "gaps": 4,
+    "atoms_used_by_repo": {
+      "sciona.atoms.time_series_features": 1
+    },
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "gbdt_modeling",
       "group_k_fold_split",
       "target_encoding"
-    ]
+    ],
+    "external_knowledge_resolved": [
+      "client_id_reverse_engineering"
+    ],
+    "trivial_inline_resolved": []
   },
   "architect_test_expectations": {
     "critical_findings": [

@@ -25,14 +25,18 @@
     },
     {
       "stage_id": "target_scaling",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_fast_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.preprocessing.standard_scaler_transform",
+      "binding_confidence": 0.82,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "active",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
-      }
+        "binding_rationale": "Stage is a fit/transform scaling chain; represent it as a multi-atom binding."
+      },
+      "bound_artifact_fqdns": [
+        "sciona.atoms.ml.sklearn.preprocessing.standard_scaler_fit",
+        "sciona.atoms.ml.sklearn.preprocessing.standard_scaler_transform"
+      ]
     },
     {
       "stage_id": "message_passing_neural_network_mpnn",
@@ -70,20 +74,23 @@
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 0,
+    "bound_active": 1,
     "bound_approximate": 0,
-    "gaps": 3,
-    "atoms_used_by_repo": {},
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "attention_mechanism",
-      "spatial_graphing",
-      "target_scaling"
-    ],
+    "gaps": 4,
+    "atoms_used_by_repo": {
+      "sciona.atoms.ml": 2
+    },
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "ensembling",
       "message_passing_neural_network_mpnn"
-    ]
+    ],
+    "external_knowledge_resolved": [
+      "attention_mechanism",
+      "spatial_graphing"
+    ],
+    "trivial_inline_resolved": []
   },
   "architect_test_expectations": {
     "critical_findings": [

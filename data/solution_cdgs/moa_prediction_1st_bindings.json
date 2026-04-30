@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.moa_prediction_1st",
+  "solution_metadata": {
+    "competition": "MoA Prediction 1st Place \u2014 Multi-Label Tabular Classification with Deep Ensembles",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "multilabel_tabular",
+    "source_url": "",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "variance_thresholding",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+      }
+    },
+    {
+      "stage_id": "dimensionality_reduction",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+      }
+    },
+    {
+      "stage_id": "pseudo_label_feature_selection",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+      }
+    },
+    {
+      "stage_id": "deep_tabular_models",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+      }
+    },
+    {
+      "stage_id": "label_smoothing",
+      "bound_artifact_fqdn": "sciona.atoms.dl.loss.label_smoothing_ce",
+      "binding_confidence": 0.9,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Existing atom covers the algorithmic part of this stage; prior gap was retrieval vocabulary mismatch."
+      }
+    },
+    {
+      "stage_id": "stacking",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 5,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 1
+    },
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [
+      "deep_tabular_models",
+      "dimensionality_reduction",
+      "pseudo_label_feature_selection",
+      "stacking",
+      "variance_thresholding"
+    ],
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": []
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings participate in retrieval tests; non-atom plumbing is resolved by action_class policy."
+    ]
+  }
+}

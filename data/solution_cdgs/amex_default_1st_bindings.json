@@ -16,11 +16,11 @@
       "stage_id": "memory_optimization",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "generic_data_ops_policy_2026_04_30",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "Trivial inline data formatting such as reshape, dtype conversion, simple stacking, groupby average, or coordinate normalization."
       }
     },
     {
@@ -36,13 +36,13 @@
     },
     {
       "stage_id": "difference_features",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tabular.gradient_boosting.temporal_difference",
+      "binding_confidence": 0.86,
+      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "status": "active",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "Existing atom covers the algorithmic part of this stage; prior gap was retrieval vocabulary mismatch."
       }
     },
     {
@@ -70,20 +70,23 @@
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 1,
+    "bound_active": 2,
     "bound_approximate": 0,
     "gaps": 3,
     "atoms_used_by_repo": {
-      "riemannian_bci": 1
+      "sciona.atoms.ml": 1,
+      "sciona.atoms.riemannian_bci": 1
     },
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "difference_features",
-      "memory_optimization",
-      "time_series_aggregation"
-    ],
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "model_training"
+    ],
+    "external_knowledge_resolved": [
+      "time_series_aggregation"
+    ],
+    "trivial_inline_resolved": [
+      "memory_optimization"
     ]
   },
   "architect_test_expectations": {

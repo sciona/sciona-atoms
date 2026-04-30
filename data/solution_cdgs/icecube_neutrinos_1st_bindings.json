@@ -16,11 +16,12 @@
       "stage_id": "point_cloud_processing",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "generic_data_ops_policy_2026_04_30",
       "status": "gap",
       "action_class": "external_knowledge",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "External data loading/parsing or file-format integration; atoms remain pure functions and should not own dataset I/O.",
+        "format": "IceCube HDF5"
       }
     },
     {
@@ -72,19 +73,21 @@
     "total_stages": 5,
     "bound_active": 1,
     "bound_approximate": 0,
-    "gaps": 3,
+    "gaps": 4,
     "atoms_used_by_repo": {
-      "geo": 1
+      "sciona.atoms.geo": 1
     },
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
+    "orchestration_resolved": [
+      "graph_definition"
+    ],
+    "external_knowledge_resolved": [
       "graph_neural_network",
       "point_cloud_processing",
       "transformer_block"
     ],
-    "orchestration_resolved": [
-      "graph_definition"
-    ]
+    "trivial_inline_resolved": []
   },
   "architect_test_expectations": {
     "critical_findings": [

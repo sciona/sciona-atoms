@@ -16,11 +16,12 @@
       "stage_id": "raw_gnss_processing",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "generic_data_ops_policy_2026_04_30",
       "status": "gap",
       "action_class": "external_knowledge",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "External data loading/parsing or file-format integration; atoms remain pure functions and should not own dataset I/O.",
+        "format": "Android GNSS logs"
       }
     },
     {
@@ -75,14 +76,16 @@
     "gaps": 5,
     "atoms_used_by_repo": {},
     "cross_repo_bindings": false,
-    "novel_atoms_needed": [
+    "novel_atoms_needed": [],
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [
       "outlier_rejection",
       "phone_position_snapping",
       "raw_gnss_processing",
       "smoothing",
       "state_estimation"
     ],
-    "orchestration_resolved": []
+    "trivial_inline_resolved": []
   },
   "architect_test_expectations": {
     "critical_findings": [

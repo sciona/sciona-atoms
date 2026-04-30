@@ -16,11 +16,11 @@
       "stage_id": "spatial_normalization",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_fast_pdf",
+      "binding_source": "generic_data_ops_policy_2026_04_30",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "Trivial inline data formatting such as reshape, dtype conversion, simple stacking, groupby average, or coordinate normalization."
       }
     },
     {
@@ -72,18 +72,21 @@
     "total_stages": 5,
     "bound_active": 1,
     "bound_approximate": 0,
-    "gaps": 3,
+    "gaps": 4,
     "atoms_used_by_repo": {
-      "cs": 1
+      "sciona.atoms.cs": 1
     },
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "continuous_ranked_probability_score_crps",
-      "spatial_normalization",
-      "spatial_tensor_formatting"
-    ],
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "1d_cnn_architecture"
+    ],
+    "external_knowledge_resolved": [
+      "continuous_ranked_probability_score_crps",
+      "spatial_tensor_formatting"
+    ],
+    "trivial_inline_resolved": [
+      "spatial_normalization"
     ]
   },
   "architect_test_expectations": {
