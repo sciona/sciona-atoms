@@ -1,0 +1,243 @@
+{
+  "nodes": [
+    {
+      "node_id": "bayesian_bandits_root",
+      "name": "Bayesian Bandits and Acquisition Functions",
+      "description": "Pure posterior-update, sampling, acquisition, and arm-selection kernels for bandits and Bayesian optimization",
+      "status": "decomposed",
+      "children": [
+        "initialize_beta_beliefs",
+        "beta_bernoulli_update",
+        "thompson_sample_beta",
+        "ucb_scores",
+        "bayesian_ucb",
+        "probability_of_improvement",
+        "expected_improvement",
+        "select_best_arm",
+        "epsilon_greedy_select",
+        "update_arm_statistics"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "initialize_beta_beliefs",
+      "name": "initialize_beta_beliefs",
+      "description": "Creates identical positive Beta prior parameters for each arm",
+      "concept_type": "posterior_update",
+      "status": "atomic",
+      "type_signature": "(n_arms: int, prior_alpha: float = 1.0, prior_beta: float = 1.0) -> tuple[NDArray[np.float64], NDArray[np.float64]]",
+      "depth": 1,
+      "inputs": [
+        {"name": "n_arms", "type_desc": "int", "required": true},
+        {"name": "prior_alpha", "type_desc": "float", "required": false},
+        {"name": "prior_beta", "type_desc": "float", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "tuple[NDArray[np.float64], NDArray[np.float64]]"}
+      ]
+    },
+    {
+      "node_id": "beta_bernoulli_update",
+      "name": "beta_bernoulli_update",
+      "description": "Applies the scalar Beta-Bernoulli posterior update after one binary reward",
+      "concept_type": "posterior_update",
+      "status": "atomic",
+      "type_signature": "(alpha: float, beta: float, reward: int) -> tuple[float, float]",
+      "depth": 1,
+      "inputs": [
+        {"name": "alpha", "type_desc": "float", "required": true},
+        {"name": "beta", "type_desc": "float", "required": true},
+        {"name": "reward", "type_desc": "int", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "tuple[float, float]"}
+      ]
+    },
+    {
+      "node_id": "thompson_sample_beta",
+      "name": "thompson_sample_beta",
+      "description": "Draws one explicit-RNG Thompson sample from each Beta posterior",
+      "concept_type": "sampler",
+      "status": "atomic",
+      "type_signature": "(alphas: NDArray[np.float64], betas: NDArray[np.float64], rng: np.random.Generator) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "alphas", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "betas", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "rng", "type_desc": "np.random.Generator", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "ucb_scores",
+      "name": "ucb_scores",
+      "description": "Computes UCB1 scores and assigns infinity to arms with no pulls",
+      "concept_type": "probabilistic_oracle",
+      "status": "atomic",
+      "type_signature": "(means: NDArray[np.float64], counts: NDArray[np.int64], total_count: int, c: float = 2.0**0.5) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "means", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "counts", "type_desc": "NDArray[np.int64]", "required": true},
+        {"name": "total_count", "type_desc": "int", "required": true},
+        {"name": "c", "type_desc": "float", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "bayesian_ucb",
+      "name": "bayesian_ucb",
+      "description": "Computes Bayes-UCB scores as Beta posterior quantiles",
+      "concept_type": "probabilistic_oracle",
+      "status": "atomic",
+      "type_signature": "(alphas: NDArray[np.float64], betas: NDArray[np.float64], quantile: float) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "alphas", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "betas", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "quantile", "type_desc": "float", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "probability_of_improvement",
+      "name": "probability_of_improvement",
+      "description": "Computes Gaussian probability of exceeding the incumbent by a margin",
+      "concept_type": "probabilistic_oracle",
+      "status": "atomic",
+      "type_signature": "(mean: NDArray[np.float64], std: NDArray[np.float64], best_observed: float, xi: float = 0.0) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "mean", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "std", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "best_observed", "type_desc": "float", "required": true},
+        {"name": "xi", "type_desc": "float", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "expected_improvement",
+      "name": "expected_improvement",
+      "description": "Computes Gaussian expected improvement over the incumbent by a margin",
+      "concept_type": "probabilistic_oracle",
+      "status": "atomic",
+      "type_signature": "(mean: NDArray[np.float64], std: NDArray[np.float64], best_observed: float, xi: float = 0.0) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "mean", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "std", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "best_observed", "type_desc": "float", "required": true},
+        {"name": "xi", "type_desc": "float", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ]
+    },
+    {
+      "node_id": "select_best_arm",
+      "name": "select_best_arm",
+      "description": "Selects the first arm with the largest acquisition score",
+      "concept_type": "selector",
+      "status": "atomic",
+      "type_signature": "(scores: NDArray[np.float64]) -> int",
+      "depth": 1,
+      "inputs": [
+        {"name": "scores", "type_desc": "NDArray[np.float64]", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "int"}
+      ]
+    },
+    {
+      "node_id": "epsilon_greedy_select",
+      "name": "epsilon_greedy_select",
+      "description": "Selects the best arm unless an explicit random draw triggers exploration",
+      "concept_type": "selector",
+      "status": "atomic",
+      "type_signature": "(values: NDArray[np.float64], epsilon: float, rng: np.random.Generator) -> int",
+      "depth": 1,
+      "inputs": [
+        {"name": "values", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "epsilon", "type_desc": "float", "required": true},
+        {"name": "rng", "type_desc": "np.random.Generator", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "int"}
+      ]
+    },
+    {
+      "node_id": "update_arm_statistics",
+      "name": "update_arm_statistics",
+      "description": "Updates one arm count and running mean without retaining reward history",
+      "concept_type": "posterior_update",
+      "status": "atomic",
+      "type_signature": "(means: NDArray[np.float64], counts: NDArray[np.int64], arm: int, reward: float) -> tuple[NDArray[np.float64], NDArray[np.int64]]",
+      "depth": 1,
+      "inputs": [
+        {"name": "means", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "counts", "type_desc": "NDArray[np.int64]", "required": true},
+        {"name": "arm", "type_desc": "int", "required": true},
+        {"name": "reward", "type_desc": "float", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "tuple[NDArray[np.float64], NDArray[np.int64]]"}
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "initialize_beta_beliefs",
+      "target_id": "thompson_sample_beta",
+      "edge_type": "data_dependency"
+    },
+    {
+      "source_id": "beta_bernoulli_update",
+      "target_id": "thompson_sample_beta",
+      "edge_type": "data_dependency"
+    },
+    {
+      "source_id": "beta_bernoulli_update",
+      "target_id": "bayesian_ucb",
+      "edge_type": "data_dependency"
+    },
+    {
+      "source_id": "ucb_scores",
+      "target_id": "select_best_arm",
+      "edge_type": "data_dependency"
+    },
+    {
+      "source_id": "bayesian_ucb",
+      "target_id": "select_best_arm",
+      "edge_type": "data_dependency"
+    },
+    {
+      "source_id": "probability_of_improvement",
+      "target_id": "select_best_arm",
+      "edge_type": "data_dependency"
+    },
+    {
+      "source_id": "expected_improvement",
+      "target_id": "select_best_arm",
+      "edge_type": "data_dependency"
+    },
+    {
+      "source_id": "update_arm_statistics",
+      "target_id": "ucb_scores",
+      "edge_type": "data_dependency"
+    }
+  ],
+  "metadata": {
+    "source": "manual_ingestion",
+    "research_artifact": "research/16_bayesian_bandits.md",
+    "research_pdf": "research/16_research.pdf",
+    "target_repo": "sciona-atoms"
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "schema_version": "1.1",
+  "atoms": {
+    "sciona.atoms.inference.bayesian_bandits.initialize_beta_beliefs@sciona/atoms/inference/bayesian_bandits/atoms.py:45": {
+      "references": [
+        {
+          "ref_id": "russo2018thompson",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["Beta prior initialization"],
+            "confidence": "high",
+            "notes": "Supports the Beta-Bernoulli posterior state used by Thompson sampling."
+          }
+        },
+        {
+          "ref_id": "research16_bayesian_bandits",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["Beta distribution belief state initialization"],
+            "confidence": "high",
+            "notes": "Local research artifact identifies this initialization stage for the ingestion batch."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.bayesian_bandits.beta_bernoulli_update@sciona/atoms/inference/bayesian_bandits/atoms.py:63": {
+      "references": [
+        {
+          "ref_id": "russo2018thompson",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["Beta-Bernoulli update"],
+            "confidence": "high",
+            "notes": "Gives the Bernoulli bandit posterior update used by Thompson sampling."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.bayesian_bandits.thompson_sample_beta@sciona/atoms/inference/bayesian_bandits/atoms.py:75": {
+      "references": [
+        {
+          "ref_id": "numpy_generator_beta_docs",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["numpy.random.Generator.beta"],
+            "confidence": "high",
+            "notes": "The atom delegates Beta variate generation to NumPy's explicit Generator API."
+          }
+        },
+        {
+          "ref_id": "russo2018thompson",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["Thompson sampling"],
+            "confidence": "high",
+            "notes": "Canonical tutorial reference for posterior sampling in bandit problems."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.bayesian_bandits.ucb_scores@sciona/atoms/inference/bayesian_bandits/atoms.py:91": {
+      "references": [
+        {
+          "ref_id": "auer2002ucb",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["UCB1"],
+            "confidence": "high",
+            "notes": "Primary finite-time UCB1 analysis reference for the score formula."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.bayesian_bandits.bayesian_ucb@sciona/atoms/inference/bayesian_bandits/atoms.py:115": {
+      "references": [
+        {
+          "ref_id": "kaufmann2012bayesucb",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["Bayes-UCB"],
+            "confidence": "high",
+            "notes": "Defines Bayes-UCB as a posterior quantile selection rule."
+          }
+        },
+        {
+          "ref_id": "scipy_beta_ppf_docs",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["scipy.stats.beta.ppf"],
+            "confidence": "high",
+            "notes": "Documents the SciPy percent-point function used for Beta quantiles."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.bayesian_bandits.probability_of_improvement@sciona/atoms/inference/bayesian_bandits/atoms.py:129": {
+      "references": [
+        {
+          "ref_id": "snoek2012bo",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["Probability of improvement"],
+            "confidence": "high",
+            "notes": "Bayesian optimization reference for Gaussian-process acquisition functions."
+          }
+        },
+        {
+          "ref_id": "scipy_norm_docs",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["scipy.stats.norm.cdf"],
+            "confidence": "high",
+            "notes": "Documents the normal CDF used by the probability-of-improvement atom."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.bayesian_bandits.expected_improvement@sciona/atoms/inference/bayesian_bandits/atoms.py:154": {
+      "references": [
+        {
+          "ref_id": "snoek2012bo",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["Expected improvement"],
+            "confidence": "high",
+            "notes": "Bayesian optimization reference for expected improvement."
+          }
+        },
+        {
+          "ref_id": "scipy_norm_docs",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["scipy.stats.norm.cdf", "scipy.stats.norm.pdf"],
+            "confidence": "high",
+            "notes": "Documents the normal CDF and PDF used by expected improvement."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.bayesian_bandits.select_best_arm@sciona/atoms/inference/bayesian_bandits/atoms.py:176": {
+      "references": [
+        {
+          "ref_id": "sutton_barto2018rl",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["greedy action selection"],
+            "confidence": "high",
+            "notes": "Standard reinforcement-learning reference for greedy action selection."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.bayesian_bandits.epsilon_greedy_select@sciona/atoms/inference/bayesian_bandits/atoms.py:187": {
+      "references": [
+        {
+          "ref_id": "sutton_barto2018rl",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["epsilon-greedy action selection"],
+            "confidence": "high",
+            "notes": "Standard reinforcement-learning reference for epsilon-greedy bandit selection."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    },
+    "sciona.atoms.inference.bayesian_bandits.update_arm_statistics@sciona/atoms/inference/bayesian_bandits/atoms.py:204": {
+      "references": [
+        {
+          "ref_id": "sutton_barto2018rl",
+          "match_metadata": {
+            "similarity_score": null,
+            "match_type": "manual",
+            "matched_nodes": ["incremental action-value update"],
+            "confidence": "high",
+            "notes": "Gives the incremental sample-average update used for action-value tracking."
+          }
+        }
+      ],
+      "auto_attribution_runs": []
+    }
+  }
+}
