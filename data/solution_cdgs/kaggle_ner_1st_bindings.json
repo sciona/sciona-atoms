@@ -14,13 +14,13 @@
   "bindings": [
     {
       "stage_id": "sequence_tokenization",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tokenizer.tokenize",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "Matched via retrieval search against atom catalog."
       }
     },
     {
@@ -58,13 +58,13 @@
     },
     {
       "stage_id": "decoding",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.ml.text_nlp.bio_decode",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "Matched via retrieval search against atom catalog. Downgraded from active: atom exists but keyword retrieval cannot reliably surface it."
       }
     }
   ],

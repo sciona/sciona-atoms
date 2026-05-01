@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.rsna_pneumonia_1st",
+  "solution_metadata": {
+    "competition": "RSNA Pneumonia Detection 1st Place — Dual-Detector Box Ensemble",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "medical_detection_2d",
+    "source_url": "https://www.kaggle.com/c/rsna-pneumonia-detection-challenge/discussion/70421",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "dicom_extraction",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_classification",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "DICOM to PNG conversion"
+      }
+    },
+    {
+      "stage_id": "xray_augmentation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "retinanet_detector",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "mask_rcnn_detector",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "nms_postprocessing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "box_ensemble",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 0,
+    "bound_approximate": 0,
+    "gaps": 5,
+    "atoms_used_by_repo": {},
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "box_ensemble",
+      "mask_rcnn_detector",
+      "nms_postprocessing",
+      "retinanet_detector",
+      "xray_augmentation"
+    ],
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [
+      "dicom_extraction"
+    ],
+    "trivial_inline_resolved": []
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

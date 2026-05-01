@@ -25,13 +25,13 @@
     },
     {
       "stage_id": "tokenization",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tokenizer.tokenize",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "Matched via retrieval search against atom catalog."
       }
     },
     {
@@ -47,13 +47,13 @@
     },
     {
       "stage_id": "post_processing_logic",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.ml.text_nlp.char_to_token_offsets",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "Covers span alignment but not full QA selection"
       }
     },
     {
@@ -70,15 +70,14 @@
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 2,
-    "atoms_used_by_repo": {},
+    "bound_active": 1,
+    "bound_approximate": 1,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona.atoms.ml": 2
+    },
     "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "post_processing_logic",
-      "tokenization"
-    ],
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "ensembling",
       "language_merging",

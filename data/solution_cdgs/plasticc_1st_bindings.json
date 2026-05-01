@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.plasticc_1st",
+  "solution_metadata": {
+    "competition": "PLAsTiCC Astronomical Classification 1st Place \u2014 Time Series Classification via GP Interpolation and Gradient Boosting",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "time_series_classification",
+    "source_url": "https://www.kaggle.com/c/PLAsTiCC-2018/discussion/75033",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "flux_correction",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "time_series_feature_extraction",
+      "bound_artifact_fqdn": "sciona.atoms.signal.time_series_features.rolling_window_features",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Matched via retrieval search against atom catalog. Downgraded from active: atom exists but keyword retrieval cannot reliably surface it."
+      }
+    },
+    {
+      "stage_id": "gaussian_process_interpolation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "feature_merging",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "Concat GP + metadata features \u2014 orchestration"
+      }
+    },
+    {
+      "stage_id": "model_training",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "platt_calibration",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 4,
+    "atoms_used_by_repo": {
+      "signal": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "flux_correction",
+      "gaussian_process_interpolation",
+      "model_training",
+      "platt_calibration"
+    ],
+    "orchestration_resolved": [
+      "feature_merging"
+    ],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": []
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

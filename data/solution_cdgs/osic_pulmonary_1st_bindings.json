@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.osic_pulmonary_1st",
+  "solution_metadata": {
+    "competition": "OSIC Pulmonary Fibrosis Progression - 1st Place (2020)",
+    "placement": "1st",
+    "team": null,
+    "year": 2020,
+    "metric": null,
+    "problem_domain": "survival_regression",
+    "source_url": "https://www.kaggle.com/competitions/osic-pulmonary-fibrosis-progression/discussion/189346",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "tabular_feature_engineering",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tabular.gradient_boosting.temporal_difference",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Covers deltas, not full feature set"
+      }
+    },
+    {
+      "stage_id": "feature_concatenation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "Concat tabular + image features — orchestration"
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 2,
+    "bound_active": 0,
+    "bound_approximate": 1,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona.atoms.ml": 1
+    },
+    "cross_repo_bindings": false,
+    "orchestration_resolved": [
+      "feature_concatenation"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

@@ -14,13 +14,13 @@
   "bindings": [
     {
       "stage_id": "dicom_windowing",
-      "bound_artifact_fqdn": "sciona.atoms.medical_imaging_3d.preprocessing.dicom_window",
-      "binding_confidence": 0.9,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "bound_artifact_fqdn": "sciona.atoms.bio.medical_imaging_3d.preprocessing.dicom_window",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
       "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "binding_rationale": "Existing atom covers the algorithmic part of this stage; prior gap was retrieval vocabulary mismatch."
+        "binding_rationale": "Matched via retrieval search against atom catalog."
       }
     },
     {
@@ -60,11 +60,11 @@
       "stage_id": "post_processing_logic",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "reclassification_2026_04_24",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "Rule-based contradiction removal \u2014 trivial inline domain logic"
       }
     }
   ],
@@ -83,10 +83,11 @@
       "sequence_modeling"
     ],
     "external_knowledge_resolved": [
-      "post_processing_logic",
       "spatial_feature_extraction"
     ],
-    "trivial_inline_resolved": []
+    "trivial_inline_resolved": [
+      "post_processing_logic"
+    ]
   },
   "architect_test_expectations": {
     "critical_findings": [

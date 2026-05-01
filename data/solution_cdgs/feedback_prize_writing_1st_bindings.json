@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.feedback_prize_writing_1st",
+  "bindings": [
+    {
+      "stage_id": "length_constraint_filtering",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "Filter spans below min length threshold \u2014 trivial inline"
+      }
+    },
+    {
+      "stage_id": "char_to_token_offset_mapping",
+      "bound_artifact_fqdn": "sciona.atoms.ml.text_nlp.char_to_token_offsets",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Matched via retrieval search against atom catalog. Downgraded from active: atom exists but keyword retrieval cannot reliably surface it."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6
+  }
+}

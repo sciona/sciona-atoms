@@ -14,13 +14,13 @@
   "bindings": [
     {
       "stage_id": "variance_thresholding",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.variance_threshold.variance_threshold_fit",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+        "binding_rationale": "Matched via retrieval search against atom catalog."
       }
     },
     {
@@ -47,13 +47,13 @@
     },
     {
       "stage_id": "deep_tabular_models",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.tabular.entity_embedding_lookup",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+        "binding_rationale": "Embedding layer only, full TabNet is opaque"
       }
     },
     {
@@ -82,14 +82,13 @@
   "binding_summary": {
     "total_stages": 6,
     "bound_active": 1,
-    "bound_approximate": 0,
-    "gaps": 5,
+    "bound_approximate": 1,
+    "gaps": 4,
     "atoms_used_by_repo": {
-      "sciona.atoms.dl": 1
+      "sciona.atoms.dl": 2
     },
-    "cross_repo_bindings": true,
+    "cross_repo_bindings": false,
     "novel_atoms_needed": [
-      "deep_tabular_models",
       "dimensionality_reduction",
       "pseudo_label_feature_selection",
       "stacking",

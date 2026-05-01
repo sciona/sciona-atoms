@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.jigsaw_toxicity_bias_1st",
+  "solution_metadata": {
+    "competition": "Jigsaw Unintended Bias in Toxicity Classification 1st Place — Bias-Aware Transformer Ensemble",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "nlp_fairness",
+    "source_url": "https://www.kaggle.com/c/jigsaw-unintended-bias-in-toxicity-classification/discussion/100661",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "text_cleaning",
+      "bound_artifact_fqdn": "sciona.atoms.ml.text_nlp.clean_text",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Matched via retrieval search against atom catalog."
+      }
+    },
+    {
+      "stage_id": "multi_tokenization",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tokenizer.tokenize",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Matched via retrieval search against atom catalog."
+      }
+    },
+    {
+      "stage_id": "sequence_bucketing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "Length-based batching — trivial inline"
+      }
+    },
+    {
+      "stage_id": "demographic_weighted_bce",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "multisample_dropout",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "model_ensembling",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 2,
+    "bound_approximate": 0,
+    "gaps": 3,
+    "atoms_used_by_repo": {
+      "ml": 2
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "demographic_weighted_bce",
+      "model_ensembling",
+      "multisample_dropout"
+    ],
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": [
+      "sequence_bucketing"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

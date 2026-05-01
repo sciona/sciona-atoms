@@ -16,44 +16,44 @@
       "stage_id": "data_deduplication",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "reclassification_2026_04_24",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "pandas drop_duplicates — trivial inline"
       }
     },
     {
       "stage_id": "prefix_formatting",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "reclassification_2026_04_24",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "String formatting — trivial inline"
       }
     },
     {
       "stage_id": "attention_masking",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "reclassification_2026_04_24",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "FlexAttention custom causal masks — architecture-specific"
       }
     },
     {
       "stage_id": "feature_extraction",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "reclassification_2026_04_24",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "Last-token extraction — trivial inline"
       }
     },
     {
@@ -94,19 +94,21 @@
     "total_stages": 7,
     "bound_active": 0,
     "bound_approximate": 0,
-    "gaps": 4,
+    "gaps": 1,
     "atoms_used_by_repo": {},
     "cross_repo_bindings": false,
     "novel_atoms_needed": [
-      "attention_masking",
-      "data_deduplication",
-      "feature_extraction",
-      "prefix_formatting"
+      "attention_masking"
     ],
     "orchestration_resolved": [
       "model_merging",
       "reasoning_optimization",
       "sft_head"
+    ],
+    "trivial_inline_resolved": [
+      "data_deduplication",
+      "feature_extraction",
+      "prefix_formatting"
     ]
   },
   "architect_test_expectations": {

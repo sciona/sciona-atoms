@@ -38,22 +38,22 @@
       "stage_id": "boundary_filtering",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "reclassification_2026_04_24",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "Remove boxes at patch boundaries \u2014 trivial inline"
       }
     },
     {
       "stage_id": "data_augmentation",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.mixup_apply",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "Covers mixing but not bbox-safe augmentation"
       }
     },
     {
@@ -104,16 +104,19 @@
   "binding_summary": {
     "total_stages": 8,
     "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 5,
-    "atoms_used_by_repo": {},
+    "bound_approximate": 1,
+    "gaps": 4,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 1
+    },
     "cross_repo_bindings": false,
     "novel_atoms_needed": [
-      "boundary_filtering",
-      "data_augmentation",
       "patch_generation",
       "post_processing",
       "video_frame_extraction"
+    ],
+    "trivial_inline_resolved": [
+      "boundary_filtering"
     ],
     "orchestration_resolved": [
       "classification_rescoring",

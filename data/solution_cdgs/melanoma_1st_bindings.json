@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.melanoma_1st",
+  "solution_metadata": {
+    "competition": "SIIM-ISIC Melanoma Classification 1st Place \u2014 Multi-Modal CNN with Pseudo-Labeling and Rank Averaging",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "medical_image_tabular",
+    "source_url": "https://www.kaggle.com/c/siim-isic-melanoma-classification/discussion/175412",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "microscope_augmentation",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.cutmix_apply",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Matched via retrieval search against atom catalog. Downgraded from active: atom exists but keyword retrieval cannot reliably surface it."
+      }
+    },
+    {
+      "stage_id": "image_backbone_training",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "metadata_concatenation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "meta_head",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "pseudo_labeling",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "rank_average_ensemble",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 5,
+    "atoms_used_by_repo": {
+      "dl": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "image_backbone_training",
+      "meta_head",
+      "metadata_concatenation",
+      "pseudo_labeling",
+      "rank_average_ensemble"
+    ],
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": []
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

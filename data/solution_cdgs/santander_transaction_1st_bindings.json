@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.santander_transaction_1st",
+  "solution_metadata": {
+    "competition": "Santander Customer Transaction Prediction - 1st Place (2019)",
+    "placement": "1st",
+    "team": null,
+    "year": 2019,
+    "metric": null,
+    "problem_domain": "tabular_classification",
+    "source_url": "https://www.kaggle.com/c/santander-customer-transaction-prediction/discussion/89003",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "count_encoding",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tabular.gradient_boosting.frequency_encode",
+      "binding_confidence": 0.9,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Exact match (vocabulary mismatch only)"
+      }
+    },
+    {
+      "stage_id": "value_substitution",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tabular.gradient_boosting.frequency_encode",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Exact match Downgraded from active: atom exists but keyword retrieval cannot reliably surface it."
+      }
+    },
+    {
+      "stage_id": "fake_data_identification",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "Unique-value detection \u2014 trivial inline"
+      }
+    },
+    {
+      "stage_id": "real_data_filtering",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "Filter synthetic rows \u2014 trivial inline"
+      }
+    },
+    {
+      "stage_id": "shuffle_augmentation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "Column shuffle by class \u2014 trivial inline"
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 2,
+    "bound_approximate": 0,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona.atoms.ml": 2
+    },
+    "cross_repo_bindings": false,
+    "trivial_inline_resolved": [
+      "fake_data_identification",
+      "real_data_filtering",
+      "shuffle_augmentation"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

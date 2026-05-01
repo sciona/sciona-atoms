@@ -1,0 +1,91 @@
+{
+  "nodes": [
+    {
+      "node_id": "scoring_root",
+      "name": "Scoring",
+      "description": "Scoring, evaluation, and reconciliation primitives for competition pipelines",
+      "status": "decomposed",
+      "children": [
+        "elo_rating_update",
+        "nab_anomaly_score",
+        "expected_f1_threshold",
+        "hierarchical_topdown_reconcile"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "elo_rating_update",
+      "name": "elo_rating_update",
+      "description": "Update Elo ratings after a match using expected score and K-factor",
+      "concept_type": "analysis",
+      "status": "atomic",
+      "type_signature": "(rating_a: float, rating_b: float, score_a: float, k: float = 32.0) -> tuple[float, float]",
+      "depth": 1,
+      "inputs": [
+        {"name": "rating_a", "type_desc": "float", "required": true},
+        {"name": "rating_b", "type_desc": "float", "required": true},
+        {"name": "score_a", "type_desc": "float", "required": true},
+        {"name": "k", "type_desc": "float", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "tuple[float, float]"}
+      ],
+      "aliases": ["elo_ratings", "elo_update"]
+    },
+    {
+      "node_id": "nab_anomaly_score",
+      "name": "nab_anomaly_score",
+      "description": "NAB anomaly benchmark score with sigmoid-weighted early detection reward",
+      "concept_type": "analysis",
+      "status": "atomic",
+      "type_signature": "(detections: NDArray, anomaly_windows: NDArray, A_tp: float = 1.0, A_fp: float = -0.11, A_fn: float = -1.0) -> float",
+      "depth": 1,
+      "inputs": [
+        {"name": "detections", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "anomaly_windows", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "A_tp", "type_desc": "float", "required": false},
+        {"name": "A_fp", "type_desc": "float", "required": false},
+        {"name": "A_fn", "type_desc": "float", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "float"}
+      ],
+      "aliases": ["windowed_evaluation", "nab_score"]
+    },
+    {
+      "node_id": "expected_f1_threshold",
+      "name": "expected_f1_threshold",
+      "description": "Faron's expected F1 maximization via descending probability thresholding",
+      "concept_type": "optimization",
+      "status": "atomic",
+      "type_signature": "(probabilities: NDArray, n_true: int) -> tuple[NDArray, float]",
+      "depth": 1,
+      "inputs": [
+        {"name": "probabilities", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "n_true", "type_desc": "int", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "tuple[NDArray[np.float64], float]"}
+      ],
+      "aliases": ["f1_maximization_dp", "faron_f1"]
+    },
+    {
+      "node_id": "hierarchical_topdown_reconcile",
+      "name": "hierarchical_topdown_reconcile",
+      "description": "Top-down proportional hierarchical forecast reconciliation",
+      "concept_type": "analysis",
+      "status": "atomic",
+      "type_signature": "(bottom_forecasts: NDArray, proportions: NDArray, top_forecast: float) -> NDArray",
+      "depth": 1,
+      "inputs": [
+        {"name": "bottom_forecasts", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "proportions", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "top_forecast", "type_desc": "float", "required": true}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ],
+      "aliases": ["hierarchical_scaling", "topdown_reconciliation"]
+    }
+  ]
+}

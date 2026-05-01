@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.vsb_power_line_1st",
+  "solution_metadata": {
+    "competition": "VSB Power Line Fault Detection 1st Place",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "signal_classification",
+    "source_url": "https://www.kaggle.com/c/vsb-power-line-fault-detection/discussion/86619",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "wavelet_denoising",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "peak_detection",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "peak_feature_extraction",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "signal_to_matrix_transform",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "np.reshape 1D to 2D matrix — trivial inline"
+      }
+    },
+    {
+      "stage_id": "tabular_model",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "dl_model",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "weighted_blend",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 7,
+    "bound_active": 0,
+    "bound_approximate": 0,
+    "gaps": 7,
+    "atoms_used_by_repo": {},
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [],
+    "orchestration_resolved": [],
+    "trivial_inline_resolved": [
+      "signal_to_matrix_transform"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

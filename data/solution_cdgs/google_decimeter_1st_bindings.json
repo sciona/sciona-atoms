@@ -16,12 +16,11 @@
       "stage_id": "raw_gnss_processing",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "binding_source": "manual_classification",
       "status": "gap",
       "action_class": "external_knowledge",
       "evidence_summary": {
-        "gap_reason": "External data loading/parsing or file-format integration; atoms remain pure functions and should not own dataset I/O.",
-        "format": "Android GNSS logs"
+        "gap_reason": "Android GNSS log parsing"
       }
     },
     {
@@ -72,16 +71,17 @@
   "binding_summary": {
     "total_stages": 5,
     "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 5,
-    "atoms_used_by_repo": {},
+    "bound_approximate": 1,
+    "gaps": 4,
+    "atoms_used_by_repo": {
+      "sciona.atoms.geo": 1
+    },
     "cross_repo_bindings": false,
     "novel_atoms_needed": [],
     "orchestration_resolved": [],
     "external_knowledge_resolved": [
       "outlier_rejection",
       "phone_position_snapping",
-      "raw_gnss_processing",
       "smoothing",
       "state_estimation"
     ],

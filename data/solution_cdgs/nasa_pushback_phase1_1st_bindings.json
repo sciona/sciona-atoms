@@ -20,8 +20,7 @@
       "status": "gap",
       "action_class": "external_knowledge",
       "evidence_summary": {
-        "gap_reason": "External data loading/parsing or file-format integration; atoms remain pure functions and should not own dataset I/O.",
-        "format": "air traffic CSV"
+        "gap_reason": "Air traffic CSV loading"
       }
     },
     {
@@ -61,11 +60,11 @@
       "stage_id": "concatenation",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "reclassification_2026_04_24",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "orchestration",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "Concat airport predictions — orchestration"
       }
     }
   ],
@@ -79,11 +78,11 @@
     "novel_atoms_needed": [],
     "orchestration_resolved": [
       "airline_sequencing",
+      "concatenation",
       "entity_splitting",
       "parallel_modeling"
     ],
     "external_knowledge_resolved": [
-      "concatenation",
       "data_ingestion"
     ],
     "trivial_inline_resolved": []

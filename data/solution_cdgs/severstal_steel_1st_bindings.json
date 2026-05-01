@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.severstal_steel_1st",
+  "solution_metadata": {
+    "competition": "Severstal Steel Defect Detection 1st Place — Classifier-Gated Segmentation with Area Thresholding",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "semantic_segmentation",
+    "source_url": "https://www.kaggle.com/c/severstal-steel-defect-detection/discussion/114331",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "tile_preprocessing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "classifier_filtering",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "segmentation_models",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "multistage_inference",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_classification",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "Conditional routing pattern"
+      }
+    },
+    {
+      "stage_id": "postprocessing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 5,
+    "bound_active": 0,
+    "bound_approximate": 0,
+    "gaps": 4,
+    "atoms_used_by_repo": {},
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "classifier_filtering",
+      "postprocessing",
+      "segmentation_models",
+      "tile_preprocessing"
+    ],
+    "orchestration_resolved": [
+      "multistage_inference"
+    ],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": []
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.global_wheat_1st",
+  "solution_metadata": {
+    "competition": "Global Wheat Detection - 1st Place (2020)",
+    "placement": "1st",
+    "team": null,
+    "year": 2020,
+    "metric": null,
+    "problem_domain": "object_detection_2d",
+    "source_url": "https://www.kaggle.com/competitions/global-wheat-detection/discussion/175961",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "mosaic_augmentation",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.cutmix_apply",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "CutMix partial; mosaic (4-image) still missing"
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 1,
+    "bound_active": 0,
+    "bound_approximate": 1,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 1
+    },
+    "cross_repo_bindings": false
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

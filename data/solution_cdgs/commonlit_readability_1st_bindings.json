@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.commonlit_readability_1st",
+  "solution_metadata": {
+    "competition": "CommonLit Readability Prize 1st Place — Domain-Adapted Transformers with SWA and SVR Calibration",
+    "placement": null,
+    "team": null,
+    "year": null,
+    "metric": null,
+    "problem_domain": "nlp_regression",
+    "source_url": "https://www.kaggle.com/c/commonlitreadabilityprize/discussion/260744",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "domain_adaptation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "tokenization",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tokenizer.tokenize",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Matched via retrieval search against atom catalog."
+      }
+    },
+    {
+      "stage_id": "attention_pooling",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "regression_head",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    },
+    {
+      "stage_id": "stochastic_weight_averaging",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "SWA training infrastructure — needs opaque wrapper"
+      }
+    },
+    {
+      "stage_id": "svr_calibration_head",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "unbound",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "No binding assigned yet."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 1,
+    "bound_approximate": 0,
+    "gaps": 5,
+    "atoms_used_by_repo": {
+      "ml": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "attention_pooling",
+      "domain_adaptation",
+      "regression_head",
+      "stochastic_weight_averaging",
+      "svr_calibration_head"
+    ],
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": []
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}
