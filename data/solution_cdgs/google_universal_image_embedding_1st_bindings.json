@@ -47,13 +47,13 @@
     },
     {
       "stage_id": "pca_dimensionality_reduction",
-      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.decomposition.pca_fit",
-      "binding_confidence": 0.78,
-      "binding_source": "manual_rule_from_fast_pdf",
+      "bound_artifact_fqdn": "sciona.atoms.dl.embeddings.pca_whiten_reduce",
+      "binding_confidence": 0.92,
+      "binding_source": "retrieval_search",
       "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "binding_rationale": "Stage text maps to the closest existing decomposition primitive in the expanded local catalog."
+        "binding_rationale": "pca_whiten_reduce projects embeddings via SVD PCA, whitens, and L2-normalizes — a better match than plain pca_fit for this embedding retrieval pipeline that compresses 1024D to 64D with whitening."
       }
     },
     {

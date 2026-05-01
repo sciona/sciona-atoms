@@ -23,13 +23,32 @@
       "type_signature": "(W: SparseGraphInput, normed: bool = False, use_out_degree: bool = False, symmetrized: bool = False) -> SparseGraphOutput",
       "depth": 1,
       "inputs": [
-        {"name": "W", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
-        {"name": "normed", "type_desc": "bool", "required": false},
-        {"name": "use_out_degree", "type_desc": "bool", "required": false},
-        {"name": "symmetrized", "type_desc": "bool", "required": false}
+        {
+          "name": "W",
+          "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix",
+          "required": true
+        },
+        {
+          "name": "normed",
+          "type_desc": "bool",
+          "required": false
+        },
+        {
+          "name": "use_out_degree",
+          "type_desc": "bool",
+          "required": false
+        },
+        {
+          "name": "symmetrized",
+          "type_desc": "bool",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix"}
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix"
+        }
       ]
     },
     {
@@ -41,16 +60,47 @@
       "type_signature": "(csgraph: SparseGraphInput, indices: np.ndarray | int = 0, method: str = 'auto', directed: bool = True, return_predecessors: bool = False, unweighted: bool = False, overwrite: bool = False) -> tuple[np.ndarray, ...] | np.ndarray",
       "depth": 1,
       "inputs": [
-        {"name": "csgraph", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
-        {"name": "indices", "type_desc": "NDArray[np.int64] | int", "required": false},
-        {"name": "method", "type_desc": "str", "required": false},
-        {"name": "directed", "type_desc": "bool", "required": false},
-        {"name": "return_predecessors", "type_desc": "bool", "required": false},
-        {"name": "unweighted", "type_desc": "bool", "required": false},
-        {"name": "overwrite", "type_desc": "bool", "required": false}
+        {
+          "name": "csgraph",
+          "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix",
+          "required": true
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64] | int",
+          "required": false
+        },
+        {
+          "name": "method",
+          "type_desc": "str",
+          "required": false
+        },
+        {
+          "name": "directed",
+          "type_desc": "bool",
+          "required": false
+        },
+        {
+          "name": "return_predecessors",
+          "type_desc": "bool",
+          "required": false
+        },
+        {
+          "name": "unweighted",
+          "type_desc": "bool",
+          "required": false
+        },
+        {
+          "name": "overwrite",
+          "type_desc": "bool",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[NDArray[np.float64], ...] | NDArray[np.float64]"}
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.float64], ...] | NDArray[np.float64]"
+        }
       ]
     },
     {
@@ -62,15 +112,42 @@
       "type_signature": "(csgraph: SparseGraphInput, method: str = 'auto', directed: bool = True, return_predecessors: bool = False, unweighted: bool = False, overwrite: bool = False) -> tuple[np.ndarray, ...] | np.ndarray",
       "depth": 1,
       "inputs": [
-        {"name": "csgraph", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
-        {"name": "method", "type_desc": "str", "required": false},
-        {"name": "directed", "type_desc": "bool", "required": false},
-        {"name": "return_predecessors", "type_desc": "bool", "required": false},
-        {"name": "unweighted", "type_desc": "bool", "required": false},
-        {"name": "overwrite", "type_desc": "bool", "required": false}
+        {
+          "name": "csgraph",
+          "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix",
+          "required": true
+        },
+        {
+          "name": "method",
+          "type_desc": "str",
+          "required": false
+        },
+        {
+          "name": "directed",
+          "type_desc": "bool",
+          "required": false
+        },
+        {
+          "name": "return_predecessors",
+          "type_desc": "bool",
+          "required": false
+        },
+        {
+          "name": "unweighted",
+          "type_desc": "bool",
+          "required": false
+        },
+        {
+          "name": "overwrite",
+          "type_desc": "bool",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[NDArray[np.float64], ...] | NDArray[np.float64]"}
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.float64], ...] | NDArray[np.float64]"
+        }
       ]
     },
     {
@@ -82,11 +159,22 @@
       "type_signature": "(csgraph: SparseGraphInput, overwrite: bool = False) -> scipy.sparse.csr_matrix",
       "depth": 1,
       "inputs": [
-        {"name": "csgraph", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
-        {"name": "overwrite", "type_desc": "bool", "required": false}
+        {
+          "name": "csgraph",
+          "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix",
+          "required": true
+        },
+        {
+          "name": "overwrite",
+          "type_desc": "bool",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "scipy.sparse.csr_matrix"}
+        {
+          "name": "result",
+          "type_desc": "scipy.sparse.csr_matrix"
+        }
       ]
     },
     {
@@ -98,12 +186,27 @@
       "type_signature": "(L: SparseGraphInput, x: NDArray[np.float64], k: int | None = None) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]",
       "depth": 1,
       "inputs": [
-        {"name": "L", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
-        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "k", "type_desc": "int | None", "required": false}
+        {
+          "name": "L",
+          "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix",
+          "required": true
+        },
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "k",
+          "type_desc": "int | None",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]"}
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]"
+        }
       ]
     },
     {
@@ -115,11 +218,22 @@
       "type_signature": "(x_hat: NDArray[np.float64], eigenvectors: NDArray[np.float64]) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "x_hat", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "eigenvectors", "type_desc": "NDArray[np.float64]", "required": true}
+        {
+          "name": "x_hat",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "eigenvectors",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
       ]
     },
     {
@@ -131,13 +245,32 @@
       "type_signature": "(L: SparseGraphInput, x: NDArray[np.float64], t: float, k: int | None = None) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "L", "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix", "required": true},
-        {"name": "x", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "t", "type_desc": "float", "required": true},
-        {"name": "k", "type_desc": "int | None", "required": false}
+        {
+          "name": "L",
+          "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix",
+          "required": true
+        },
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "t",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "k",
+          "type_desc": "int | None",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
       ]
     },
     {
@@ -149,11 +282,49 @@
       "type_signature": "(loc: float = 0, scale: float = 1) -> rv_continuous_frozen",
       "depth": 1,
       "inputs": [
-        {"name": "loc", "type_desc": "float", "required": false},
-        {"name": "scale", "type_desc": "float", "required": false}
+        {
+          "name": "loc",
+          "type_desc": "float",
+          "required": false
+        },
+        {
+          "name": "scale",
+          "type_desc": "float",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "scipy.stats.rv_continuous_frozen"}
+        {
+          "name": "result",
+          "type_desc": "scipy.stats.rv_continuous_frozen"
+        }
+      ]
+    },
+    {
+      "node_id": "idct",
+      "name": "idct",
+      "description": "Inverse Discrete Cosine Transform. Reconstruct spatial-domain signal from DCT frequency coefficients.",
+      "concept_type": "signal_transform",
+      "status": "atomic",
+      "aliases": [
+        "spatial_decompression",
+        "inverse_dct",
+        "inverse_discrete_cosine_transform"
+      ],
+      "type_signature": "(x: NDArray, type: int, n: int | None, axis: int, norm: str | None) -> NDArray",
+      "inputs": [
+        {
+          "name": "x",
+          "type_desc": "NDArray",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "NDArray",
+          "required": true
+        }
       ]
     }
   ],
