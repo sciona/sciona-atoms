@@ -1,0 +1,1111 @@
+[
+  {
+    "competition_id": "arc-prize-2024",
+    "title": "ARC Prize 2024",
+    "year": 2024,
+    "problem_type": "optimization",
+    "domain": "rl",
+    "modalities": [
+      "code",
+      "tabular"
+    ],
+    "evaluation_metric": "Exact Match",
+    "prompt": "Create an AI that can solve the Abstraction and Reasoning Corpus (ARC) puzzles, which require human-like logic to transform grid patterns based on a few examples. Data: Pairs of input-output grids (colors 0-9). Goal: Predict the output grid for an unseen test input. Challenge: Generalizing from 2-3 examples without specific training for the puzzle's unique logic.",
+    "solution_summary": "1st place solution (Ryan) used an ensemble of Program Synthesis and Large Language Model (LLM) reasoning. They developed a Domain Specific Language (DSL) to describe grid transformations and used a Monte Carlo Tree Search (MCTS) to find the correct program. They fine-tuned Llama-3 to generate candidate Python code for the transformations.",
+    "key_techniques": [
+      "DSL-based Program Synthesis",
+      "Monte Carlo Tree Search (MCTS)",
+      "Llama-3 fine-tuning for code generation",
+      "Symmetry and rotation invariance checks",
+      "Back-tracking search for grid constraints",
+      "Hand-crafted geometric primitives"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/arc-prize-2024/discussion"
+  },
+  {
+    "competition_id": "rsna-2024-hip-fracture-identification",
+    "title": "RSNA 2024 Hip Fracture Identification",
+    "year": 2024,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Weighted Log Loss",
+    "prompt": "Identify and classify hip fractures in pelvic X-ray images. Data: Standard 2D pelvic radiographs with bounding boxes for fractures. Goal: Predict the presence of three types of fractures: femoral neck, intertrochanteric, and subtrochanteric. Challenge: Identifying tiny hairline fractures and differentiating between fracture types in noisy clinical images.",
+    "solution_summary": "The winning pipeline utilized a 2-stage 'Detect-then-Classify' approach. First, a YOLOv8-X model localized the hip joints and identified regions of interest. Second, cropped ROIs were fed into an ensemble of ConvNeXt-v2 and MaxViT models. They used a specific 'Asymmetric Loss' to handle the class imbalance between normal and fractured cases.",
+    "key_techniques": [
+      "YOLOv8-X for ROI localization",
+      "ConvNeXt-v2 and MaxViT ensemble",
+      "Asymmetric Loss for class imbalance",
+      "MixUp and CutMix on ROI crops",
+      "Test-Time Augmentation (TTA) with scaling",
+      "5-fold stratified GroupKFold by patient"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/rsna-2024-hip-fracture-identification/discussion"
+  },
+  {
+    "competition_id": "pii-detection-removal-from-educational-data",
+    "title": "PII Detection and Removal from Educational Data",
+    "year": 2024,
+    "problem_type": "detection",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Micro F5 Score",
+    "prompt": "Detect Personally Identifiable Information (PII) in student-written essays to ensure data privacy. Data: 22k essays with token-level annotations for 7 types of PII (Name, ID, Email, etc.). Goal: Identify the start and end offsets of all PII tokens. Challenge: Distinguishing between a person's name and a fictional character's name in a narrative.",
+    "solution_summary": "Ensemble of DeBERTa-v3-Large models with a token classification head. 1st place focused on 'contextual augmentation', where they swapped PII values with synthetic names from the Faker library during training. They implemented a custom 'F5-Loss' to prioritize recall over precision and used post-processing rules to clean up trailing punctuation and common honorifics.",
+    "key_techniques": [
+      "DeBERTa-v3-Large for token classification",
+      "PII data augmentation with Faker",
+      "Custom Micro F5-weighted loss",
+      "Sliding window for long documents",
+      "Post-processing heuristic rules",
+      "B-I-O (Beginning-Inside-Outside) tagging"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/pii-detection-removal-from-educational-data/discussion/495364"
+  },
+  {
+    "competition_id": "birdclef-2023",
+    "title": "BirdCLEF 2023 - Identify Bird Calls",
+    "year": 2023,
+    "problem_type": "classification",
+    "domain": "audio",
+    "modalities": [
+      "audio"
+    ],
+    "evaluation_metric": "Class-mean ROC AUC",
+    "prompt": "Identify bird species from audio recordings in East African soundscapes. Data: 10-second audio snippets and 5-minute background recordings. Goal: Predict the presence of target bird species. Challenge: Handling extremely high noise levels (wind, rain) and overlapping calls from multiple species in a single clip.",
+    "solution_summary": "1D-CNN and 2D-Spectrogram ensemble using SedNet architecture. The winning team utilized an ensemble of EfficientNet-B0 and ConvNeXt-Nano. They applied 'Background Noise Injection' from non-bird segments of the test set and used a 'Label Smoothing' strategy to handle the 'weakly labeled' nature of long soundscapes where bird calls are sparse.",
+    "key_techniques": [
+      "EfficientNet-B0 and ConvNeXt-Nano backbones",
+      "Sound Event Detection (SED) head",
+      "Background Noise Injection augmentation",
+      "MixUp and SpecAugment",
+      "Xeno-Canto pre-training",
+      "Multi-label BCE loss"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/birdclef-2023/discussion/412707"
+  },
+  {
+    "competition_id": "birdclef-2022",
+    "title": "BirdCLEF 2022 - Identify Bird Species",
+    "year": 2022,
+    "problem_type": "classification",
+    "domain": "audio",
+    "modalities": [
+      "audio"
+    ],
+    "evaluation_metric": "Mean F1 Score",
+    "prompt": "Identify bird calls in audio recordings from the Hawaiian Islands. Data: Short clips of specific species and long, unannotated soundscapes. Goal: Predict bird presence at 5-second intervals. Challenge: The test set features many endangered species with very few training examples, requiring robust zero-shot or few-shot transfer.",
+    "solution_summary": "Ensemble of 2D CNNs using a multi-scale spectrogram approach. 1st place used EfficientNet-B3 and NFNet-F0 backbones. They implemented a 'Two-Stage' training: first training on all 1,500 species available on Xeno-Canto, followed by fine-tuning specifically on the Hawaiian species. They used 'Pseudo-labeling' on the soundscapes to identify silence and noise.",
+    "key_techniques": [
+      "EfficientNet-B3 and NFNet-F0",
+      "Xeno-Canto large-scale pre-training",
+      "Pseudo-labeling for noise/silence",
+      "Label Smoothing with species-weighting",
+      "STFT with Mel-scale conversion",
+      "Test-Time Augmentation (TTA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/birdclef-2022/discussion/327195"
+  },
+  {
+    "competition_id": "nfl-player-contact-detection",
+    "title": "NFL Player Contact Detection",
+    "year": 2023,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "video",
+      "tabular"
+    ],
+    "evaluation_metric": "Matthews Correlation Coefficient (MCC)",
+    "prompt": "Detect contacts between football players and between players and the ground. Data: Synchronized 2D video (Sideline and Endzone views) and 3D tracking (GPS) data for all players. Goal: Predict pairs in contact for every frame. Challenge: Aligning 3D GPS time-series with 2D video pixels and identifying subtle collisions obscured by other players.",
+    "solution_summary": "Multimodal fusion of 1D-CNN and 2D-CNN. 1st place used a 2D CNN (EfficientNet-B0) to extract patches around player pairs in the video and a 1D-CNN to process the distance-based features from the tracking data. They used a 'Graph Neural Network' (GNN) to model the proximity of players on the field and predict contact probabilities based on both visual and physical cues.",
+    "key_techniques": [
+      "2D CNN for video patch extraction",
+      "1D-CNN for GPS tracking time-series",
+      "Graph Neural Network (GNN) for proximity",
+      "Distance-based negative sampling",
+      "Feature fusion with late-stage MLP",
+      "MCC-optimized thresholding"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/nfl-player-contact-detection/discussion/391515"
+  },
+  {
+    "competition_id": "nfl-impact-detection",
+    "title": "NFL Impact Detection",
+    "year": 2021,
+    "problem_type": "detection",
+    "domain": "cv",
+    "modalities": [
+      "video"
+    ],
+    "evaluation_metric": "Precision @ IoU 0.5",
+    "prompt": "Identify helmet impacts in football videos to improve safety. Data: High-definition game footage from multiple angles. Goal: Predict the bounding box and frame of every helmet-to-helmet or helmet-to-ground impact. Challenge: Impacts are very brief (1-3 frames) and involve rapid motion blur.",
+    "solution_summary": "3D-CNN and Object Detection ensemble. The winning solution used a 'SlowFast' 3D-CNN to detect the temporal location of impacts and a Faster R-CNN to localize the helmets in those specific frames. They applied 'Temporal Smoothing' to ensure impacts detected in one frame were consistent with the movement of players in adjacent frames.",
+    "key_techniques": [
+      "SlowFast 3D-CNN for temporal detection",
+      "Faster R-CNN for helmet localization",
+      "Temporal Smoothing post-processing",
+      "Optical Flow for motion context",
+      "Heavy motion-blur augmentation",
+      "Weighted Boxes Fusion (WBF)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/nfl-impact-detection/discussion/203277"
+  },
+  {
+    "competition_id": "nfl-helmet-assignment",
+    "title": "NFL Health & Safety - Helmet Assignment",
+    "year": 2022,
+    "problem_type": "matching",
+    "domain": "cv",
+    "modalities": [
+      "video",
+      "tabular"
+    ],
+    "evaluation_metric": "Accuracy",
+    "prompt": "Assign player IDs to helmets in game footage using tracking data. Data: 2D videos and 3D player tracking (GPS) logs. Goal: Match each detected helmet box in the video to a specific player ID from the tracking data. Challenge: Perspective distortion and overlapping helmets when players cluster together on the line of scrimmage.",
+    "solution_summary": "Geometric optimization with Hungarian Algorithm. 1st place first detected all helmets using YOLOv5. They then projected the 3D GPS coordinates into the 2D image plane using an estimated camera matrix. The matching was solved as a 'Linear Assignment Problem' using the Hungarian algorithm, with a cost function based on Euclidean distance and movement velocity consistency.",
+    "key_techniques": [
+      "YOLOv5 for helmet detection",
+      "3D-to-2D Coordinate Projection",
+      "Hungarian Algorithm for matching",
+      "Velocity-based cost function",
+      "Camera matrix (homography) estimation",
+      "Temporal consistency tracking"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/nfl-helmet-assignment/discussion/294340"
+  },
+  {
+    "competition_id": "g2net-detecting-continuous-gravitational-waves",
+    "title": "G2Net - Detecting Continuous Gravitational Waves",
+    "year": 2023,
+    "problem_type": "classification",
+    "domain": "scientific",
+    "modalities": [
+      "time_series"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Find continuous gravitational wave signals from rotating neutron stars in simulated detector data. Data: Frequency-domain strain data (spectrograms) from LIGO detectors. Goal: Predict the probability of a signal being present. Challenge: Signals are persistent but extremely weak, often hidden under 'lines' of terrestrial interference.",
+    "solution_summary": "Spectrogram denoising and 2D-CNN. The 1st place solution used a 2D-CNN (EfficientNet-B0) on frequency-time maps. They implemented a custom 'SFT-Denoising' layer that removed stationary noise lines (instrumental artifacts) before feeding the data into the network. They used 'F-Statistic' maps as an auxiliary input to provide physical context to the model.",
+    "key_techniques": [
+      "EfficientNet-B0 with custom SFT layers",
+      "Instrumental line denoising (Vertical filtering)",
+      "F-Statistic map auxiliary features",
+      "MixUp and frequency-masking augmentation",
+      "GroupKFold by simulation seed",
+      "Test-Time Augmentation (TTA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/g2net-detecting-continuous-gravitational-waves/discussion/376079"
+  },
+  {
+    "competition_id": "rossmann-store-sales",
+    "title": "Rossmann Store Sales",
+    "year": 2015,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular",
+      "time_series"
+    ],
+    "evaluation_metric": "RMSPE",
+    "prompt": "Predict the daily sales for Rossmann drugstores across Germany. Data: Historical sales, store promos, school holidays, and competitor info. Goal: Forecast sales for the next 6 weeks. Challenge: Capturing the strong weekly seasonality and the sudden surges in sales caused by various regional holidays and promotions.",
+    "solution_summary": "Ensemble of XGBoost and Neural Networks with Entity Embeddings. This competition was famous for the 3rd place solution that introduced 'Entity Embeddings' for categorical variables in neural networks. The winning solution used an ensemble of XGBoost models with heavy feature engineering on 'days since last promo' and 'distance to competitor'.",
+    "key_techniques": [
+      "XGBoost with custom RMSPE loss",
+      "Entity Embeddings for store/day categories",
+      "Lagged sales and promo features",
+      "Rolling window aggregates",
+      "Holiday effect feature engineering",
+      "Bayesian hyperparameter optimization"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/rossmann-store-sales/discussion/18024"
+  },
+  {
+    "competition_id": "expedia-hotel-recommendations",
+    "title": "Expedia Hotel Recommendations",
+    "year": 2016,
+    "problem_type": "recommendation",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Mean Average Precision @ 5 (MAP@5)",
+    "prompt": "Predict which hotel cluster a user will book on Expedia. Data: User search history (destination, dates, number of people) and hotel data. Goal: Predict the top 5 hotel clusters for a booking. Challenge: Over 100 hotel clusters and a massive number of users with sparse interaction history.",
+    "solution_summary": "Frequency-based mapping with Gradient Boosting. 1st place used a combination of 'Leakage-based' counting (matching user destination and clusters in the training set) and XGBoost. They built a mapping of (Destination ID, Hotel Cluster) frequencies and used it as a primary feature. They also used 'Search Latency' and 'Seasonality' features to capture user intent.",
+    "key_techniques": [
+      "Frequency mapping (Destination-to-Cluster)",
+      "XGBoost for re-ranking",
+      "Time-based weight decay for old logs",
+      "User search history aggregation",
+      "Handling Data Leakage (User ID correlation)",
+      "Stratified validation by month"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/expedia-hotel-recommendations/discussion/21607"
+  },
+  {
+    "competition_id": "state-farm-distracted-driver-detection",
+    "title": "State Farm Distracted Driver Detection",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Detect if a driver is distracted and identify the type of distraction. Data: Dashboard camera images of drivers in various states (texting, talking on phone, drinking, reaching behind). Goal: Predict one of 10 distraction classes. Challenge: Generalizing to new drivers not seen in the training data, as body proportions and interior car colors vary.",
+    "solution_summary": "Ensemble of VGG and ResNet models with 'Driver-specific' validation. 1st place used an ensemble of VGG16 and ResNet-50. The key was using 'GroupKFold' based on the Driver ID to prevent the model from memorizing the specific driver's appearance. They used heavy spatial augmentation (shifting and cropping) to make the model invariant to camera position.",
+    "key_techniques": [
+      "VGG16 and ResNet-50 ensemble",
+      "GroupKFold by Driver ID",
+      "Heavy spatial augmentation (Random Crop/Shift)",
+      "Pre-training on ImageNet",
+      "Global Average Pooling (GAP)",
+      "Test-Time Augmentation (TTA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/state-farm-distracted-driver-detection/discussion/22023"
+  },
+  {
+    "competition_id": "home-depot-product-search-relevance",
+    "title": "Home Depot Product Search Relevance",
+    "year": 2016,
+    "problem_type": "regression",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Root Mean Squared Error (RMSE)",
+    "prompt": "Predict the relevance of search results on Home Depot's website. Data: Search queries, product titles, and product descriptions. Goal: Predict a relevance score from 1.0 (not relevant) to 3.0 (highly relevant). Challenge: Measuring semantic similarity between technical search terms (e.g., '1/2 inch drill bit') and product metadata.",
+    "solution_summary": "Feature engineering-centric ensemble of Gradient Boosting and SVR. 1st place developed over 200 features based on N-gram overlap, Word2Vec similarity, and 'Latent Semantic Analysis' (LSA). They used XGBoost as the meta-learner and included 'Query Expansion' to handle synonyms and common misspellings in the search logs.",
+    "key_techniques": [
+      "XGBoost and SVR ensemble",
+      "N-gram overlap features (Jaccard, Cosine)",
+      "Word2Vec and LSA embeddings",
+      "Query Expansion for synonyms",
+      "Spell-correction pre-processing",
+      "Target normalization (0-1 scaling)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/home-depot-product-search-relevance/discussion/20420"
+  },
+  {
+    "competition_id": "airbnb-new-user-bookings",
+    "title": "Airbnb New User Bookings",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "NDCG @ 5",
+    "prompt": "Predict which country a new Airbnb user will book for the first time. Data: User demographics, web session logs, and device info. Goal: Predict the top 5 destination countries. Challenge: Large class imbalance (most users book within their own country or not at all) and sparse session data.",
+    "solution_summary": "Feature engineering and XGBoost. 1st place created aggregate features from the session logs, such as 'average time spent per action' and 'most common device used'. They used a single XGBoost model with 'Multi-class Softmax' and optimized for NDCG using a custom validation set that mirrored the temporal split of the test data.",
+    "key_techniques": [
+      "XGBoost with multi-softprob",
+      "Session log aggregation (count, sum, mean)",
+      "Time-based feature engineering (Day of week, month)",
+      "Handling 'No Destination' class imbalance",
+      "One-hot encoding for categorical variables",
+      "Validation split by account creation date"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/airbnb-new-user-bookings/discussion/18779"
+  },
+  {
+    "competition_id": "facebook-v-predicting-check-ins",
+    "title": "Facebook V: Predicting Check-ins",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "geospatial",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Mean Average Precision @ 3 (MAP@3)",
+    "prompt": "Predict which business location a user is checking into based on their GPS coordinates. Data: X, Y coordinates, accuracy, and timestamp. Goal: Predict the location ID. Challenge: Over 100,000 unique location IDs in a small geographic area and highly noisy GPS data.",
+    "solution_summary": "Spatial-temporal K-Nearest Neighbors (KNN) and Gradient Boosting. 1st place used a local search approach, building an ensemble of KNN and XGBoost for small geographic 'cells'. They heavily utilized the 'Time' feature to model business hours and weekly cycles. They applied a 'Location Frequency' prior to boost popular locations in dense areas.",
+    "key_techniques": [
+      "K-Nearest Neighbors (KNN) with spatial weighting",
+      "XGBoost for local re-ranking",
+      "Grid-based data partitioning",
+      "Time-cycle feature engineering (Hour, Day)",
+      "Location Frequency priors",
+      "Distance-weighted voting"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/facebook-v-predicting-check-ins/discussion/22465"
+  },
+  {
+    "competition_id": "two-sigma-financial-modeling",
+    "title": "Two Sigma Financial Modeling Challenge",
+    "year": 2017,
+    "problem_type": "regression",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "R-squared ($R^2$)",
+    "prompt": "Predict the future returns of various financial assets using anonymized technical indicators. Data: Time-series of features and asset IDs. Goal: Predict the 'target' value for the next time step. Challenge: Extremely low signal-to-noise ratio and non-stationary data that changes behavior over different market regimes.",
+    "solution_summary": "Linear regression with aggressive feature clipping and Ridge regularization. 1st place found that simple models performed better than deep learning due to the high noise levels. They used 'Feature Clipping' to remove extreme outliers and applied a 'Target Denoising' step using a rolling median. A final ensemble included LightGBM and Ridge Regression.",
+    "key_techniques": [
+      "Ridge Regression and LightGBM ensemble",
+      "Feature Clipping for outlier removal",
+      "Target Denoising via rolling median",
+      "Asset-specific feature normalization",
+      "Time-series Cross-Validation with gap",
+      "Interaction features (Product of indicators)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/two-sigma-financial-modeling/discussion/30571"
+  },
+  {
+    "competition_id": "bosch-production-line-performance",
+    "title": "Bosch Production Line Performance",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Matthews Correlation Coefficient (MCC)",
+    "prompt": "Predict internal failures in parts as they move through a complex production line. Data: Thousands of measurements from various production stations and timestamps. Goal: Predict binary failure status. Challenge: Extreme class imbalance (0.5% failure rate) and identifying the 'path' of a part through the factory from sparse data.",
+    "solution_summary": "Path-based feature engineering and XGBoost. 1st place focused on the 'flow' of parts, creating features like 'time spent at station X' and 'last station visited'. They used XGBoost with a custom MCC-objective function. A key insight was using the 'Time' gap between parts to identify batches of failed items moving together through the line.",
+    "key_techniques": [
+      "XGBoost with custom MCC loss",
+      "Path-tracking feature engineering",
+      "Time-gap batch analysis",
+      "Handling sparse categorical features",
+      "Stratified Sampling for imbalance",
+      "Feature selection via permutation importance"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/bosch-production-line-performance/discussion/25430"
+  },
+  {
+    "competition_id": "yelp-restaurant-photo-classification",
+    "title": "Yelp Restaurant Photo Classification",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Mean F1 Score",
+    "prompt": "Predict restaurant attributes from a collection of user-uploaded photos. Data: Multiple photos per restaurant and a set of binary tags (e.g., 'good for lunch', 'has outdoor seating'). Goal: Predict all tags for a restaurant. Challenge: Aggregating information from multiple images of varying quality (food, menus, exterior) into a single set of tags.",
+    "solution_summary": "Multi-instance learning with Deep CNNs. 1st place used an Inception-v3 model to extract features from each photo. They then used 'Max-Pooling' and 'Mean-Pooling' across all photo features for a specific restaurant to create a single descriptor, which was fed into a multi-label classification head. They utilized 'ImageNet' pre-training and fine-tuned on Yelp data.",
+    "key_techniques": [
+      "Inception-v3 for feature extraction",
+      "Multi-instance feature aggregation (Max/Mean)",
+      "Multi-label Sigmoid head",
+      "ImageNet pre-training",
+      "Heavy data augmentation on individual photos",
+      "Threshold optimization per tag"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/yelp-restaurant-photo-classification/discussion/21033"
+  },
+  {
+    "competition_id": "walmart-recruiting-trip-type-classification",
+    "title": "Walmart Recruiting: Trip Type Classification",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Classify shopping trips into specific types (e.g., 'grocery', 'entertainment', 'pharmacy') based on items purchased. Data: Visit logs with Department IDs and Item counts. Goal: Predict the trip type category. Challenge: Capturing the semantic meaning of combinations of items (e.g., milk + diapers vs. milk + cereal).",
+    "solution_summary": "Item-Department co-occurrence modeling with XGBoost. 1st place used XGBoost with features based on 'Department ID' counts per visit. They implemented a 'Bag of Words' approach for items and used 'Singular Value Decomposition' (SVD) to reduce the dimensionality of high-cardinality item IDs. They also engineered 'Time of day' and 'Day of week' features.",
+    "key_techniques": [
+      "XGBoost with multi-class logloss",
+      "Bag-of-Departments (Counts)",
+      "SVD for item-id dimensionality reduction",
+      "Time-based shopping patterns",
+      "Interaction features between Departments",
+      "Cross-validation by Visit ID"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/walmart-recruiting-trip-type-classification/discussion/18158"
+  },
+  {
+    "competition_id": "bnp-paribas-cardif-claims-management",
+    "title": "BNP Paribas Cardif Claims Management",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Accelerate the claims management process by predicting the category of a claim from anonymous features. Data: 100+ anonymized numerical and categorical features. Goal: Predict the claim category. Challenge: Managing high-cardinality categorical data and significant amounts of missing values in the anonymized dataset.",
+    "solution_summary": "Stacked ensemble of Gradient Boosting and ExtraTrees. The 1st place solution used a 2-level stacking approach. Level 1 included XGBoost, LightGBM, and ExtraTrees. Level 2 used a Logistic Regression meta-learner. They used 'Mean Target Encoding' for categorical features and 'Iterative Imputation' to fill missing values based on feature correlations.",
+    "key_techniques": [
+      "2-level Model Stacking",
+      "XGBoost, LightGBM, ExtraTrees",
+      "Mean Target Encoding with smoothing",
+      "Iterative Imputation for missing data",
+      "Feature selection via Recursive Feature Elimination",
+      "Logistic Regression meta-learner"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/bnp-paribas-cardif-claims-management/discussion/20853"
+  },
+  {
+    "competition_id": "liberty-mutual-group-property-inspection-prediction",
+    "title": "Liberty Mutual Group: Property Inspection Prediction",
+    "year": 2015,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Gini Coefficient",
+    "prompt": "Predict a hazard score for a property based on its characteristics to prioritize inspections. Data: Anonymized property features (age, location, materials). Goal: Predict the numerical hazard score. Challenge: High levels of noise in the hazard labels and the non-linear relationship between features and risk.",
+    "solution_summary": "Ensemble of Gradient Boosting and Random Forests. 1st place used XGBoost and Random Forest models. They optimized for Gini directly by using a custom objective function. They focused on 'Interaction Features', multiplying categorical variables to find hidden risk combinations. A final step included 'Rank-Averaging' of multiple models to stabilize the leader-board position.",
+    "key_techniques": [
+      "XGBoost and Random Forest ensemble",
+      "Custom Gini optimization loss",
+      "Rank-Averaging of model outputs",
+      "Categorical interaction features",
+      "Target encoding for high-cardinality features",
+      "Feature importance-based pruning"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/liberty-mutual-group-property-inspection-prediction/discussion/16474"
+  },
+  {
+    "competition_id": "santander-customer-satisfaction",
+    "title": "Santander Customer Satisfaction",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Identify unhappy customers early in their relationship with Santander Bank. Data: 300+ anonymized features about user behavior and accounts. Goal: Predict binary satisfaction (0 = happy, 1 = unhappy). Challenge: Highly imbalanced data (only 4% unhappy) and redundant, anonymized features.",
+    "solution_summary": "Aggressive feature selection with XGBoost. The winning solution focused on removing 'constant' and 'quasi-constant' features. They used an ensemble of XGBoost and Random Forest. A critical step was 'Duplicated Feature Removal' where they identified and removed features with identical values across all rows, which significantly reduced model over-fitting.",
+    "key_techniques": [
+      "XGBoost with early stopping",
+      "Constant/Quasi-constant feature removal",
+      "Duplicate feature detection",
+      "SMOTE for over-sampling unhappy class",
+      "Recursive Feature Elimination (RFE)",
+      "Stratified 10-fold Cross-Validation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/santander-customer-satisfaction/discussion/21800"
+  },
+  {
+    "competition_id": "springleaf-marketing-response",
+    "title": "Springleaf Marketing Response",
+    "year": 2015,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Predict which customers will respond to a direct mail marketing campaign. Data: 2,000+ anonymized features from credit bureaus and demographic providers. Goal: Predict binary response status. Challenge: Handling a massive feature space with high collinearity and noisy data labels.",
+    "solution_summary": "Large-scale feature selection and Gradient Boosting. 1st place used XGBoost and H2O.ai models. They implemented a multi-stage feature selection process: first removing low-variance features, then using 'Random Forest Importance' to select the top 500 features. They utilized 'Target Encoding' for all categorical variables and a weighted ensemble of 50+ models.",
+    "key_techniques": [
+      "XGBoost and H2O ensemble",
+      "Multi-stage feature selection",
+      "Target encoding for high-cardinality features",
+      "Feature importance-based pruning",
+      "Weighted average stacking",
+      "Handling massive data with sparse matrices"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/springleaf-marketing-response/discussion/17300"
+  },
+  {
+    "competition_id": "prudential-life-insurance-assessment",
+    "title": "Prudential Life Insurance Assessment",
+    "year": 2016,
+    "problem_type": "ranking",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Quadratic Weighted Kappa (QWK)",
+    "prompt": "Predict the risk level of life insurance applicants to automate the underwriting process. Data: 120+ features about medical history, employment, and insurance history. Goal: Predict an ordinal risk category (1 to 8). Challenge: Capturing the non-linear relationship between health markers and long-term risk while optimizing for the QWK metric.",
+    "solution_summary": "Ensemble of Gradient Boosting with custom thresholding. 1st place used an ensemble of XGBoost and LightGBM models that predicted continuous values. They then used a 'Nelder-Mead' optimization algorithm to find the optimal thresholds for converting the continuous predictions into the 8 discrete risk categories, maximizing the QWK metric on the validation set.",
+    "key_techniques": [
+      "XGBoost and LightGBM ensemble",
+      "Nelder-Mead threshold optimization",
+      "Ordinal regression strategy",
+      "Recursive Feature Elimination (RFE)",
+      "Target encoding for medical codes",
+      "StandardScaler for numerical features"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/prudential-life-insurance-assessment/discussion/19131"
+  },
+  {
+    "competition_id": "allstate-claims-severity",
+    "title": "Allstate Claims Severity",
+    "year": 2016,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Mean Absolute Error (MAE)",
+    "prompt": "Predict the cost of insurance claims (severity) based on property and accident features. Data: 100+ categorical and numerical features. Goal: Predict the 'loss' amount. Challenge: Highly skewed target variable (long-tail distribution) and the need for high precision in the dollar-amount predictions.",
+    "solution_summary": "Stacked ensemble with target transformation. The winning solution used a 3-level stack of XGBoost, LightGBM, and Keras Neural Networks. They applied a 'Log-transformation' ($log(x + c)$) to the target variable to handle the skewness. A key insight was using 'Fair Loss' as the objective function in XGBoost, which is more robust to outliers than traditional MSE or MAE loss.",
+    "key_techniques": [
+      "3-level model stacking",
+      "Log-target transformation",
+      "Fair Loss objective function",
+      "XGBoost, LightGBM, Keras ensemble",
+      "Mean Target Encoding",
+      "Outlier-robust meta-learner"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/allstate-claims-severity/discussion/26416"
+  },
+  {
+    "competition_id": "plant-seedlings-classification",
+    "title": "Plant Seedlings Classification",
+    "year": 2018,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Categorical Accuracy",
+    "prompt": "Differentiate between 12 species of plant seedlings at various growth stages. Data: 4,750 images of seedlings (e.g., 'common chickweed', 'maize', 'sugar beet'). Goal: Predict the species label. Challenge: Many seedlings look identical in the 'dicot' stage; the model must find subtle leaf shape and texture differences.",
+    "solution_summary": "Ensemble of Deep CNNs with background removal. 1st place used an ensemble of Inception-ResNet-v2 and Xception models. They applied 'HSV-masking' to remove the soil and background, focusing the model purely on the green plant tissue. They used heavy spatial augmentation (flips and 90-degree rotations) to maximize the limited training data.",
+    "key_techniques": [
+      "Inception-ResNet-v2 and Xception ensemble",
+      "HSV-based green-masking (segmentation)",
+      "ImageNet pre-training",
+      "Heavy rotation and flip augmentation",
+      "Global Average Pooling (GAP)",
+      "Test-Time Augmentation (TTA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/plant-seedlings-classification/discussion/47512"
+  },
+  {
+    "competition_id": "leaf-classification",
+    "title": "Leaf Classification",
+    "year": 2017,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "tabular",
+      "image"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Classify plant species from images and extracted features of their leaves. Data: Binary images of leaves and 192 handcrafted features (shape, margin, texture). Goal: Predict the species for 99 different classes. Challenge: Small dataset (1,500 samples) and high similarity between several leaf species.",
+    "solution_summary": "Fusion of CNN and MLP. 1st place used a hybrid architecture where image features were extracted using a small CNN and concatenated with the handcrafted tabular features in a final Dense layer (MLP). They used 'Dropout' heavily to prevent over-fitting on the small sample size and applied a 'Label Smoothing' strategy to stabilize the log loss.",
+    "key_techniques": [
+      "CNN-MLP hybrid architecture",
+      "Feature concatenation (Vision + Tabular)",
+      "Heavy Dropout regularization",
+      "Label Smoothing for logloss stability",
+      "StandardScaler for handcrafted features",
+      "Stratified 10-fold Cross-Validation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/leaf-classification/discussion/30520"
+  },
+  {
+    "competition_id": "intel-mobileodt-cervical-cancer-screening",
+    "title": "Intel & MobileODT Cervical Cancer Screening",
+    "year": 2017,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Identify different types of cervix from images to help doctors choose appropriate treatments. Data: Clinical images of the cervix labeled as Type 1, Type 2, or Type 3. Goal: Predict the probability of each type. Challenge: Visual similarity between types and low image quality in field settings.",
+    "solution_summary": "2-stage Detection and classification ensemble. The 1st place solution used a 'Faster R-CNN' to detect and crop the cervix area from the noisy background images. These cropped ROIs were then fed into an ensemble of ResNet-50 and Inception-v3 models. They utilized 'Pseudo-labeling' on the unlabeled test set to improve the classification boundaries.",
+    "key_techniques": [
+      "Faster R-CNN for ROI detection",
+      "ResNet-50 and Inception-v3 ensemble",
+      "Pseudo-labeling for domain adaptation",
+      "Multi-stage fine-tuning",
+      "Heavy color and blur augmentation",
+      "Test-Time Augmentation (TTA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/intel-mobileodt-cervical-cancer-screening/discussion/31558"
+  },
+  {
+    "competition_id": "right-whale-recognition",
+    "title": "NOAA Right Whale Recognition",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Identify individual North Atlantic Right Whales from aerial photos. Data: Images of whale heads (callosities). Goal: Predict the individual ID (out of 447 classes). Challenge: Callosity patterns are the only distinguishing feature, and images vary in orientation, lighting, and water clarity.",
+    "solution_summary": "Localization-driven CNN ensemble. 1st place used a custom 'Face-alignment' method for whales. They trained a small CNN to detect the notch and head of the whale, then warped the image to a standardized 224x224 'aligned head' patch. This patch was fed into a VGG16 model. They used 'Test-Time Augmentation' specifically for rotation invariance.",
+    "key_techniques": [
+      "VGG16 with custom alignment layer",
+      "Whale-head localization (Spatial Transformer)",
+      "Affine warping for pose normalization",
+      "ImageNet pre-training",
+      "Multi-class Softmax with dropout",
+      "Rotation-based TTA"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/noaa-right-whale-recognition/discussion/19612"
+  },
+  {
+    "competition_id": "second-annual-data-science-bowl",
+    "title": "Second Annual Data Science Bowl",
+    "year": 2016,
+    "problem_type": "regression",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "CRPS (Continuous Ranked Probability Score)",
+    "prompt": "Automatically measure the cardiac volume from MRI scans to detect heart disease. Data: 4D MRI (3D volumes over time) of human hearts. Goal: Predict the probability distribution of End-Systolic (ESV) and End-Diastolic (EDV) volumes. Challenge: Correctly identifying the heart boundaries across different slices and motion states.",
+    "solution_summary": "3D-CNN and stacked sequence modeling. 1st place used a 2D CNN to segment the ventricle in each slice, followed by a 'Temporal Accumulator' (RNN) that aggregated information across the heartbeat cycle. They used a 'Cumulative Distribution Function' (CDF) regression head to directly optimize the CRPS metric.",
+    "key_techniques": [
+      "2D UNet for ventricle segmentation",
+      "LSTM for temporal volume aggregation",
+      "CDF-based regression head",
+      "Slice-stacking for 3D context",
+      "Dice + CRPS combined loss",
+      "Heavy geometric augmentation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/second-annual-data-science-bowl/discussion/21300"
+  },
+  {
+    "competition_id": "first-annual-data-science-bowl",
+    "title": "First Annual Data Science Bowl",
+    "year": 2015,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Classify 121 species of plankton from oceanographic images. Data: 30,000 black-and-white images captured by an underwater imaging system. Goal: Predict the plankton species. Challenge: Plankton vary in size and orientation, and many species look very similar (e.g., different types of copepods).",
+    "solution_summary": "Deep CNN ensemble with orientation invariance. 1st place utilized an ensemble of ResNet-like architectures with 'Cyclic Pooling' layers that allowed the network to learn features that were invariant to 90-degree rotations. They used a 'Multi-scale' approach by resizing images to different resolutions and merging the predictions.",
+    "key_techniques": [
+      "Deep CNN with Cyclic Pooling",
+      "Rotation-invariant feature learning",
+      "Multi-scale image input (96, 128, 192 px)",
+      "Global Average Pooling (GAP)",
+      "Label Smoothing for 121 classes",
+      "Test-Time Augmentation (TTA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/datasciencebowl/discussion/13100"
+  },
+  {
+    "competition_id": "diabetic-retinopathy-detection",
+    "title": "Diabetic Retinopathy Detection",
+    "year": 2015,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Quadratic Weighted Kappa (QWK)",
+    "prompt": "Identify signs of diabetic retinopathy in high-resolution fundus images. Data: Photos of the back of the eye. Goal: Predict a severity score from 0 (no disease) to 4 (proliferative DR). Challenge: Detecting microscopic hemorrhages and exudates in very large images (3000px+) across varied lighting.",
+    "solution_summary": "Ensemble of Deep CNNs with high-res pre-processing. 1st place used an ensemble of VGG and GoogLeNet. They applied 'Ben Graham's pre-processing' (subtracting a local average color to enhance local features) and cropped images to the circular retina. They used a 'Ranking' loss to ensure the model learned the ordinal nature of the DR grades.",
+    "key_techniques": [
+      "VGG and GoogLeNet ensemble",
+      "Local Color Subtraction (Ben Graham's method)",
+      "Circular retina cropping/masking",
+      "Ranking-based ordinal loss",
+      "Multi-scale training (up to 512px)",
+      "Test-Time Augmentation (TTA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/diabetic-retinopathy-detection/discussion/15800"
+  },
+  {
+    "competition_id": "quora-question-pairs",
+    "title": "Quora Question Pairs",
+    "year": 2017,
+    "problem_type": "classification",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Identify duplicate questions on Quora to reduce redundant information. Data: Pairs of question strings. Goal: Predict if the two questions have the same intent. Challenge: Questions may use different words to ask the same thing, or the same words to ask different things.",
+    "solution_summary": "Hybrid of Deep Learning and NLP feature engineering. 1st place used a combination of Siamese LSTM/GRUs and XGBoost. They engineered 'Graph' features based on how often questions appeared together in pairs and utilized Word2Vec / GloVe embeddings. A key trick was identifying 'Magic Features' related to question frequency in the dataset which leaked information about duplicates.",
+    "key_techniques": [
+      "Siamese Bi-LSTM with Attention",
+      "XGBoost on handcrafted features",
+      "Question-Graph features (Node degree)",
+      "GloVe and Word2Vec embeddings",
+      "N-gram overlap and Jaccard similarity",
+      "Frequency-based 'Magic Features'"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/quora-question-pairs/discussion/34355"
+  },
+  {
+    "competition_id": "talkingdata-mobile-user-demographics",
+    "title": "TalkingData Mobile User Demographics",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Predict the gender and age group of mobile users based on their app usage and device metadata. Data: App IDs, labels, and event logs (timestamps, locations). Goal: Predict which of 12 demographics categories (e.g., 'Male 22-26') a user belongs to. Challenge: Massive, sparse feature space with thousands of apps and millions of users.",
+    "solution_summary": "Sparse matrix modeling with XGBoost and Neural Networks. 1st place used a multi-modal approach: XGBoost for tabular features (device, location) and a Neural Network to handle the sparse 'Bag of Apps' data. They utilized 'Category Embeddings' for high-cardinality App IDs and applied 'SVD' to reduce the dimensionality of the app labels.",
+    "key_techniques": [
+      "XGBoost + Neural Network ensemble",
+      "Bag-of-Apps (binary counts)",
+      "Entity Embeddings for App IDs",
+      "SVD on app categories",
+      "Time-of-day usage aggregation",
+      "5-fold Cross-Validation by user"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/talkingdata-mobile-user-demographics/discussion/23424"
+  },
+  {
+    "competition_id": "avito-duplicate-ads-detection",
+    "title": "Avito Duplicate Ads Detection",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "multimodal",
+    "modalities": [
+      "text",
+      "image"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Identify duplicate listings on the Avito classifieds site to prevent spam. Data: Listing titles, descriptions, prices, and images. Goal: Predict if two listings are for the same item. Challenge: Combining semantic text information (Russian language) with visual similarity in a large-scale dataset.",
+    "solution_summary": "Multi-modal feature fusion with XGBoost. 1st place extracted text features using TF-IDF and 'Word2Vec' (trained on Russian text). They used a pre-trained CNN (VGG16) to extract image embeddings. The final model was an XGBoost ensemble that combined the text similarity scores and image distances with handcrafted listing metadata.",
+    "key_techniques": [
+      "XGBoost on multimodal features",
+      "TF-IDF and Word2Vec (Russian)",
+      "VGG16 image embeddings",
+      "Price-ratio and location-match features",
+      "Jaccard similarity on descriptions",
+      "Levenshtein distance on titles"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/avito-duplicate-ads-detection/discussion/22455"
+  },
+  {
+    "competition_id": "planet-understanding-the-amazon-from-space",
+    "title": "Planet: Understanding the Amazon from Space",
+    "year": 2017,
+    "problem_type": "classification",
+    "domain": "geospatial",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Mean F2 Score",
+    "prompt": "Tag satellite images of the Amazon rainforest with various labels (e.g., 'primary forest', 'clear', 'agriculture', 'road'). Data: High-resolution satellite images in RGB and NIR channels. Goal: Predict all relevant tags for each image (multi-label). Challenge: Detecting small human impacts (roads) in dense forest and distinguishing between different cloud/haze conditions.",
+    "solution_summary": "Ensemble of CNNs with multi-label thresholding. 1st place used an ensemble of ResNet-101, DenseNet-161, and Inception-v4. They used a 'Multi-label Sigmoid' output and optimized the F2-score by tuning the detection threshold for each label independently. They utilized the NIR (Near-Infrared) channel by stacking it as a 4th input channel.",
+    "key_techniques": [
+      "ResNet-101 and DenseNet-161",
+      "4-channel input (RGB + NIR)",
+      "Label-specific threshold optimization",
+      "Multi-label Sigmoid head",
+      "Heavy rotation and flip augmentation",
+      "Test-Time Augmentation (TTA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/planet-understanding-the-amazon-from-space/discussion/36088"
+  },
+  {
+    "competition_id": "sberbank-russian-housing-market",
+    "title": "Sberbank Russian Housing Market",
+    "year": 2017,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular",
+      "time_series"
+    ],
+    "evaluation_metric": "RMSLE",
+    "prompt": "Predict housing prices in Moscow using transactional and macroeconomic data. Data: Property features and Russian macroeconomic indicators (oil price, exchange rates). Goal: Predict the sale price. Challenge: The Russian economy is highly volatile, and house prices are influenced by global factors that shift over time.",
+    "solution_summary": "Time-series validation with Gradient Boosting. 1st place focused on the 'Macro' data, using a rolling validation strategy that mirrored the time-split of the test set. They used an ensemble of XGBoost and LightGBM. A key insight was using 'Pseudo-labeling' on the test set to adapt the model to the most recent price trends not seen in the historical training data.",
+    "key_techniques": [
+      "XGBoost and LightGBM ensemble",
+      "Macroeconomic feature integration",
+      "Rolling-window time-series validation",
+      "Pseudo-labeling for price trends",
+      "Log-target transformation",
+      "Outlier removal based on price/sqm"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/sberbank-russian-housing-market/discussion/35600"
+  },
+  {
+    "competition_id": "bluebook-for-bulldozers",
+    "title": "Blue Book for Bulldozers",
+    "year": 2013,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "RMSLE",
+    "prompt": "Predict the auction sale price of heavy equipment (bulldozers) based on usage and configuration. Data: Historical auction logs, machine specs, and usage hours. Goal: Predict the sale price. Challenge: Handling high-cardinality categorical data (hundreds of models) and massive amounts of missing data.",
+    "solution_summary": "Random Forest with feature engineering on Dates. This competition was the basis for the Fast.ai machine learning curriculum. 1st place used a Random Forest with extensive extraction from the 'Date' field (Day of week, is_quarter_end, etc.). They used 'Label Encoding' for categories and implemented 'Feature Importance' analysis to prune the model.",
+    "key_techniques": [
+      "Random Forest Regressor",
+      "Date-part feature extraction",
+      "Label Encoding for high-cardinality models",
+      "Out-of-Bag (OOB) error estimation",
+      "Log-target transformation",
+      "Feature importance-based selection"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/bluebook-for-bulldozers/discussion/3600"
+  },
+  {
+    "competition_id": "forest-cover-type-prediction",
+    "title": "Forest Cover Type Prediction",
+    "year": 2014,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Categorical Accuracy",
+    "prompt": "Predict the forest cover type (tree species) from cartographic variables. Data: Elevation, slope, soil type, and distance to hydrology. Goal: Predict one of 7 cover types. Challenge: Differentiating between tree species that grow in similar environments but have subtle ecological preferences.",
+    "solution_summary": "Ensemble of ExtraTrees and Gradient Boosting. 1st place used an ensemble of ExtraTrees and XGBoost. They focused on 'Distance-based' feature engineering, calculating the Euclidean distance to water and road networks. They used 'Feature Interactions' between elevation and soil type to capture specific ecological niches.",
+    "key_techniques": [
+      "ExtraTrees and XGBoost ensemble",
+      "Euclidean distance features",
+      "Soil-type categorical interactions",
+      "Recursive Feature Elimination (RFE)",
+      "StandardScaler for elevation/slope",
+      "10-fold Cross-Validation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/forest-cover-type-prediction/discussion/11250"
+  },
+  {
+    "competition_id": "facial-keypoints-detection",
+    "title": "Facial Keypoints Detection",
+    "year": 2015,
+    "problem_type": "regression",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Root Mean Squared Error (RMSE)",
+    "prompt": "Identify the coordinates of 15 key points on human faces (e.g., eyes, nose, mouth corners). Data: 96x96 grayscale images of faces. Goal: Predict the (x, y) coordinates for all keypoints. Challenge: Handling missing keypoints in some training images and the small image resolution.",
+    "solution_summary": "Deep CNN regression with multi-task learning. 1st place used a 4-layer CNN architecture with Max-Pooling and Dropout. They utilized a 'Multi-task' approach where the model predicted all 30 coordinates (15 x, y pairs) simultaneously. They applied 'Image Augmentation' (flipping and shifting) and filled missing labels using the mean coordinates during training.",
+    "key_techniques": [
+      "4-layer CNN regressor",
+      "Multi-task coordinate prediction",
+      "Horizontal flip augmentation",
+      "Missing value imputation (Mean-fill)",
+      "Adam optimizer with learning rate decay",
+      "Global Average Pooling (GAP)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/facial-keypoints-detection/discussion/13520"
+  },
+  {
+    "competition_id": "tabular-playground-series-jan-2021",
+    "title": "Tabular Playground Series - Jan 2021",
+    "year": 2021,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Root Mean Squared Error (RMSE)",
+    "prompt": "Predict a continuous target value from a set of anonymized numerical features. Data: 14 numerical features and 300,000 rows. Goal: Predict the target. Challenge: The features are highly correlated and have complex, non-linear distributions with multiple peaks.",
+    "solution_summary": "Ensemble of high-depth LightGBM and XGBoost. 1st place utilized an ensemble of LightGBM, XGBoost, and CatBoost models. They applied 'Quantile Transformation' to the features to make them more Gaussian and used a 'Denoising Autoencoder' (DAE) to extract a secondary set of features from the tabular data before feeding them into the ensemble.",
+    "key_techniques": [
+      "LightGBM and CatBoost ensemble",
+      "Denoising Autoencoder (DAE) features",
+      "Quantile Transformer for numerical scaling",
+      "Bayesian Optimization for hyperparameters",
+      "Out-of-fold (OOF) prediction stacking",
+      "RMSE-optimized early stopping"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/tabular-playground-series-jan-2021/discussion/213000"
+  },
+  {
+    "competition_id": "tabular-playground-series-may-2021",
+    "title": "Tabular Playground Series - May 2021",
+    "year": 2021,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Classify rows into one of four classes based on 50 anonymized features. Data: Integer features representing counts or categories. Goal: Predict the probability for Class 1, 2, 3, and 4. Challenge: Handling extremely sparse data where most values are zero and managing class imbalance (Class 2 is dominant).",
+    "solution_summary": "Neural Network with Entity Embeddings and LightGBM. 1st place used a hybrid approach: a 3-layer MLP with embeddings for each integer feature and a LightGBM model. They used a 'Pseudo-labeling' strategy on the test set to balance the class distribution and applied 'Label Smoothing' to prevent over-confidence in the Class 2 predictions.",
+    "key_techniques": [
+      "MLP with Entity Embeddings",
+      "LightGBM with custom weighting",
+      "Pseudo-labeling on the test set",
+      "Label Smoothing for class imbalance",
+      "Handling sparsity with zero-fill",
+      "5-fold stratified Cross-Validation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/tabular-playground-series-may-2021/discussion/242500"
+  },
+  {
+    "competition_id": "store-sales-time-series-forecasting",
+    "title": "Store Sales - Time Series Forecasting",
+    "year": 2022,
+    "problem_type": "regression",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "RMSLE",
+    "prompt": "Forecast grocery sales for the Favorita store chain in Ecuador. Data: Historical sales, store info, holidays, and oil prices. Goal: Predict the unit sales for thousands of items. Challenge: Accounting for the impact of earthquakes and national holidays on shopping behavior and managing external shocks (oil price shifts).",
+    "solution_summary": "Hybrid Linear Regression and LightGBM. 1st place used a Linear Regression model to capture the 'long-term trend' and a LightGBM model to capture 'short-term residuals' (seasonal peaks/promos). They heavily engineered 'Holiday-offset' features and used 'Lagged Sales' (1-7 days) to model immediate buyer response to promotions.",
+    "key_techniques": [
+      "Linear Regression + LightGBM hybrid",
+      "Trend and Residual modeling",
+      "Holiday-offset feature engineering",
+      "Lagged sales and oil price features",
+      "Target encoding for store/item IDs",
+      "Log-target transformation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/store-sales-time-series-forecasting/discussion"
+  },
+  {
+    "competition_id": "santander-value-prediction-challenge",
+    "title": "Santander Value Prediction Challenge",
+    "year": 2018,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "RMSLE",
+    "prompt": "Predict the log-value of transactions for Santander customers. Data: 4,900+ anonymized features and only 4,400 training rows. Goal: Predict the transaction value. Challenge: Dealing with a 'wide' dataset where features vastly outnumber samples, leading to severe over-fitting risk.",
+    "solution_summary": "Dimensionality reduction and LightGBM. 1st place used 'Truncated SVD' and 'ICA' (Independent Component Analysis) to reduce the 4,900 features into 100 latent components. They used a single LightGBM model with a very small learning rate and high regularization. A key trick was 'Leakage Detection'\u2014identifying that some rows were near-duplicates, allowing for manual correction of targets.",
+    "key_techniques": [
+      "Truncated SVD and ICA reduction",
+      "LightGBM with high regularization",
+      "Leakage detection (Duplicate rows)",
+      "Target encoding for high-variance features",
+      "Recursive Feature Elimination (RFE)",
+      "Pseudo-labeling on low-variance test rows"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/santander-value-prediction-challenge/discussion/63908"
+  },
+  {
+    "competition_id": "movie-review-sentiment-analysis-kernels-only",
+    "title": "Movie Review Sentiment Analysis (Kernels Only)",
+    "year": 2018,
+    "problem_type": "classification",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Multi-class Accuracy",
+    "prompt": "Classify the sentiment of movie reviews into five levels (0-4). Data: Rotten Tomatoes phrases and sentiment labels. Goal: Predict the sentiment level. Challenge: Phrases are short and context-dependent; models must capture the nuances of 'somewhat positive' vs 'positive'.",
+    "solution_summary": "Ensemble of Bi-LSTM and CNN on word embeddings. 1st place utilized an ensemble of Bidirectional LSTM and 1D-CNN layers. They used pre-trained 'FastText' embeddings and applied a 'Max-Pooling' layer across the sequence to capture the most sentiment-heavy words. They utilized 'Class Weights' to handle the imbalance of the middle sentiment classes.",
+    "key_techniques": [
+      "Bidirectional LSTM and 1D-CNN",
+      "FastText word embeddings",
+      "Global Max Pooling for context",
+      "Class-weighting for sentiment imbalance",
+      "Dropout and spatial dropout regularization",
+      "Cyclic Learning Rate (CLR)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/movie-review-sentiment-analysis-kernels-only/discussion/64955"
+  },
+  {
+    "competition_id": "sf-crime-classification",
+    "title": "San Francisco Crime Classification",
+    "year": 2016,
+    "problem_type": "classification",
+    "domain": "geospatial",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Predict the category of crime that occurred in San Francisco based on time and location. Data: Timestamp, location (lat/lon), and police district. Goal: Predict one of 39 crime categories. Challenge: High levels of overlap between crime types in specific districts and capturing the 'cyclical' nature of crime (hourly/weekly).",
+    "solution_summary": "Feature engineering and XGBoost. 1st place created 'Circular features' for time (using sin/cos of hour and month) to capture the cyclical nature of crime. They used XGBoost with 'Softmax' and optimized for log loss. They also engineered 'Address-frequency' features to identify high-crime hotspots (e.g., '800 block of Bryant St').",
+    "key_techniques": [
+      "XGBoost with multi-class softmax",
+      "Circular time features (Sin/Cos)",
+      "Address-frequency hotspots",
+      "District-wise target encoding",
+      "Handling 'Other Offenses' class imbalance",
+      "10-fold stratified Cross-Validation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/sf-crime-classification/discussion/18858"
+  },
+  {
+    "competition_id": "favorita-grocery-sales-forecasting",
+    "title": "Corporaci\u00f3n Favorita Grocery Sales Forecasting",
+    "year": 2018,
+    "problem_type": "regression",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "NWMAE (Normalized Weighted MAE)",
+    "prompt": "Predict unit sales for thousands of items across Favorita stores. Data: Historical sales, store info, and promotions. Goal: Forecast sales for the next 16 days. Challenge: Massive data size (125M rows) and the need to weight perishable items more heavily in the error metric.",
+    "solution_summary": "Ensemble of LightGBM and Deep RNNs. The 1st place solution utilized a stacked ensemble. Level 1 included a 'Seq2Seq' GRU model and LightGBM. They focused on 'Moving Averages' of sales at different grains (item, store, family) and applied a 'Target Decay' to reduce the influence of old sales data on future forecasts.",
+    "key_techniques": [
+      "LightGBM and Seq2Seq GRU ensemble",
+      "Moving average feature engineering",
+      "Perishable-item error weighting",
+      "Target decay for historical sales",
+      "Lagged promo and holiday features",
+      "OOF-stacking with Ridge meta-learner"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/favorita-grocery-sales-forecasting/discussion/47582"
+  },
+  {
+    "competition_id": "two-sigma-connect-rental-listing-inquiries",
+    "title": "Two Sigma Connect: Rental Listing Inquiries",
+    "year": 2017,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular",
+      "text",
+      "image"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Predict how much interest a new rental listing on RentHop will receive. Data: Listing features (price, bedrooms), description text, and photos. Goal: Predict if interest is 'high', 'medium', or 'low'. Challenge: Handling unformatted text descriptions and identifying 'bargain' listings where the price is low for the neighborhood.",
+    "solution_summary": "Multimodal stacking with XGBoost. 1st place used XGBoost for the tabular features and a 'Bag of Words' + 'TF-IDF' model for the descriptions. They engineered a 'Price-per-Bedroom' feature and a 'Neighborhood-Price-Rank' feature. They used 'VGG16' to extract image quality features (brightness, size) as secondary signals for listing appeal.",
+    "key_techniques": [
+      "XGBoost with multi-class logloss",
+      "Price-per-bedroom and rank features",
+      "TF-IDF on listing descriptions",
+      "VGG16 image quality descriptors",
+      "Manager-ID target encoding",
+      "5-fold stratified Cross-Validation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/two-sigma-connect-rental-listing-inquiries/discussion/32123"
+  },
+  {
+    "competition_id": "cat-in-the-dat",
+    "title": "Categorical Feature Encoding Challenge",
+    "year": 2020,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Develop the best encoding strategy for categorical features in binary classification. Data: Nominal, ordinal, cyclic, and high-cardinality binary/categorical features. Goal: Predict the binary target. Challenge: Generalizing encoding techniques (e.g., target encoding, hash encoding) across diverse category types without over-fitting.",
+    "solution_summary": "Hybrid encoding and Logistic Regression. 1st place found that for this specific synthetic dataset, a 'Simple Logistic Regression' on 'One-Hot Encoded' features performed best. They utilized 'Feature Hashing' to manage the high-cardinality columns and applied a 'Target Encoding' with strong smoothing to the most complex nominal features.",
+    "key_techniques": [
+      "Logistic Regression with L2 regularization",
+      "One-Hot Encoding for small categories",
+      "Feature Hashing for high-cardinality IDs",
+      "Target Encoding with smoothing",
+      "StandardScaler for ordinal ranks",
+      "Sin/Cos encoding for cyclic features"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/cat-in-the-dat/discussion/115560"
+  },
+  {
+    "competition_id": "facial-expression-recognition-challenge",
+    "title": "Facial Expression Recognition Challenge",
+    "year": 2013,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Categorical Accuracy",
+    "prompt": "Classify facial expressions into 7 categories (Angry, Disgust, Fear, Happy, Sad, Surprise, Neutral). Data: 48x48 grayscale images of faces. Goal: Predict the emotion label. Challenge: Images are low-resolution and often contain non-frontal faces or extreme lighting that obscures expressions.",
+    "solution_summary": "Convolutional Neural Network with dropout. 1st place utilized a 3-layer CNN with Max-Pooling and 50% Dropout. They used 'Image Augmentation' (random cropping and horizontal flipping) to artificially increase the dataset size. A key insight was using a 'Softmax' layer with a temperature parameter to sharpen the probability distribution during inference.",
+    "key_techniques": [
+      "3-layer CNN with Max-Pooling",
+      "Dropout and L2 regularization",
+      "Random Crop and Flip augmentation",
+      "Softmax temperature scaling",
+      "Adam optimizer with decay",
+      "10-fold Cross-Validation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/challenges-in-representation-learning-facial-expression-recognition-challenge/discussion"
+  }
+]

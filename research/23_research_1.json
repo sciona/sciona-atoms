@@ -1,0 +1,1088 @@
+[
+  {
+    "competition_id": "hms-harmful-brain-activity-classification",
+    "title": "HMS - Harmful Brain Activity Classification",
+    "year": 2024,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "time_series",
+      "image"
+    ],
+    "evaluation_metric": "Kullback-Leibler Divergence",
+    "prompt": "Classify patterns of harmful brain activity in EEG recordings to assist doctors in detecting seizures and other critical states. Data: 50-second EEG segments (sampled at 200Hz) and corresponding spectrograms. Goal: Predict the probability distribution across six classes of brain activity (Seizure, LPD, GPD, LRDA, GRDA, Other). Challenge: High noise in raw EEG and inter-rater variability in human labels.",
+    "solution_summary": "Ensemble of 1D and 2D CNN models. 1st place team (Sony) transformed raw EEG into 2D scalogram images using Continuous Wavelet Transform (CWT) and bipolar montages. They used a 2-stage training process: first training on the full noisy dataset and then fine-tuning on high-quality labels (10+ human votes). Key insight was using 'entmax' with a small alpha (1.03) to sharpen class probabilities.",
+    "key_techniques": [
+      "2D CNN with timm (Swin-v2, EfficientNet-B0)",
+      "Continuous Wavelet Transform (CWT) for scalograms",
+      "Bipolar montage feature engineering",
+      "2-stage training (noisy to clean labels)",
+      "Entmax activation for crisp probabilities",
+      "XYMasking and Mixup augmentation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/hms-harmful-brain-activity-classification/discussion/492560"
+  },
+  {
+    "competition_id": "leash-BELKA",
+    "title": "NeurIPS 2024 - Predict New Medicines with BELKA",
+    "year": 2024,
+    "problem_type": "classification",
+    "domain": "scientific",
+    "modalities": [
+      "tabular",
+      "text"
+    ],
+    "evaluation_metric": "Mean Average Precision (mAP)",
+    "prompt": "Predict the binding affinity of small molecules to specific protein targets to accelerate drug discovery. Data: 133M chemical compounds represented as SMILES strings, with binding results from a DNA-encoded chemical library (DEL). Goal: Classify each molecule as a binder or non-binder for three proteins. Challenge: Extreme class imbalance and the need to generalize to 'unseen' chemical building blocks.",
+    "solution_summary": "A minimalist Transformer-based approach. The winning solution used a simple 4-layer Transformer encoder with 8 heads, treating SMILES as a character-level text problem. The critical success factor was a two-stage pre-training: first using Masked Language Modeling (MLM) and second predicting ECFP fingerprints (SMILES-to-ECFP) before fine-tuning on the competition data. This allowed the model to learn robust chemical representations.",
+    "key_techniques": [
+      "Vanilla Transformer Encoder (4 layers, 8 heads)",
+      "SMILES character-level tokenization",
+      "Masked Language Modeling (MLM) pre-training",
+      "SMILES-to-ECFP fingerprint prediction",
+      "CategoricalFocalCrossEntropy loss",
+      "Dynamic mini-batch alpha weights"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/leash-BELKA/writeups/victor-shlepov-1st-place-solution-updated"
+  },
+  {
+    "competition_id": "ubc-ocean",
+    "title": "UBC-OCEAN: Ovarian Cancer Subtype Classification and Outlier Detection",
+    "year": 2024,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Balanced Accuracy",
+    "prompt": "Classify ovarian cancer subtypes from high-resolution histopathology images and identify rare variants. Data: Whole-slide images (WSI) and tissue microarrays (TMA). Goal: Predict one of five subtypes (CC, EC, HGSC, LGSC, MC) or 'Other'. Challenge: WSIs are multi-gigabyte files with varied magnifications, and models must handle outliers not seen in the training set.",
+    "solution_summary": "Multiple Instance Learning (MIL) pipeline using foundation model embeddings. The 1st place solution (Owkin) extracted features from image tiles using Phikon (a digital pathology foundation model). These embeddings were then fed into a 'Chowder' MIL model, which uses top/bottom instances for scoring. Outlier detection for the 'Other' class was handled using high-entropy prediction thresholds.",
+    "key_techniques": [
+      "Phikon (foundation model) feature extraction",
+      "Chowder Multiple Instance Learning (MIL)",
+      "High entropy outlier detection",
+      "Tiling at 20x magnification",
+      "Balanced training strategy for rare subtypes",
+      "Ensemble of MIL models"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/UBC-OCEAN/writeups/owkin-1st-place-solution-owkin"
+  },
+  {
+    "competition_id": "optiver-trading-at-the-close",
+    "title": "Optiver - Trading at the Close",
+    "year": 2023,
+    "problem_type": "regression",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Mean Absolute Error (MAE)",
+    "prompt": "Predict the closing price movements of hundreds of Nasdaq-listed stocks during the final ten minutes of the trading day. Data: Order book imbalance data (sizes and prices), reference prices, and target labels (WAP shifts). Goal: Predict the target value for the next 60 seconds. Challenge: Strict inference time constraints and the need to prevent data leakage in streaming validation.",
+    "solution_summary": "Ensemble of LightGBM and CatBoost models with a custom online refitting strategy. The 1st place solution focused on 'lead-lag' features and rolling window statistics. They implemented a streaming CV setup to mimic the actual time-series inference. A key post-processing step was 'zero-sum' normalization, ensuring that the net predicted movement across all stocks was zero, reflecting the market-neutral nature of the target.",
+    "key_techniques": [
+      "LightGBM + CatBoost ensemble",
+      "Online model refitting every 6-12 days",
+      "Zero-sum post-processing",
+      "Revealed target lag features (1, 2, 3 day lags)",
+      "Market imbalance indicators (RSI, MACD, Bollinger)",
+      "Streaming Cross-Validation"
+    ],
+    "source_url": "https://www.kaggle.com/c/optiver-trading-at-the-close/discussion/462653"
+  },
+  {
+    "competition_id": "isic-2024-skin-cancer-detection-with-3d-tbp",
+    "title": "ISIC 2024 - Skin Cancer Detection with 3D-TBP",
+    "year": 2024,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "image",
+      "tabular"
+    ],
+    "evaluation_metric": "Partial AUC at 80% sensitivity",
+    "prompt": "Identify skin cancer (malignant lesions) from low-resolution crops of 3D Total Body Photographs. Data: 400,000+ image crops (typically <256px) and detailed patient/lesion metadata. Goal: Predict the probability of malignancy. Challenge: Extreme class imbalance (0.1% positive rate) and low image quality compared to traditional dermoscopy.",
+    "solution_summary": "Multimodal fusion of image and tabular features. The top solutions combined 2D CNN backbones (EfficientNetV2, ConvNeXt) for image feature extraction with Gradient Boosting Machines (XGBoost/LightGBM) for patient-level metadata. Models were pre-trained on high-resolution data from previous ISIC years (2018-2020) and fine-tuned on the 2024 low-res images using heavy data augmentation.",
+    "key_techniques": [
+      "EfficientNetV2-S and ConvNeXt-Tiny backbones",
+      "LightGBM on lesion/patient metadata",
+      "Pre-training on ISIC 2020/2019 high-res data",
+      "Heavy down-sampling augmentation",
+      "Partial AUC optimization via loss weighting",
+      "Center-crop normalization"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/isic-2024-challenge/discussion/515356"
+  },
+  {
+    "competition_id": "llm-detect-ai-generated-text",
+    "title": "LLM - Detect AI Generated Text",
+    "year": 2024,
+    "problem_type": "classification",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Build a model to detect whether an essay was written by a student or generated by a Large Language Model. Data: Student-written essays from various prompts and AI essays from models like GPT-4 and Llama. Goal: Predict the probability of being AI-generated. Challenge: The test set uses prompts and AI models not seen in the training data, requiring robust generalization.",
+    "solution_summary": "A hybrid approach combining traditional NLP with Deep Learning. The 1st place solution (Team 'The 1st') relied on an ensemble of TF-IDF / N-gram models and DeBERTa-v3-Large fine-tuned on a massive external dataset of 800k student/AI samples. They used a specific character-level filtering strategy to remove 'prompt-specific' artifacts that caused over-fitting in baseline models.",
+    "key_techniques": [
+      "DeBERTa-v3-Large sequence classification",
+      "TF-IDF with large vocabulary (100k+ features)",
+      "LGBM/XGBoost on top of TF-IDF scores",
+      "Data augmentation with external LLM datasets",
+      "Freezing early transformer layers for stability",
+      "Byte-Pair Encoding (BPE) feature analysis"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/llm-detect-ai-generated-text/discussion/471309"
+  },
+  {
+    "competition_id": "rsna-2023-abdominal-trauma-detection",
+    "title": "RSNA 2023 Abdominal Trauma Detection",
+    "year": 2023,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "3d_volume"
+    ],
+    "evaluation_metric": "Weighted Log Loss",
+    "prompt": "Detect and grade injuries to internal organs (liver, spleen, kidney, bowel) from abdominal CT scans. Data: 3D CT volumes and organ-level annotations. Goal: Predict injury status and severity for each organ. Challenge: Handling 3D context in multi-slice CT images and the rare occurrence of high-grade injuries.",
+    "solution_summary": "A multi-stage pipeline utilizing 2.5D and 3D CNNs. 1st place used a 2D model (EfficientNet-B0) to segment/locate organs and extract relevant slices. These slices were then aggregated using a 3D-ConvNeXt or Transformer encoder to capture volumetric context. Final classification was performed using a weighted loss function to prioritize high-grade injuries as per the metric.",
+    "key_techniques": [
+      "2.5D CNN (EfficientNet/ConvNeXt) for slice extraction",
+      "3D Segmentation for organ localization",
+      "Transformer-based sequence aggregation",
+      "Heavy slice-sampling augmentation",
+      "Weighted Cross-Entropy Loss",
+      "GroupKFold by Patient ID"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/rsna-2023-abdominal-trauma-detection/discussion/447473"
+  },
+  {
+    "competition_id": "blood-vessel-segmentation",
+    "title": "SenNet + HOA - Hacking the Human Vasculature",
+    "year": 2024,
+    "problem_type": "segmentation",
+    "domain": "medical",
+    "modalities": [
+      "3d_volume"
+    ],
+    "evaluation_metric": "Surface Dice Coefficient",
+    "prompt": "Segment 3D blood vessels from high-resolution Hierarchical Phase-Contrast Tomography (HiP-CT) scans of human kidneys. Data: 3D volumetric images at micron-level resolution. Goal: Predict a binary mask for every voxel. Challenge: Immense data size (terabytes) and the complex, thin topology of microvascular structures.",
+    "solution_summary": "Ensemble of 2.5D and 3D UNet architectures. The 1st place solution utilized a 3D SegResNet and a 2.5D ConvNeXt-UNet, training on small overlapping crops (patches). They applied heavy morphological post-processing to connect broken vessel segments. A key insight was using pseudo-labeling on unlabeled kidney regions to increase training data diversity.",
+    "key_techniques": [
+      "3D SegResNet and 2.5D ConvNeXt-UNet",
+      "Mixed-precision training (FP16)",
+      "Pseudo-labeling for unlabeled regions",
+      "Morphological vessel-hole filling",
+      "Overlapping patch inference",
+      "Surface Dice optimization"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/blood-vessel-segmentation/discussion/475141"
+  },
+  {
+    "competition_id": "ariel-data-challenge-2024",
+    "title": "NeurIPS - Ariel Data Challenge 2024",
+    "year": 2024,
+    "problem_type": "regression",
+    "domain": "scientific",
+    "modalities": [
+      "time_series",
+      "image"
+    ],
+    "evaluation_metric": "Gaussian Log-Likelihood (GLL)",
+    "prompt": "Extract the atmospheric spectra of exoplanets from raw simulated space telescope observations. Data: Multi-wavelength time-series images (spectral focal plane) covering a transit. Goal: Predict the mean transit depth and uncertainty for 283 wavelengths. Challenge: High jitter noise from the spacecraft and extremely low signal-to-noise ratio.",
+    "solution_summary": "Physics-informed regression using least-squares optimization. The winning approach involved modeling the transit signal as a product of a polynomial (for baseline/noise) and a step function (for transit depth). They used the Dogbox algorithm (scipy.optimize) for robust fitting. A critical technique was modeling 'jitter spikes' with Lorentzian functions to denoise the pixel-level data before aggregation.",
+    "key_techniques": [
+      "Levenberg-Marquardt / Dogbox optimization",
+      "Polynomial baseline detrending",
+      "Lorentzian spike modeling for jitter",
+      "Moving average smoothing with Taylor windows",
+      "Weighted Least Squares for depth estimation",
+      "Gaussian Log-Likelihood optimization"
+    ],
+    "source_url": "https://www.kaggle.com/c/ariel-data-challenge-2024/discussion/543855"
+  },
+  {
+    "competition_id": "leap-atmospheric-physics-ai-climsim",
+    "title": "LEAP - Atmospheric Physics using AI (ClimSim)",
+    "year": 2024,
+    "problem_type": "regression",
+    "domain": "scientific",
+    "modalities": [
+      "tabular",
+      "time_series"
+    ],
+    "evaluation_metric": "R-squared ($R^2$)",
+    "prompt": "Simulate the sub-grid atmospheric physics (clouds, precipitation, radiation) for climate models. Data: Global dataset of 80 million atmospheric states with input variables like temperature/humidity and output tendencies. Goal: Predict the vertical tendency profiles. Challenge: Massive dataset (700GB+) and the need for high numerical precision in conservation laws.",
+    "solution_summary": "Deep learning architecture using Transformers and Fourier Neural Operators (FNO). The 1st place solution (Greysnow) employed a vanilla Transformer encoder to process vertical features, coupled with an FNO1D decoder head to predict per-token targets. They used bf16 training to handle the wide dynamic range of features and hdf5 for fast random-access data reading during training.",
+    "key_techniques": [
+      "Transformer Encoder with Beit-v2 blocks",
+      "FNO1D (Fourier Neural Operator) decoder",
+      "Bf16 / FP32 mixed training for precision",
+      "HDF5 fast data loading",
+      "Weighted MSE + L1 multi-loss",
+      "Handcrafted vertical difference features"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/leap-atmospheric-physics-ai-climsim/discussion/523271"
+  },
+  {
+    "competition_id": "learning-agency-lab-automated-essay-scoring-2",
+    "title": "Learning Agency Lab - Automated Essay Scoring 2.0",
+    "year": 2024,
+    "problem_type": "ranking",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Quadratic Weighted Kappa (QWK)",
+    "prompt": "Develop an automated system to score student-written essays based on their quality. Data: 17k+ essays written by students (Grades 6-12) with labels from 1 to 6. Goal: Predict the integer score for each essay. Challenge: Achieving human-level grading consistency across different prompts and ensuring model efficiency for real-world classroom use.",
+    "solution_summary": "Ensemble of fine-tuned Transformer models and feature-based regressors. The 1st place approach combined DeBERTa-v3-Large fine-tuned with a custom QWK loss function and LightGBM models trained on 1,500+ linguistically motivated features (e.g., lexical diversity, grammar errors). They used a 'pseudo-ranking' strategy where the model predicted continuous values before thresholding into integers.",
+    "key_techniques": [
+      "DeBERTa-v3-Large with custom QWK head",
+      "LightGBM on linguistic features",
+      "Differential thresholding for integer conversion",
+      "Prompt-specific normalization",
+      "Self-distillation for model efficiency",
+      "Iterative pseudo-labeling"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/learning-agency-lab-automated-essay-scoring-2/discussion/516000"
+  },
+  {
+    "competition_id": "linking-writing-processes-to-writing-quality",
+    "title": "Linking Writing Processes to Writing Quality",
+    "year": 2023,
+    "problem_type": "regression",
+    "domain": "nlp",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Root Mean Squared Error (RMSE)",
+    "prompt": "Predict essay quality scores from raw keystroke data logged during the writing process. Data: Event-level logs including keys pressed, mouse clicks, and cursor positions over time. Goal: Predict the final score (0.5 - 6.0). Challenge: Extracting high-level writing behaviors (pauses, revisions, burstiness) from extremely granular and long event sequences.",
+    "solution_summary": "Feature engineering-centric approach using Gradient Boosting. The winning solution (Tomoo) developed over 1,000 features characterizing writing 'bursts' (Productive periods), 'R-bursts' (Revision periods), and 'P-bursts' (Pauses). They used an ensemble of LightGBM, XGBoost, and CatBoost. A key insight was modeling the 'unwritten' time (time spent thinking) as a separate predictive feature.",
+    "key_techniques": [
+      "LightGBM / XGBoost ensemble",
+      "Burst-level feature engineering (P-burst, R-burst)",
+      "Keystroke frequency and transition matrices",
+      "Recursive Feature Elimination (RFE)",
+      "Sentence-level aggregate stats",
+      "Time-since-last-event rolling averages"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/linking-writing-processes-to-writing-quality/discussion/465135"
+  },
+  {
+    "competition_id": "rsna-2024-lumbar-spine-degenerative-classification",
+    "title": "RSNA 2024 Lumbar Spine Degenerative Classification",
+    "year": 2024,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "3d_volume"
+    ],
+    "evaluation_metric": "Weighted Log Loss",
+    "prompt": "Classify five degenerative lumbar spine conditions from multi-sequence MRI scans. Data: T1, T2, and T2-STIR MRI volumes for each patient. Goal: Predict the severity (Normal/Mild, Moderate, Severe) for each lumbar level (L1-S1). Challenge: Coordinating classification across multiple views (Sagittal/Axial) and localizing the correct spine level.",
+    "solution_summary": "A 2-stage pipeline consisting of localization and classification. 1st place used a 3D ConvNeXt model to predict 'instance numbers' (slice indices) and coordinates for each vertebrae level. In the second stage, cropped ROI patches from different MRI sequences were fed into a multi-head CNN (ConvNeXt-S/EfficientNet-V2) with a MIL-LSTM head to aggregate features across slices for a final patient-level prediction.",
+    "key_techniques": [
+      "3D ConvNeXt for coordinate/slice localization",
+      "Multi-sequence fusion (T1/T2/T2-STIR)",
+      "MIL-LSTM head for slice aggregation",
+      "Coordinate regression auxiliary loss",
+      "Symmetrized axial-sagittal attention",
+      "GroupKFold split by patient"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/rsna-2024-lumbar-spine-degenerative-classification/writeups/avengers-1st-place-solution"
+  },
+  {
+    "competition_id": "predict-student-performance-from-game-play",
+    "title": "Predict Student Performance from Game Play",
+    "year": 2023,
+    "problem_type": "classification",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "F1-Score",
+    "prompt": "Predict whether a student will correctly answer questions in an educational game based on their in-game interaction logs. Data: Clickstream data (room, level, elapsed time) from thousands of game sessions. Goal: Predict correct/incorrect for 18 specific questions. Challenge: Time-series nature of the logs where future performance must be predicted from past interactions.",
+    "solution_summary": "Session-level feature engineering with Gradient Boosting. The 1st place solution created sophisticated aggregate features over 'levels' and 'rooms' within the game, such as 'time spent per page' and 'click frequency'. They used a separate LightGBM model for each of the 18 questions. A key insight was using 'group-by' features on the sequence of events to capture student frustration or engagement levels.",
+    "key_techniques": [
+      "Question-specific LightGBM models",
+      "Temporal aggregation features",
+      "Level-wise click count and duration stats",
+      "Coordinate-based heatmap features",
+      "Binary cross-entropy optimization",
+      "Stratified GroupKFold by Session ID"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/predict-student-performance-from-game-play/discussion/420235"
+  },
+  {
+    "competition_id": "icr-identify-age-related-conditions",
+    "title": "ICR - Identifying Age-Related Conditions",
+    "year": 2023,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Balanced Log Loss",
+    "prompt": "Predict whether a person has one of three age-related medical conditions using anonymous health data. Data: 50+ health markers (categorical and numerical) for ~600 patients. Goal: Binary classification of condition presence. Challenge: Extremely small dataset size and highly imbalanced labels, requiring models with very high stability.",
+    "solution_summary": "Ensemble of diverse tabular models including TabPFN and Gradient Boosting. 1st place used TabPFN (a Prior-Data Fitted Network) which excels on small datasets, alongside XGBoost and LightGBM. They implemented a custom 'stable' cross-validation strategy and used pseudo-labeling to slightly expand the training set. A major component was handling 'epsilon' features through robust imputation.",
+    "key_techniques": [
+      "TabPFN (Prior-Data Fitted Network)",
+      "XGBoost + LightGBM + CatBoost ensemble",
+      "Pseudo-labeling on test set",
+      "Custom Balanced Log Loss function",
+      "Iterative Imputation for missing markers",
+      "Leave-One-Out validation strategy"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/icr-identify-age-related-conditions/discussion/430349"
+  },
+  {
+    "competition_id": "godaddy-microbusiness-density-forecasting",
+    "title": "GoDaddy - Microbusiness Density Forecasting",
+    "year": 2023,
+    "problem_type": "regression",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Symmetric Mean Absolute Percentage Error (SMAPE)",
+    "prompt": "Forecast the monthly microbusiness density in U.S. counties. Data: Historic density rates, census data, and economic indicators. Goal: Predict density for the next several months. Challenge: The target is highly stable for most counties but volatile in others, making simple models hard to beat.",
+    "solution_summary": "A 'last-value-plus' strategy with selective ML overrides. The winning approach relied on a weighted combination of 'Last Observed Value' and Linear Regression with trend capping for most counties. They only used CatBoost for counties with high volatility or clear trend shifts identified via outlier detection. Census data (ACS) was used as a static feature for cross-sectional modeling.",
+    "key_techniques": [
+      "Linear Regression with Trend Capping",
+      "Last Value (Naive) persistence",
+      "CatBoost for high-volatility counties",
+      "DBSCAN for outlier county detection",
+      "Symmetric MAPE optimization",
+      "Census ACS feature integration"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/godaddy-microbusiness-density-forecasting/discussion/416390"
+  },
+  {
+    "competition_id": "stable-diffusion-image-to-prompts",
+    "title": "Stable Diffusion - Image to Prompts",
+    "year": 2023,
+    "problem_type": "regression",
+    "domain": "nlp",
+    "modalities": [
+      "image",
+      "text"
+    ],
+    "evaluation_metric": "Mean Cosine Similarity",
+    "prompt": "Reverse-engineer the text prompt used to generate a specific image with Stable Diffusion. Data: Thousands of AI-generated images and their corresponding prompts. Goal: Predict a 384-dimensional embedding representing the prompt. Challenge: Aligning visual style and semantic content in a high-dimensional embedding space.",
+    "solution_summary": "Fine-tuning Large Vision-Language Models for embedding regression. The 1st place solution fine-tuned CLIP-based backbones (ViT-L-14 and ViT-H-14) using a custom head that mapped visual features directly to the target prompt embedding space. They optimized for Cosine Similarity loss and used a massive auxiliary dataset (LAION-5B) to improve the model's understanding of diverse prompt styles.",
+    "key_techniques": [
+      "CLIP ViT-L-14 and ViT-H-14 backbones",
+      "Cosine Similarity Loss",
+      "Auxiliary training on LAION-5B dataset",
+      "EMA (Exponential Moving Average) weights",
+      "MLP Regression Head",
+      "Prompt-length-aware feature scaling"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/stable-diffusion-image-to-prompts/discussion/410185"
+  },
+  {
+    "competition_id": "feedback-prize-english-language-learning",
+    "title": "Feedback Prize - English Language Learning",
+    "year": 2022,
+    "problem_type": "regression",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Mean Columnwise Root Mean Squared Error (MCRMSE)",
+    "prompt": "Evaluate the writing quality of English Language Learners (ELLs) across six categories. Data: Essays written by students for whom English is a second language. Goal: Predict scores (1.0 - 5.0) for Cohesion, Syntax, Vocabulary, Phraseology, Grammar, and Conventions. Challenge: Correlated multi-task targets and varied writing styles.",
+    "solution_summary": "Multi-task learning with Large Language Models. 1st place used an ensemble of DeBERTa-v3-Large models with a shared backbone and six task-specific regression heads. They applied Multi-Sample Dropout to prevent over-fitting and utilized 'Mean-Pooling' of hidden states from the last 4 layers. A key technique was 'Pseudo-Labeling' using the competition's unlabeled dataset to stabilize the scores.",
+    "key_techniques": [
+      "DeBERTa-v3-Large multi-task backbone",
+      "Mean-Pooling of final 4 layers",
+      "Multi-Sample Dropout",
+      "Pseudo-Labeling for multi-target regression",
+      "Differential Learning Rate by layer",
+      "Stochastic Weight Averaging (SWA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/feedback-prize-english-language-learning/discussion/369609"
+  },
+  {
+    "competition_id": "us-patent-phrase-to-phrase-matching",
+    "title": "U.S. Patent Phrase to Phrase Matching",
+    "year": 2022,
+    "problem_type": "regression",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Pearson Correlation Coefficient",
+    "prompt": "Measure the semantic similarity between two phrases within the context of a patent application. Data: Pairs of 'anchor' and 'target' phrases, along with a 'context' code (CPC category). Goal: Predict similarity on a scale of 0 to 1. Challenge: Understanding technical jargon and the specific nuance of 'context' which changes the meaning of common words.",
+    "solution_summary": "Context-aware Transformer models. The winning solution concatenated anchor, target, and context description into a single sequence: '[CLS] anchor [SEP] target [SEP] context_description'. They used DeBERTa-v3-Large and ELECTRA-Large backbones. They applied 'Attention Pooling' over the target phrase tokens specifically to highlight the relevant semantic features.",
+    "key_techniques": [
+      "DeBERTa-v3-Large and ELECTRA-Large",
+      "Context string concatenation",
+      "Attention-based pooling (Custom Head)",
+      "Layer-wise Learning Rate Decay (LLRD)",
+      "Adversarial Weight Perturbation (AWP)",
+      "Pearson correlation optimization"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/us-patent-phrase-to-phrase-matching/discussion/332234"
+  },
+  {
+    "competition_id": "nbme-score-clinical-patient-notes",
+    "title": "NBME - Score Clinical Patient Notes",
+    "year": 2022,
+    "problem_type": "detection",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "F1-Score (Character-level)",
+    "prompt": "Identify specific clinical concepts within patient notes written by medical students. Data: Patient notes and a list of 'features' (e.g., 'chest pain') to find in the text. Goal: Predict the character offsets of the relevant text spans. Challenge: The same concept can be described using many synonyms or abbreviations, and spans can be non-contiguous.",
+    "solution_summary": "Token classification (NER) with multi-head attention. 1st place treated this as a Question-Answering/NER task using DeBERTa-v3-Large. They formatted the input as 'feature [SEP] patient_note'. The model predicted 'B-I-O' labels for each token. Non-contiguous spans were handled by post-processing overlapping predictions and merging spans that were within a 3-character distance.",
+    "key_techniques": [
+      "DeBERTa-v3-Large for token classification",
+      "B-I-O (Beginning-Inside-Outside) labeling",
+      "Span merging post-processing",
+      "GroupKFold by Case ID",
+      "Multi-sample Dropout",
+      "Adversarial Weight Perturbation (AWP)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/nbme-score-clinical-patient-notes/discussion/323048"
+  },
+  {
+    "competition_id": "mayo-clinic-strip-ai",
+    "title": "Mayo Clinic - STRIP AI",
+    "year": 2022,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Weighted Log Loss",
+    "prompt": "Classify the origin of blood clots (stroke etiology) from high-resolution whole-slide images. Data: Digital pathology slides of blood clots. Goal: Predict if the clot originated from the heart (CE) or the large arteries (LAA). Challenge: WSIs are massive; images often contain a lot of empty space or artifacts, and the CE/LAA distinction is visually subtle.",
+    "solution_summary": "Tile-based Multiple Instance Learning (MIL). The winning solution used a 'receptive field' approach, extracting thousands of 512x512 tiles from tissue areas. These tiles were encoded by an EfficientNet-B0/B1. The embeddings were then aggregated using a gated-attention MIL head. They also used 'hard negative mining' to focus the model on tissue regions that were most difficult to classify.",
+    "key_techniques": [
+      "EfficientNet-B1 tile encoder",
+      "Gated Attention MIL aggregation",
+      "Otsu thresholding for tissue detection",
+      "Hard negative mining",
+      "Weighted cross-entropy for CE/LAA",
+      "Heavy color jitter and stain normalization"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/mayo-clinic-strip-ai/discussion/358334"
+  },
+  {
+    "competition_id": "uw-madison-gi-tract-image-segmentation",
+    "title": "UW-Madison GI Tract Image Segmentation",
+    "year": 2022,
+    "problem_type": "segmentation",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Dice Coefficient + Hausdorf Distance",
+    "prompt": "Segment the stomach and intestines in MRI scans to help guide radiation therapy for cancer. Data: 2D MRI slices of the abdomen over multiple days. Goal: Predict masks for Stomach, Large Bowel, and Small Bowel. Challenge: Low contrast between organs and the need for high-precision boundaries to avoid damaging healthy tissue.",
+    "solution_summary": "2.5D UNet ensemble with heavy spatial context. 1st place used an ensemble of UNet++ and SegFormer architectures. They used '2.5D' input by stacking 3 consecutive slices (t-1, t, t+1) into RGB channels to provide depth context. They optimized a joint Dice-BCE loss and used test-time augmentation (TTA) with horizontal flipping and scaling.",
+    "key_techniques": [
+      "2.5D slice stacking (3-channel input)",
+      "UNet++ with Swin-Transformer backbone",
+      "SegFormer (B2/B4) ensemble",
+      "Dice + Binary Cross-Entropy loss",
+      "Test-Time Augmentation (TTA)",
+      "Post-processing to remove small components"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/uw-madison-gi-tract-image-segmentation/discussion/336965"
+  },
+  {
+    "competition_id": "hubmap-organ-segmentation",
+    "title": "HuBMAP + HPA - Hacking the Human Body",
+    "year": 2022,
+    "problem_type": "segmentation",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Dice Coefficient",
+    "prompt": "Segment functional tissue units (FTUs) across different human organs (kidney, lung, prostate, etc.). Data: Histopathology images from different sources with varied staining and resolution. Goal: Predict a binary mask for FTUs in each organ. Challenge: Generalizing across diverse organ types and data sources with differing visual appearances.",
+    "solution_summary": "An ensemble of high-resolution UNets. The 1st place solution utilized UNet backbones with EfficientNet-B7 and ConvNeXt-Large encoders. They used a large crop size (1024x1024) to capture sufficient FTU context. A crucial step was Organ-specific fine-tuning: training a general model first, then refining it for each organ class using organ-specific data augmentations.",
+    "key_techniques": [
+      "EfficientNet-B7 and ConvNeXt-Large UNets",
+      "1024x1024 input resolution",
+      "Organ-specific fine-tuning",
+      "Heavy stain augmentation (Macenko)",
+      "Dice + Lovasz Hinge loss",
+      "Stochastic Weight Averaging (SWA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/hubmap-organ-segmentation/discussion/353974"
+  },
+  {
+    "competition_id": "feedback-prize-effectiveness",
+    "title": "Feedback Prize - Predicting Effective Arguments",
+    "year": 2022,
+    "problem_type": "classification",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Multi-class Log Loss",
+    "prompt": "Classify the effectiveness of argumentative elements in student essays. Data: Essay snippets labeled as 'Claim', 'Evidence', etc. Goal: Predict if the element is 'Effective', 'Adequate', or 'Ineffective'. Challenge: Contextual dependency; the effectiveness of a 'Claim' depends on the surrounding 'Evidence' and the overall essay flow.",
+    "solution_summary": "Full-essay context modeling with Transformers. 1st place used DeBERTa-v3-Large where the entire essay was input, and specific markers ([START], [END]) were added around the target discourse element. They used an ensemble of models trained with different seeds and 'Multi-Sample Dropout'. They also used a second-stage LGBM model to aggregate predictions and essay-level features.",
+    "key_techniques": [
+      "DeBERTa-v3-Large with special markers",
+      "Full essay context windowing",
+      "Multi-Sample Dropout",
+      "Second-stage LGBM ensemble",
+      "Pseudo-labeling from Feedback 1.0 competition",
+      "Stratified GroupKFold"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/feedback-prize-effectiveness/discussion/347512"
+  },
+  {
+    "competition_id": "coleridge-initiative-show-us-the-data",
+    "title": "Coleridge Initiative - Show US the Data",
+    "year": 2021,
+    "problem_type": "detection",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "Jaccard-based F1 Score",
+    "prompt": "Identify the names of datasets mentioned in scientific publications. Data: Full-text JSON files of research papers. Goal: Predict the exact string of any dataset mentioned. Challenge: Datasets are often referred to by acronyms, informal names, or aliases not present in any official list.",
+    "solution_summary": "Hybrid NER and String Matching approach. 1st place combined a transformer-based NER model (SciBERT) to find potential dataset candidates with a 'literal string matching' algorithm against a large dictionary of known datasets. They used a rule-based post-processor to clean acronyms and resolve variations like 'ADNI' vs 'Alzheimer\\'s Disease Neuroimaging Initiative'.",
+    "key_techniques": [
+      "SciBERT for Named Entity Recognition (NER)",
+      "Dictionary-based literal string matching",
+      "Acronym-to-expansion mapping",
+      "Heuristic cleaning of text spans",
+      "External data scraping (government portals)",
+      "Jaccard similarity thresholding"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/coleridge-initiative-show-us-the-data/discussion/248384"
+  },
+  {
+    "competition_id": "ventilator-pressure-prediction",
+    "title": "Google Brain - Ventilator Pressure Prediction",
+    "year": 2021,
+    "problem_type": "regression",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Mean Absolute Error (MAE)",
+    "prompt": "Predict the pressure inside a mechanical ventilator's circuit based on control signals. Data: Time-series of 'u_in' (air valve) and 'u_out' (exhaust valve) over 80 timesteps. Goal: Predict the pressure at each timestep. Challenge: Capturing the physical dynamics of the lung and mechanical system purely from time-series logs.",
+    "solution_summary": "Deep sequence modeling with bidirectional LSTMs and GRUs. 1st place used an ensemble of deep (4-8 layers) Bi-LSTMs. They heavily engineered 'delta' features (change in u_in over time) and 'integral' features (cumulative u_in). A key insight was modeling the 'breath' as a single sequence and using a 'Huber Loss' which is more robust to outliers than MSE.",
+    "key_techniques": [
+      "Deep Bidirectional LSTM / GRU",
+      "Temporal 'delta' and 'lag' features",
+      "Cumulative sum (integral) of air input",
+      "Huber Loss for outlier robustness",
+      "Ensemble of different window sizes",
+      "Multi-stage training with LR scheduler"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/ventilator-pressure-prediction/discussion/285434"
+  },
+  {
+    "competition_id": "g2net-gravitational-wave-detection",
+    "title": "G2Net Gravitational Wave Detection",
+    "year": 2021,
+    "problem_type": "classification",
+    "domain": "scientific",
+    "modalities": [
+      "time_series"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Detect gravitational wave signals from merging black holes hidden in detector noise. Data: 1D time-series strain data from three detectors (LIGO Hanford, LIGO Livingston, Virgo). Goal: Binary classification (signal present vs. noise). Challenge: Extremely low signal-to-noise ratio where signals are buried in 'colored' Gaussian noise.",
+    "solution_summary": "Spectrogram-based Computer Vision. 1st place converted the 1D strain data into 2D spectrograms using Constant-Q Transform (CQT). They used an ensemble of EfficientNet-B7 and NFNet-F0 models. They applied 'Whiten' and 'Bandpass' filters to the raw signal before conversion to remove dominant noise frequencies. Data augmentation included frequency and time masking.",
+    "key_techniques": [
+      "Constant-Q Transform (CQT) for spectrograms",
+      "EfficientNet-B7 and NFNet backbones",
+      "Whitening and Bandpass filtering",
+      "SpecAugment (frequency/time masking)",
+      "Weighted ensemble of 1D and 2D models",
+      "Large-scale synthetic data generation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/g2net-gravitational-wave-detection/discussion/275460"
+  },
+  {
+    "competition_id": "vinbigdata-chest-xray-abnormalities-detection",
+    "title": "VinBigData Chest X-ray Abnormalities Detection",
+    "year": 2021,
+    "problem_type": "detection",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "mAP at IoU 0.4",
+    "prompt": "Detect and localize 14 types of thoracic abnormalities in chest X-ray images. Data: Standard DICOM chest X-rays with bounding box annotations from multiple radiologists. Goal: Predict bounding boxes and labels. Challenge: High disagreement between radiologists and the need to filter out false positives from 'noisy' consensus.",
+    "solution_summary": "Ensemble of Object Detectors with box fusion. 1st place used an ensemble of YOLOv5 and Faster R-CNN (Detectron2). They utilized 'Weighted Boxes Fusion' (WBF) to consolidate overlapping predictions from different models. A key insight was using a separate 'Classifier' model to filter out images with no abnormalities, significantly reducing false positive boxes.",
+    "key_techniques": [
+      "YOLOv5 and Faster R-CNN (ResNet101)",
+      "Weighted Boxes Fusion (WBF)",
+      "2-stage detection: Global classifier + BBox detector",
+      "Heavy mixup and mosaic augmentation",
+      "Radiologist-specific 'Consensus' filtering",
+      "Test-Time Augmentation (TTA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/vinbigdata-chest-xray-abnormalities-detection/discussion/229696"
+  },
+  {
+    "competition_id": "riiid-test-answer-prediction",
+    "title": "Riiid AIEd Challenge 2020",
+    "year": 2021,
+    "problem_type": "classification",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Predict whether a student will answer a standardized test question correctly based on their learning history. Data: 100M+ interactions (question_id, timestamp, response). Goal: Predict correctness of the next interaction. Challenge: Long-term dependency in student performance and the massive scale of the interaction log.",
+    "solution_summary": "Transformer-based sequence modeling (SAINT+). 1st place used an encoder-decoder Transformer architecture that separately processed question features (ID, tags) and response features (correctness, elapsed time). They combined this with a LightGBM model that used handcrafted features like 'user-level rolling accuracy' and 'content difficulty' for final blending.",
+    "key_techniques": [
+      "SAINT+ Transformer (Encoder-Decoder)",
+      "Temporal embedding for 'time since last action'",
+      "Handcrafted rolling features (LGBM)",
+      "Target encoding for Question IDs",
+      "Memory-efficient data processing (Numpy/CUDF)",
+      "Embedding for content 'tags'"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/riiid-test-answer-prediction/discussion/210354"
+  },
+  {
+    "competition_id": "ashrae-energy-prediction",
+    "title": "ASHRAE - Great Energy Predictor III",
+    "year": 2019,
+    "problem_type": "regression",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Root Mean Squared Logarithmic Error (RMSLE)",
+    "prompt": "Predict the energy consumption of buildings across four meter types (electricity, chilled water, steam, hot water). Data: Three years of hourly meter readings, weather data, and building metadata. Goal: Forecast future energy usage. Challenge: Dealing with massive amounts of 'zero' readings, outliers, and data leaks from public sources.",
+    "solution_summary": "LightGBM ensemble with extensive cleaning. 1st place identified that 'site 0' (UCF) had meter readings in different units (kWh vs kBTU) and corrected them. They used a cross-validation strategy that accounted for the specific time-series structure of each site. They built separate models for each meter type and used weather data imputation to fill missing temperature gaps.",
+    "key_techniques": [
+      "LightGBM with custom loss",
+      "Weather data imputation (bidirectional)",
+      "Site-specific unit correction (site 0)",
+      "Removal of long 'zero' reading streaks",
+      "Lagged weather features (3h, 6h, 72h)",
+      "Ensemble with CatBoost and XGBoost"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/ashrae-energy-prediction/discussion/124709"
+  },
+  {
+    "competition_id": "recursion-cellular-image-classification",
+    "title": "Recursion Cellular Image Classification",
+    "year": 2019,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Multi-class Accuracy",
+    "prompt": "Identify biological perturbations (siRNA) in cellular images to help drug discovery. Data: 6-channel microscopy images of cells under 1,108 different siRNA treatments. Goal: Predict which siRNA was applied. Challenge: Significant 'batch effects' between different experimental plates and imaging sites that shift the data distribution.",
+    "solution_summary": "ArcFace with batch-normalization correction. 1st place used an ensemble of DenseNet and EfficientNet models. To combat batch effects, they implemented a 'Adaptive Batch Norm' where BN statistics were recalculated on a per-plate basis during inference. They also used ArcFace loss to create a discriminative embedding space where siRNA classes were well-separated.",
+    "key_techniques": [
+      "ArcFace (Additive Angular Margin Loss)",
+      "EfficientNet-B2 and DenseNet121 ensemble",
+      "Adaptive Batch Normalization (per-plate)",
+      "Plate-level feature centering",
+      "6-channel image input handling",
+      "Pseudo-labeling for batch alignment"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/recursion-cellular-image-classification/discussion/110314"
+  },
+  {
+    "competition_id": "elo-merchant-category-recommendation",
+    "title": "Elo Merchant Category Recommendation",
+    "year": 2019,
+    "problem_type": "regression",
+    "domain": "recommender",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Root Mean Squared Error (RMSE)",
+    "prompt": "Predict loyalty scores for cardholders based on their transaction history. Data: Card-level metadata and millions of transaction records (historical and new). Goal: Predict the 'loyalty' numerical target. Challenge: Extremely noisy target variable and identifying 'outlier' cardholders who contribute significantly to the total error.",
+    "solution_summary": "Feature engineering-heavy LightGBM ensemble. 1st place focused on aggregating transaction data at different time grains (monthly, weekly). They used a 'Binary Classifier' as a first stage to detect potential outliers (the -33.219 target value) and a separate regressor for non-outliers. Key features included 'time since last purchase' and 'category concentration' ratios.",
+    "key_techniques": [
+      "LightGBM with early stopping",
+      "2-stage outlier detection (Classifier + Regressor)",
+      "Target encoding for merchant/category IDs",
+      "Transaction aggregation (Mean, Max, Sum, Std)",
+      "Feature selection using permutation importance",
+      "Bayesian Optimization for hyper-parameters"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/elo-merchant-category-recommendation/discussion/82055"
+  },
+  {
+    "competition_id": "humpback-whale-identification",
+    "title": "Humpback Whale Identification",
+    "year": 2019,
+    "problem_type": "classification",
+    "domain": "scientific",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Mean Average Precision @ 5 (MAP@5)",
+    "prompt": "Identify individual humpback whales from photos of their tails (flukes). Data: 25k images across 5,000+ unique whale IDs. Goal: Predict the whale ID for new images. Challenge: Many whales only have a single photo in the dataset (Few-shot learning), and fluke patterns change slightly over time.",
+    "solution_summary": "Metric Learning with Siamese Networks. 1st place used an ensemble of ResNet-101 and Senet-154 models. They utilized a 'Triplet Loss' architecture to learn an embedding space where images of the same whale were close together. They also built a separate 'New Whale' classifier to handle the high probability of a whale being previously unseen.",
+    "key_techniques": [
+      "Siamese Network with Triplet Loss",
+      "ResNet-101 and Senet-154 backbones",
+      "Whale-tail alignment (bounding box crop)",
+      "Pseudo-labeling of unlabeled images",
+      "Hard triplet mining",
+      "Binary classifier for 'New Whale' detection"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/humpback-whale-identification/discussion/82366"
+  },
+  {
+    "competition_id": "quora-insincere-questions-classification",
+    "title": "Quora Insincere Questions Classification",
+    "year": 2019,
+    "problem_type": "classification",
+    "domain": "nlp",
+    "modalities": [
+      "text"
+    ],
+    "evaluation_metric": "F1-Score",
+    "prompt": "Detect insincere or toxic questions on Quora. Data: Text of questions. Goal: Binary classification (sincere vs. insincere). Challenge: Short text lengths and the need for high efficiency, as inference must run in under two hours on a single GPU without internet.",
+    "solution_summary": "Ensemble of Bi-GRU/LSTM with pre-trained embeddings. 1st place used an ensemble of RNN architectures (Bidirectional GRU and LSTM) with Attention layers. They combined multiple pre-trained word embeddings (GloVe and Paragram) by averaging them. They used 'BucketIterator' for efficient padding and inference within the competition's strict time limits.",
+    "key_techniques": [
+      "Bidirectional GRU + Attention",
+      "GloVe and Paragram embedding fusion",
+      "Text cleaning (contraction expansion, punctuation)",
+      "Threshold optimization for F1 score",
+      "Cyclic Learning Rate (CLR)",
+      "Efficient batch padding"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/quora-insincere-questions-classification/discussion/80568"
+  },
+  {
+    "competition_id": "google-ai-open-images-visual-relationship-detection",
+    "title": "Google AI Open Images - Visual Relationship Detection",
+    "year": 2019,
+    "problem_type": "detection",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Weighted mAP",
+    "prompt": "Identify specific relationships between objects in an image (e.g., 'woman riding horse'). Data: Images with bounding box pairs and relationship labels. Goal: Predict (Subject, Object, Relationship) triplets. Challenge: Combinatorial explosion of possible relationships and identifying subtle interactions.",
+    "solution_summary": "Relation Proposal Network (RelPN). 1st place used a Faster R-CNN with an FPN backbone to detect subjects and objects. They then used a 'Triplet Head' that took the concatenated features of the subject, object, and their union box to predict the relationship. They utilized a 'Frequency Prior' to boost common relationships found in the training set.",
+    "key_techniques": [
+      "Faster R-CNN with Feature Pyramid Network (FPN)",
+      "Relationship-specific Triplet Head",
+      "Union box feature extraction",
+      "Class-specific frequency priors",
+      "Non-Maximum Suppression (NMS) for triplets",
+      "Multi-scale training/inference"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/google-ai-open-images-visual-relationship-detection/discussion/107054"
+  },
+  {
+    "competition_id": "landmark-recognition-2020",
+    "title": "Google Landmark Recognition 2020",
+    "year": 2020,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Global Average Precision (GAP)",
+    "prompt": "Recognize world landmarks in images across 80,000+ classes. Data: 1.5M images of global landmarks. Goal: Predict the landmark ID and a confidence score. Challenge: Massive number of classes (many with only 1-2 examples) and high visual similarity between different landmarks.",
+    "solution_summary": "Sub-center ArcFace with Global Descriptors. 1st place used an ensemble of EfficientNet (B7) and ResNet backbones. They used Generalized Mean Pooling (GeM) to extract global descriptors and a 'Sub-center ArcFace' loss, which allows each class to have multiple cluster centers to account for different viewing angles of a landmark.",
+    "key_techniques": [
+      "EfficientNet-B7 with GeM pooling",
+      "Sub-center ArcFace Loss",
+      "Dynamic Margin Scaling",
+      "Progressive image resizing during training",
+      "Test-Time Augmentation (TTA)",
+      "Large-scale distributed training (TPU)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/landmark-recognition-2020/discussion/176037"
+  },
+  {
+    "competition_id": "generative-dog-images",
+    "title": "Generative Dog Images",
+    "year": 2019,
+    "problem_type": "generation",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Frechet Inception Distance (FID)",
+    "prompt": "Generate realistic images of dogs. Data: 20,000 images of various dog breeds. Goal: Submit a generative model (GAN) to produce 10,000 synthetic 64x64 images. Challenge: High image quality and diversity required with limited training data and strict GPU time constraints.",
+    "solution_summary": "Customized BigGAN architecture. The winning solution utilized a BigGAN-inspired model with 'Spectral Normalization' in both the generator and discriminator. They applied 'Self-Attention' modules to capture global dog structures and used 'Data Augmentation' (flipping, rotation) within the GAN training loop to prevent the discriminator from over-fitting to the small dataset.",
+    "key_techniques": [
+      "BigGAN architecture",
+      "Spectral Normalization",
+      "Self-Attention modules",
+      "Two-timescale Update Rule (TTUR)",
+      "Hinge Loss for GANs",
+      "Differentiable Augmentation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/generative-dog-images/discussion/102373"
+  },
+  {
+    "competition_id": "recognizing-faces-in-the-wild",
+    "title": "Northeastern SMILE Lab - Recognizing Faces in the Wild",
+    "year": 2019,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Determine if two people are blood relatives based on facial images. Data: Pairs of facial images from the same or different families. Goal: Binary classification (related vs. unrelated). Challenge: Facial features for kinship are subtle and can be obscured by age, lighting, or pose.",
+    "solution_summary": "Kinship-specific Metric Learning. 1st place used a Siamese network with a ResNet-50 backbone pre-trained on the VGGFace2 dataset. They used a 'Contrastive Loss' to minimize the distance between related pairs and maximize it for unrelated pairs. A key technique was 'Image Triangulation' where they compared children to both parents simultaneously to find shared features.",
+    "key_techniques": [
+      "Siamese Network (ResNet-50)",
+      "VGGFace2 pre-training",
+      "Contrastive / Triplet Loss",
+      "MTCNN for face alignment",
+      "Kinship-specific data augmentation",
+      "Parent-Child feature fusion"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/recognizing-faces-in-the-wild/discussion/105221"
+  },
+  {
+    "competition_id": "airbus-ship-detection",
+    "title": "Airbus Ship Detection Challenge",
+    "year": 2018,
+    "problem_type": "segmentation",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "F2 Score at different IoU thresholds",
+    "prompt": "Locate and segment all ships in satellite imagery. Data: High-resolution satellite images with Run-Length Encoded (RLE) masks. Goal: Predict a binary mask for each ship. Challenge: Tiny ships in huge images (768x768), significant class imbalance (mostly empty sea), and close-proximity ships.",
+    "solution_summary": "2-stage Detection and Segmentation. 1st place used a 'U-Net' architecture with a ResNet-34 backbone for segmentation. They preceded this with a 'Ship Classifier' (Binary) to remove empty images from the training/inference pipeline. To handle overlapping ships, they used a 'Border Loss' that penalized the model for merging masks of adjacent ships.",
+    "key_techniques": [
+      "U-Net with ResNet-34 encoder",
+      "Binary classifier for image filtering",
+      "Dice + Binary Cross-Entropy Loss",
+      "Border/Edge weighted loss",
+      "Test-Time Augmentation (TTA)",
+      "SWA (Stochastic Weight Averaging)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/airbus-ship-detection/discussion/71665"
+  },
+  {
+    "competition_id": "pubg-finish-placement-prediction",
+    "title": "PUBG Finish Placement Prediction",
+    "year": 2018,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Mean Absolute Error (MAE)",
+    "prompt": "Predict the final placement percentile of players in a PUBG match based on their in-game stats. Data: Player stats like kills, distance traveled, and damage dealt. Goal: Predict winPlacePerc (0 to 1). Challenge: The data is grouped by 'match' and 'group' (squad), and the target is relative within each match.",
+    "solution_summary": "Group-aware MLP and LightGBM. 1st place solution heavily relied on 'group-aggregated' features (mean/max kills in a squad, rank within a match). They used a Deep Neural Network (MLP) with categorical embeddings for match types. They applied a post-processing step to 'rescale' predictions so they followed the discrete ranking structure of the match.",
+    "key_techniques": [
+      "Multi-Layer Perceptron (MLP) with Embeddings",
+      "Group-level feature aggregation",
+      "Rank-based features within matches",
+      "LightGBM for feature importance",
+      "Target rescaling post-processing",
+      "Feature engineering for 'kill-streaks'"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/pubg-finish-placement-prediction/discussion/71333"
+  },
+  {
+    "competition_id": "talkingdata-adtracking-fraud-detection",
+    "title": "TalkingData AdTracking Fraud Detection Challenge",
+    "year": 2018,
+    "problem_type": "classification",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Area Under ROC Curve (AUC)",
+    "prompt": "Detect fraudulent ad clicks in mobile app campaigns. Data: 200M+ click records (IP, app, device, OS, channel, time). Goal: Predict the probability of a click resulting in a download. Challenge: Massive scale of data and the need to capture complex temporal patterns in IP clicking behavior.",
+    "solution_summary": "Extensive Feature Engineering with LightGBM. 1st place focused on 'Next Click' and 'Previous Click' time-delta features for various feature combinations (e.g., same IP + same App). They used 'Target Encoding' for high-cardinality categories and trained on the full 200M rows using a specific sampling strategy to handle the class imbalance.",
+    "key_techniques": [
+      "LightGBM with large leaf nodes",
+      "Next-click time-delta features",
+      "Count-based features (clicks per IP/hour)",
+      "Target Encoding with smoothing",
+      "Efficient data loading (FFM format)",
+      "XGBoost/CatBoost ensemble"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/talkingdata-adtracking-fraud-detection/discussion/56475"
+  },
+  {
+    "competition_id": "ga-customer-revenue-prediction",
+    "title": "Google Analytics Customer Revenue Prediction",
+    "year": 2019,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Root Mean Squared Error (RMSE)",
+    "prompt": "Predict the total revenue per customer for the Google Merchandise Store. Data: User-level session logs including geography, device, and traffic source. Goal: Predict the log of (1 + total revenue) for a specific future period. Challenge: Only 1% of users actually make a purchase, leading to a highly zero-inflated target.",
+    "solution_summary": "2-stage model with temporal aggregation. 1st place used a classification model to predict 'probability of purchase' followed by a regression model to predict the amount. They aggregated session data into user-level features (e.g., 'total sessions', 'first visit date'). A key insight was modeling the 'time gap' between the training and test periods as a feature.",
+    "key_techniques": [
+      "2-stage: Classifier + Regressor",
+      "User-level feature aggregation",
+      "LightGBM with RMSE loss",
+      "Time-series validation split",
+      "Target encoding for Traffic Source",
+      "Handling JSON flattening for nested data"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/ga-customer-revenue-prediction/discussion/82231"
+  },
+  {
+    "competition_id": "google-ai-open-images-object-detection-track",
+    "title": "Google AI Open Images - Object Detection",
+    "year": 2018,
+    "problem_type": "detection",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "mAP @ IoU 0.5",
+    "prompt": "Detect and localize 500 object classes in real-world images. Data: 1.7M images with 12M bounding box annotations. Goal: Predict bounding boxes and labels. Challenge: Massive label hierarchy (e.g., 'Dog' is a parent of 'German Shepherd') and extreme variation in object scales.",
+    "solution_summary": "Large-scale Object Detection with Cascade R-CNN. 1st place used an ensemble of 'Cascade R-CNN' with 'SENet154' and 'ResNext101' backbones. They used 'Feature Pyramid Networks' (FPN) and 'Soft-NMS' to handle overlapping boxes. They specifically addressed the hierarchy by mapping specific labels to parent categories during training to boost signal for rare classes.",
+    "key_techniques": [
+      "Cascade R-CNN with SENet154 backbone",
+      "Feature Pyramid Network (FPN)",
+      "Soft-NMS (Non-Maximum Suppression)",
+      "Hierarchical label mapping",
+      "Multi-scale training (Image pyramids)",
+      "Synchronized Batch Normalization"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/google-ai-open-images-object-detection-track/discussion/69106"
+  },
+  {
+    "competition_id": "inclusive-images-challenge",
+    "title": "Inclusive Images Challenge",
+    "year": 2018,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "F2 Score",
+    "prompt": "Ensure image classifiers work fairly across different geographic regions. Data: Training data from Western countries, but test data from globally diverse regions (e.g., India, Ethiopia). Goal: Multi-label classification. Challenge: Managing 'geographic bias' where models fail on culturally specific visual representations of the same label.",
+    "solution_summary": "Robust fine-tuning and domain adaptation. 1st place used an ensemble of ResNet-50 and Inception-v3 models. They utilized 'Pseudo-labeling' on the unlabeled global test set to align the model's feature distribution with the target domains. They also applied heavy 'color augmentation' to reduce the model's reliance on skin tone or lighting conditions typical of Western datasets.",
+    "key_techniques": [
+      "ResNet-50 / Inception-v3 ensemble",
+      "Pseudo-labeling for domain adaptation",
+      "Heavy color jitter and grayscale augmentation",
+      "Multi-label Softmax with threshold tuning",
+      "Geographic feature conditioning",
+      "Stochastic Weight Averaging (SWA)"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/inclusive-images-challenge/discussion/70932"
+  },
+  {
+    "competition_id": "quickdraw-doodle-recognition",
+    "title": "Quick, Draw! Doodle Recognition Challenge",
+    "year": 2018,
+    "problem_type": "classification",
+    "domain": "cv",
+    "modalities": [
+      "image",
+      "time_series"
+    ],
+    "evaluation_metric": "Mean Average Precision @ 3 (MAP@3)",
+    "prompt": "Recognize hand-drawn doodles across 340 categories. Data: Stroke-based data (sequences of x, y, time) for 50M drawings. Goal: Predict the object drawn. Challenge: Drawings are often abstract, messy, or incomplete; models must process both the final image and the drawing process.",
+    "solution_summary": "Hybrid 1D-CNN and 2D-CNN ensemble. 1st place used a '2D CNN' (MobileNet/ResNet) on the rendered doodle image and a '1D CNN' on the raw stroke sequence. The 1D CNN captured the temporal order of drawing. They used 'Progressive Image Resizing' to speed up training and a large ensemble of models to handle the variety of drawing styles.",
+    "key_techniques": [
+      "MobileNetV2 and SE-ResNext50 (2D CNN)",
+      "1D CNN for stroke sequence modeling",
+      "Stroke-to-image rendering with line thickness",
+      "Label smoothing for noisy doodles",
+      "Progressive Resizing (from 64x64 to 128x128)",
+      "Ensemble with different stroke thicknesses"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/quickdraw-doodle-recognition/discussion/73703"
+  },
+  {
+    "competition_id": "human-protein-atlas-image-classification",
+    "title": "Human Protein Atlas Image Classification",
+    "year": 2018,
+    "problem_type": "classification",
+    "domain": "medical",
+    "modalities": [
+      "image"
+    ],
+    "evaluation_metric": "Macro F1 Score",
+    "prompt": "Classify the subcellular localization of proteins in microscopy images. Data: 4-channel images (Red, Green, Blue, Yellow) representing different cell structures. Goal: Predict which of 28 organelles the protein is located in (multi-label). Challenge: High class imbalance and identifying patterns in 4-channel multi-spectral data.",
+    "solution_summary": "Multi-head CNN with 4-channel input. 1st place used an ensemble of ResNet-50 and GapNet-styled models modified to accept 4 input channels. They utilized 'Focal Loss' to address class imbalance and applied 'External Data' from the official Human Protein Atlas website to triple the size of the minority classes. Post-processing included threshold optimization per class.",
+    "key_techniques": [
+      "4-channel input (RGBY) CNN",
+      "Focal Loss for class imbalance",
+      "External HPA data integration",
+      "Threshold optimization per organelle",
+      "GAP (Global Average Pooling) features",
+      "Heavy rotation and flip augmentation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/human-protein-atlas-image-classification/discussion/75330"
+  },
+  {
+    "competition_id": "recruit-restaurant-visitor-forecasting",
+    "title": "Recruit Restaurant Visitor Forecasting",
+    "year": 2018,
+    "problem_type": "regression",
+    "domain": "time_series",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Root Mean Squared Logarithmic Error (RMSLE)",
+    "prompt": "Predict the future number of restaurant visitors in Japan. Data: Reservation data, historical visits, and holiday information. Goal: Forecast daily visitors for the next 45 days. Challenge: Capturing the interplay between reservations (which are leading indicators) and walk-in visitors.",
+    "solution_summary": "Ensemble of Gradient Boosting and Neural Networks. 1st place created 'Lagged Reservation' features and 'Weighted Moving Averages' of historical visits based on the day of the week. They used a combination of XGBoost, LightGBM, and an MLP. They specifically modeled 'Golden Week' (Japanese holiday) differently due to its unique impact on foot traffic.",
+    "key_techniques": [
+      "XGBoost + LightGBM + MLP ensemble",
+      "Weighted Moving Averages (EMA)",
+      "Day-of-week and Holiday features",
+      "Reservation-to-Visit ratio features",
+      "Target encoding for Area/Genre",
+      "RMSLE-optimized objective function"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/recruit-restaurant-visitor-forecasting/discussion/47044"
+  },
+  {
+    "competition_id": "zillow-prize-1",
+    "title": "Zillow Prize: Zillow\u2019s Home Value Prediction",
+    "year": 2018,
+    "problem_type": "regression",
+    "domain": "tabular",
+    "modalities": [
+      "tabular"
+    ],
+    "evaluation_metric": "Mean Absolute Error (MAE)",
+    "prompt": "Improve the 'Zestimate' accuracy by predicting the log-error of the home value model. Data: Property features (size, location, age) and transaction history. Goal: Predict the error between the actual price and Zillow's estimate. Challenge: The error is small and noisy; the model must find tiny signals in home features that the base model missed.",
+    "solution_summary": "Stacking of shallow and deep models. 1st place used a stacked ensemble of XGBoost, LightGBM, and a Neural Network. They focused on 'Location-based' feature engineering, calculating the distance to nearby amenities and the 'relative' value compared to neighbors. A key technique was 'Outlier clipping'\u2014removing extreme log-errors from training to focus the model on the typical error range.",
+    "key_techniques": [
+      "Stacked Ensemble (XGB, LGBM, NN)",
+      "Location-relative feature engineering",
+      "Log-error outlier clipping",
+      "Mean target encoding for Zip codes",
+      "Bayesian Ridge meta-learner",
+      "Coordinate-based aggregation"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/zillow-prize-1/discussion/47045"
+  },
+  {
+    "competition_id": "petfinder-pawpularity-score",
+    "title": "PetFinder.my - Pawpularity Score Prediction",
+    "year": 2022,
+    "problem_type": "regression",
+    "domain": "cv",
+    "modalities": [
+      "image",
+      "tabular"
+    ],
+    "evaluation_metric": "Root Mean Squared Error (RMSE)",
+    "prompt": "Predict the 'Pawpularity' (click rate) of shelter pet photos. Data: Pet images and categorical metadata (e.g., 'eyes', 'blur'). Goal: Predict a score from 1 to 100. Challenge: The 'Pawpularity' score is highly subjective and depends on both aesthetic and emotional qualities of the photo.",
+    "solution_summary": "Fusion of Swin Transformer and Metadata. 1st place used a Swin-Large Transformer pre-trained on ImageNet-22k. They concatenated the image features with the tabular metadata at the final layer. They used a 'Binary Cross-Entropy' loss by scaling the 1-100 score to 0-1, which performed better than MSE due to the score distribution's peaks at the boundaries.",
+    "key_techniques": [
+      "Swin-Transformer (Large) backbone",
+      "BCE Loss on scaled targets",
+      "Image/Tabular late fusion",
+      "Mixup and Cutmix augmentation",
+      "Stochastic Depth for Swin layers",
+      "Ten-crop evaluation at inference"
+    ],
+    "source_url": "https://www.kaggle.com/competitions/petfinder-pawpularity-score/discussion/301323"
+  }
+]
