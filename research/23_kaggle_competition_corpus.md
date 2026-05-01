@@ -1,210 +1,102 @@
-# Research: Kaggle Competition Corpus — Prompts & Winning Solutions
+# Research: Kaggle Competition Corpus
 
-## Goal
+## CRITICAL: Output format
 
-Compile a comprehensive corpus of Kaggle competitions that have publicly
-available 1st-place solution write-ups. For each competition, extract the
-problem description (what a user would tell sciona) and a structured summary
-of the winning approach.
+**You MUST output a single JSON array. No essays. No narrative. No meta-analysis.**
 
-This corpus will be used to validate the sciona framework end-to-end:
-feed the problem description into the architect, generate a CDG, ground it
-with atoms, and compare against the documented winning solution.
+Your entire output should be a JSON array of competition objects. Nothing else.
+If you want to add notes, put them in the `"notes"` field of individual entries.
 
-## What to collect
+## What to produce
 
-For EVERY Kaggle competition where a 1st-place solution write-up exists
-(discussion post, blog, GitHub, paper), collect:
-
-### Competition metadata
-- `competition_id`: Kaggle URL slug (e.g., "google-smartphone-decimeter-2021")
-- `title`: Full competition title
-- `year`: Competition year
-- `host`: Competition host organization
-- `prize`: Total prize pool (if applicable)
-- `participants`: Number of teams
-- `problem_type`: classification, regression, ranking, segmentation, detection,
-  recommendation, optimization, generation, or other
-- `domain`: primary domain (tabular, cv, nlp, audio, medical, geospatial,
-  time_series, graph, recommender, reinforcement_learning, scientific, other)
-- `modalities`: list of data modalities (tabular, image, text, audio, video,
-  3d_volume, graph, time_series, geospatial)
-
-### Problem prompt (what a user would provide to sciona)
-- `description`: 2-4 sentence natural language problem statement
-- `data_description`: What data is provided — feature types, formats, sizes,
-  number of samples, special characteristics (class imbalance, missing values,
-  multi-modal, temporal, etc.)
-- `evaluation_metric`: Exact metric name and formula if non-standard
-  (e.g., "QWK", "CRPS", "MAP@5", "Dice coefficient", "log loss")
-- `constraints`: Submission format, time limits, compute limits, external
-  data rules
-- `key_challenges`: What makes this problem hard (e.g., "extreme class
-  imbalance", "noisy labels", "domain shift between train/test",
-  "very large dataset", "multi-modal fusion required")
-
-### Winning solution summary
-- `placement`: "1st" (also collect 2nd/3rd if they used notably different approaches)
-- `team`: Team or individual name
-- `source_url`: URL to the write-up (discussion post, blog, GitHub)
-- `source_type`: "kaggle_discussion", "github_repo", "blog_post", "paper"
-- `summary`: 2-3 paragraph technical summary covering:
-  - Overall pipeline architecture
-  - Key modeling choices (model family, architecture, loss function)
-  - Critical preprocessing and feature engineering steps
-  - Ensemble strategy
-  - Any tricks or insights that were decisive
-- `key_techniques`: List of 5-10 specific techniques used, e.g.:
-  ["5-fold stratified CV", "EfficientNet-B4 backbone", "CutMix augmentation",
-   "pseudo-labeling on test data", "TTA with horizontal flip",
-   "rank-average ensemble of 3 models"]
-- `critical_decisions`: List of 3-5 decisions that differentiated the winning
-  solution, e.g.:
-  ["Used EKF instead of particle filter — 10x faster with similar accuracy",
-   "Applied Ben Graham preprocessing for retinal images",
-   "Trained on external data (not just competition data)"]
-- `novel_insights`: Any insights that would be surprising or non-obvious,
-  even to an experienced practitioner
-
-## Scope
-
-### Must include (our existing 125 CDGs)
-We already have CDGs for 125 competitions. For each, verify we have the
-competition prompt in the right format. The CDG files contain solution
-summaries but may not have the PROBLEM DESCRIPTION (what the user sees
-before knowing the solution).
-
-List of our 125 competitions: see `sciona-atoms/data/solution_cdgs/*.json`
-(exclude `_bindings.json` files).
-
-### New competitions to add
-Search for ALL additional Kaggle competitions with public 1st-place
-write-ups. Priority order:
-
-1. **Featured competitions** (hosted by companies, with prizes)
-   - These have the highest-quality solutions and write-ups
-   - Source: `kaggle.com/competitions?hostSegmentIdFilter=1`
-
-2. **Research competitions** (hosted by research orgs)
-   - Often have novel problem formulations
-   - Source: `kaggle.com/competitions?hostSegmentIdFilter=2`
-
-3. **Community competitions** with significant participation (>500 teams)
-   - Quality varies but volume is high
-   - Filter by team count
-
-4. **Playground competitions** with novel problem types
-   - Good for testing framework generalization
-
-### Where to find 1st-place write-ups
-
-1. **Kaggle discussion forums**: Search each competition's discussion tab
-   for posts by top-placing teams. Common patterns:
-   - Title contains "1st place", "gold", "winning"
-   - Posted by the competition winner
-   - Often pinned by competition hosts
-
-2. **GitHub**: Many winners publish code repos
-   - Search: `kaggle 1st place solution site:github.com`
-   - Check the winner's Kaggle profile for linked GitHub
-
-3. **Blog posts**: Winners often write detailed blog posts
-   - Medium, personal blogs, company tech blogs
-   - Search: `"kaggle" "1st place" "solution" site:medium.com`
-
-4. **Papers**: Some competition solutions are published as papers
-   - NeurIPS competition track, CVPR workshops, KDD cup papers
-   - Search: arxiv, Google Scholar
-
-5. **Existing compilations**:
-   - https://github.com/interviewBubble/Kaggle-Solutions (check if current)
-   - https://farid.one/kaggle-solutions/ (comprehensive list)
-   - https://www.kaggle.com/sudalairajkumar/winning-solutions-of-kaggle-competitions
-
-## Output format
-
-Produce a single JSON file `validation_corpus.json` with this structure:
+A JSON array of 50 competition objects. Each object has this EXACT schema:
 
 ```json
 {
-  "metadata": {
-    "compiled_date": "2026-05-01",
-    "total_competitions": 225,
-    "existing_cdg_count": 125,
-    "new_additions": 100,
-    "sources": ["kaggle_discussions", "github", "blogs", "papers"]
-  },
-  "competitions": [
-    {
-      "competition_id": "google-smartphone-decimeter-2021",
-      "title": "Google Smartphone Decimeter Challenge",
-      "year": 2021,
-      "host": "Google",
-      "prize": 10000,
-      "participants": 810,
-      "problem_type": "regression",
-      "domain": "geospatial",
-      "modalities": ["tabular", "time_series", "geospatial"],
-      "has_existing_cdg": true,
-      "cdg_file": "google_decimeter_1st.json",
-      "prompt": {
-        "description": "Predict the precise location of a smartphone using raw GNSS measurements. Given sequences of satellite pseudorange observations and IMU sensor data, output latitude/longitude coordinates accurate to sub-meter precision.",
-        "data_description": "Raw GNSS measurements (pseudorange, carrier phase, C/N0, constellation) at 1Hz + IMU data (accelerometer, gyroscope, magnetometer) at 100Hz. ~500 driving traces, each 5-30 minutes. Ground truth from NovAtel SPAN reference system.",
-        "evaluation_metric": "50th percentile of horizontal distance error in meters",
-        "constraints": "Submission is lat/lon per millisecond epoch. No external GNSS correction services allowed at inference time.",
-        "key_challenges": ["Multipath interference in urban canyons", "Clock bias estimation", "Sensor fusion of GNSS + IMU", "Variable satellite visibility"]
-      },
-      "winning_solutions": [
-        {
-          "placement": "1st",
-          "team": "Team name",
-          "source_url": "https://www.kaggle.com/c/google-smartphone-decimeter/discussion/...",
-          "source_type": "kaggle_discussion",
-          "summary": "Applied Extended Kalman Filter with IMU-assisted prediction...",
-          "key_techniques": [
-            "Extended Kalman Filter (EKF) for GNSS+IMU fusion",
-            "Rauch-Tung-Striebel (RTS) backward smoother",
-            "C/N0-based satellite signal quality filtering",
-            "Snap-to-road-network post-processing",
-            "Phone-specific clock bias correction"
-          ],
-          "critical_decisions": [
-            "Used EKF over particle filter for computational efficiency",
-            "Filtered satellites with C/N0 < 25 dB-Hz",
-            "Applied road network matching as final step"
-          ],
-          "novel_insights": [
-            "Phone-specific systematic biases are the dominant error source, not GNSS accuracy"
-          ]
-        }
-      ]
-    }
-  ]
+  "competition_id": "google-smartphone-decimeter-2021",
+  "title": "Google Smartphone Decimeter Challenge",
+  "year": 2021,
+  "problem_type": "regression",
+  "domain": "geospatial",
+  "modalities": ["tabular", "time_series"],
+  "evaluation_metric": "50th percentile horizontal distance error (meters)",
+  "prompt": "Predict precise smartphone GPS location from raw GNSS satellite measurements and IMU sensor data. Data: pseudorange observations at 1Hz from multiple satellite constellations, accelerometer/gyroscope at 100Hz, ~500 driving traces of 5-30 minutes each. Ground truth from NovAtel reference system. Metric: median horizontal distance error in meters. Constraints: no external correction services at inference time.",
+  "solution_summary": "EKF sensor fusion with RTS backward smoother. Filtered satellites by C/N0 > 25 dB-Hz. Applied phone-specific clock bias correction. Snapped final trajectory to road network. Key insight: phone-specific systematic biases dominate over GNSS accuracy.",
+  "key_techniques": [
+    "Extended Kalman Filter for GNSS+IMU fusion",
+    "Rauch-Tung-Striebel backward smoother",
+    "C/N0 satellite quality filtering",
+    "Road network snap-to-grid post-processing",
+    "Phone-specific bias correction"
+  ],
+  "source_url": "https://www.kaggle.com/competitions/google-smartphone-decimeter-challenge/discussion/..."
 }
 ```
 
-## Research questions
+## Field definitions
 
-1. How many Kaggle competitions have public 1st-place write-ups?
-   (Estimate: 300-500 featured + research competitions since 2015)
-2. What is the distribution by problem type and domain?
-3. Are there competitions where top solutions are fundamentally different
-   from each other? (These are interesting for testing sciona's flexibility)
-4. What competitions have NO public write-up? (These are less useful for
-   validation but worth noting for coverage)
-5. For our existing 125 CDGs, do we have the PROBLEM DESCRIPTION as well
-   as the solution? (Many CDGs were built from solution write-ups and may
-   not include the original problem statement)
+- `competition_id`: Kaggle URL slug exactly as it appears in kaggle.com/competitions/SLUG
+- `title`: Full competition title
+- `year`: Year competition ended
+- `problem_type`: One of: "classification", "regression", "detection", "segmentation", "ranking", "recommendation", "optimization", "generation", "matching"
+- `domain`: One of: "tabular", "cv", "nlp", "audio", "medical", "geospatial", "time_series", "graph", "recommender", "scientific", "multimodal", "rl"
+- `modalities`: List from: "tabular", "image", "text", "audio", "video", "3d_volume", "graph", "time_series", "geospatial", "code", "molecular"
+- `evaluation_metric`: Exact metric name and brief formula if non-standard
+- `prompt`: 2-4 sentences describing the problem AS A USER WOULD STATE IT. This is NOT the competition page text. It should say: what to predict, what data is available, what the metric is, and what the key challenges are. Write it as if you're asking an AI assistant for help.
+- `solution_summary`: 2-4 sentences covering: overall pipeline, key model choices, critical preprocessing, ensemble strategy, decisive insight. Be SPECIFIC — name exact models, techniques, and parameters.
+- `key_techniques`: List of 4-8 SPECIFIC techniques. Say "EfficientNet-B4" not "CNN". Say "5-fold stratified GroupKFold" not "cross-validation". Say "CutMix + MixUp augmentation" not "data augmentation".
+- `source_url`: URL to the 1st-place write-up (Kaggle discussion, GitHub, blog)
 
-## Notes for the research agent
+## Which competitions to include
 
-- Be thorough: aim for 200+ competitions total
-- Focus on QUALITY of the prompt and solution summary over quantity
-- For the problem prompt: write it as a USER would describe it to an AI
-  assistant, NOT as the competition host describes it (remove Kaggle-specific
-  jargon like "kernel", "submission deadline", etc.)
-- For key_techniques: be SPECIFIC — "EfficientNet-B4" not just "CNN",
-  "CutMix" not just "augmentation", "5-fold stratified CV" not just "CV"
-- Include the source URL for every solution so we can verify
-- Flag competitions where the winning approach is particularly creative
-  or unconventional — these are the most interesting test cases for sciona
+Focus on Featured and Research competitions from 2018-2026 with publicly available 1st-place solution write-ups. Start with the most well-known and high-prize competitions.
+
+Good sources for finding these:
+- https://farid.one/kaggle-solutions/ (comprehensive list with links)
+- Kaggle competition discussion forums (search "1st place solution")
+- https://github.com/interviewBubble/Kaggle-Solutions
+
+## Competitions to SKIP
+
+- We already have CDGs for these 125 competitions. Do NOT include any of them:
+  adversarial_attacks, aimo_llm_tool_use, alaska2_steganalysis, alice_lyric_alignment,
+  amex_default, aptos_blindness, arc_program_synthesis, avito_demand,
+  barachant_seizure, bengali_grapheme, bengali_speech, birdclef_edge_device_2021,
+  bms_molecular_translation, byu_flagellar_motors, cafa5_protein_function,
+  cassava_leaf, cause_effect, cdiscount_image_classification, chaii_qa,
+  champs_molecular_properties, child_mind_sleep_states, commonlit_readability,
+  connectomics, cornell_birdcall, covid_vaccine_mrna, dcase2020_sound_event_detection,
+  dfdc_deepfake_detection, dfl_bundesliga, dsb2017, dstl_satellite_features,
+  eedi_misconception, facebook_image_similarity, feedback_prize_writing,
+  flavours_physics, foursquare_location_matching, g_research_crypto,
+  global_wheat, google_asl_fingerspelling, google_asl_translation,
+  google_contrails, google_decimeter, google_landmark_retrieval,
+  google_universal_image_embedding, great_barrier_reef, halite_two_sigma,
+  handm_personalized_fashion, home_credit_default, hpa_single_cell,
+  hubmap_hpa_human_body, hubmap_kidney, hubmap_vasculature, icecube_neutrinos,
+  ieee_cis_fraud, image_matching, indoor_navigation, instacart_basket,
+  jane_street_market_prediction, jigsaw_toxicity_bias, jpx_stock_prediction,
+  kaggle_ner, lanl_earthquake, llm_prompt_recovery, llm_science_exam,
+  lux_ai_season1, lyft_3d_object_detection, lyft_motion, m5_accuracy,
+  m5_uncertainty, make_data_count, march_mania, melanoma, mercari_price,
+  miccai_tn_scui, moa_prediction, nasa_airport_pushback, nasa_pushback_phase1,
+  neurips_open_polymer, nfl_big_data_bowl, nfl_health_and_safety,
+  novozymes_enzyme_stability, numenta_anomaly_benchmark, ogb_mag240m,
+  ogb_wikikg90m, open_problems_multimodal_single_cell, openvaccine_mrna,
+  optiver_realized_volatility, osic_pulmonary, otto_group_product,
+  otto_recommender, outbrain_click_prediction, panda_prostate_mil,
+  parkinsons_fog, passenger_screening, petfinder_adoption, plasticc,
+  playground_s5e4_podcast, playground_s6e3_churn, porto_seguro,
+  predict_future_sales, rsna_cervical_spine, rsna_mammography,
+  rsna_miccai_brain_tumor, rsna_pe, rsna_pneumonia, santa_2020_candy_cane,
+  santa_2021_magic_minves, santander_transaction, sartorius_cell_segmentation,
+  seti_breakthrough_listen, severstal_steel, shopee_price_match,
+  spacenet3_roads, stanford_ribonanza, tgs_salt_identification,
+  toxic_comment, trackml, trends_neuroimaging, two_sigma_news_stock,
+  um_mcts_strength, vesuvius_ink_detection, vqa_v2, vsb_power_line,
+  web_traffic_forecasting
+
+## REMINDER
+
+Output ONLY the JSON array. Start with `[` and end with `]`. No markdown fences.
+No preamble. No conclusion. Just the data.
