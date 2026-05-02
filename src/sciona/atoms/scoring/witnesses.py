@@ -41,3 +41,14 @@ def witness_hierarchical_topdown_reconcile(
 ) -> AbstractArray:
     """Ghost witness for top-down hierarchical reconciliation."""
     return bottom_forecasts
+
+
+def witness_probability_weighted_adjustment(
+    predictions: AbstractArray,
+    probabilities: AbstractArray,
+    shift: float = 0.0,
+) -> AbstractArray:
+    """Ghost witness for probability-weighted prediction adjustment."""
+    if predictions.shape != probabilities.shape:
+        raise ValueError("predictions and probabilities must have equal shape")
+    return AbstractArray(shape=predictions.shape, dtype="float64")

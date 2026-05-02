@@ -14,13 +14,13 @@
   "bindings": [
     {
       "stage_id": "tabular_feature_engineering",
-      "bound_artifact_fqdn": "sciona.atoms.ml.tabular.gradient_boosting.temporal_difference",
-      "binding_confidence": 0.6,
-      "binding_source": "retrieval_search",
-      "status": "approximate",
-      "action_class": "replace_stage",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "binding_rationale": "Covers deltas, not full feature set"
+        "gap_reason": "Baseline FVC + temporal deltas \u2014 trivial pandas"
       }
     },
     {
@@ -38,14 +38,15 @@
   "binding_summary": {
     "total_stages": 2,
     "bound_active": 0,
-    "bound_approximate": 1,
-    "gaps": 0,
-    "atoms_used_by_repo": {
-      "sciona.atoms.ml": 1
-    },
+    "bound_approximate": 0,
+    "gaps": 2,
+    "atoms_used_by_repo": {},
     "cross_repo_bindings": false,
     "orchestration_resolved": [
       "feature_concatenation"
+    ],
+    "trivial_inline_resolved": [
+      "tabular_feature_engineering"
     ]
   },
   "architect_test_expectations": {

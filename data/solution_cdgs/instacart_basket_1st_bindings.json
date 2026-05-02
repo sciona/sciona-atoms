@@ -14,13 +14,13 @@
   "bindings": [
     {
       "stage_id": "user_product_aggregation",
-      "bound_artifact_fqdn": "sciona.atoms.ml.tabular.gradient_boosting.group_aggregate",
-      "binding_confidence": 0.6,
-      "binding_source": "retrieval_search",
-      "status": "approximate",
-      "action_class": "replace_stage",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "binding_rationale": "Covers aggregation, not full interaction features"
+        "gap_reason": "Group-by aggregation stats \u2014 trivial pandas"
       }
     },
     {
@@ -47,16 +47,18 @@
     }
   ],
   "binding_summary": {
-    "total_stages": 2,
+    "total_stages": 3,
     "bound_active": 0,
-    "bound_approximate": 1,
-    "gaps": 0,
-    "atoms_used_by_repo": {
-      "sciona.atoms.ml": 1
-    },
+    "bound_approximate": 0,
+    "gaps": 3,
+    "atoms_used_by_repo": {},
     "cross_repo_bindings": false,
     "orchestration_resolved": [
       "feature_merging"
+    ],
+    "trivial_inline_resolved": [
+      "candidate_generation",
+      "user_product_aggregation"
     ]
   },
   "architect_test_expectations": {

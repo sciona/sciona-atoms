@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.petfinder_adoption_1st",
+  "solution_metadata": {
+    "competition": "PetFinder.my Adoption Prediction - 1st Place (2019)",
+    "placement": "1st",
+    "team": null,
+    "year": 2019,
+    "metric": "QWK",
+    "problem_domain": "multimodal_classification",
+    "source_url": "https://www.kaggle.com/competitions/petfinder-adoption-prediction/discussion/88773",
+    "source_license": null
+  },
+  "bindings": [
+    {
+      "stage_id": "image_processing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "initial_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "DenseNet121 pretrained backbone with multi-image aggregation; orchestration-level."
+      }
+    },
+    {
+      "stage_id": "text_processing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "initial_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "TF-IDF + SVD pipeline plus external Google NLP API; orchestration-level."
+      }
+    },
+    {
+      "stage_id": "tabular_processing",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "initial_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "orchestration",
+      "evidence_summary": {
+        "gap_reason": "Target encoding + groupby aggregates compose multiple atoms; orchestration-level."
+      }
+    },
+    {
+      "stage_id": "feature_union",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "initial_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "Horizontal concatenation of feature matrices; trivial inline."
+      }
+    },
+    {
+      "stage_id": "level1_models",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.lightgbm_train",
+      "binding_confidence": 0.55,
+      "binding_source": "alias_retrieval_fix_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "lightgbm_train covers the LightGBM component of the level-1 ensemble; approximate because the stage also uses XGBoost and TabNet regressors."
+      }
+    },
+    {
+      "stage_id": "threshold_optimization",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "initial_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "external_knowledge",
+      "evidence_summary": {
+        "gap_reason": "Nelder-Mead QWK threshold optimization; no dedicated atom exists."
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 0,
+    "bound_approximate": 1,
+    "gaps": 5,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 1
+    },
+    "cross_repo_bindings": false,
+    "novel_atoms_needed": [
+      "threshold_optimization"
+    ],
+    "orchestration_resolved": [
+      "image_processing",
+      "tabular_processing",
+      "text_processing"
+    ],
+    "external_knowledge_resolved": [
+      "threshold_optimization"
+    ],
+    "trivial_inline_resolved": [
+      "feature_union"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

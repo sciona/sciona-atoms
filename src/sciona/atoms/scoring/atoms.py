@@ -18,6 +18,7 @@ from .witnesses import (
     witness_expected_f1_threshold,
     witness_hierarchical_topdown_reconcile,
     witness_nab_anomaly_score,
+    witness_probability_weighted_adjustment,
 )
 
 
@@ -160,3 +161,16 @@ def hierarchical_topdown_reconcile(
     sum to the top forecast.
     """
     return proportions * top_forecast
+
+
+@register_atom(witness_probability_weighted_adjustment)
+@icontract.require(lambda predictions, probabilities: len(predictions) == len(probabilities), "predictions and probabilities must have equal length")
+@icontract.require(lambda probabilities: np.all((probabilities >= 0) & (probabilities <= 1)), "probabilities must be in [0, 1]")
+@icontract.ensure(lambda result, predictions: result.shape == predictions.shape, "result must preserve shape")
+def probability_weighted_adjustment(
+    predictions: NDArray[np.float64],
+    probabilities: NDArray[np.float64],
+    shift: float = 0.0,
+) -> NDArray[np.float64]:
+    """Adjust predictions by classifier probability weights with optional shift."""
+    return predictions * probabilities + shift * (1.0 - probabilities)

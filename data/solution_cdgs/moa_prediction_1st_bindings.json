@@ -69,23 +69,24 @@
     },
     {
       "stage_id": "stacking",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.ensemble.stacking_meta_features.stacking_meta_feature_matrix",
+      "binding_confidence": 0.65,
+      "binding_source": "alias_retrieval_fix_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+        "binding_rationale": "stacking_meta_feature_matrix covers OOF stacking meta-feature construction; alias 'oof_stacking' added to atom cdg.json. Approximate because the full stacking stage includes model training."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 6,
-    "bound_active": 1,
-    "bound_approximate": 1,
-    "gaps": 4,
+    "bound_active": 2,
+    "bound_approximate": 2,
+    "gaps": 2,
     "atoms_used_by_repo": {
-      "sciona.atoms.dl": 2
+      "sciona.atoms.dl": 2,
+      "sciona.atoms.ml": 1
     },
     "cross_repo_bindings": false,
     "novel_atoms_needed": [

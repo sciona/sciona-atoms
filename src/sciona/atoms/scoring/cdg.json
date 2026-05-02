@@ -9,7 +9,8 @@
         "elo_rating_update",
         "nab_anomaly_score",
         "expected_f1_threshold",
-        "hierarchical_topdown_reconcile"
+        "hierarchical_topdown_reconcile",
+        "probability_weighted_adjustment"
       ],
       "depth": 0
     },
@@ -86,6 +87,24 @@
         {"name": "result", "type_desc": "NDArray[np.float64]"}
       ],
       "aliases": ["hierarchical_scaling", "topdown_reconciliation"]
+    },
+    {
+      "node_id": "probability_weighted_adjustment",
+      "name": "probability_weighted_adjustment",
+      "description": "Adjust predictions by classifier probability weights with optional shift",
+      "concept_type": "analysis",
+      "status": "atomic",
+      "type_signature": "(predictions: NDArray[np.float64], probabilities: NDArray[np.float64], shift: float = 0.0) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "predictions", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "probabilities", "type_desc": "NDArray[np.float64]", "required": true},
+        {"name": "shift", "type_desc": "float", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]"}
+      ],
+      "aliases": ["probabilistic_adjustment", "probability_shift"]
     }
   ]
 }

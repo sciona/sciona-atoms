@@ -58,21 +58,21 @@
     },
     {
       "stage_id": "spatial_verification",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.linear_model.ransac.ransac_consensus_is_better",
+      "binding_confidence": 0.5,
+      "binding_source": "alias_retrieval_fix_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "ransac_consensus_is_better covers one step of the RANSAC spatial verification workflow; approximate because full spatial verification requires the complete RANSAC loop with feature matching."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 5,
     "bound_active": 1,
-    "bound_approximate": 0,
-    "gaps": 3,
+    "bound_approximate": 1,
+    "gaps": 2,
     "atoms_used_by_repo": {
       "ml": 1
     },

@@ -25,13 +25,13 @@
     },
     {
       "stage_id": "spatial_feature_extraction",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
-      "status": "gap",
-      "action_class": "external_knowledge",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.efficientnet_backbone",
+      "binding_confidence": 0.7,
+      "binding_source": "alias_retrieval_fix_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "binding_rationale": "efficientnet_backbone covers per-slice CNN feature extraction; aliases 'spatial_feature_extraction' and 'slice_embedding_extraction' added. Approximate because the full stage may include multi-scale or custom head logic."
       }
     },
     {
@@ -71,10 +71,11 @@
   "binding_summary": {
     "total_stages": 5,
     "bound_active": 1,
-    "bound_approximate": 0,
-    "gaps": 4,
+    "bound_approximate": 1,
+    "gaps": 3,
     "atoms_used_by_repo": {
-      "sciona.atoms.medical_imaging_3d": 1
+      "sciona.atoms.medical_imaging_3d": 1,
+      "sciona.atoms.dl": 1
     },
     "cross_repo_bindings": true,
     "novel_atoms_needed": [],

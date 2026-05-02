@@ -25,13 +25,13 @@
     },
     {
       "stage_id": "cross_asset_features",
-      "bound_artifact_fqdn": "sciona.atoms.ml.tabular.gradient_boosting.pairwise_ratios",
-      "binding_confidence": 0.6,
-      "binding_source": "retrieval_search",
-      "status": "approximate",
-      "action_class": "replace_stage",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "reclassification_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "binding_rationale": "Generic ratios, not BTC-specific"
+        "gap_reason": "Pairwise ratios \u2014 trivial numpy division"
       }
     },
     {
@@ -60,22 +60,20 @@
       "stage_id": "post_processing",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_wave2_pdf",
+      "binding_source": "reclassification_2026_04_24",
       "status": "gap",
-      "action_class": "external_knowledge",
+      "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "Reverse neutralization \u2014 trivial math transform"
       }
     }
   ],
   "binding_summary": {
     "total_stages": 5,
     "bound_active": 0,
-    "bound_approximate": 1,
-    "gaps": 4,
-    "atoms_used_by_repo": {
-      "sciona.atoms.ml": 1
-    },
+    "bound_approximate": 0,
+    "gaps": 5,
+    "atoms_used_by_repo": {},
     "cross_repo_bindings": false,
     "novel_atoms_needed": [],
     "orchestration_resolved": [
@@ -83,10 +81,11 @@
       "group_k_fold_training",
       "target_neutralization"
     ],
-    "external_knowledge_resolved": [
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": [
+      "cross_asset_features",
       "post_processing"
-    ],
-    "trivial_inline_resolved": []
+    ]
   },
   "architect_test_expectations": {
     "critical_findings": [

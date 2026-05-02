@@ -16,11 +16,11 @@
       "stage_id": "data_leak_extraction",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "manual_rule_from_fast_pdf",
+      "binding_source": "reclassification_2026_04_24",
       "status": "gap",
       "action_class": "external_knowledge",
       "evidence_summary": {
-        "gap_reason": "No sufficiently specific atom exists in the current expanded catalog; keep as orchestration/external integration until a dedicated atom is ingested."
+        "gap_reason": "Competition-specific document ID tracing"
       }
     },
     {
@@ -70,19 +70,21 @@
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 0,
+    "bound_active": 1,
     "bound_approximate": 0,
-    "gaps": 2,
-    "atoms_used_by_repo": {},
+    "gaps": 4,
+    "atoms_used_by_repo": {
+      "sciona.atoms.ml": 1
+    },
     "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "data_leak_extraction",
-      "feature_hashing"
-    ],
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "field_aware_factorization_machine_ffm",
       "follow_the_regularized_leader_ftrl",
       "rank_averaging"
+    ],
+    "external_knowledge_resolved": [
+      "data_leak_extraction"
     ]
   },
   "architect_test_expectations": {
