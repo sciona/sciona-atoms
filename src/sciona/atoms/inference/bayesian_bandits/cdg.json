@@ -49,6 +49,20 @@
           "name": "result",
           "type_desc": "tuple[NDArray[np.float64], NDArray[np.float64]]"
         }
+      ],
+      "common_patterns": [
+        {
+          "pattern_id": "bayesian_bandit_cycle",
+          "description": "Initialize priors, compute UCB scores, select arm, update beliefs",
+          "atoms": [
+            "initialize_beta_beliefs",
+            "bayesian_ucb",
+            "select_best_arm",
+            "beta_bernoulli_update"
+          ],
+          "ordering": "sequential",
+          "when": "Stage describes multi-armed bandit or Bayesian exploration"
+        }
       ]
     },
     {
@@ -80,6 +94,20 @@
         {
           "name": "result",
           "type_desc": "tuple[float, float]"
+        }
+      ],
+      "common_patterns": [
+        {
+          "pattern_id": "bayesian_bandit_cycle",
+          "description": "Initialize priors, compute UCB scores, select arm, update beliefs",
+          "atoms": [
+            "initialize_beta_beliefs",
+            "bayesian_ucb",
+            "select_best_arm",
+            "beta_bernoulli_update"
+          ],
+          "ordering": "sequential",
+          "when": "Stage describes multi-armed bandit or Bayesian exploration"
         }
       ]
     },
@@ -182,6 +210,20 @@
           "name": "result",
           "type_desc": "NDArray[np.float64]"
         }
+      ],
+      "common_patterns": [
+        {
+          "pattern_id": "bayesian_bandit_cycle",
+          "description": "Initialize priors, compute UCB scores, select arm, update beliefs",
+          "atoms": [
+            "initialize_beta_beliefs",
+            "bayesian_ucb",
+            "select_best_arm",
+            "beta_bernoulli_update"
+          ],
+          "ordering": "sequential",
+          "when": "Stage describes multi-armed bandit or Bayesian exploration"
+        }
       ]
     },
     {
@@ -282,6 +324,20 @@
       "aliases": [
         "action_execution",
         "arm_selection"
+      ],
+      "common_patterns": [
+        {
+          "pattern_id": "bayesian_bandit_cycle",
+          "description": "Initialize priors, compute UCB scores, select arm, update beliefs",
+          "atoms": [
+            "initialize_beta_beliefs",
+            "bayesian_ucb",
+            "select_best_arm",
+            "beta_bernoulli_update"
+          ],
+          "ordering": "sequential",
+          "when": "Stage describes multi-armed bandit or Bayesian exploration"
+        }
       ]
     },
     {
