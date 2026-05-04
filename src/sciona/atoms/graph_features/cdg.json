@@ -1,0 +1,37 @@
+{
+  "nodes": [
+    {
+      "node_id": "graph_features_root",
+      "name": "Graph Feature Generation",
+      "description": "Node and edge feature construction primitives for graph neural networks",
+      "status": "decomposed",
+      "children": [
+        "node_onehot_positional"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "node_onehot_positional",
+      "name": "node_onehot_positional",
+      "description": "Generate node features from one-hot category encoding concatenated with sinusoidal positional encoding",
+      "concept_type": "data_extraction",
+      "status": "atomic",
+      "aliases": [
+        "node_feature_generation",
+        "onehot_positional_encoding",
+        "graph_node_features"
+      ],
+      "type_signature": "(categories: NDArray[np.int64], num_classes: int, encoding_dim: int = 16, max_position: int = 1000) -> NDArray[np.float64]",
+      "depth": 1,
+      "inputs": [
+        {"name": "categories", "type_desc": "NDArray[np.int64]", "required": true, "constraints": "1D array of integer category labels"},
+        {"name": "num_classes", "type_desc": "int", "required": true, "constraints": ">= 1"},
+        {"name": "encoding_dim", "type_desc": "int", "required": false},
+        {"name": "max_position", "type_desc": "int", "required": false}
+      ],
+      "outputs": [
+        {"name": "result", "type_desc": "NDArray[np.float64]", "constraints": "shape (N, num_classes + encoding_dim)"}
+      ]
+    }
+  ]
+}
