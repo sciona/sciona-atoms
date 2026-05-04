@@ -23,9 +23,61 @@
       "evidence_summary": {
         "binding_rationale": "Matched via retrieval search against atom catalog. Downgraded from active: atom exists but keyword retrieval cannot reliably surface it."
       }
+    },
+    {
+      "stage_id": "sliding_window_tokenization",
+      "bound_artifact_fqdn": "sciona.atoms.dl.video_temporal.sliding_windows",
+      "binding_confidence": 0.6,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Window extraction; not tokenizer-specific"
+      }
+    },
+    {
+      "stage_id": "sequence_tagging_training",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.sequence_tagging_trainer",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Opaque BIO sequence tagging training"
+      }
+    },
+    {
+      "stage_id": "span_extraction",
+      "bound_artifact_fqdn": "sciona.atoms.ml.text_nlp.bio_decode",
+      "binding_confidence": 0.7,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "BIO to span conversion"
+      }
+    },
+    {
+      "stage_id": "text_weighted_box_fusion",
+      "bound_artifact_fqdn": "sciona.atoms.dl.detection.wbf_1d",
+      "binding_confidence": 0.9,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "1D weighted box fusion for text spans"
+      }
     }
   ],
   "binding_summary": {
-    "total_stages": 6
+    "total_stages": 6,
+    "bound_active": 2,
+    "bound_approximate": 3,
+    "gaps": 1,
+    "atoms_used_by_repo": {
+      "sciona.atoms.ml": 2,
+      "sciona.atoms.dl": 3
+    },
+    "cross_repo_bindings": true
   }
 }

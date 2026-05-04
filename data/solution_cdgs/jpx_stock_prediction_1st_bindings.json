@@ -14,13 +14,13 @@
   "bindings": [
     {
       "stage_id": "target_normalization",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "reclassification_2026_04_24",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.fintech.signal_processing.alpha_isolation",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "Alpha isolation formula (r_stock - r_market) — symbolic atom candidate"
+        "binding_rationale": "alpha_isolation atom isolates stock-specific return from market return, directly matching target normalization."
       }
     },
     {
@@ -70,15 +70,15 @@
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 1,
+    "bound_active": 2,
     "bound_approximate": 0,
-    "gaps": 2,
+    "gaps": 1,
     "atoms_used_by_repo": {
-      "sciona.atoms.ml": 1
+      "sciona.atoms.ml": 1,
+      "sciona.atoms.fintech": 1
     },
     "cross_repo_bindings": true,
     "novel_atoms_needed": [
-      "target_normalization",
       "technical_features"
     ],
     "orchestration_resolved": [

@@ -22,17 +22,73 @@
       "evidence_summary": {
         "binding_rationale": "CutMix partial; mosaic (4-image) still missing"
       }
+    },
+    {
+      "stage_id": "heavy_detector",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.resnet_family_backbone",
+      "binding_confidence": 0.5,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "ResNet family backbone approximates the heavy detector backbone (e.g., EfficientDet/FasterRCNN); approximate because full detector includes FPN and detection head."
+      }
+    },
+    {
+      "stage_id": "light_detector",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.yolo_object_detector",
+      "binding_confidence": 0.8,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "YOLO object detector opaque wrapper covers the lightweight single-stage detector."
+      }
+    },
+    {
+      "stage_id": "pseudo_labeling",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tabular.gradient_boosting.extract_pseudo_labels",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Confidence-based pseudo-label selection"
+      }
+    },
+    {
+      "stage_id": "pseudo_label_retraining",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.semi_supervised.self_training_fit",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Self-training loop with pseudo labels"
+      }
+    },
+    {
+      "stage_id": "weighted_box_fusion",
+      "bound_artifact_fqdn": "sciona.atoms.dl.detection.wbf",
+      "binding_confidence": 0.9,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Weighted box fusion for detection ensembling"
+      }
     }
   ],
   "binding_summary": {
-    "total_stages": 1,
-    "bound_active": 0,
-    "bound_approximate": 1,
+    "total_stages": 6,
+    "bound_active": 4,
+    "bound_approximate": 2,
     "gaps": 0,
     "atoms_used_by_repo": {
-      "sciona.atoms.dl": 1
+      "sciona.atoms.dl": 4,
+      "sciona.atoms.ml": 2
     },
-    "cross_repo_bindings": false
+    "cross_repo_bindings": true
   },
   "architect_test_expectations": {
     "critical_findings": [

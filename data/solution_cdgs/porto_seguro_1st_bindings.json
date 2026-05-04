@@ -3,6 +3,28 @@
   "solution_id": "solution.kaggle.porto_seguro_1st",
   "bindings": [
     {
+      "stage_id": "missing_value_imputation",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.impute.simple_imputer_transform",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Simple imputer transform approximates missing value imputation; approximate because original may use more complex imputation strategies."
+      }
+    },
+    {
+      "stage_id": "denoising_autoencoder_features",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.denoising_autoencoder",
+      "binding_confidence": 0.8,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Denoising autoencoder opaque wrapper directly replaces the DAE feature extraction stage."
+      }
+    },
+    {
       "stage_id": "feature_concatenation",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
@@ -10,17 +32,42 @@
       "status": "gap",
       "action_class": "orchestration",
       "evidence_summary": {
-        "gap_reason": "Concat tabular + DAE features — orchestration"
+        "gap_reason": "Concat tabular + DAE features \u2014 orchestration"
+      }
+    },
+    {
+      "stage_id": "model_training",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.lightgbm_train",
+      "binding_confidence": 0.7,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "LightGBM component of multi-model training pipeline"
+      }
+    },
+    {
+      "stage_id": "rank_average_ensemble",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.fold_ensemble_average",
+      "binding_confidence": 0.65,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Fold ensemble averaging approximates rank averaging across models"
       }
     }
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 0,
-    "atoms_used_by_repo": {},
-    "cross_repo_bindings": false,
+    "bound_active": 1,
+    "bound_approximate": 3,
+    "gaps": 1,
+    "atoms_used_by_repo": {
+      "sciona.atoms.ml": 1,
+      "sciona.atoms.dl": 3
+    },
+    "cross_repo_bindings": true,
     "orchestration_resolved": [
       "feature_concatenation"
     ]

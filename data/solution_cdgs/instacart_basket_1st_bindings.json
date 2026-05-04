@@ -20,7 +20,7 @@
       "status": "gap",
       "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "Group-by aggregation stats \u2014 trivial pandas"
+        "gap_reason": "Group-by aggregation stats — trivial pandas"
       }
     },
     {
@@ -31,7 +31,7 @@
       "status": "gap",
       "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "Filter to previously-ordered products \u2014 trivial inline set filter"
+        "gap_reason": "Filter to previously-ordered products — trivial inline set filter"
       }
     },
     {
@@ -44,15 +44,40 @@
       "evidence_summary": {
         "gap_reason": "Feature table join — pipeline orchestration"
       }
+    },
+    {
+      "stage_id": "reorder_probability_model",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.lightgbm_train",
+      "binding_confidence": 0.8,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "LightGBM train atom replaces the reorder probability gradient boosting model."
+      }
+    },
+    {
+      "stage_id": "f1_maximization_dp",
+      "bound_artifact_fqdn": "sciona.atoms.scoring.expected_f1_threshold",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Expected F1 threshold approximates the F1 maximization DP; approximate because original uses dynamic programming for exact optimization."
+      }
     }
   ],
   "binding_summary": {
-    "total_stages": 3,
-    "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 3,
-    "atoms_used_by_repo": {},
-    "cross_repo_bindings": false,
+    "total_stages": 5,
+    "bound_active": 1,
+    "bound_approximate": 1,
+    "gaps": 1,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 1,
+      "sciona.atoms.scoring": 1
+    },
+    "cross_repo_bindings": true,
     "orchestration_resolved": [
       "feature_merging"
     ],

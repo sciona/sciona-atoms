@@ -25,25 +25,73 @@
     },
     {
       "stage_id": "back_translation_augmentation",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "reclassification_2026_04_24",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.back_translation.translate_text",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "Needs opaque MarianMT translation wrapper — research prompt written"
+        "binding_rationale": "translate_text atom covers the MarianMT translation component used in back-translation augmentation; approximate because full back-translation requires two calls (src->tgt, tgt->src)."
+      }
+    },
+    {
+      "stage_id": "bidirectional_rnn_features",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.recurrent_sequence_model",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Recurrent sequence model approximates the bidirectional GRU/LSTM feature extractor; approximate because original uses specific bidirectional configuration."
+      }
+    },
+    {
+      "stage_id": "dual_pooling",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "np.max + np.mean + np.concatenate"
+      }
+    },
+    {
+      "stage_id": "classification_head",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.linear_prediction_head",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Linear prediction head covers the final classification layer for multi-label toxicity prediction."
+      }
+    },
+    {
+      "stage_id": "meta_model_ensemble",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.fold_ensemble_average",
+      "binding_confidence": 0.65,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Fold ensemble averaging approximates LightGBM meta-model stacking"
       }
     }
   ],
   "binding_summary": {
-    "total_stages": 1,
-    "bound_active": 0,
-    "bound_approximate": 1,
-    "gaps": 0,
+    "total_stages": 5,
+    "bound_active": 1,
+    "bound_approximate": 4,
+    "gaps": 1,
     "atoms_used_by_repo": {
-      "sciona.atoms.ml": 1
+      "sciona.atoms.ml": 1,
+      "sciona.atoms.dl": 4
     },
-    "cross_repo_bindings": false
+    "cross_repo_bindings": true,
+    "trivial_inline_resolved": [
+      "dual_pooling"
+    ]
   },
   "architect_test_expectations": {
     "critical_findings": [

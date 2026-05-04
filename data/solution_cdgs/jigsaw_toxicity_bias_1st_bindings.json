@@ -47,50 +47,49 @@
     },
     {
       "stage_id": "demographic_weighted_bce",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.loss.weighted_bce_loss",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Weighted BCE loss approximates the demographic-weighted binary cross-entropy; approximate because original uses identity-group-specific sample weights."
       }
     },
     {
       "stage_id": "multisample_dropout",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "unbound",
+      "binding_source": "manual_binding_2026_04_24",
       "status": "gap",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "gap_reason": "Needs multi-sample dropout atom"
       }
     },
     {
       "stage_id": "model_ensembling",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.gradient_attacks.ensemble_logit_fusion",
+      "binding_confidence": 0.85,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "ensemble_logit_fusion atom implements model ensembling via logit-level fusion across multiple transformer models."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 6,
-    "bound_active": 2,
-    "bound_approximate": 0,
-    "gaps": 3,
+    "bound_active": 3,
+    "bound_approximate": 1,
+    "gaps": 1,
     "atoms_used_by_repo": {
-      "ml": 2
+      "sciona.atoms.ml": 3,
+      "sciona.atoms.dl": 1
     },
-    "cross_repo_bindings": false,
+    "cross_repo_bindings": true,
     "novel_atoms_needed": [
-      "demographic_weighted_bce",
-      "model_ensembling",
       "multisample_dropout"
     ],
     "orchestration_resolved": [],

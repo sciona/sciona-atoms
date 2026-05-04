@@ -14,13 +14,13 @@
   "bindings": [
     {
       "stage_id": "domain_adaptation",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.masked_language_model_pretrain",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Masked language model pretraining approximates domain adaptation via continued MLM on target corpus; approximate because original uses specific data selection."
       }
     },
     {
@@ -36,65 +36,60 @@
     },
     {
       "stage_id": "attention_pooling",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.mil_attention_aggregator",
+      "binding_confidence": 0.5,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "MIL attention aggregator approximates attention pooling over transformer hidden states; approximate because original uses single-head attention pooling while MIL aggregator targets instance-level weighting."
       }
     },
     {
       "stage_id": "regression_head",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.linear_prediction_head",
+      "binding_confidence": 0.8,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Linear prediction head atom covers the regression output layer on pooled transformer features."
       }
     },
     {
       "stage_id": "stochastic_weight_averaging",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "reclassification_2026_04_24",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.stochastic_weight_averaging",
+      "binding_confidence": 0.8,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "SWA training infrastructure — needs opaque wrapper"
+        "binding_rationale": "SWA opaque wrapper directly replaces the stochastic weight averaging training stage."
       }
     },
     {
       "stage_id": "svr_calibration_head",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.calibration.sigmoid_calibration_predict",
+      "binding_confidence": 0.45,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "sigmoid_calibration_predict approximates SVR calibration; approximate because original uses SVR post-hoc calibration while this atom uses Platt sigmoid scaling."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 6,
-    "bound_active": 1,
-    "bound_approximate": 0,
-    "gaps": 5,
+    "bound_active": 3,
+    "bound_approximate": 3,
+    "gaps": 0,
     "atoms_used_by_repo": {
-      "ml": 1
+      "sciona.atoms.ml": 2,
+      "sciona.atoms.dl": 4
     },
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "attention_pooling",
-      "domain_adaptation",
-      "regression_head",
-      "stochastic_weight_averaging",
-      "svr_calibration_head"
-    ],
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
     "orchestration_resolved": [],
     "external_knowledge_resolved": [],
     "trivial_inline_resolved": []

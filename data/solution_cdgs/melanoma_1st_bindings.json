@@ -25,76 +25,71 @@
     },
     {
       "stage_id": "image_backbone_training",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.efficientnet_backbone",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "EfficientNet backbone approximates the image backbone used for melanoma classification; approximate because original uses multiple backbone variants."
       }
     },
     {
       "stage_id": "metadata_concatenation",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.tabular.entity_embedding_lookup",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Entity embedding lookup approximates the metadata embedding + concatenation; approximate because original combines patient metadata with image features."
       }
     },
     {
       "stage_id": "meta_head",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.linear_prediction_head",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Linear prediction head approximates the meta classification head; approximate because original uses multi-layer FC head with dropout."
       }
     },
     {
       "stage_id": "pseudo_labeling",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.tabular.gradient_boosting.extract_pseudo_labels",
+      "binding_confidence": 0.85,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "extract_pseudo_labels atom directly implements pseudo-label extraction from confident predictions for semi-supervised retraining."
       }
     },
     {
       "stage_id": "rank_average_ensemble",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.fold_ensemble_average",
+      "binding_confidence": 0.8,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "fold_ensemble_average covers rank averaging across folds; active because the averaging mechanism is functionally equivalent even though original applies rank normalization before averaging."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 6,
-    "bound_active": 1,
-    "bound_approximate": 0,
-    "gaps": 5,
+    "bound_active": 3,
+    "bound_approximate": 3,
+    "gaps": 0,
     "atoms_used_by_repo": {
-      "dl": 1
+      "sciona.atoms.dl": 5,
+      "sciona.atoms.ml": 1
     },
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "image_backbone_training",
-      "meta_head",
-      "metadata_concatenation",
-      "pseudo_labeling",
-      "rank_average_ensemble"
-    ],
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
     "orchestration_resolved": [],
     "external_knowledge_resolved": [],
     "trivial_inline_resolved": []

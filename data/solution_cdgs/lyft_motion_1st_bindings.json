@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.lyft_motion_1st",
+  "bindings": [
+    {
+      "stage_id": "bev_rasterization",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "gap_reason": "Needs BEV rasterization atom (3D perception research)"
+      }
+    },
+    {
+      "stage_id": "temporal_stacking",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "Channel-wise frame stacking"
+      }
+    },
+    {
+      "stage_id": "cnn_backbone",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.efficientnet_backbone",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "EfficientNet backbone approximates the CNN backbone used for BEV feature extraction; approximate because original may use ResNet variants."
+      }
+    },
+    {
+      "stage_id": "multimodal_prediction_head",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.dual_head_regression",
+      "binding_confidence": 0.5,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "dual_head_regression approximates multimodal prediction head; approximate because original predicts multiple trajectory modes with confidence while this atom handles dual regression outputs."
+      }
+    },
+    {
+      "stage_id": "multimodal_nll_loss",
+      "bound_artifact_fqdn": "sciona.atoms.dl.loss.multimodal_nll_loss",
+      "binding_confidence": 0.95,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Exact match: multimodal negative log-likelihood loss"
+      }
+    },
+    {
+      "stage_id": "trajectory_ensembling",
+      "bound_artifact_fqdn": "sciona.atoms.ml.gradient_attacks.ensemble_logit_fusion",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Weighted trajectory averaging via logit fusion"
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 2,
+    "bound_approximate": 2,
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 3,
+      "sciona.atoms.ml": 1
+    },
+    "cross_repo_bindings": true,
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": [
+      "temporal_stacking"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

@@ -20,7 +20,18 @@
       "status": "gap",
       "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "Baseline FVC + temporal deltas \u2014 trivial pandas"
+        "gap_reason": "Baseline FVC + temporal deltas — trivial pandas"
+      }
+    },
+    {
+      "stage_id": "image_feature_extraction",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.efficientnet_backbone",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "EfficientNet backbone approximates the CT image feature extraction; approximate because original may use 3D variants or specific medical imaging architectures."
       }
     },
     {
@@ -33,14 +44,38 @@
       "evidence_summary": {
         "gap_reason": "Concat tabular + image features — orchestration"
       }
+    },
+    {
+      "stage_id": "quantile_regression_training",
+      "bound_artifact_fqdn": "sciona.atoms.dl.time_series.pinball_loss",
+      "binding_confidence": 0.85,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Pinball loss atom directly covers the quantile regression training objective for FVC prediction intervals."
+      }
+    },
+    {
+      "stage_id": "confidence_interval_postprocessing",
+      "bound_artifact_fqdn": "sciona.atoms.dl.loss.quantile_spread_to_confidence",
+      "binding_confidence": 0.85,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Quantile spread to confidence atom converts quantile predictions to confidence intervals for the Laplace log-likelihood metric."
+      }
     }
   ],
   "binding_summary": {
-    "total_stages": 2,
-    "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 2,
-    "atoms_used_by_repo": {},
+    "total_stages": 5,
+    "bound_active": 2,
+    "bound_approximate": 1,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 3
+    },
     "cross_repo_bindings": false,
     "orchestration_resolved": [
       "feature_concatenation"

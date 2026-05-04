@@ -25,24 +25,24 @@
     },
     {
       "stage_id": "dimensionality_reduction",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.decomposition.pca_fit",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+        "binding_rationale": "PCA fit approximates the dimensionality reduction stage; approximate because original may use additional decomposition methods."
       }
     },
     {
       "stage_id": "pseudo_label_feature_selection",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.feature_selection.selectors.select_from_model_threshold",
+      "binding_confidence": 0.55,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+        "binding_rationale": "select_from_model_threshold approximates pseudo-label-driven feature selection; approximate because original selects features based on pseudo-label utility while this atom uses model importance thresholding."
       }
     },
     {
@@ -82,19 +82,14 @@
   "binding_summary": {
     "total_stages": 6,
     "bound_active": 2,
-    "bound_approximate": 2,
-    "gaps": 2,
+    "bound_approximate": 4,
+    "gaps": 0,
     "atoms_used_by_repo": {
       "sciona.atoms.dl": 2,
-      "sciona.atoms.ml": 1
+      "sciona.atoms.ml": 3
     },
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "dimensionality_reduction",
-      "pseudo_label_feature_selection",
-      "stacking",
-      "variance_thresholding"
-    ],
+    "cross_repo_bindings": true,
+    "novel_atoms_needed": [],
     "orchestration_resolved": [],
     "external_knowledge_resolved": [],
     "trivial_inline_resolved": []

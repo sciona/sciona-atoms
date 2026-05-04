@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.bengali_grapheme_1st",
+  "bindings": [
+    {
+      "stage_id": "image_preprocessing",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.resize_and_pad_apply",
+      "binding_confidence": 0.55,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "resize_and_pad_apply covers the resize component of image preprocessing; approximate because original includes color inversion and bounding-box crop specific to Bengali graphemes."
+      }
+    },
+    {
+      "stage_id": "heavy_augmentation",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.cutmix_apply",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "CutMix is one component of the heavy augmentation pipeline; approximate because original includes additional augmentations."
+      }
+    },
+    {
+      "stage_id": "multihead_backbone",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.resnet_family_backbone",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "ResNet family backbone approximates the SE-ResNeXt multi-head backbone; approximate because multi-head output structure differs."
+      }
+    },
+    {
+      "stage_id": "weighted_multitask_loss",
+      "bound_artifact_fqdn": "sciona.atoms.dl.loss.weighted_multitask_loss",
+      "binding_confidence": 0.9,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Direct match: weighted multi-task loss atom covers grapheme/vowel/consonant joint loss."
+      }
+    },
+    {
+      "stage_id": "ohem_training",
+      "bound_artifact_fqdn": "sciona.atoms.dl.training.online_hard_negative_mining",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Hard example selection via online hard negative mining"
+      }
+    },
+    {
+      "stage_id": "soft_voting_ensemble",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.ensemble.voting.voting_classifier_soft_probabilities",
+      "binding_confidence": 0.9,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Soft probability averaging for ensemble voting"
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 3,
+    "bound_approximate": 3,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 5,
+      "sciona.atoms.ml": 1
+    },
+    "cross_repo_bindings": true,
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": []
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

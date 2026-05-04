@@ -10,17 +10,75 @@
       "status": "gap",
       "action_class": "trivial_inline",
       "evidence_summary": {
-        "gap_reason": "Score to binary adjacency — trivial inline"
+        "gap_reason": "Score to binary adjacency \u2014 trivial inline"
+      }
+    },
+    {
+      "stage_id": "connected_components",
+      "bound_artifact_fqdn": "sciona.atoms.algorithmic.graph.utilities.connected_components",
+      "binding_confidence": 0.9,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Connected components atom directly replaces the graph clustering stage for product grouping."
+      }
+    },
+    {
+      "stage_id": "image_embedding",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.resnet_family_backbone",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "ResNet family backbone approximates the image embedding extraction; approximate because original uses ArcFace-trained embeddings."
+      }
+    },
+    {
+      "stage_id": "text_embedding",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.sentence_transformer",
+      "binding_confidence": 0.7,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Sentence-transformer for text embedding extraction"
+      }
+    },
+    {
+      "stage_id": "embedding_fusion",
+      "bound_artifact_fqdn": "sciona.atoms.dl.embeddings.l2_normalize",
+      "binding_confidence": 0.65,
+      "binding_source": "retrieval_search",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "L2 normalization after embedding concatenation"
+      }
+    },
+    {
+      "stage_id": "pairwise_similarity",
+      "bound_artifact_fqdn": "sciona.atoms.dl.embeddings.cosine_similarity_matrix",
+      "binding_confidence": 0.9,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Pairwise cosine similarity matrix computation"
       }
     }
   ],
   "binding_summary": {
     "total_stages": 6,
-    "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 0,
-    "atoms_used_by_repo": {},
-    "cross_repo_bindings": false,
+    "bound_active": 2,
+    "bound_approximate": 3,
+    "gaps": 1,
+    "atoms_used_by_repo": {
+      "sciona.atoms.algorithmic": 1,
+      "sciona.atoms.dl": 4
+    },
+    "cross_repo_bindings": true,
     "trivial_inline_resolved": [
       "dynamic_thresholding"
     ]

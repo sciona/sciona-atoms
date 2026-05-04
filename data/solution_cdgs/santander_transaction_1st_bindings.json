@@ -57,6 +57,17 @@
       }
     },
     {
+      "stage_id": "lightgbm_training",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.lightgbm_train",
+      "binding_confidence": 0.85,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "LightGBM train atom directly replaces the gradient boosting training stage."
+      }
+    },
+    {
       "stage_id": "shuffle_augmentation",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
@@ -70,13 +81,14 @@
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 2,
+    "bound_active": 3,
     "bound_approximate": 0,
     "gaps": 0,
     "atoms_used_by_repo": {
-      "sciona.atoms.ml": 2
+      "sciona.atoms.ml": 2,
+      "sciona.atoms.dl": 1
     },
-    "cross_repo_bindings": false,
+    "cross_repo_bindings": true,
     "trivial_inline_resolved": [
       "fake_data_identification",
       "real_data_filtering",

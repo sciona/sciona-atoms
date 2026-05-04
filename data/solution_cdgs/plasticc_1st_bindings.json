@@ -16,11 +16,11 @@
       "stage_id": "flux_correction",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "unbound",
+      "binding_source": "manual_binding_2026_04_24",
       "status": "gap",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "gap_reason": "No flux k-correction atom found; needs astrophysics-specific flux correction atom"
       }
     },
     {
@@ -36,13 +36,13 @@
     },
     {
       "stage_id": "gaussian_process_interpolation",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.gaussian_process.regression.gp_train_cholesky",
+      "binding_confidence": 0.6,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "gp_train_cholesky approximates GP interpolation of light curves; approximate because original uses GP for temporal interpolation while this atom covers the Cholesky-based GP training step."
       }
     },
     {
@@ -58,41 +58,40 @@
     },
     {
       "stage_id": "model_training",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.lightgbm_train",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "LightGBM train approximates the gradient boosting model training; approximate because PLAsTiCC uses multi-class classification with custom features."
       }
     },
     {
       "stage_id": "platt_calibration",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.calibration.sigmoid_calibration_fit",
+      "binding_confidence": 0.9,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "sigmoid_calibration_fit atom directly implements Platt scaling calibration for multi-class probability outputs."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 6,
-    "bound_active": 1,
-    "bound_approximate": 0,
-    "gaps": 4,
+    "bound_active": 2,
+    "bound_approximate": 2,
+    "gaps": 1,
     "atoms_used_by_repo": {
-      "signal": 1
+      "sciona.atoms.signal": 1,
+      "sciona.atoms.dl": 1,
+      "sciona.atoms.ml": 2
     },
-    "cross_repo_bindings": false,
+    "cross_repo_bindings": true,
     "novel_atoms_needed": [
-      "flux_correction",
-      "gaussian_process_interpolation",
-      "model_training",
-      "platt_calibration"
+      "flux_correction"
     ],
     "orchestration_resolved": [
       "feature_merging"

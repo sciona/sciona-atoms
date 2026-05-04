@@ -58,27 +58,28 @@
     },
     {
       "stage_id": "spatial_verification",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "reclassification_2026_04_24",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.linear_model.ransac.ransac_consensus_is_better",
+      "binding_confidence": 0.5,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "RANSAC + homography from keypoints — research needed"
+        "binding_rationale": "RANSAC consensus checking approximates the spatial verification step; approximate because original uses homography estimation with keypoints."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 3,
-    "atoms_used_by_repo": {},
-    "cross_repo_bindings": false,
+    "bound_active": 1,
+    "bound_approximate": 1,
+    "gaps": 1,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 1,
+      "sciona.atoms.ml": 1
+    },
+    "cross_repo_bindings": true,
     "novel_atoms_needed": [
-      "database_side_augmentation_query_expansion",
-      "faiss_indexing",
-      "spatial_verification"
+      "faiss_indexing"
     ],
     "orchestration_resolved": [
       "backbone_architecture",

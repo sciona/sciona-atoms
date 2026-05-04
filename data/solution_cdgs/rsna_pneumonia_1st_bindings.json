@@ -25,74 +25,70 @@
     },
     {
       "stage_id": "xray_augmentation",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.affine_transform_centered",
+      "binding_confidence": 0.5,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Affine transform centered approximates X-ray augmentation; approximate because original includes medical-specific augmentations beyond geometric transforms."
       }
     },
     {
       "stage_id": "retinanet_detector",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.resnet_family_backbone",
+      "binding_confidence": 0.5,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "ResNet family backbone approximates the RetinaNet backbone; approximate because full RetinaNet includes FPN and focal loss head."
       }
     },
     {
       "stage_id": "mask_rcnn_detector",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.resnet_family_backbone",
+      "binding_confidence": 0.5,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "ResNet family backbone approximates the Mask R-CNN backbone; approximate because full Mask R-CNN includes RPN and mask head."
       }
     },
     {
       "stage_id": "nms_postprocessing",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.detection.nms",
+      "binding_confidence": 0.9,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "nms atom directly implements non-maximum suppression for post-processing detection bounding boxes."
       }
     },
     {
       "stage_id": "box_ensemble",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.detection.wbf",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Weighted box fusion approximates the box ensemble stage; approximate because original may use NMS-based ensemble."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 6,
-    "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 5,
-    "atoms_used_by_repo": {},
+    "bound_active": 1,
+    "bound_approximate": 4,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 5
+    },
     "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "box_ensemble",
-      "mask_rcnn_detector",
-      "nms_postprocessing",
-      "retinanet_detector",
-      "xray_augmentation"
-    ],
+    "novel_atoms_needed": [],
     "orchestration_resolved": [],
     "external_knowledge_resolved": [
       "dicom_extraction"

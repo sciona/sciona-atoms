@@ -14,35 +14,35 @@
   "bindings": [
     {
       "stage_id": "tile_preprocessing",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.resize_and_pad_apply",
+      "binding_confidence": 0.5,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Resize and pad approximates the tile preprocessing; approximate because original uses specific steel strip tiling logic."
       }
     },
     {
       "stage_id": "classifier_filtering",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.efficientnet_backbone",
+      "binding_confidence": 0.5,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "EfficientNet backbone approximates the binary classifier used for defect filtering; approximate because full pipeline includes classification head and thresholding."
       }
     },
     {
       "stage_id": "segmentation_models",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.unet_2d_segmentation",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "UNet 2D segmentation approximates the segmentation model ensemble; approximate because original uses multiple FPN/UNet variants."
       }
     },
     {
@@ -58,29 +58,26 @@
     },
     {
       "stage_id": "postprocessing",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.segmentation.filter_components_by_area",
+      "binding_confidence": 0.85,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "filter_components_by_area atom directly implements area-based connected component filtering for segmentation mask post-processing."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 4,
-    "atoms_used_by_repo": {},
+    "bound_active": 1,
+    "bound_approximate": 3,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 4
+    },
     "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "classifier_filtering",
-      "postprocessing",
-      "segmentation_models",
-      "tile_preprocessing"
-    ],
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "multistage_inference"
     ],

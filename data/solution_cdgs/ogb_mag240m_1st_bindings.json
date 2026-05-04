@@ -25,13 +25,13 @@
     },
     {
       "stage_id": "graph_sampling",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "reclassification_2026_04_24",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.heterogeneous_graph_sampler",
+      "binding_confidence": 0.85,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "Needs opaque DGL heterogeneous neighbor sampling wrapper"
+        "binding_rationale": "heterogeneous_graph_sampler atom directly implements neighbor sampling for heterogeneous academic graphs."
       }
     },
     {
@@ -70,16 +70,14 @@
   ],
   "binding_summary": {
     "total_stages": 5,
-    "bound_active": 0,
+    "bound_active": 1,
     "bound_approximate": 0,
-    "gaps": 3,
-    "atoms_used_by_repo": {},
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 1
+    },
     "cross_repo_bindings": false,
-    "novel_atoms_needed": [
-      "blending",
-      "graph_sampling",
-      "node_text_extraction"
-    ],
+    "novel_atoms_needed": [],
     "orchestration_resolved": [
       "label_propagation",
       "message_passing"

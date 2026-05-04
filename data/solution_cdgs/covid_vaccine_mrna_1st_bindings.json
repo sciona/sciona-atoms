@@ -27,33 +27,33 @@
       "stage_id": "node_feature_generation",
       "bound_artifact_fqdn": null,
       "binding_confidence": 0.0,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
+      "binding_source": "manual_binding_2026_04_24",
       "status": "gap",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+        "gap_reason": "Needs one-hot + positional encoding for graph nodes"
       }
     },
     {
       "stage_id": "sequence_to_sequence_model",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.recurrent_sequence_model",
+      "binding_confidence": 0.8,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+        "binding_rationale": "Recurrent sequence model covers the GRU/LSTM seq2seq architecture used for per-nucleotide prediction."
       }
     },
     {
       "stage_id": "graph_neural_network",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "generic_data_ops_policy_2026_04_30",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.graph_neural_network",
+      "binding_confidence": 0.8,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned by the generic data-op audit; requires separate stage-level grounding review."
+        "binding_rationale": "GNN opaque wrapper covers the graph neural network component for RNA structure-aware prediction."
       }
     },
     {
@@ -69,29 +69,28 @@
     },
     {
       "stage_id": "output_head",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "reclassification_2026_04_24",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.linear_prediction_head",
+      "binding_confidence": 0.8,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "Linear prediction head — architecture component"
+        "binding_rationale": "Linear prediction head atom covers the final output layer for per-nucleotide degradation prediction."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 6,
-    "bound_active": 0,
+    "bound_active": 3,
     "bound_approximate": 0,
-    "gaps": 6,
-    "atoms_used_by_repo": {},
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "sciona.atoms.dl": 3
+    },
     "cross_repo_bindings": false,
     "novel_atoms_needed": [
-      "graph_neural_network",
       "node_feature_generation",
-      "output_head",
-      "secondary_structure_parsing",
-      "sequence_to_sequence_model"
+      "secondary_structure_parsing"
     ],
     "orchestration_resolved": [
       "feature_fusion"

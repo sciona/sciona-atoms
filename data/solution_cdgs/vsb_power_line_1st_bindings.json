@@ -14,35 +14,35 @@
   "bindings": [
     {
       "stage_id": "wavelet_denoising",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.signal_processing.wavelet.wavelet_denoise",
+      "binding_confidence": 0.9,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Wavelet denoise atom directly replaces wavelet denoising stage."
       }
     },
     {
       "stage_id": "peak_detection",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.expansion.signal_event_rate.detect_peaks_in_signal",
+      "binding_confidence": 0.9,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "detect_peaks_in_signal atom directly replaces peak detection stage in power line signals."
       }
     },
     {
       "stage_id": "peak_feature_extraction",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.time_series_features.rolling_window_features",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Rolling window features covers statistical feature extraction from detected peaks; approximate because original extracts peak-specific features."
       }
     },
     {
@@ -58,47 +58,53 @@
     },
     {
       "stage_id": "tabular_model",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.lightgbm_train",
+      "binding_confidence": 0.85,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "LightGBM train atom replaces the tabular gradient boosting model stage."
       }
     },
     {
       "stage_id": "dl_model",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.recurrent_sequence_model",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "Recurrent sequence model approximates the RNN/LSTM used for time series classification; approximate because exact architecture differs."
       }
     },
     {
       "stage_id": "weighted_blend",
-      "bound_artifact_fqdn": null,
-      "binding_confidence": 0.0,
-      "binding_source": "unbound",
-      "status": "gap",
+      "bound_artifact_fqdn": "sciona.atoms.riemannian_bci.signal_processing.ranked_prediction_blend",
+      "binding_confidence": 0.8,
+      "binding_source": "atom_search_2026_04_24",
+      "status": "active",
       "action_class": "replace_stage",
       "evidence_summary": {
-        "gap_reason": "No binding assigned yet."
+        "binding_rationale": "ranked_prediction_blend atom implements weighted blending of tabular and deep learning model predictions."
       }
     }
   ],
   "binding_summary": {
     "total_stages": 7,
-    "bound_active": 0,
-    "bound_approximate": 0,
-    "gaps": 7,
-    "atoms_used_by_repo": {},
-    "cross_repo_bindings": false,
-    "novel_atoms_needed": [],
+    "bound_active": 4,
+    "bound_approximate": 2,
+    "gaps": 1,
+    "atoms_used_by_repo": {
+      "sciona.atoms.signal_processing": 1,
+      "sciona.atoms.expansion": 1,
+      "sciona.atoms.time_series_features": 1,
+      "sciona.atoms.dl": 2,
+      "sciona.atoms.riemannian_bci": 1
+    },
+    "cross_repo_bindings": true,
     "orchestration_resolved": [],
+    "external_knowledge_resolved": [],
     "trivial_inline_resolved": [
       "signal_to_matrix_transform"
     ]

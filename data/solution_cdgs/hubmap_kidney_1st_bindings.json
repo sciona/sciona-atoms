@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.hubmap_kidney_1st",
+  "bindings": [
+    {
+      "stage_id": "tiling",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.images.extract_patches_2d",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "extract_patches_2d covers tile extraction from gigapixel images; approximate because medical tiling includes overlap and stride logic."
+      }
+    },
+    {
+      "stage_id": "segmentation_architecture",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.unet_2d_segmentation",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "UNet 2D segmentation approximates the FPN/UNet variants used; approximate because exact architecture details differ."
+      }
+    },
+    {
+      "stage_id": "lovasz_bce_loss",
+      "bound_artifact_fqdn": "sciona.atoms.dl.loss.lovasz_softmax_loss",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Lovasz softmax loss approximates the Lovasz + BCE combination; approximate because original combines two loss functions."
+      }
+    },
+    {
+      "stage_id": "gigapixel_stitching",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.images.reconstruct_from_patches_2d",
+      "binding_confidence": 0.7,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "reconstruct_from_patches_2d covers tile reassembly; approximate because gigapixel stitching may include blending/overlap handling."
+      }
+    },
+    {
+      "stage_id": "stain_normalization",
+      "bound_artifact_fqdn": "sciona.atoms.medical_imaging_3d.preprocessing.macenko_stain_vectors",
+      "binding_confidence": 0.9,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Macenko stain vector estimation for normalization"
+      }
+    },
+    {
+      "stage_id": "tta_on_tiles",
+      "bound_artifact_fqdn": "sciona.atoms.dl.image_augmentation.tta_geometric_average",
+      "binding_confidence": 0.9,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Test-time augmentation geometric averaging"
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 2,
+    "bound_approximate": 4,
+    "gaps": 0,
+    "atoms_used_by_repo": {
+      "sciona.atoms.ml": 2,
+      "sciona.atoms.dl": 3,
+      "sciona.atoms.medical_imaging_3d": 1
+    },
+    "cross_repo_bindings": true,
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": []
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}

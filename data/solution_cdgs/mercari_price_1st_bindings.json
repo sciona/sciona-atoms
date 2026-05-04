@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "solution_id": "solution.kaggle.mercari_price_1st",
+  "bindings": [
+    {
+      "stage_id": "categorical_encoding",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.preprocessing.onehot_encoder_fit_transform",
+      "binding_confidence": 0.9,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "OneHot encoding atom directly replaces categorical encoding stage."
+      }
+    },
+    {
+      "stage_id": "sparse_concatenation",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "trivial_inline",
+      "evidence_summary": {
+        "gap_reason": "scipy.sparse.hstack"
+      }
+    },
+    {
+      "stage_id": "online_fm_model",
+      "bound_artifact_fqdn": null,
+      "binding_confidence": 0.0,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "gap",
+      "action_class": "external_tool",
+      "evidence_summary": {
+        "gap_reason": "FTRL/Factorization Machines \u2014 external training framework"
+      }
+    },
+    {
+      "stage_id": "neural_text_model",
+      "bound_artifact_fqdn": "sciona.atoms.dl.architectures.recurrent_sequence_model",
+      "binding_confidence": 0.6,
+      "binding_source": "manual_binding_2026_04_24",
+      "status": "approximate",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Recurrent sequence model approximates the text CNN/RNN component; approximate because original uses specific text embedding pipeline."
+      }
+    },
+    {
+      "stage_id": "text_vectorization",
+      "bound_artifact_fqdn": "sciona.atoms.ml.sklearn.feature_extraction.tfidf_vectorizer_transform",
+      "binding_confidence": 0.9,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "TF-IDF vectorization for text features"
+      }
+    },
+    {
+      "stage_id": "weighted_ensemble",
+      "bound_artifact_fqdn": "sciona.atoms.causal_inference.estimators.weighted_ensemble_combination",
+      "binding_confidence": 0.85,
+      "binding_source": "retrieval_search",
+      "status": "active",
+      "action_class": "replace_stage",
+      "evidence_summary": {
+        "binding_rationale": "Weighted average combination of model predictions"
+      }
+    }
+  ],
+  "binding_summary": {
+    "total_stages": 6,
+    "bound_active": 3,
+    "bound_approximate": 1,
+    "gaps": 2,
+    "atoms_used_by_repo": {
+      "sciona.atoms.ml": 2,
+      "sciona.atoms.dl": 1,
+      "sciona.atoms.causal_inference": 1
+    },
+    "cross_repo_bindings": true,
+    "orchestration_resolved": [],
+    "external_knowledge_resolved": [],
+    "trivial_inline_resolved": [
+      "sparse_concatenation"
+    ]
+  },
+  "architect_test_expectations": {
+    "critical_findings": [
+      "Only active bindings are expected to participate in retrieval tests; gap/orchestration stages document missing atom coverage for future ingestion."
+    ]
+  }
+}
