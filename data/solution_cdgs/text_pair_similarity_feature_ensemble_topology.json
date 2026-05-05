@@ -1,0 +1,112 @@
+{
+  "asset_id": "solution.kaggle.text_pair_similarity_feature_ensemble_topology",
+  "asset_version": "v1",
+  "family": "text_pair_similarity_feature_ensemble",
+  "paradigm": "optimization",
+  "name": "Text Pair Similarity Feature Ensemble Pipeline Template",
+  "summary": "Reusable base CDG for classic text-pair matching, duplicate detection, product search relevance, query-document relevance, question-pair similarity, title-description matching, and entity-linking tasks that combine text normalization, lexical overlap features, embedding similarity, graph or frequency features, and tree/linear ensembling.",
+  "dejargonized_summary": "Clean pairs of text fields such as search term and product title, question and question, or mention and candidate, build exact-match and similarity features such as n-gram overlap, Jaccard, Levenshtein, cosine, GloVe, Word2Vec, or LSA scores, add pair graph or frequency features, then train an ensemble to score whether the two texts match or are relevant.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "text_pair_matching",
+    "duplicate_question_detection",
+    "search_relevance",
+    "product_search_relevance",
+    "home_depot_search_relevance",
+    "query_document_relevance",
+    "query_product_title_matching",
+    "title_description_matching",
+    "entity_linking",
+    "jaccard_similarity",
+    "levenshtein_distance",
+    "ngram_overlap",
+    "cosine_similarity",
+    "glove_word2vec_embeddings",
+    "lsa_embeddings",
+    "query_expansion",
+    "spell_correction",
+    "question_graph_features",
+    "magic_frequency_features",
+    "xgboost_handcrafted_features"
+  ],
+  "inputs": [
+    {"name": "text_pairs", "type_desc": "PairDataset[str, str]", "constraints": "Query-document, question-question, title-description, or mention-candidate text pairs.", "required": true}
+  ],
+  "outputs": [
+    {"name": "pair_scores", "type_desc": "SubmissionArtifact", "constraints": "Similarity, relevance, duplicate, or match scores formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The solution depends on engineered features over two text fields rather than a single text classifier.",
+      "Winning techniques include n-gram overlap, Jaccard, Levenshtein, cosine similarity, Word2Vec/GloVe/LSA, query expansion, spelling correction, pair frequency features, or XGBoost on handcrafted text-pair features.",
+      "Pairwise graph structure such as duplicate-question neighborhoods, candidate transitive closure, node degree, or frequency magic features improves the score."
+    ],
+    "do_not_use_when": [
+      "The task is a prompt-response LLM preference or reasoning task where a cross-encoder or LLM adapter is load-bearing.",
+      "The task is multimodal image-text retrieval where visual embedding and image-text fusion are core stages.",
+      "The task is ordinary single-document classification or regression with no pairwise similarity structure."
+    ],
+    "key_insight": "The load-bearing topology is pair construction followed by many cheap lexical, embedding, and graph features whose interactions are learned by a shallow ensemble. This differs from neural cross-encoder retrieval because feature coverage and pair graph leakage controls drive performance.",
+    "critical_stages": ["pair_normalization", "lexical_similarity_features", "embedding_similarity_features", "pair_context_features", "feature_ensemble"],
+    "swappable_stages": {
+      "lexical_similarity_features": "Can use Jaccard, Dice, BM25, Levenshtein, edit distance, token overlap, character n-grams, or TF-IDF cosine if the feature contract remains pairwise.",
+      "embedding_similarity_features": "Can use GloVe, Word2Vec, LSA, SVD, sentence embeddings, or averaged token embeddings.",
+      "feature_ensemble": "Can be XGBoost, LightGBM, SVR, logistic regression, random forest, or a weighted blend over the same feature table."
+    },
+    "scaling_notes": "Cache normalized text, sparse vectorizers, and pair graph statistics; block candidate generation before all-pairs scoring when the corpus is large.",
+    "failure_modes": [
+      "Frequency or graph features can leak validation labels if train/test or group boundaries are mixed.",
+      "Aggressive normalization can erase brand names, symbols, code identifiers, or exact terms that define a match.",
+      "Lexical features underperform on semantic paraphrases unless embedding or synonym-expansion features are included."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "pair_normalization_before_similarity",
+      "statement": "Normalize, spell-correct, tokenize, and optionally expand queries before computing lexical or embedding pair features.",
+      "rationale": "Similarity features assume both sides of the pair share consistent tokenization and text cleanup.",
+      "confidence": 0.95,
+      "source_stage": "support2_true_novel_semantic_audit",
+      "source_reference": "research/validation_results_expansion_130_round3_support2_gap_mining.json"
+    },
+    {
+      "category": "validation",
+      "subject": "pair_graph_leakage_guard",
+      "statement": "Build graph, frequency, and transitive-closure features with split-aware boundaries.",
+      "rationale": "Text-pair competitions often derive strong features from graph structure; those features can leak labels if computed across validation targets.",
+      "confidence": 0.9,
+      "source_stage": "support2_true_novel_semantic_audit",
+      "source_reference": "research/validation_results_expansion_130_round3_support2_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "review_status": "draft",
+    "rationale": "Added after support-2 validation left repeated divergent text-pair and search-relevance solutions. Semantic comparison found Shopee price matching too multimodal/retrieval-centric, Mercari price regression too single-record/sparse-regression-centric, and CommonLit too transformer-regression-centric for classic handcrafted pair-feature ensembles.",
+    "dejargonized_summary": "This covers text matching tasks where the main work is comparing two text fields with lexical, embedding, and graph features before training an ensemble.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_130_round3_support2_full.json",
+      "Gap mining: research/validation_results_expansion_130_round3_support2_gap_mining.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Specific feature choices such as BM25, Levenshtein, Jaccard, and query expansion may later become expansion operations."
+    ],
+    "references": [
+      {
+        "title": "Sciona support-2 expansion validation audit",
+        "citation": "research/validation_results_expansion_130_round3_support2_gap_mining.json",
+        "note": "Deterministic missing-technique clusters for Home Depot, Quora, Avito, Coleridge, and related text-pair cases."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "pair_normalization", "name": "Pair Normalization", "description": "Clean text pairs with lowercasing, spelling correction, synonym or query expansion, punctuation handling, and domain-specific token normalization.", "dejargonized_description": "Prepare both sides of each text pair so their words can be compared consistently.", "concept_type": "data_assembly", "inputs": [{"name": "text_pairs", "type_desc": "PairDataset[str, str]", "constraints": "Raw text pairs.", "required": true}], "outputs": [{"name": "normalized_pairs", "type_desc": "PairDataset[list[str], list[str]]", "constraints": "Tokenized and normalized pairs.", "required": true}], "preconditions": ["Raw pair fields are present."], "guarantees": ["Pair order and normalized tokens are explicit."], "matched_primitive": ""},
+    {"stage_id": "lexical_similarity_features", "name": "Lexical Similarity Features", "description": "Compute n-gram overlap, Jaccard, cosine TF-IDF, Levenshtein/edit distance, BM25, exact match, and length-ratio features for each pair.", "dejargonized_description": "Measure how much the two texts share exact words, phrases, characters, and spelling patterns.", "concept_type": "signal_transform", "inputs": [{"name": "normalized_pairs", "type_desc": "PairDataset[list[str], list[str]]", "constraints": "Normalized token pairs.", "required": true}], "outputs": [{"name": "lexical_features", "type_desc": "FeatureMatrix", "constraints": "Pairwise lexical feature columns.", "required": true}], "preconditions": ["Pair text is normalized."], "guarantees": ["Features are aligned one row per text pair."], "matched_primitive": ""},
+    {"stage_id": "embedding_similarity_features", "name": "Embedding Similarity Features", "description": "Compute similarity from GloVe, Word2Vec, LSA/SVD, averaged token vectors, or sentence embeddings.", "dejargonized_description": "Compare the meaning of the two texts using vector representations, not only exact words.", "concept_type": "dimensionality_reduction", "inputs": [{"name": "normalized_pairs", "type_desc": "PairDataset[list[str], list[str]]", "constraints": "Normalized token pairs.", "required": true}], "outputs": [{"name": "embedding_features", "type_desc": "FeatureMatrix", "constraints": "Semantic similarity feature columns.", "required": true}], "preconditions": ["Embedding model or vectorizer is fitted."], "guarantees": ["Semantic feature rows match the pair table."], "matched_primitive": ""},
+    {"stage_id": "pair_context_features", "name": "Pair Context Features", "description": "Add pair graph degree, duplicate-neighborhood, transitive-closure, candidate frequency, category, or magic features computed with leakage-safe splits.", "dejargonized_description": "Use dataset context such as how often each text appears and how pairs connect to each other.", "concept_type": "graph_optimization", "inputs": [{"name": "normalized_pairs", "type_desc": "PairDataset[list[str], list[str]]", "constraints": "Normalized token pairs.", "required": true}], "outputs": [{"name": "context_features", "type_desc": "FeatureMatrix", "constraints": "Graph and frequency feature columns.", "required": true}], "preconditions": ["Split-aware pair graph can be built."], "guarantees": ["Context features respect validation boundaries."], "matched_primitive": ""},
+    {"stage_id": "feature_ensemble", "name": "Feature Ensemble", "description": "Train XGBoost, LightGBM, SVR, logistic regression, or blended models on the combined lexical, embedding, and context features.", "dejargonized_description": "Train one or more models that learn which similarity features matter for the final match score.", "concept_type": "optimization", "inputs": [{"name": "lexical_features", "type_desc": "FeatureMatrix", "constraints": "Lexical features.", "required": true}, {"name": "embedding_features", "type_desc": "FeatureMatrix", "constraints": "Embedding features.", "required": true}, {"name": "context_features", "type_desc": "FeatureMatrix", "constraints": "Context features.", "required": true}], "outputs": [{"name": "raw_pair_scores", "type_desc": "NDArray[float]", "constraints": "Raw pair scores.", "required": true}], "preconditions": ["Training labels and validation split are available."], "guarantees": ["Each input pair receives a raw score."], "matched_primitive": ""},
+    {"stage_id": "metric_thresholding", "name": "Metric Thresholding", "description": "Calibrate thresholds, ranks, target normalization, or transitive closure against the competition metric.", "dejargonized_description": "Convert raw scores into final match, duplicate, or relevance outputs.", "concept_type": "optimization", "inputs": [{"name": "raw_pair_scores", "type_desc": "NDArray[float]", "constraints": "Raw model scores.", "required": true}], "outputs": [{"name": "pair_scores", "type_desc": "SubmissionArtifact", "constraints": "Final benchmark outputs.", "required": true}], "preconditions": ["Metric and output format are known."], "guarantees": ["Outputs are calibrated and formatted for submission."], "matched_primitive": ""}
+  ]
+}

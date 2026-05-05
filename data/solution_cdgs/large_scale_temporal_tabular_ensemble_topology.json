@@ -1,0 +1,117 @@
+{
+  "asset_id": "solution.kaggle.large_scale_temporal_tabular_ensemble_topology",
+  "asset_version": "v1",
+  "family": "large_scale_temporal_tabular_ensemble",
+  "paradigm": "optimization",
+  "name": "Large-Scale Temporal Tabular Ensemble Pipeline Template",
+  "summary": "Reusable base CDG for high-volume tabular, demand forecasting, store sales, bike sharing, market, click-through, inventory, and time-indexed competitions that combine memory-efficient loading, lag and rolling-window features, categorical/statistical encodings, leakage-safe time validation, gradient-boosted ensembles, and metric-specific post-processing.",
+  "dejargonized_summary": "Load a large event or demand table efficiently, create time, lag, rolling, calendar, inventory, market, and categorical features, validate using time or group boundaries, train LightGBM, XGBoost, CatBoost, or sparse models, and apply post-processing such as clipping, zero-sum correction, target inverse transforms, or online refitting.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "large_scale_tabular",
+    "temporal_tabular",
+    "demand_forecasting",
+    "inventory_demand",
+    "bike_sharing_demand",
+    "store_sales_forecasting",
+    "market_prediction",
+    "click_through_rate_prediction",
+    "transaction_fraud_tabular",
+    "rolling_window_features",
+    "lag_features",
+    "time_of_day_features",
+    "day_of_week_features",
+    "catboost_categorical",
+    "lightgbm_large_leaf",
+    "xgboost_lightgbm_catboost_ensemble",
+    "sparse_matrix_scale",
+    "hdf5_fast_loading",
+    "time_series_cross_validation",
+    "streaming_cross_validation",
+    "online_model_refit",
+    "outlier_clipping",
+    "metric_aligned_loss",
+    "zero_sum_postprocessing"
+  ],
+  "inputs": [
+    {"name": "tabular_events", "type_desc": "LargeTabularDataset", "constraints": "Large event, demand, market, user, sensor, or transaction table with time, group, categorical, or sparse features.", "required": true}
+  ],
+  "outputs": [
+    {"name": "tabular_predictions", "type_desc": "SubmissionArtifact", "constraints": "Predictions formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The solution is dominated by large tabular/time-indexed feature engineering rather than image, language-model, or physics operators.",
+      "Winning techniques include rolling-window statistics, lag features, time-of-day/day-of-week features, sparse matrices, HDF5 or memory-mapped loading, CatBoost categorical handling, large-leaf LightGBM, GBM ensembles, online refitting, or target-specific clipping.",
+      "Validation must respect time order, user/store/product groups, streaming splits, or temporal leakage boundaries."
+    ],
+    "do_not_use_when": [
+      "The primary signal is free text pair similarity, image segmentation, GNSS carrier-phase estimation, or LLM adapter fine-tuning.",
+      "The dataset is small and independent rows can be modeled with a simple static tabular classifier without temporal or scale constraints.",
+      "The target is a coupled action plan or route requiring search rather than independent row-level predictions."
+    ],
+    "key_insight": "The durable topology is large-scale feature materialization under leakage-safe temporal validation, followed by boosted/sparse ensembles and metric-specific post-processing. This differs from generic tabular CDGs because memory layout, rolling windows, and time-aware validation are load-bearing stages.",
+    "critical_stages": ["efficient_table_loading", "temporal_feature_engineering", "leakage_safe_validation", "boosted_sparse_ensemble", "metric_postprocessing"],
+    "swappable_stages": {
+      "efficient_table_loading": "Can use HDF5, Parquet, memory maps, chunked CSV, sparse matrices, or cached feature stores.",
+      "boosted_sparse_ensemble": "Can use LightGBM, XGBoost, CatBoost, ExtraTrees, FTRL, sparse linear models, or blended ensembles.",
+      "metric_postprocessing": "Can use clipping, rounding, zero-sum correction, target inverse transform, thresholding, or online refitting depending on the metric."
+    },
+    "scaling_notes": "Cache intermediate feature tables, compute rolling features by group, avoid leakage in target encodings, and materialize sparse or categorical features in memory-aware formats.",
+    "failure_modes": [
+      "Random folds leak future or same-entity information into validation.",
+      "Rolling features can accidentally include the prediction target or future rows.",
+      "Large sparse matrices can exceed memory if categorical or text vocabularies are not capped or hashed.",
+      "Online refitting can overfit public leaderboard drift if update cadence is not validated."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "data",
+      "subject": "efficient_loading_before_feature_materialization",
+      "statement": "Load and partition the table with a memory-aware format before constructing rolling, sparse, or categorical feature matrices.",
+      "rationale": "High-volume tabular competitions fail operationally if feature engineering is attempted on uncached raw rows.",
+      "confidence": 0.95,
+      "source_stage": "support2_true_novel_semantic_audit",
+      "source_reference": "research/validation_results_expansion_130_round3_support2_gap_mining.json"
+    },
+    {
+      "category": "validation",
+      "subject": "time_and_group_split_before_model_selection",
+      "statement": "Define time-aware, streaming, or group-aware validation before model selection and target encoding.",
+      "rationale": "The same entity or future rows can leak through lag features, rolling windows, and encodings if validation is not fixed first.",
+      "confidence": 0.95,
+      "source_stage": "support2_true_novel_semantic_audit",
+      "source_reference": "research/validation_results_expansion_130_round3_support2_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "review_status": "draft",
+    "rationale": "Added after support-2 validation left repeated divergent large-scale temporal tabular solutions. Semantic comparison found generic tabular, Mercari sparse text regression, and Optiver-style volatility templates too narrow because they do not jointly represent memory-aware loading, rolling/lag feature materialization, temporal validation, boosted/categorical ensembles, and metric-specific post-processing.",
+    "dejargonized_summary": "This covers big table competitions where time-aware feature engineering, validation, memory layout, and boosted ensembles are the main topology.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_130_round3_support2_full.json",
+      "Gap mining: research/validation_results_expansion_130_round3_support2_gap_mining.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Individual refinements such as CatBoost categorical handling, HDF5 loading, and online refitting may later become expansion operations."
+    ],
+    "references": [
+      {
+        "title": "Sciona support-2 expansion validation audit",
+        "citation": "research/validation_results_expansion_130_round3_support2_gap_mining.json",
+        "note": "Deterministic missing-technique clusters for Optiver, Grupo Bimbo, bike sharing, ASHRAE, Home Credit, TalkingData, and related tabular/time-series cases."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "efficient_table_loading", "name": "Efficient Table Loading", "description": "Load high-volume tabular, event, or transaction data with chunked reads, HDF5/Parquet, memory maps, sparse matrices, categorical compression, or cached feature stores.", "dejargonized_description": "Read the large dataset in a format that can be processed without running out of memory.", "concept_type": "data_extraction", "inputs": [{"name": "tabular_events", "type_desc": "LargeTabularDataset", "constraints": "Raw table or event stream.", "required": true}], "outputs": [{"name": "loaded_table", "type_desc": "DataFrameOrSparseMatrix", "constraints": "Memory-aware raw table.", "required": true}], "preconditions": ["Raw files and schema are available."], "guarantees": ["Rows, time keys, groups, and categorical columns are preserved."], "matched_primitive": ""},
+    {"stage_id": "temporal_feature_engineering", "name": "Temporal Feature Engineering", "description": "Create lag features, rolling-window statistics, revealed-target history, time-of-day/day-of-week/month embeddings, market indicators, demand statistics, and grouped aggregations.", "dejargonized_description": "Summarize each entity's recent history and calendar context as model features.", "concept_type": "data_assembly", "inputs": [{"name": "loaded_table", "type_desc": "DataFrameOrSparseMatrix", "constraints": "Loaded event table.", "required": true}], "outputs": [{"name": "temporal_features", "type_desc": "FeatureMatrix", "constraints": "Lag, rolling, calendar, and grouped features.", "required": true}], "preconditions": ["Time and group keys are defined."], "guarantees": ["Feature rows align to prediction rows."], "matched_primitive": ""},
+    {"stage_id": "categorical_sparse_encoding", "name": "Categorical and Sparse Encoding", "description": "Encode high-cardinality categoricals with CatBoost-style handling, target encoding, hashing, one-hot sparse matrices, or capped vocabularies.", "dejargonized_description": "Turn categories and sparse identifiers into model-ready columns without exploding memory.", "concept_type": "data_assembly", "inputs": [{"name": "loaded_table", "type_desc": "DataFrameOrSparseMatrix", "constraints": "Loaded event table.", "required": true}], "outputs": [{"name": "encoded_features", "type_desc": "FeatureMatrix", "constraints": "Categorical and sparse feature columns.", "required": true}], "preconditions": ["Categorical columns and validation folds are known."], "guarantees": ["Encodings are fit without validation leakage."], "matched_primitive": ""},
+    {"stage_id": "leakage_safe_validation", "name": "Leakage-Safe Validation", "description": "Define time-series, streaming, grouped, or rolling validation splits before target encodings, online refits, and model selection.", "dejargonized_description": "Split training and validation so future rows or same-entity rows cannot leak into the score.", "concept_type": "ml_model_selection", "inputs": [{"name": "temporal_features", "type_desc": "FeatureMatrix", "constraints": "Temporal features.", "required": true}, {"name": "encoded_features", "type_desc": "FeatureMatrix", "constraints": "Encoded features.", "required": true}], "outputs": [{"name": "validation_plan", "type_desc": "ValidationPlan", "constraints": "Time/group-aware folds.", "required": true}], "preconditions": ["Entity and timestamp columns are available."], "guarantees": ["Model selection uses leakage-safe splits."], "matched_primitive": ""},
+    {"stage_id": "boosted_sparse_ensemble", "name": "Boosted and Sparse Ensemble", "description": "Train LightGBM, XGBoost, CatBoost, ExtraTrees, sparse linear/FTRL, or blended models with metric-aligned objectives and early stopping.", "dejargonized_description": "Train several strong tabular models and blend their predictions.", "concept_type": "optimization", "inputs": [{"name": "temporal_features", "type_desc": "FeatureMatrix", "constraints": "Temporal features.", "required": true}, {"name": "encoded_features", "type_desc": "FeatureMatrix", "constraints": "Encoded features.", "required": true}, {"name": "validation_plan", "type_desc": "ValidationPlan", "constraints": "Leakage-safe validation.", "required": true}], "outputs": [{"name": "raw_predictions", "type_desc": "NDArray[float]", "constraints": "Raw row-level predictions.", "required": true}], "preconditions": ["Training labels and validation plan are available."], "guarantees": ["Predictions are produced for each target row."], "matched_primitive": ""},
+    {"stage_id": "metric_postprocessing", "name": "Metric Postprocessing", "description": "Apply target inverse transforms, clipping, rank or threshold tuning, zero-sum constraints, online refitting, smoothing, or domain-specific corrections.", "dejargonized_description": "Adjust raw predictions to satisfy the metric and benchmark rules.", "concept_type": "optimization", "inputs": [{"name": "raw_predictions", "type_desc": "NDArray[float]", "constraints": "Raw model predictions.", "required": true}], "outputs": [{"name": "tabular_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final submission artifact.", "required": true}], "preconditions": ["Metric and output constraints are known."], "guarantees": ["Predictions are formatted and metric-calibrated."], "matched_primitive": ""}
+  ]
+}

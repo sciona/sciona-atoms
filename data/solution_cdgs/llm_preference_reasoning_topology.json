@@ -4,15 +4,32 @@
   "family": "llm_preference_reasoning",
   "paradigm": "neural_network",
   "name": "LLM Preference and Reasoning Pipeline Template",
-  "summary": "Reusable base CDG for LLM competitions that combine prompt construction, paired or sequence encoding, supervised or LoRA fine-tuning, preference/ranking heads, reasoning augmentation, and calibration or thresholding.",
-  "dejargonized_summary": "Prepare prompts or paired responses, encode them with an LLM or cross-encoder, adapt the model with supervised fine-tuning or LoRA, train a preference or reasoning head, and calibrate outputs for ranking, detection, or scoring tasks.",
+  "summary": "Reusable base CDG for LLM, language-model efficiency, fine-tuning, alignment, preference, and reasoning competitions that combine prompt construction, paired or sequence encoding, supervised/LoRA/QLoRA adapter fine-tuning, efficient training controls, preference/ranking heads, reasoning augmentation, RLHF-style supervision, and calibration or thresholding.",
+  "dejargonized_summary": "Prepare prompts or paired responses, encode them with an LLM or cross-encoder, adapt the model with supervised fine-tuning, LoRA, QLoRA, adapters, or instruction tuning, optionally use memory-efficient training such as FlashAttention, paged optimizers, mixed precision, and gradient accumulation, train a preference or reasoning head, and calibrate outputs for ranking, detection, or scoring tasks.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "llm_preference",
+    "llm_efficiency",
+    "llm_fine_tuning",
+    "language_model_efficiency",
+    "efficient_llm_training",
     "pairwise_ranking",
     "cross_encoder",
     "prompt_reasoning",
     "lora_finetuning",
+    "qlora_4bit_training",
+    "quantized_4bit_lora",
+    "lora_moe_adapter_routing",
+    "flashattention2",
+    "paged_optimizers",
+    "gradient_accumulation",
+    "mixed_precision_bf16",
+    "data_distillation",
+    "quality_filtering",
+    "instruction_tuning",
+    "open_orca_instruction_data",
+    "elastic_weight_consolidation",
+    "synthetic_self_play_data",
     "rlhf",
     "hallucination_detection",
     "misconception_matching"
@@ -27,7 +44,8 @@
     "use_when": [
       "The task is scored by pairwise preference, response quality, hallucination detection, misconception matching, reasoning quality, or prompt-response relevance.",
       "Inputs contain prompts, answers, response pairs, generated text, candidate misconceptions, or query-document pairs.",
-      "A pretrained LLM, DeBERTa-style cross-encoder, LoRA adapter, or instruction-tuned model is a load-bearing representation stage."
+      "A pretrained LLM, DeBERTa-style cross-encoder, LoRA/QLoRA adapter, instruction-tuned model, or efficient fine-tuning stack is a load-bearing representation stage.",
+      "Winning techniques include QLoRA, LoRA-MoE, adapter routing, FlashAttention-2, paged optimizers, bf16/mixed precision, gradient accumulation, data distillation, instruction tuning, RLHF, or synthetic self-play data."
     ],
     "do_not_use_when": [
       "The task is ordinary tabular classification with no prompt, response, pair, or ranking structure.",
@@ -36,10 +54,11 @@
     "key_insight": "The durable topology is paired or prompt-aware representation before preference, reasoning, or ranking supervision; the exact LLM backbone is swappable.",
     "critical_stages": ["prompt_pair_construction", "llm_or_cross_encoder", "preference_reasoning_head"],
     "swappable_stages": {
-      "llm_or_cross_encoder": "Can be DeBERTa, Llama, QLoRA, a cross-encoder, or another paired-input transformer if it preserves pair-aware scoring.",
+      "llm_or_cross_encoder": "Can be DeBERTa, Llama, QLoRA, LoRA-MoE, a cross-encoder, adapter-routed model, or another paired-input transformer if it preserves prompt-aware or pair-aware scoring.",
+      "reasoning_augmentation": "Can be external LLM data, data distillation, synthetic self-play, instruction data, rationale distillation, or RLHF-style preference examples.",
       "metric_calibration": "Can be threshold tuning, rank averaging, Bradley-Terry normalization, or metric-specific rounding."
     },
-    "scaling_notes": "Cache tokenization, use adapter fine-tuning for large models, and keep pair generation deterministic for reproducible validation.",
+    "scaling_notes": "Cache tokenization, use adapter or quantized fine-tuning for large models, and keep pair generation deterministic for reproducible validation.",
     "failure_modes": [
       "Symmetry violations in response-pair ordering can leak label artifacts.",
       "Prompt templates that differ between train and inference can break calibrated scores.",
@@ -103,8 +122,8 @@
     {
       "stage_id": "llm_or_cross_encoder",
       "name": "LLM or Cross-Encoder Representation",
-      "description": "Encode examples with a DeBERTa cross-encoder, Llama-style model, LoRA/QLoRA adapter, or instruction-tuned transformer.",
-      "dejargonized_description": "Use a pretrained language model to create pair-aware or prompt-aware representations.",
+      "description": "Encode examples with a DeBERTa cross-encoder, Llama-style model, LoRA/QLoRA adapter, LoRA-MoE adapter routing, or instruction-tuned transformer.",
+      "dejargonized_description": "Use a pretrained language model, often with lightweight adapters, to create pair-aware or prompt-aware representations.",
       "concept_type": "neural_network",
       "inputs": [{"name": "paired_examples", "type_desc": "PairDataset", "constraints": "Constructed prompt or pair examples.", "required": true}],
       "outputs": [{"name": "text_representations", "type_desc": "Tensor", "constraints": "Dense language representations.", "required": true}],
@@ -115,8 +134,8 @@
     {
       "stage_id": "reasoning_augmentation",
       "name": "Reasoning Augmentation",
-      "description": "Optionally add chain-of-thought traces, rationale distillation, external LLM data, or prompt variants.",
-      "dejargonized_description": "Add reasoning traces or extra generated examples when the task rewards explicit reasoning or robust prompt coverage.",
+      "description": "Optionally add chain-of-thought traces, rationale distillation, external LLM data, data distillation, quality filtering, synthetic self-play examples, instruction-tuning corpora, RLHF-style preference data, or prompt variants.",
+      "dejargonized_description": "Add reasoning traces, filtered training data, or extra generated examples when the task rewards explicit reasoning, alignment, or robust prompt coverage.",
       "concept_type": "external_tool",
       "inputs": [{"name": "text_representations", "type_desc": "Tensor", "constraints": "Language representations or prompt examples.", "required": true}],
       "outputs": [{"name": "augmented_representations", "type_desc": "Tensor", "constraints": "Reasoning-aware training artifacts.", "required": true}],

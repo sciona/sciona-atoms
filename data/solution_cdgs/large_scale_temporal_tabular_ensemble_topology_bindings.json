@@ -1,0 +1,12 @@
+{
+  "asset_id": "solution.kaggle.large_scale_temporal_tabular_ensemble_topology.bindings",
+  "template": "large_scale_temporal_tabular_ensemble_topology",
+  "bindings": [
+    {"stage_id": "efficient_table_loading", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Memory-aware table loading depends on file format, schema, and scale."}},
+    {"stage_id": "temporal_feature_engineering", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Lag, rolling, and grouped statistics are dataset-specific feature engineering."}},
+    {"stage_id": "categorical_sparse_encoding", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Categorical and sparse encodings must be fit with competition-specific leakage boundaries."}},
+    {"stage_id": "leakage_safe_validation", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Temporal, grouped, or streaming validation is a pipeline contract."}},
+    {"stage_id": "boosted_sparse_ensemble", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Boosted, sparse, and categorical learners are swappable external implementations."}},
+    {"stage_id": "metric_postprocessing", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Metric post-processing is validation-driven and benchmark-specific."}}
+  ]
+}

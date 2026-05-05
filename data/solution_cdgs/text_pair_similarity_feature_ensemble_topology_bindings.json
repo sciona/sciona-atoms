@@ -1,0 +1,12 @@
+{
+  "asset_id": "solution.kaggle.text_pair_similarity_feature_ensemble_topology.bindings",
+  "template": "text_pair_similarity_feature_ensemble_topology",
+  "bindings": [
+    {"stage_id": "pair_normalization", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Text normalization, spelling correction, and synonym expansion are dataset-specific preprocessing."}},
+    {"stage_id": "lexical_similarity_features", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Lexical feature extraction is implemented from standard string and sparse-vector operations."}},
+    {"stage_id": "embedding_similarity_features", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Embedding sources vary across competitions and may come from pretrained vectors or fitted decompositions."}},
+    {"stage_id": "pair_context_features", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Graph, frequency, and leakage-safe context features are competition-specific."}},
+    {"stage_id": "feature_ensemble", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "The ensemble can be implemented with tree, linear, kernel, or blended learners."}},
+    {"stage_id": "metric_thresholding", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Metric thresholding and transitive closure are validation-driven post-processing."}}
+  ]
+}

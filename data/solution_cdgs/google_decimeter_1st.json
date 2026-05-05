@@ -4,11 +4,27 @@
   "family": "sensor_fusion",
   "paradigm": "sequential_filter",
   "name": "Google Smartphone Decimeter Challenge - 1st Place (2021) - Pipeline Template",
-  "summary": "Sensor fusion / Trajectory Optimization solution template for Google Smartphone Decimeter Challenge - 1st Place (2021), modeled as a 5-stage deterministic pipeline: Raw GNSS processing, Outlier rejection, State estimation, Smoothing, and downstream competition-specific post-processing.",
-  "dejargonized_summary": "This template captures the ordered steps used by Google Smartphone Decimeter Challenge - 1st Place (2021): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "summary": "GNSS sensor fusion and trajectory optimization template for smartphone decimeter localization, covering raw pseudorange and carrier-phase processing, outlier rejection, EKF or factor graph optimization (FGO), TDCP/double-difference phase features, forward-backward RTS smoothing, map matching, and satellite/phone bias correction.",
+  "dejargonized_summary": "Estimate a phone trajectory from raw satellite signals by cleaning noisy measurements, combining pseudorange, carrier phase, IMU, and optional visual odometry signals, optimizing the trajectory with an EKF or factor graph, smoothing it forward and backward, correcting satellite or phone biases, and matching the path to map constraints.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "kalman_filter",
+    "extended_kalman_filter",
+    "factor_graph_optimization",
+    "fgo",
+    "gnss_double_difference",
+    "tdcp",
+    "time_differenced_carrier_phase",
+    "carrier_phase_smoothing",
+    "ionosphere_free_l1_l5",
+    "satellite_specific_clock_bias",
+    "satellite_specific_phase_bias",
+    "phone_bias_correction",
+    "rts_smoother",
+    "forward_backward_smoothing",
+    "hmm_map_matching",
+    "visual_inertial_odometry",
+    "multipath_rejection",
     "sensor",
     "fusion",
     "trajectory",
@@ -32,16 +48,17 @@
   ],
   "applicability": {
     "use_when": [
-      "The new task has the same broad problem type: Sensor fusion / Trajectory Optimization.",
+      "The new task has the same broad problem type: GNSS, phone, satellite, or outdoor sensor fusion / trajectory optimization.",
       "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
-      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
+      "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages.",
+      "Winning techniques include factor graph optimization, double-difference GNSS, TDCP, carrier-phase smoothing, satellite-specific bias correction, visual-inertial fusion, or HMM/map-matching."
     ],
     "do_not_use_when": [
       "The target task lacks the modality or metadata required by the early pipeline stages.",
       "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
       "The evaluation metric rewards a fundamentally different output structure than the source competition."
     ],
-    "key_insight": "The load-bearing idea is the pipeline topology: Raw GNSS processing creates the representation needed by Phone position snapping, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "key_insight": "The load-bearing idea is the pipeline topology: raw GNSS processing creates pseudorange, carrier-phase, and bias-corrected measurement factors that feed sequential filtering or factor graph optimization; smoothing and map matching then improve the full trajectory rather than isolated points.",
     "critical_stages": [
       "raw_gnss_processing",
       "outlier_rejection"
@@ -80,8 +97,8 @@
     {
       "stage_id": "raw_gnss_processing",
       "name": "Raw GNSS processing",
-      "description": "extract pseudo-ranges and carrier phases from raw Android log files (custom parsing)",
-      "dejargonized_description": "This stage extract pseudo-ranges and carrier phases from raw Android log files (custom parsing).",
+      "description": "Extract pseudoranges, carrier phase, Doppler, L1/L5 combinations, satellite metadata, and phone clock fields from raw Android GNSS log files.",
+      "dejargonized_description": "Read the raw phone satellite logs and turn them into usable distance, phase, and satellite measurement tables.",
       "concept_type": "data_extraction",
       "inputs": [
         {
@@ -110,8 +127,8 @@
     {
       "stage_id": "outlier_rejection",
       "name": "Outlier rejection",
-      "description": "filter satellite signals based on carrier-to-noise density (C/N0) and multipath indicators (pandas)",
-      "dejargonized_description": "This stage filter satellite signals based on carrier-to-noise density (C/N0) and multipath indicators (pandas).",
+      "description": "Filter satellite signals based on carrier-to-noise density (C/N0), multipath indicators, double-difference residuals, TDCP consistency, and learned multipath rejection scores.",
+      "dejargonized_description": "Remove or downweight satellite measurements that look unreliable before trajectory optimization.",
       "concept_type": "signal_filter",
       "inputs": [
         {
@@ -140,8 +157,8 @@
     {
       "stage_id": "state_estimation",
       "name": "State estimation",
-      "description": "apply an Extended Kalman Filter (EKF) to fuse the GNSS positioning with IMU data (accelerometer, gyro) (custom math)",
-      "dejargonized_description": "This stage apply an Extended Kalman Filter (EKF) to fuse the GNSS positioning with IMU data (accelerometer, gyro) (custom math).",
+      "description": "Apply an Extended Kalman Filter (EKF) or factor graph optimization (FGO) to fuse GNSS pseudorange, carrier phase, TDCP, IMU, visual-inertial odometry, and bias-correction factors.",
+      "dejargonized_description": "Estimate the full trajectory by combining all trustworthy satellite, motion, and bias-correction signals in one filter or graph optimizer.",
       "concept_type": "sequential_filter",
       "inputs": [
         {
@@ -170,8 +187,8 @@
     {
       "stage_id": "smoothing",
       "name": "Smoothing",
-      "description": "apply a forward-backward Rauch-Tung-Striebel (RTS) smoother to the EKF trajectory (scipy)",
-      "dejargonized_description": "This stage apply a forward-backward Rauch-Tung-Striebel (RTS) smoother to the EKF trajectory (scipy).",
+      "description": "Apply a forward-backward Rauch-Tung-Striebel (RTS) smoother, graph smoothing pass, or carrier-phase smoothing to the estimated trajectory.",
+      "dejargonized_description": "Use both past and future measurements to smooth the estimated path and reduce jitter.",
       "concept_type": "sequential_filter",
       "inputs": [
         {
@@ -200,8 +217,8 @@
     {
       "stage_id": "phone_position_snapping",
       "name": "Phone position snapping",
-      "description": "snap the derived trajectory to a localized highway/street grid using map matching",
-      "dejargonized_description": "This stage snap the derived trajectory to a localized highway/street grid using map matching.",
+      "description": "Apply HMM map matching, road snapping, phone/satellite bias correction, and competition-specific trajectory post-processing.",
+      "dejargonized_description": "Adjust the smoothed path so it follows plausible roads or map constraints and corrects systematic phone or satellite bias.",
       "concept_type": "searching",
       "inputs": [
         {
