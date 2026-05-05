@@ -1,0 +1,51 @@
+{
+  "asset_id": "family.kalman_filter.expansions.v1",
+  "asset_version": "phase1.v1",
+  "family": "kalman_filter",
+  "domain": "state_estimation",
+  "name": "Kalman Filter Expansion Inventory",
+  "description": "Declarative refinement inventory for Kalman filter pipelines.",
+  "operations": [
+    {
+      "rule_name": "insert_innovation_consistency_check_after_innovation",
+      "operation_type": "insert",
+      "applies_to": "kalman_filter.innovation",
+      "name": "Insert Innovation Consistency Check",
+      "dejargonized_summary": "Check whether innovations match their predicted covariance.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_covariance_pd_validation_after_predict_covariance",
+      "operation_type": "insert",
+      "applies_to": "kalman_filter.predict_covariance",
+      "name": "Insert Covariance Positive-Definite Validation",
+      "dejargonized_summary": "Check that the predicted covariance matrix remains positive definite.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_gain_magnitude_analysis_after_kalman_gain",
+      "operation_type": "insert",
+      "applies_to": "kalman_filter.kalman_gain",
+      "name": "Insert Gain Magnitude Analysis",
+      "dejargonized_summary": "Detect unstable Kalman gains that can drive filter divergence.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_state_smoothness_check_after_update_state",
+      "operation_type": "insert",
+      "applies_to": "kalman_filter.update_state",
+      "name": "Insert State Smoothness Check",
+      "dejargonized_summary": "Check whether state estimates jump too abruptly after updates.",
+      "action_classes": ["gate_or_validate", "smooth_or_aggregate"]
+    }
+  ],
+  "audit": {
+    "provenance": "provider_migrated_asset",
+    "source_kind": "shared_asset",
+    "review_status": "transitional",
+    "rationale": "Moves existing Kalman filter expansion rules onto the common provider expansion schema.",
+    "dejargonized_summary": "Reusable checks for innovation consistency, covariance validity, gain magnitude, and state smoothness.",
+    "references": [{"title": "sciona-atoms kalman_filter expansion atoms"}],
+    "maintainers": ["sciona-atoms"]
+  }
+}

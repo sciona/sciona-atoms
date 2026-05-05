@@ -1,0 +1,51 @@
+{
+  "asset_id": "family.divide_and_conquer.expansions.v1",
+  "asset_version": "phase1.v1",
+  "family": "divide_and_conquer",
+  "domain": "algorithmic",
+  "name": "Divide and Conquer Expansion Inventory",
+  "description": "Declarative refinement inventory for divide-and-conquer pipelines.",
+  "operations": [
+    {
+      "rule_name": "insert_split_balance_after_split",
+      "operation_type": "insert",
+      "applies_to": "divide_and_conquer.split",
+      "name": "Insert Split Balance Analysis",
+      "dejargonized_summary": "Check whether recursive splits are becoming badly unbalanced.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_recursion_depth_check_before_recurse",
+      "operation_type": "insert",
+      "applies_to": "divide_and_conquer.recurse",
+      "name": "Insert Recursion Depth Check",
+      "dejargonized_summary": "Check whether recursion is getting too deep for the input size.",
+      "action_classes": ["precondition", "gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_merge_cost_profiling_after_merge",
+      "operation_type": "insert",
+      "applies_to": "divide_and_conquer.merge",
+      "name": "Insert Merge Cost Profiling",
+      "dejargonized_summary": "Measure whether merge work is dominating the algorithm.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_subproblem_overlap_detection_before_split",
+      "operation_type": "insert",
+      "applies_to": "divide_and_conquer.split",
+      "name": "Insert Subproblem Overlap Detection",
+      "dejargonized_summary": "Detect repeated subproblems that may call for memoization or dynamic programming.",
+      "action_classes": ["precondition", "branch_and_compare"]
+    }
+  ],
+  "audit": {
+    "provenance": "provider_migrated_asset",
+    "source_kind": "shared_asset",
+    "review_status": "transitional",
+    "rationale": "Moves existing divide-and-conquer expansion rules onto the common provider expansion schema.",
+    "dejargonized_summary": "Reusable checks for recursive split quality, recursion depth, merge cost, and repeated subproblems.",
+    "references": [{"title": "sciona-atoms divide_and_conquer expansion atoms"}],
+    "maintainers": ["sciona-atoms"]
+  }
+}

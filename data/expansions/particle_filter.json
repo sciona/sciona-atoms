@@ -1,0 +1,51 @@
+{
+  "asset_id": "family.particle_filter.expansions.v1",
+  "asset_version": "phase1.v1",
+  "family": "particle_filter",
+  "domain": "state_estimation",
+  "name": "Particle Filter Expansion Inventory",
+  "description": "Declarative refinement inventory for particle filter pipelines.",
+  "operations": [
+    {
+      "rule_name": "insert_ess_monitoring_after_reweight",
+      "operation_type": "insert",
+      "applies_to": "particle_filter.reweight",
+      "name": "Insert Effective Sample Size Monitoring",
+      "dejargonized_summary": "Monitor whether particle weights have collapsed after reweighting.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_particle_diversity_analysis_after_predict",
+      "operation_type": "insert",
+      "applies_to": "particle_filter.predict",
+      "name": "Insert Particle Diversity Analysis",
+      "dejargonized_summary": "Check whether predicted particles still cover enough state diversity.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_weight_variance_tracking_after_postprocess",
+      "operation_type": "insert",
+      "applies_to": "particle_filter.postprocess",
+      "name": "Insert Weight Variance Tracking",
+      "dejargonized_summary": "Track whether final particle weights are too concentrated.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_resampling_quality_check_after_preprocess",
+      "operation_type": "insert",
+      "applies_to": "particle_filter.preprocess",
+      "name": "Insert Resampling Quality Check",
+      "dejargonized_summary": "Check whether resampling preserves enough particle diversity.",
+      "action_classes": ["gate_or_validate", "branch_and_compare"]
+    }
+  ],
+  "audit": {
+    "provenance": "provider_migrated_asset",
+    "source_kind": "shared_asset",
+    "review_status": "transitional",
+    "rationale": "Moves existing particle filter expansion rules onto the common provider expansion schema.",
+    "dejargonized_summary": "Reusable checks for particle degeneracy, diversity, weight variance, and resampling quality.",
+    "references": [{"title": "sciona-atoms particle_filter expansion atoms"}],
+    "maintainers": ["sciona-atoms"]
+  }
+}

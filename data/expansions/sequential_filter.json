@@ -1,0 +1,51 @@
+{
+  "asset_id": "family.sequential_filter.expansions.v1",
+  "asset_version": "phase1.v1",
+  "family": "sequential_filter",
+  "domain": "state_estimation",
+  "name": "Sequential Filter Expansion Inventory",
+  "description": "Declarative refinement inventory for generic sequential filter pipelines.",
+  "operations": [
+    {
+      "rule_name": "insert_observability_check_before_predict",
+      "operation_type": "insert",
+      "applies_to": "sequential_filter.predict",
+      "name": "Insert Observability Check",
+      "dejargonized_summary": "Check whether the filter has enough observations to estimate the state.",
+      "action_classes": ["precondition", "gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_innovation_whiteness_after_update",
+      "operation_type": "insert",
+      "applies_to": "sequential_filter.update",
+      "name": "Insert Innovation Whiteness Check",
+      "dejargonized_summary": "Check whether update residuals still contain structure the model missed.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_adaptive_noise_before_predict_cov",
+      "operation_type": "insert",
+      "applies_to": "sequential_filter.predict_covariance",
+      "name": "Insert Adaptive Noise Estimation",
+      "dejargonized_summary": "Adapt process or observation noise when fixed noise assumptions are unstable.",
+      "action_classes": ["insert_correction"]
+    },
+    {
+      "rule_name": "insert_divergence_detection_after_update",
+      "operation_type": "insert",
+      "applies_to": "sequential_filter.update",
+      "name": "Insert Divergence Detection",
+      "dejargonized_summary": "Detect when sequential state updates are diverging.",
+      "action_classes": ["gate_or_validate"]
+    }
+  ],
+  "audit": {
+    "provenance": "provider_migrated_asset",
+    "source_kind": "shared_asset",
+    "review_status": "transitional",
+    "rationale": "Moves existing sequential filter expansion rules onto the common provider expansion schema.",
+    "dejargonized_summary": "Reusable checks for observability, innovation whiteness, adaptive noise, and divergence.",
+    "references": [{"title": "sciona-atoms sequential_filter expansion atoms"}],
+    "maintainers": ["sciona-atoms"]
+  }
+}

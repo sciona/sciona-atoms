@@ -1,0 +1,51 @@
+{
+  "asset_id": "family.belief_propagation.expansions.v1",
+  "asset_version": "phase1.v1",
+  "family": "belief_propagation",
+  "domain": "probabilistic_inference",
+  "name": "Belief Propagation Expansion Inventory",
+  "description": "Declarative refinement inventory for belief propagation pipelines.",
+  "operations": [
+    {
+      "rule_name": "insert_message_convergence_monitoring_after_factor_to_var",
+      "operation_type": "insert",
+      "applies_to": "belief_propagation.factor_to_variable_message",
+      "name": "Insert Message Convergence Monitoring",
+      "dejargonized_summary": "Monitor whether factor-to-variable messages are still changing too much.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_belief_normalization_validation_after_marginal",
+      "operation_type": "insert",
+      "applies_to": "belief_propagation.marginal",
+      "name": "Insert Belief Normalization Validation",
+      "dejargonized_summary": "Check that marginal beliefs normalize to valid probability distributions.",
+      "action_classes": ["gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_message_damping_analysis_after_var_to_factor",
+      "operation_type": "insert",
+      "applies_to": "belief_propagation.variable_to_factor_message",
+      "name": "Insert Message Damping Analysis",
+      "dejargonized_summary": "Check whether message damping is needed to stabilize loopy updates.",
+      "action_classes": ["smooth_or_aggregate", "gate_or_validate"]
+    },
+    {
+      "rule_name": "insert_cycle_detection_before_var_to_factor",
+      "operation_type": "insert",
+      "applies_to": "belief_propagation.variable_to_factor_message",
+      "name": "Insert Cycle Detection",
+      "dejargonized_summary": "Detect graph cycles that make exact tree-style belief propagation unsafe.",
+      "action_classes": ["precondition", "gate_or_validate"]
+    }
+  ],
+  "audit": {
+    "provenance": "provider_migrated_asset",
+    "source_kind": "shared_asset",
+    "review_status": "transitional",
+    "rationale": "Moves existing belief propagation expansion rules onto the common provider expansion schema.",
+    "dejargonized_summary": "Reusable checks for message convergence, normalization, damping, and cycles.",
+    "references": [{"title": "sciona-atoms belief_propagation expansion atoms"}],
+    "maintainers": ["sciona-atoms"]
+  }
+}
