@@ -16,17 +16,24 @@
       "intent": "Expose HMC integration failures after the accept/reject decision.",
       "dejargonized_summary": "Add a check for sampler proposals whose energy changed too much to trust.",
       "trigger": {
-        "metric_name": "energy_error",
+        "metric_name": "divergent_transition_fraction",
         "comparison": "gt",
-        "threshold": 1000.0,
-        "required_intermediate_keys": ["energy_errors"]
+        "threshold": 0.0,
+        "required_intermediate_keys": [
+          "energies_initial",
+          "energies_proposed"
+        ]
       },
-      "action_classes": ["gate_or_validate"],
+      "action_classes": [
+        "gate_or_validate"
+      ],
       "rewrite": {
         "before_summary": "Accepted and rejected proposals flow downstream without explicit divergence evidence.",
         "after_summary": "A divergence detector is inserted after the acceptance step.",
         "information_flow_effect": "Adds sampler-health evidence while preserving the chain output contract."
-      }
+      },
+      "runtime_rule_builder": "insert_divergence_detection_after_accept",
+      "operation_id": "sciona.expansions.mcmc.insert_divergence_detection_after_accept"
     },
     {
       "rule_name": "insert_step_size_adaptation_before_leapfrog",
@@ -38,17 +45,24 @@
       "intent": "Tune leapfrog step size when acceptance behavior indicates unstable or inefficient proposals.",
       "dejargonized_summary": "Add a warmup step that adjusts the sampler step size from acceptance feedback.",
       "trigger": {
-        "metric_name": "acceptance_rate",
+        "metric_name": "mean_acceptance_probability",
         "comparison": "lt",
         "threshold": 0.55,
-        "required_intermediate_keys": ["acceptance_rate"]
+        "required_intermediate_keys": [
+          "accept_probs"
+        ]
       },
-      "action_classes": ["precondition", "smooth_or_aggregate"],
+      "action_classes": [
+        "precondition",
+        "smooth_or_aggregate"
+      ],
       "rewrite": {
         "before_summary": "Leapfrog integration consumes a fixed step size.",
         "after_summary": "A dual-averaging step-size adaptation stage runs before leapfrog integration.",
         "information_flow_effect": "Uses warmup acceptance evidence to select a more stable integration scale."
-      }
+      },
+      "runtime_rule_builder": "insert_step_size_adaptation_before_leapfrog",
+      "operation_id": "sciona.expansions.mcmc.insert_step_size_adaptation_before_leapfrog"
     },
     {
       "rule_name": "insert_mass_matrix_estimation_before_leapfrog",
@@ -63,14 +77,21 @@
         "metric_name": "parameter_scale_ratio",
         "comparison": "gt",
         "threshold": 10.0,
-        "required_intermediate_keys": ["parameter_scale_ratio"]
+        "required_intermediate_keys": [
+          "samples"
+        ]
       },
-      "action_classes": ["precondition", "smooth_or_aggregate"],
+      "action_classes": [
+        "precondition",
+        "smooth_or_aggregate"
+      ],
       "rewrite": {
         "before_summary": "Leapfrog position updates use a default mass matrix.",
         "after_summary": "A mass-matrix estimation stage is inserted before position updates.",
         "information_flow_effect": "Uses warmup samples to improve sampler geometry without changing target density semantics."
-      }
+      },
+      "runtime_rule_builder": "insert_mass_matrix_estimation_before_leapfrog",
+      "operation_id": "sciona.expansions.mcmc.insert_mass_matrix_estimation_before_leapfrog"
     },
     {
       "rule_name": "insert_convergence_diagnostics_after_accept",
@@ -85,14 +106,20 @@
         "metric_name": "max_rhat",
         "comparison": "gt",
         "threshold": 1.01,
-        "required_intermediate_keys": ["max_rhat"]
+        "required_intermediate_keys": [
+          "chains"
+        ]
       },
-      "action_classes": ["gate_or_validate"],
+      "action_classes": [
+        "gate_or_validate"
+      ],
       "rewrite": {
         "before_summary": "Samples may be consumed without explicit convergence evidence.",
         "after_summary": "Convergence diagnostics are inserted after the acceptance step.",
         "information_flow_effect": "Adds chain quality evidence before posterior summaries are trusted."
-      }
+      },
+      "runtime_rule_builder": "insert_convergence_diagnostics_after_accept",
+      "operation_id": "sciona.expansions.mcmc.insert_convergence_diagnostics_after_accept"
     }
   ],
   "audit": {
@@ -107,6 +134,8 @@
         "note": "Rule names and trigger metrics mirror sciona/principal/expansion_rules/mcmc.py."
       }
     ],
-    "maintainers": ["sciona-atoms"]
+    "maintainers": [
+      "sciona-atoms"
+    ]
   }
 }

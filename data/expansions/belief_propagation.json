@@ -12,7 +12,25 @@
       "applies_to": "belief_propagation.factor_to_variable_message",
       "name": "Insert Message Convergence Monitoring",
       "dejargonized_summary": "Monitor whether factor-to-variable messages are still changing too much.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "message_final_delta",
+        "comparison": "gt",
+        "threshold": 1e-06,
+        "required_intermediate_keys": [
+          "message_final_delta"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Factor-to-variable messages feed downstream belief updates without convergence evidence.",
+        "after_summary": "A message-convergence monitor is inserted after factor-to-variable message computation.",
+        "information_flow_effect": "Adds convergence evidence before downstream belief updates consume messages."
+      },
+      "runtime_rule_builder": "insert_message_convergence_monitoring_after_factor_to_var",
+      "runtime_diagnostic": "message_final_delta",
+      "operation_id": "sciona.expansions.belief_propagation.insert_message_convergence_monitoring_after_factor_to_var"
     },
     {
       "rule_name": "insert_belief_normalization_validation_after_marginal",
@@ -20,7 +38,25 @@
       "applies_to": "belief_propagation.marginal",
       "name": "Insert Belief Normalization Validation",
       "dejargonized_summary": "Check that marginal beliefs normalize to valid probability distributions.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "belief_max_deviation",
+        "comparison": "gt",
+        "threshold": 1e-08,
+        "required_intermediate_keys": [
+          "belief_max_deviation"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Marginal beliefs flow downstream without explicit normalization evidence.",
+        "after_summary": "A normalization validator is inserted after marginal belief computation.",
+        "information_flow_effect": "Adds probability-validity evidence for marginal beliefs."
+      },
+      "runtime_rule_builder": "insert_belief_normalization_validation_after_marginal",
+      "runtime_diagnostic": "belief_max_deviation",
+      "operation_id": "sciona.expansions.belief_propagation.insert_belief_normalization_validation_after_marginal"
     },
     {
       "rule_name": "insert_message_damping_analysis_after_var_to_factor",
@@ -28,7 +64,26 @@
       "applies_to": "belief_propagation.variable_to_factor_message",
       "name": "Insert Message Damping Analysis",
       "dejargonized_summary": "Check whether message damping is needed to stabilize loopy updates.",
-      "action_classes": ["smooth_or_aggregate", "gate_or_validate"]
+      "action_classes": [
+        "smooth_or_aggregate",
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "oscillation_score",
+        "comparison": "gt",
+        "threshold": 0.1,
+        "required_intermediate_keys": [
+          "oscillation_score"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Variable-to-factor messages continue without oscillation evidence.",
+        "after_summary": "A damping analysis stage is inserted after variable-to-factor message computation.",
+        "information_flow_effect": "Adds stability evidence for loopy message passing."
+      },
+      "runtime_rule_builder": "insert_message_damping_analysis_after_var_to_factor",
+      "runtime_diagnostic": "oscillation_score",
+      "operation_id": "sciona.expansions.belief_propagation.insert_message_damping_analysis_after_var_to_factor"
     },
     {
       "rule_name": "insert_cycle_detection_before_var_to_factor",
@@ -36,7 +91,26 @@
       "applies_to": "belief_propagation.variable_to_factor_message",
       "name": "Insert Cycle Detection",
       "dejargonized_summary": "Detect graph cycles that make exact tree-style belief propagation unsafe.",
-      "action_classes": ["precondition", "gate_or_validate"]
+      "action_classes": [
+        "precondition",
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "n_extra_edges",
+        "comparison": "gt",
+        "threshold": 0.0,
+        "required_intermediate_keys": [
+          "n_extra_edges"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Variable-to-factor messages may assume tree-like structure implicitly.",
+        "after_summary": "A cycle detector is inserted before variable-to-factor message computation.",
+        "information_flow_effect": "Adds graph-structure evidence before approximate loopy updates."
+      },
+      "runtime_rule_builder": "insert_cycle_detection_before_var_to_factor",
+      "runtime_diagnostic": "n_extra_edges",
+      "operation_id": "sciona.expansions.belief_propagation.insert_cycle_detection_before_var_to_factor"
     }
   ],
   "audit": {
@@ -45,7 +119,13 @@
     "review_status": "transitional",
     "rationale": "Moves existing belief propagation expansion rules onto the common provider expansion schema.",
     "dejargonized_summary": "Reusable checks for message convergence, normalization, damping, and cycles.",
-    "references": [{"title": "sciona-atoms belief_propagation expansion atoms"}],
-    "maintainers": ["sciona-atoms"]
+    "references": [
+      {
+        "title": "sciona-atoms belief_propagation expansion atoms"
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms"
+    ]
   }
 }

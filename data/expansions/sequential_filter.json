@@ -12,7 +12,28 @@
       "applies_to": "sequential_filter.predict",
       "name": "Insert Observability Check",
       "dejargonized_summary": "Check whether the filter has enough observations to estimate the state.",
-      "action_classes": ["precondition", "gate_or_validate"]
+      "action_classes": [
+        "precondition",
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "observability_rank_deficit",
+        "comparison": "gt",
+        "threshold": 0.0,
+        "required_runtime_keys": [
+          "F",
+          "H",
+          "n_states"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Prediction proceeds without observability evidence.",
+        "after_summary": "An observability check is inserted before prediction.",
+        "information_flow_effect": "Adds state-identifiability evidence before propagating the filter."
+      },
+      "runtime_rule_builder": "insert_observability_check_before_predict",
+      "runtime_diagnostic": "observability_rank_deficit",
+      "operation_id": "sciona.expansions.sequential_filter.insert_observability_check_before_predict"
     },
     {
       "rule_name": "insert_innovation_whiteness_after_update",
@@ -20,7 +41,25 @@
       "applies_to": "sequential_filter.update",
       "name": "Insert Innovation Whiteness Check",
       "dejargonized_summary": "Check whether update residuals still contain structure the model missed.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "max_innovation_acf",
+        "comparison": "gt",
+        "threshold": 0.0,
+        "required_intermediate_keys": [
+          "innovations"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Updates flow downstream without innovation whiteness evidence.",
+        "after_summary": "An innovation-whiteness check is inserted after update.",
+        "information_flow_effect": "Adds residual-correlation evidence for model mismatch."
+      },
+      "runtime_rule_builder": "insert_innovation_whiteness_after_update",
+      "runtime_diagnostic": "max_innovation_acf",
+      "operation_id": "sciona.expansions.sequential_filter.insert_innovation_whiteness_after_update"
     },
     {
       "rule_name": "insert_adaptive_noise_before_predict_cov",
@@ -28,7 +67,25 @@
       "applies_to": "sequential_filter.predict_covariance",
       "name": "Insert Adaptive Noise Estimation",
       "dejargonized_summary": "Adapt process or observation noise when fixed noise assumptions are unstable.",
-      "action_classes": ["insert_correction"]
+      "action_classes": [
+        "insert_correction"
+      ],
+      "trigger": {
+        "metric_name": "max_innovation_acf",
+        "comparison": "gt",
+        "threshold": 0.0,
+        "required_intermediate_keys": [
+          "innovations"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Prediction covariance uses fixed noise assumptions.",
+        "after_summary": "An adaptive-noise estimation stage is inserted before covariance prediction.",
+        "information_flow_effect": "Adds residual-driven noise adaptation evidence before covariance propagation."
+      },
+      "runtime_rule_builder": "insert_adaptive_noise_before_predict_cov",
+      "runtime_diagnostic": "max_innovation_acf",
+      "operation_id": "sciona.expansions.sequential_filter.insert_adaptive_noise_before_predict_cov"
     },
     {
       "rule_name": "insert_divergence_detection_after_update",
@@ -36,7 +93,26 @@
       "applies_to": "sequential_filter.update",
       "name": "Insert Divergence Detection",
       "dejargonized_summary": "Detect when sequential state updates are diverging.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "nis_exceed_fraction",
+        "comparison": "gt",
+        "threshold": 0.1,
+        "required_intermediate_keys": [
+          "innovations",
+          "S_matrices"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Filter updates flow downstream without NIS divergence evidence.",
+        "after_summary": "A divergence detector is inserted after update.",
+        "information_flow_effect": "Adds statistical divergence evidence before trusting state estimates."
+      },
+      "runtime_rule_builder": "insert_divergence_detection_after_update",
+      "runtime_diagnostic": "nis_exceed_fraction",
+      "operation_id": "sciona.expansions.sequential_filter.insert_divergence_detection_after_update"
     }
   ],
   "audit": {
@@ -45,7 +121,13 @@
     "review_status": "transitional",
     "rationale": "Moves existing sequential filter expansion rules onto the common provider expansion schema.",
     "dejargonized_summary": "Reusable checks for observability, innovation whiteness, adaptive noise, and divergence.",
-    "references": [{"title": "sciona-atoms sequential_filter expansion atoms"}],
-    "maintainers": ["sciona-atoms"]
+    "references": [
+      {
+        "title": "sciona-atoms sequential_filter expansion atoms"
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms"
+    ]
   }
 }

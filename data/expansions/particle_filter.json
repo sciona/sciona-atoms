@@ -12,7 +12,25 @@
       "applies_to": "particle_filter.reweight",
       "name": "Insert Effective Sample Size Monitoring",
       "dejargonized_summary": "Monitor whether particle weights have collapsed after reweighting.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "ess_fraction",
+        "comparison": "lt",
+        "threshold": 0.5,
+        "required_intermediate_keys": [
+          "ess_fraction"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Reweighted particles flow downstream without degeneracy evidence.",
+        "after_summary": "An effective-sample-size monitor is inserted after reweighting.",
+        "information_flow_effect": "Adds particle degeneracy evidence before resampling or estimation."
+      },
+      "runtime_rule_builder": "insert_ess_monitoring_after_reweight",
+      "runtime_diagnostic": "ess_fraction",
+      "operation_id": "sciona.expansions.particle_filter.insert_ess_monitoring_after_reweight"
     },
     {
       "rule_name": "insert_particle_diversity_analysis_after_predict",
@@ -20,7 +38,25 @@
       "applies_to": "particle_filter.predict",
       "name": "Insert Particle Diversity Analysis",
       "dejargonized_summary": "Check whether predicted particles still cover enough state diversity.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "particle_diversity_low",
+        "comparison": "gt",
+        "threshold": 0.0,
+        "required_intermediate_keys": [
+          "particle_diversity_low"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Predicted particles flow onward without diversity evidence.",
+        "after_summary": "A particle-diversity analyzer is inserted after prediction.",
+        "information_flow_effect": "Adds state-space coverage evidence for the particle set."
+      },
+      "runtime_rule_builder": "insert_particle_diversity_analysis_after_predict",
+      "runtime_diagnostic": "particle_diversity_low",
+      "operation_id": "sciona.expansions.particle_filter.insert_particle_diversity_analysis_after_predict"
     },
     {
       "rule_name": "insert_weight_variance_tracking_after_postprocess",
@@ -28,7 +64,25 @@
       "applies_to": "particle_filter.postprocess",
       "name": "Insert Weight Variance Tracking",
       "dejargonized_summary": "Track whether final particle weights are too concentrated.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "weight_variance_trend",
+        "comparison": "gt",
+        "threshold": 0.0,
+        "required_intermediate_keys": [
+          "weight_variance_trend"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Postprocessed particles flow downstream without weight trend evidence.",
+        "after_summary": "A weight-variance tracker is inserted after postprocessing.",
+        "information_flow_effect": "Adds weight concentration evidence before final particle summaries."
+      },
+      "runtime_rule_builder": "insert_weight_variance_tracking_after_postprocess",
+      "runtime_diagnostic": "weight_variance_trend",
+      "operation_id": "sciona.expansions.particle_filter.insert_weight_variance_tracking_after_postprocess"
     },
     {
       "rule_name": "insert_resampling_quality_check_after_preprocess",
@@ -36,7 +90,26 @@
       "applies_to": "particle_filter.preprocess",
       "name": "Insert Resampling Quality Check",
       "dejargonized_summary": "Check whether resampling preserves enough particle diversity.",
-      "action_classes": ["gate_or_validate", "branch_and_compare"]
+      "action_classes": [
+        "gate_or_validate",
+        "branch_and_compare"
+      ],
+      "trigger": {
+        "metric_name": "max_duplication_fraction",
+        "comparison": "gt",
+        "threshold": 0.1,
+        "required_intermediate_keys": [
+          "max_duplication_fraction"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Preprocessed particles flow toward resampling without duplication evidence.",
+        "after_summary": "A resampling quality check is inserted after preprocessing.",
+        "information_flow_effect": "Adds diversity-preservation evidence for resampling decisions."
+      },
+      "runtime_rule_builder": "insert_resampling_quality_check_after_preprocess",
+      "runtime_diagnostic": "max_duplication_fraction",
+      "operation_id": "sciona.expansions.particle_filter.insert_resampling_quality_check_after_preprocess"
     }
   ],
   "audit": {
@@ -45,7 +118,13 @@
     "review_status": "transitional",
     "rationale": "Moves existing particle filter expansion rules onto the common provider expansion schema.",
     "dejargonized_summary": "Reusable checks for particle degeneracy, diversity, weight variance, and resampling quality.",
-    "references": [{"title": "sciona-atoms particle_filter expansion atoms"}],
-    "maintainers": ["sciona-atoms"]
+    "references": [
+      {
+        "title": "sciona-atoms particle_filter expansion atoms"
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms"
+    ]
   }
 }

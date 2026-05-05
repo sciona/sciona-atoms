@@ -12,7 +12,25 @@
       "applies_to": "divide_and_conquer.split",
       "name": "Insert Split Balance Analysis",
       "dejargonized_summary": "Check whether recursive splits are becoming badly unbalanced.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "split_balance",
+        "comparison": "lt",
+        "threshold": 0.5,
+        "required_intermediate_keys": [
+          "split_balance"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Split results feed recursion directly.",
+        "after_summary": "A split-balance analysis stage is inserted after partitioning.",
+        "information_flow_effect": "Adds partition-quality evidence before recursive descent."
+      },
+      "runtime_rule_builder": "insert_split_balance_after_split",
+      "runtime_diagnostic": "split_balance",
+      "operation_id": "sciona.expansions.divide_and_conquer.insert_split_balance_after_split"
     },
     {
       "rule_name": "insert_recursion_depth_check_before_recurse",
@@ -20,7 +38,27 @@
       "applies_to": "divide_and_conquer.recurse",
       "name": "Insert Recursion Depth Check",
       "dejargonized_summary": "Check whether recursion is getting too deep for the input size.",
-      "action_classes": ["precondition", "gate_or_validate"]
+      "action_classes": [
+        "precondition",
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "depth_ratio",
+        "comparison": "gt",
+        "threshold": 1.0,
+        "required_intermediate_keys": [
+          "recursion_depth",
+          "input_size"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Recursive calls proceed without depth-vs-size evidence.",
+        "after_summary": "A recursion-depth check is inserted before recursive descent.",
+        "information_flow_effect": "Adds stack-depth and termination-risk evidence before recursing."
+      },
+      "runtime_rule_builder": "insert_recursion_depth_check_before_recurse",
+      "runtime_diagnostic": "depth_ratio",
+      "operation_id": "sciona.expansions.divide_and_conquer.insert_recursion_depth_check_before_recurse"
     },
     {
       "rule_name": "insert_merge_cost_profiling_after_merge",
@@ -28,7 +66,25 @@
       "applies_to": "divide_and_conquer.merge",
       "name": "Insert Merge Cost Profiling",
       "dejargonized_summary": "Measure whether merge work is dominating the algorithm.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "merge_fraction",
+        "comparison": "gt",
+        "threshold": 0.5,
+        "required_intermediate_keys": [
+          "merge_fraction"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Merge output feeds downstream stages without cost attribution.",
+        "after_summary": "A merge-cost profiler is inserted after merge.",
+        "information_flow_effect": "Adds runtime composition evidence for divide-and-conquer overhead."
+      },
+      "runtime_rule_builder": "insert_merge_cost_profiling_after_merge",
+      "runtime_diagnostic": "merge_fraction",
+      "operation_id": "sciona.expansions.divide_and_conquer.insert_merge_cost_profiling_after_merge"
     },
     {
       "rule_name": "insert_subproblem_overlap_detection_before_split",
@@ -36,7 +92,26 @@
       "applies_to": "divide_and_conquer.split",
       "name": "Insert Subproblem Overlap Detection",
       "dejargonized_summary": "Detect repeated subproblems that may call for memoization or dynamic programming.",
-      "action_classes": ["precondition", "branch_and_compare"]
+      "action_classes": [
+        "precondition",
+        "branch_and_compare"
+      ],
+      "trigger": {
+        "metric_name": "subproblem_overlap_ratio",
+        "comparison": "gt",
+        "threshold": 0.1,
+        "required_intermediate_keys": [
+          "subproblem_overlap_ratio"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Subproblems are split without checking repeated work.",
+        "after_summary": "An overlap detector is inserted before splitting.",
+        "information_flow_effect": "Adds repeated-subproblem evidence that can justify memoization or DP refinement."
+      },
+      "runtime_rule_builder": "insert_subproblem_overlap_detection_before_split",
+      "runtime_diagnostic": "subproblem_overlap_ratio",
+      "operation_id": "sciona.expansions.divide_and_conquer.insert_subproblem_overlap_detection_before_split"
     }
   ],
   "audit": {
@@ -45,7 +120,13 @@
     "review_status": "transitional",
     "rationale": "Moves existing divide-and-conquer expansion rules onto the common provider expansion schema.",
     "dejargonized_summary": "Reusable checks for recursive split quality, recursion depth, merge cost, and repeated subproblems.",
-    "references": [{"title": "sciona-atoms divide_and_conquer expansion atoms"}],
-    "maintainers": ["sciona-atoms"]
+    "references": [
+      {
+        "title": "sciona-atoms divide_and_conquer expansion atoms"
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms"
+    ]
   }
 }

@@ -12,7 +12,25 @@
       "applies_to": "kalman_filter.innovation",
       "name": "Insert Innovation Consistency Check",
       "dejargonized_summary": "Check whether innovations match their predicted covariance.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "mean_nis",
+        "comparison": "gt",
+        "threshold": 0.0,
+        "required_intermediate_keys": [
+          "mean_nis"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Innovations feed the update path without consistency evidence.",
+        "after_summary": "An innovation consistency check is inserted after innovation computation.",
+        "information_flow_effect": "Adds model-fit evidence from normalized innovation statistics."
+      },
+      "runtime_rule_builder": "insert_innovation_consistency_check_after_innovation",
+      "runtime_diagnostic": "mean_nis",
+      "operation_id": "sciona.expansions.kalman_filter.insert_innovation_consistency_check_after_innovation"
     },
     {
       "rule_name": "insert_covariance_pd_validation_after_predict_covariance",
@@ -20,7 +38,25 @@
       "applies_to": "kalman_filter.predict_covariance",
       "name": "Insert Covariance Positive-Definite Validation",
       "dejargonized_summary": "Check that the predicted covariance matrix remains positive definite.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "min_covariance_eigenvalue",
+        "comparison": "lte",
+        "threshold": 0.0,
+        "required_intermediate_keys": [
+          "min_covariance_eigenvalue"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Predicted covariance flows downstream without positive-definiteness evidence.",
+        "after_summary": "A covariance positive-definiteness validator is inserted after covariance prediction.",
+        "information_flow_effect": "Adds numerical validity evidence for the state uncertainty representation."
+      },
+      "runtime_rule_builder": "insert_covariance_pd_validation_after_predict_covariance",
+      "runtime_diagnostic": "min_covariance_eigenvalue",
+      "operation_id": "sciona.expansions.kalman_filter.insert_covariance_pd_validation_after_predict_covariance"
     },
     {
       "rule_name": "insert_gain_magnitude_analysis_after_kalman_gain",
@@ -28,7 +64,25 @@
       "applies_to": "kalman_filter.kalman_gain",
       "name": "Insert Gain Magnitude Analysis",
       "dejargonized_summary": "Detect unstable Kalman gains that can drive filter divergence.",
-      "action_classes": ["gate_or_validate"]
+      "action_classes": [
+        "gate_or_validate"
+      ],
+      "trigger": {
+        "metric_name": "max_kalman_gain_norm",
+        "comparison": "gt",
+        "threshold": 100.0,
+        "required_intermediate_keys": [
+          "max_kalman_gain_norm"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Kalman gains feed state updates without magnitude checks.",
+        "after_summary": "A gain magnitude analyzer is inserted after gain computation.",
+        "information_flow_effect": "Adds stability evidence before measurement updates can dominate the state."
+      },
+      "runtime_rule_builder": "insert_gain_magnitude_analysis_after_kalman_gain",
+      "runtime_diagnostic": "max_kalman_gain_norm",
+      "operation_id": "sciona.expansions.kalman_filter.insert_gain_magnitude_analysis_after_kalman_gain"
     },
     {
       "rule_name": "insert_state_smoothness_check_after_update_state",
@@ -36,7 +90,26 @@
       "applies_to": "kalman_filter.update_state",
       "name": "Insert State Smoothness Check",
       "dejargonized_summary": "Check whether state estimates jump too abruptly after updates.",
-      "action_classes": ["gate_or_validate", "smooth_or_aggregate"]
+      "action_classes": [
+        "gate_or_validate",
+        "smooth_or_aggregate"
+      ],
+      "trigger": {
+        "metric_name": "state_jump_fraction",
+        "comparison": "gt",
+        "threshold": 0.05,
+        "required_intermediate_keys": [
+          "state_jump_fraction"
+        ]
+      },
+      "rewrite": {
+        "before_summary": "Updated states flow downstream without jump evidence.",
+        "after_summary": "A state smoothness check is inserted after state update.",
+        "information_flow_effect": "Adds temporal smoothness evidence for state estimates."
+      },
+      "runtime_rule_builder": "insert_state_smoothness_check_after_update_state",
+      "runtime_diagnostic": "state_jump_fraction",
+      "operation_id": "sciona.expansions.kalman_filter.insert_state_smoothness_check_after_update_state"
     }
   ],
   "audit": {
@@ -45,7 +118,13 @@
     "review_status": "transitional",
     "rationale": "Moves existing Kalman filter expansion rules onto the common provider expansion schema.",
     "dejargonized_summary": "Reusable checks for innovation consistency, covariance validity, gain magnitude, and state smoothness.",
-    "references": [{"title": "sciona-atoms kalman_filter expansion atoms"}],
-    "maintainers": ["sciona-atoms"]
+    "references": [
+      {
+        "title": "sciona-atoms kalman_filter expansion atoms"
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms"
+    ]
   }
 }
