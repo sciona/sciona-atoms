@@ -1,0 +1,70 @@
+{
+  "asset_id": "family.agent_simulation_search_planning.expansions.v1",
+  "asset_version": "phase1.v1",
+  "family": "agent_simulation_search_planning",
+  "family_aliases": [
+    "agent_planning",
+    "agent_simulation",
+    "planning",
+    "reinforcement_learning",
+    "multi_agent"
+  ],
+  "domain": "planning",
+  "name": "Agent Simulation Search Planning Expansion Inventory",
+  "summary": "Declarative expansion and refinement inventory for agent, simulation, search, route, game, and constrained-planning pipeline adaptations.",
+  "operations": [
+    {
+      "rule_name": "insert_ppo_policy_optimization_after_rollout",
+      "operation_id": "sciona.expansions.agent_simulation_search_planning.ppo_policy_optimization",
+      "operation_type": "insert",
+      "applies_to": "agent_simulation_search_planning.search_or_rollout->constraint_repair",
+      "runtime_rule_builder": "insert_ppo_policy_optimization_after_rollout",
+      "runtime_diagnostic": "requires_ppo_policy_optimization",
+      "name": "PPO Policy Optimization",
+      "intent": "Insert PPO or multi-agent PPO policy optimization between simulator/search rollouts and final constraint repair when the solution depends on learned action policies.",
+      "dejargonized_summary": "Use PPO (Proximal Policy Optimization) or Multi-Agent PPO (Proximal Policy Optimization) to improve action policies from rollout trajectories before selecting a feasible plan.",
+      "trigger": {
+        "metric_name": "requires_ppo_policy_optimization",
+        "comparison": "gt",
+        "threshold": 0.0,
+        "required_any_intermediate_keys": [
+          "agent_simulation.requires_ppo",
+          "agent_simulation.use_ppo",
+          "agent_simulation.use_multi_agent_ppo",
+          "requires_ppo",
+          "use_ppo",
+          "use_multi_agent_ppo"
+        ]
+      },
+      "action_classes": [
+        "replace_stage",
+        "smooth_or_aggregate"
+      ],
+      "rewrite": {
+        "before_summary": "Candidates are generated and evaluated by search or rollout before feasibility repair.",
+        "after_summary": "PPO policy optimization refines rollout behavior or action scoring before feasibility repair and final plan selection.",
+        "information_flow_effect": "Preserves the plan-selection contract while adding a learned policy-improvement loop over simulated trajectories."
+      },
+      "uncertainty_notes": [
+        "Only use when policy optimization is load-bearing; ordinary greedy local search or hand-coded heuristics should use lighter planning refinements."
+      ]
+    }
+  ],
+  "audit": {
+    "provenance": "Derived from validation gap mining after the 130-template expansion-aware validation run.",
+    "source_kind": "local_asset",
+    "review_status": "draft",
+    "rationale": "PPO and multi-agent PPO recurred across remaining unmatched planning-style validation cases and was not covered by existing expansion operations.",
+    "dejargonized_summary": "This asset records PPO as a reusable planning-loop refinement rather than requiring a new base CDG.",
+    "references": [
+      {
+        "title": "Sciona expansion 130-template round-3 gap mining",
+        "citation": "research/validation_results_expansion_130_round3_gap_mining.json",
+        "note": "Support-5 reusable-operation candidate for PPO and multi-agent PPO."
+      }
+    ],
+    "maintainers": [
+      "sciona-atoms"
+    ]
+  }
+}
