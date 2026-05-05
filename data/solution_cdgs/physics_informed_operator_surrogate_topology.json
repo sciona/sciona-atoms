@@ -1,0 +1,70 @@
+{
+  "asset_id": "solution.kaggle.physics_informed_operator_surrogate_topology",
+  "asset_version": "v1",
+  "family": "physics_informed_surrogate",
+  "paradigm": "neural_network",
+  "name": "Physics-Informed Operator Surrogate Pipeline Template",
+  "summary": "Reusable base CDG for scientific regression tasks that combine physical state assembly, spectral/operator neural surrogates, physics constraints, and metric-specific post-processing.",
+  "dejargonized_summary": "Build physical state features, train a neural surrogate such as a transformer, Fourier Neural Operator, graph network, or spectral regressor, enforce physical constraints, and calibrate continuous predictions.",
+  "canonical_for_paradigm": false,
+  "variant_hints": ["physics_informed", "fourier_neural_operator", "spectral_regression", "scientific_surrogate", "operator_learning", "pinn", "pignn"],
+  "inputs": [{"name": "physical_observations", "type_desc": "ScientificDataset", "constraints": "Gridded, spectral, sequence, graph, or tabular physical measurements.", "required": true}],
+  "outputs": [{"name": "physical_predictions", "type_desc": "SubmissionArtifact", "constraints": "Continuous scientific predictions formatted for the metric.", "required": true}],
+  "applicability": {
+    "use_when": ["The target is a physical quantity governed by conservation, smoothness, spectral, graph, or operator structure.", "Winning solutions require FNO, transformer surrogates, PINN/PIGNN, spectral regression, or physics-informed constraints."],
+    "do_not_use_when": ["The task is ordinary image or tabular prediction with no physical state or scientific constraint.", "A lightweight feature-engineering expansion of an existing tabular, image, or signal CDG captures the solution without an operator or physics-constrained surrogate."],
+    "key_insight": "The durable topology is physical state construction followed by an operator or physics-constrained surrogate, not a generic estimator.",
+    "critical_stages": ["physical_state_assembly", "operator_surrogate", "constraint_projection"],
+    "swappable_stages": {"operator_surrogate": "Can be FNO, transformer, graph neural network, PINN, PIGNN, or a spectral regressor."},
+    "scaling_notes": "Use chunked/HDF5 loading for large arrays and validate constraints on held-out physical regimes.",
+    "failure_modes": ["A surrogate can fit leaderboard metrics while violating physical invariants.", "Incorrect coordinate or unit normalization breaks transfer across regimes."]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "physical_state_before_surrogate",
+      "statement": "Assemble coordinates, units, state tensors, and physical context before applying an operator or physics-informed surrogate.",
+      "rationale": "The surrogate stage learns over physical state structure rather than raw unaligned observations.",
+      "confidence": 0.95,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    },
+    {
+      "category": "data",
+      "subject": "constraint_projection_after_prediction",
+      "statement": "Apply conservation, boundary, positivity, smoothness, or metric-specific physical constraints after raw surrogate prediction.",
+      "rationale": "Constraint projection depends on predicted physical quantities and cannot be performed before the surrogate produces them.",
+      "confidence": 0.9,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    }
+  ],
+  "audit": {
+    "review_status": "draft",
+    "rationale": "Added after expansion validation left repeated unmatched scientific modeling solutions requiring physical state assembly, operator learning, and explicit constraints.",
+    "dejargonized_summary": "This covers scientific tasks where a model learns a physical input-output relationship and then enforces domain constraints.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_support3_full.json",
+      "Gap mining cleanup: research/validation_results_expansion_support3_gap_mining_cleanup.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Specific operator families such as FNO, PINN, PIGNN, and spectral regressors may later become refinements or atoms."
+    ],
+    "references": [
+      {
+        "title": "Sciona expansion support-3 validation audit",
+        "citation": "research/validation_results_expansion_support3_gap_mining_cleanup.json",
+        "note": "Local deterministic and semantic audit of unmatched solution patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "physical_state_assembly", "name": "Physical State Assembly", "description": "Load gridded, sequence, graph, spectral, or tabular physical observations and construct state tensors with coordinates, units, and exogenous variables.", "dejargonized_description": "Prepare physical inputs with coordinates, units, and derived state variables.", "concept_type": "data_assembly", "inputs": [{"name": "physical_observations", "type_desc": "ScientificDataset", "constraints": "Raw physical observations.", "required": true}], "outputs": [{"name": "state_tensor", "type_desc": "Tensor", "constraints": "Normalized physical state.", "required": true}], "preconditions": ["Coordinate system and units are known."], "guarantees": ["State tensors have consistent axes and units."], "matched_primitive": ""},
+    {"stage_id": "spectral_or_graph_features", "name": "Spectral or Graph Features", "description": "Compute vertical differences, Fourier features, graph neighborhoods, chemistry descriptors, or spectral basis features.", "dejargonized_description": "Create scientific features that expose known physical structure.", "concept_type": "signal_transform", "inputs": [{"name": "state_tensor", "type_desc": "Tensor", "constraints": "Physical state tensor.", "required": true}], "outputs": [{"name": "structured_features", "type_desc": "Tensor", "constraints": "Physics-aware features.", "required": true}], "preconditions": ["Feature transforms match the coordinate system."], "guarantees": ["Features preserve physical indexing."], "matched_primitive": ""},
+    {"stage_id": "operator_surrogate", "name": "Operator Surrogate", "description": "Train an FNO, transformer, graph neural network, PINN/PIGNN, or spectral regression model to map state features to targets.", "dejargonized_description": "Train a model that learns the physical input-output operator.", "concept_type": "neural_network", "inputs": [{"name": "structured_features", "type_desc": "Tensor", "constraints": "Physics-aware features.", "required": true}], "outputs": [{"name": "raw_physical_predictions", "type_desc": "Tensor", "constraints": "Raw physical predictions.", "required": true}], "preconditions": ["Training split covers physical regimes."], "guarantees": ["Predictions have the required target shape."], "matched_primitive": ""},
+    {"stage_id": "constraint_projection", "name": "Constraint Projection", "description": "Apply conservation, smoothness, positivity, boundary, or biogeochemical constraints to raw predictions.", "dejargonized_description": "Correct predictions so they satisfy required physical constraints.", "concept_type": "optimization", "inputs": [{"name": "raw_physical_predictions", "type_desc": "Tensor", "constraints": "Raw predictions.", "required": true}], "outputs": [{"name": "constrained_predictions", "type_desc": "Tensor", "constraints": "Constraint-aware predictions.", "required": true}], "preconditions": ["Constraint definitions are available."], "guarantees": ["Predictions satisfy explicit constraints or expose violations."], "matched_primitive": ""},
+    {"stage_id": "metric_postprocessing", "name": "Metric Postprocessing", "description": "Apply weighted least squares, detrending, smoothing, uncertainty aggregation, or target-specific clipping before submission.", "dejargonized_description": "Calibrate continuous predictions for the benchmark metric.", "concept_type": "optimization", "inputs": [{"name": "constrained_predictions", "type_desc": "Tensor", "constraints": "Constraint-aware predictions.", "required": true}], "outputs": [{"name": "physical_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final predictions.", "required": true}], "preconditions": ["Metric and output format are known."], "guarantees": ["Predictions are formatted for submission."], "matched_primitive": ""}
+  ]
+}

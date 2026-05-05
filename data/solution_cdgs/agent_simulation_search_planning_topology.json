@@ -1,0 +1,70 @@
+{
+  "asset_id": "solution.kaggle.agent_simulation_search_planning_topology",
+  "asset_version": "v1",
+  "family": "agent_simulation_search_planning",
+  "paradigm": "optimization",
+  "name": "Agent Simulation and Search Planning Pipeline Template",
+  "summary": "Reusable base CDG for game, route, scheduling, logistics, robot, and constrained planning competitions that combine state encoding, simulator rollouts, heuristic search, policy/value guidance, and rule-based orchestration.",
+  "dejargonized_summary": "Represent the environment state, generate candidate actions, simulate or search future outcomes, score candidates with heuristics or learned policies, and choose a valid plan under constraints.",
+  "canonical_for_paradigm": false,
+  "variant_hints": ["agent_planning", "simulation_rollout", "local_search", "route_optimization", "rule_based_orchestrator", "policy_value", "constraint_search"],
+  "inputs": [{"name": "environment_state", "type_desc": "PlanningDataset", "constraints": "Game state, route graph, schedule, robot state, or constraint instance.", "required": true}],
+  "outputs": [{"name": "planned_actions", "type_desc": "SubmissionArtifact", "constraints": "Actions, route, schedule, or optimized plan.", "required": true}],
+  "applicability": {
+    "use_when": ["The solution must output actions, routes, schedules, decisions, or plans under hard constraints.", "Winning solutions use simulation, rollout, local search, hill climbing, IDA*, beam search, policy/value guidance, or rule-based orchestration."],
+    "do_not_use_when": ["The benchmark asks only for independent labels or continuous predictions with no coupled plan constraints.", "The solution is a simple postprocessing heuristic on model predictions rather than a search, simulation, route, schedule, or action-planning loop."],
+    "key_insight": "The durable topology is state to candidate actions to search/simulation to constraint-checked plan selection.",
+    "critical_stages": ["state_encoder", "candidate_generator", "search_or_rollout"],
+    "swappable_stages": {"search_or_rollout": "Can be local search, simulated annealing, IDA*, beam search, MCTS, or simulator rollout."},
+    "scaling_notes": "Cache state transitions and keep feasibility checks cheap enough to run inside search loops.",
+    "failure_modes": ["A strong scorer cannot recover if candidate generation misses feasible high-value actions.", "Search can exploit simulator bugs or invalid constraint handling."]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "state_before_candidate_generation",
+      "statement": "Encode the full planning state and constraints before generating candidate actions, routes, schedules, or edits.",
+      "rationale": "Candidate generation is only meaningful when it can inspect resources, rules, and feasibility constraints.",
+      "confidence": 0.95,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    },
+    {
+      "category": "validation",
+      "subject": "constraint_check_after_search",
+      "statement": "Run feasibility repair or constraint checking after search or rollout and before selecting the final plan.",
+      "rationale": "Search and simulation can propose high-scoring candidates that are invalid under hard benchmark rules.",
+      "confidence": 0.9,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    }
+  ],
+  "audit": {
+    "review_status": "draft",
+    "rationale": "Added after expansion validation left repeated unmatched planning, game, routing, and simulation solutions where state, candidate generation, search, and repair form a distinct topology.",
+    "dejargonized_summary": "This covers competitions that output valid actions or plans rather than independent predictions.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_support3_full.json",
+      "Gap mining cleanup: research/validation_results_expansion_support3_gap_mining_cleanup.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Specific search methods such as MCTS, IDA*, simulated annealing, and beam search should remain refinements unless the topology changes."
+    ],
+    "references": [
+      {
+        "title": "Sciona expansion support-3 validation audit",
+        "citation": "research/validation_results_expansion_support3_gap_mining_cleanup.json",
+        "note": "Local deterministic and semantic audit of unmatched solution patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "state_encoder", "name": "State Encoder", "description": "Encode board, route, graph, robot, schedule, or environment state with all constraints and resources.", "dejargonized_description": "Turn the current planning problem into a structured state representation.", "concept_type": "data_assembly", "inputs": [{"name": "environment_state", "type_desc": "PlanningDataset", "constraints": "Raw state or instance.", "required": true}], "outputs": [{"name": "encoded_state", "type_desc": "PlanningState", "constraints": "Structured state.", "required": true}], "preconditions": ["Raw constraints are available."], "guarantees": ["Encoded state preserves feasibility constraints."], "matched_primitive": ""},
+    {"stage_id": "candidate_generator", "name": "Candidate Generator", "description": "Generate candidate moves, routes, schedules, questions, guesses, or control actions from the encoded state.", "dejargonized_description": "List plausible actions or plan edits to evaluate.", "concept_type": "searching", "inputs": [{"name": "encoded_state", "type_desc": "PlanningState", "constraints": "Structured state.", "required": true}], "outputs": [{"name": "candidate_actions", "type_desc": "CandidateSet", "constraints": "Feasible or repairable candidates.", "required": true}], "preconditions": ["Action space is known."], "guarantees": ["Candidate actions can be scored or simulated."], "matched_primitive": ""},
+    {"stage_id": "search_or_rollout", "name": "Search or Rollout", "description": "Run local search, simulated annealing, IDA*, beam search, dynamic programming, policy/value rollout, or simulator evaluation.", "dejargonized_description": "Explore candidate outcomes before choosing the final plan.", "concept_type": "optimization", "inputs": [{"name": "candidate_actions", "type_desc": "CandidateSet", "constraints": "Candidate actions.", "required": true}], "outputs": [{"name": "scored_candidates", "type_desc": "ScoredCandidateSet", "constraints": "Candidates with rollout/search scores.", "required": true}], "preconditions": ["Simulator or scoring heuristic is available."], "guarantees": ["Candidates are ranked by expected objective value or feasibility."], "matched_primitive": ""},
+    {"stage_id": "constraint_repair", "name": "Constraint Repair", "description": "Repair infeasible actions, enforce path or resource constraints, and remove invalid candidates.", "dejargonized_description": "Make sure candidate plans obey the rules.", "concept_type": "optimization", "inputs": [{"name": "scored_candidates", "type_desc": "ScoredCandidateSet", "constraints": "Scored candidates.", "required": true}], "outputs": [{"name": "valid_candidates", "type_desc": "ScoredCandidateSet", "constraints": "Feasible candidates.", "required": true}], "preconditions": ["Constraint checker is available."], "guarantees": ["Remaining candidates satisfy hard constraints."], "matched_primitive": ""},
+    {"stage_id": "plan_selection", "name": "Plan Selection", "description": "Choose the best valid action, route, schedule, or plan and format it for submission.", "dejargonized_description": "Select and submit the best feasible plan.", "concept_type": "optimization", "inputs": [{"name": "valid_candidates", "type_desc": "ScoredCandidateSet", "constraints": "Feasible scored candidates.", "required": true}], "outputs": [{"name": "planned_actions", "type_desc": "SubmissionArtifact", "constraints": "Final plan.", "required": true}], "preconditions": ["At least one feasible candidate exists."], "guarantees": ["Final output satisfies the benchmark format."], "matched_primitive": ""}
+  ]
+}

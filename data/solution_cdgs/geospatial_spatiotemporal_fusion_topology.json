@@ -1,0 +1,70 @@
+{
+  "asset_id": "solution.kaggle.geospatial_spatiotemporal_fusion_topology",
+  "asset_version": "v1",
+  "family": "geospatial_spatiotemporal_fusion",
+  "paradigm": "optimization",
+  "name": "Geospatial Spatiotemporal Fusion Pipeline Template",
+  "summary": "Reusable base CDG for geospatial, satellite, GNSS, crop, wildfire, mobility, and environmental forecasting tasks that combine spatial tiling, temporal aggregation, external rasters, spatial validation, and constrained post-processing.",
+  "dejargonized_summary": "Join location, time, sensor, raster, weather, road, or census data; build spatial and temporal features; validate by location or time; train fused models; and apply geographic constraints or smoothing.",
+  "canonical_for_paradigm": false,
+  "variant_hints": ["geospatial", "spatiotemporal", "satellite", "gnss", "spatial_cv", "weather_features", "raster_fusion", "road_network"],
+  "inputs": [{"name": "spatial_temporal_records", "type_desc": "GeoTemporalDataset", "constraints": "Coordinates, timestamps, sensor measurements, rasters, or external geographic attributes.", "required": true}],
+  "outputs": [{"name": "geo_predictions", "type_desc": "SubmissionArtifact", "constraints": "Predictions aligned to locations, times, tiles, or tracks.", "required": true}],
+  "applicability": {
+    "use_when": ["The task requires spatial coordinates, time windows, satellite imagery, GNSS tracks, road networks, weather, climate, crop, or wildfire context.", "Validation must avoid spatial or temporal leakage."],
+    "do_not_use_when": ["The task has no location, time, sensor, raster, or geographic grouping structure.", "Spatial or temporal metadata is incidental and ordinary grouped validation plus a base ML CDG is sufficient."],
+    "key_insight": "The load-bearing topology is fusion of spatial and temporal context before leakage-safe validation and geographic correction.",
+    "critical_stages": ["geo_temporal_join", "spatial_temporal_features", "leakage_safe_geo_validation"],
+    "swappable_stages": {"fusion_model": "Can be LightGBM, CatBoost, CNN/ViT, sequence model, or hybrid late fusion."},
+    "scaling_notes": "Cache expensive raster joins and use tiled processing for large imagery or tracks.",
+    "failure_modes": ["Random validation folds overestimate performance when nearby locations or adjacent times leak.", "External rasters can be misaligned by projection, resolution, or timestamp."]
+  },
+  "planning_constraints": [
+    {
+      "category": "data",
+      "subject": "geo_temporal_alignment_before_features",
+      "statement": "Align coordinate reference systems, timestamps, tiles, tracks, and external rasters before deriving spatial-temporal features.",
+      "rationale": "Feature extraction assumes that geography and time are already joined on compatible keys and projections.",
+      "confidence": 0.95,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    },
+    {
+      "category": "validation",
+      "subject": "spatial_temporal_leakage_guard",
+      "statement": "Use location, tile, group, track, or time-aware validation before trusting fusion-model scores.",
+      "rationale": "Random folds can overstate performance when nearby places, adjacent times, or repeated tracks leak across splits.",
+      "confidence": 0.9,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    }
+  ],
+  "audit": {
+    "review_status": "draft",
+    "rationale": "Added after expansion validation left repeated unmatched geospatial and spatiotemporal fusion pipelines with location/time joins and leakage-safe validation as load-bearing stages.",
+    "dejargonized_summary": "This captures tasks where location, time, sensors, rasters, tracks, or weather must be fused before modeling and constrained post-processing.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_support3_full.json",
+      "Gap mining cleanup: research/validation_results_expansion_support3_gap_mining_cleanup.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Future ingestion should split reusable raster, map-matching, GNSS, and weather feature operations into refinements where appropriate."
+    ],
+    "references": [
+      {
+        "title": "Sciona expansion support-3 validation audit",
+        "citation": "research/validation_results_expansion_support3_gap_mining_cleanup.json",
+        "note": "Local deterministic and semantic audit of unmatched solution patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "geo_temporal_join", "name": "Geospatial Temporal Join", "description": "Join coordinates, timestamps, tracks, rasters, weather, road networks, census, soil, bioclim, or other external geographic context.", "dejargonized_description": "Attach relevant location and time context to each example.", "concept_type": "data_assembly", "inputs": [{"name": "spatial_temporal_records", "type_desc": "GeoTemporalDataset", "constraints": "Raw geospatial records.", "required": true}], "outputs": [{"name": "joined_geo_records", "type_desc": "DataFrame", "constraints": "Records with external geographic context.", "required": true}], "preconditions": ["Coordinate reference systems and timestamps are known."], "guarantees": ["Each example has aligned geographic context."], "matched_primitive": ""},
+    {"stage_id": "spatial_temporal_features", "name": "Spatial Temporal Features", "description": "Create distance, tile, rolling window, lag, seasonal, raster, road-network, or neighborhood aggregate features.", "dejargonized_description": "Convert location and time context into model-ready features.", "concept_type": "signal_transform", "inputs": [{"name": "joined_geo_records", "type_desc": "DataFrame", "constraints": "Joined context.", "required": true}], "outputs": [{"name": "geo_features", "type_desc": "FeatureTable", "constraints": "Spatial-temporal features.", "required": true}], "preconditions": ["Joined records are aligned."], "guarantees": ["Features preserve location/time grouping metadata."], "matched_primitive": ""},
+    {"stage_id": "leakage_safe_geo_validation", "name": "Leakage-Safe Geo Validation", "description": "Use spatial, temporal, grouped, rolling-window, or tile-based cross-validation to avoid geographic leakage.", "dejargonized_description": "Split validation by place, time, track, tile, user, or other leakage boundary.", "concept_type": "ml_model_selection", "inputs": [{"name": "geo_features", "type_desc": "FeatureTable", "constraints": "Geo features with groups.", "required": true}], "outputs": [{"name": "geo_folds", "type_desc": "FoldSet", "constraints": "Leakage-safe folds.", "required": true}], "preconditions": ["Group or time boundaries are available."], "guarantees": ["Validation respects spatial and temporal leakage boundaries."], "matched_primitive": ""},
+    {"stage_id": "fusion_model", "name": "Fusion Model", "description": "Train a tree, neural, image, sequence, or hybrid fusion model over spatial, temporal, sensor, and external features.", "dejargonized_description": "Train the model that combines geographic, time, and sensor evidence.", "concept_type": "ml_model_selection", "inputs": [{"name": "geo_folds", "type_desc": "FoldSet", "constraints": "Leakage-safe folds.", "required": true}], "outputs": [{"name": "raw_geo_predictions", "type_desc": "NDArray", "constraints": "Raw predictions.", "required": true}], "preconditions": ["Training folds are leakage-safe."], "guarantees": ["Predictions align to the requested locations/times."], "matched_primitive": ""},
+    {"stage_id": "geographic_postprocessing", "name": "Geographic Postprocessing", "description": "Apply map matching, smoothing, zero-sum correction, clipping, neighborhood consistency, or constraint-aware aggregation.", "dejargonized_description": "Correct predictions using known geographic or temporal constraints.", "concept_type": "optimization", "inputs": [{"name": "raw_geo_predictions", "type_desc": "NDArray", "constraints": "Raw predictions.", "required": true}], "outputs": [{"name": "geo_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final geographic predictions.", "required": true}], "preconditions": ["Post-processing constraints are known."], "guarantees": ["Outputs are formatted and geographically consistent."], "matched_primitive": ""}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.llm_preference_reasoning_topology.bindings",
+  "template": "llm_preference_reasoning_topology",
+  "bindings": [
+    {"stage_id": "prompt_pair_construction", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Prompt and pair construction is orchestration over task records."}},
+    {"stage_id": "llm_or_cross_encoder", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Backbone selection depends on provider LLM or transformer runtime."}},
+    {"stage_id": "reasoning_augmentation", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Reasoning augmentation may call external LLMs or use generated traces."}},
+    {"stage_id": "preference_reasoning_head", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Preference, QWK, and ranking heads are swappable metric-specific stages."}},
+    {"stage_id": "metric_calibration", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Calibration is a validation-driven orchestration step."}}
+  ]
+}

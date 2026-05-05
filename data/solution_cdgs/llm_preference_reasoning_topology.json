@@ -1,0 +1,152 @@
+{
+  "asset_id": "solution.kaggle.llm_preference_reasoning_topology",
+  "asset_version": "v1",
+  "family": "llm_preference_reasoning",
+  "paradigm": "neural_network",
+  "name": "LLM Preference and Reasoning Pipeline Template",
+  "summary": "Reusable base CDG for LLM competitions that combine prompt construction, paired or sequence encoding, supervised or LoRA fine-tuning, preference/ranking heads, reasoning augmentation, and calibration or thresholding.",
+  "dejargonized_summary": "Prepare prompts or paired responses, encode them with an LLM or cross-encoder, adapt the model with supervised fine-tuning or LoRA, train a preference or reasoning head, and calibrate outputs for ranking, detection, or scoring tasks.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "llm_preference",
+    "pairwise_ranking",
+    "cross_encoder",
+    "prompt_reasoning",
+    "lora_finetuning",
+    "rlhf",
+    "hallucination_detection",
+    "misconception_matching"
+  ],
+  "inputs": [
+    {"name": "prompt_or_pair_data", "type_desc": "LLMCompetitionDataset", "constraints": "Prompts, responses, labels, comparisons, or relevance pairs.", "required": true}
+  ],
+  "outputs": [
+    {"name": "ranked_or_scored_outputs", "type_desc": "SubmissionArtifact", "constraints": "Scores, labels, rankings, or selected responses formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The task is scored by pairwise preference, response quality, hallucination detection, misconception matching, reasoning quality, or prompt-response relevance.",
+      "Inputs contain prompts, answers, response pairs, generated text, candidate misconceptions, or query-document pairs.",
+      "A pretrained LLM, DeBERTa-style cross-encoder, LoRA adapter, or instruction-tuned model is a load-bearing representation stage."
+    ],
+    "do_not_use_when": [
+      "The task is ordinary tabular classification with no prompt, response, pair, or ranking structure.",
+      "The target output is a continuous physical quantity and no language model representation is needed."
+    ],
+    "key_insight": "The durable topology is paired or prompt-aware representation before preference, reasoning, or ranking supervision; the exact LLM backbone is swappable.",
+    "critical_stages": ["prompt_pair_construction", "llm_or_cross_encoder", "preference_reasoning_head"],
+    "swappable_stages": {
+      "llm_or_cross_encoder": "Can be DeBERTa, Llama, QLoRA, a cross-encoder, or another paired-input transformer if it preserves pair-aware scoring.",
+      "metric_calibration": "Can be threshold tuning, rank averaging, Bradley-Terry normalization, or metric-specific rounding."
+    },
+    "scaling_notes": "Cache tokenization, use adapter fine-tuning for large models, and keep pair generation deterministic for reproducible validation.",
+    "failure_modes": [
+      "Symmetry violations in response-pair ordering can leak label artifacts.",
+      "Prompt templates that differ between train and inference can break calibrated scores.",
+      "Cross-encoder context windows can truncate important evidence."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "pair_aware_representation_before_scoring",
+      "statement": "Construct prompt or response pairs before training a preference, reasoning, ranking, or calibration head.",
+      "rationale": "The scoring stage assumes that prompt markers, pair ordering, and comparison direction are already encoded.",
+      "confidence": 0.95,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    },
+    {
+      "category": "data",
+      "subject": "symmetric_pair_leakage_guard",
+      "statement": "Keep train, validation, and inference pair construction symmetric and split-aware.",
+      "rationale": "Preference and reasoning tasks can leak labels through pair order, prompt template drift, or generated rationale reuse.",
+      "confidence": 0.9,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    }
+  ],
+  "audit": {
+    "review_status": "draft",
+    "rationale": "Added after support-3 expansion validation left repeated unmatched LLM preference, reasoning, hallucination, and misconception pipelines that were not base-plus-expansion variants of existing templates.",
+    "dejargonized_summary": "This captures language-model competitions where prompts or pairs must be represented before preference, reasoning, ranking, or calibration.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_support3_full.json",
+      "Gap mining cleanup: research/validation_results_expansion_support3_gap_mining_cleanup.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Representative topology only; future solution-specific ingestion should decide which stages become expansions versus new atoms."
+    ],
+    "references": [
+      {
+        "title": "Sciona expansion support-3 validation audit",
+        "citation": "research/validation_results_expansion_support3_gap_mining_cleanup.json",
+        "note": "Local deterministic and semantic audit of unmatched solution patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {
+      "stage_id": "prompt_pair_construction",
+      "name": "Prompt Pair Construction",
+      "description": "Build prompt-response, query-document, misconception-answer, or answer-pair examples with symmetric swaps and task-specific markers.",
+      "dejargonized_description": "Turn raw language records into paired or prompt-aware examples that preserve the comparison structure.",
+      "concept_type": "data_assembly",
+      "inputs": [{"name": "prompt_or_pair_data", "type_desc": "LLMCompetitionDataset", "constraints": "Raw text and labels.", "required": true}],
+      "outputs": [{"name": "paired_examples", "type_desc": "PairDataset", "constraints": "Tokenizable paired or prompt-aware examples.", "required": true}],
+      "preconditions": ["Raw text fields and labels are available."],
+      "guarantees": ["Pair ordering and prompt markers are explicit."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "llm_or_cross_encoder",
+      "name": "LLM or Cross-Encoder Representation",
+      "description": "Encode examples with a DeBERTa cross-encoder, Llama-style model, LoRA/QLoRA adapter, or instruction-tuned transformer.",
+      "dejargonized_description": "Use a pretrained language model to create pair-aware or prompt-aware representations.",
+      "concept_type": "neural_network",
+      "inputs": [{"name": "paired_examples", "type_desc": "PairDataset", "constraints": "Constructed prompt or pair examples.", "required": true}],
+      "outputs": [{"name": "text_representations", "type_desc": "Tensor", "constraints": "Dense language representations.", "required": true}],
+      "preconditions": ["Tokenizer and context-length policy are fixed."],
+      "guarantees": ["Examples are represented in a shared embedding or scoring space."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "reasoning_augmentation",
+      "name": "Reasoning Augmentation",
+      "description": "Optionally add chain-of-thought traces, rationale distillation, external LLM data, or prompt variants.",
+      "dejargonized_description": "Add reasoning traces or extra generated examples when the task rewards explicit reasoning or robust prompt coverage.",
+      "concept_type": "external_tool",
+      "inputs": [{"name": "text_representations", "type_desc": "Tensor", "constraints": "Language representations or prompt examples.", "required": true}],
+      "outputs": [{"name": "augmented_representations", "type_desc": "Tensor", "constraints": "Reasoning-aware training artifacts.", "required": true}],
+      "preconditions": ["Augmentation is generated without validation leakage."],
+      "guarantees": ["Augmented artifacts preserve target labels or preference direction."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "preference_reasoning_head",
+      "name": "Preference or Reasoning Head",
+      "description": "Train a Bradley-Terry, pairwise ranking, hallucination detection, QWK, or calibrated classification/regression head.",
+      "dejargonized_description": "Convert language representations into the task-specific score, label, rank, or preference probability.",
+      "concept_type": "loss_function",
+      "inputs": [{"name": "augmented_representations", "type_desc": "Tensor", "constraints": "Reasoning-aware representations.", "required": true}],
+      "outputs": [{"name": "raw_scores", "type_desc": "NDArray", "constraints": "Uncalibrated task scores.", "required": true}],
+      "preconditions": ["Loss matches the benchmark target type."],
+      "guarantees": ["Scores are aligned to the task supervision."],
+      "matched_primitive": ""
+    },
+    {
+      "stage_id": "metric_calibration",
+      "name": "Metric Calibration",
+      "description": "Apply thresholding, rank normalization, symmetric averaging, or integer rounding against the validation metric.",
+      "dejargonized_description": "Convert raw model scores into final benchmark decisions or rankings.",
+      "concept_type": "optimization",
+      "inputs": [{"name": "raw_scores", "type_desc": "NDArray", "constraints": "Raw task scores.", "required": true}],
+      "outputs": [{"name": "ranked_or_scored_outputs", "type_desc": "SubmissionArtifact", "constraints": "Final submission artifact.", "required": true}],
+      "preconditions": ["Validation metric and calibration split are known."],
+      "guarantees": ["Outputs are formatted and calibrated for the benchmark metric."],
+      "matched_primitive": ""
+    }
+  ]
+}

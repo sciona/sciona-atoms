@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.geospatial_spatiotemporal_fusion_topology.bindings",
+  "template": "geospatial_spatiotemporal_fusion_topology",
+  "bindings": [
+    {"stage_id": "geo_temporal_join", "status": "active", "action_class": "external_knowledge", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "External geographic joins are data-source specific."}},
+    {"stage_id": "spatial_temporal_features", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Feature construction depends on location and temporal metadata."}},
+    {"stage_id": "leakage_safe_geo_validation", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Validation policy is group/time/space specific."}},
+    {"stage_id": "fusion_model", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Model class is swappable as long as fusion contract is preserved."}},
+    {"stage_id": "geographic_postprocessing", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Geographic correction is benchmark-specific."}}
+  ]
+}

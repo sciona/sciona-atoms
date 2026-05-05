@@ -1,0 +1,70 @@
+{
+  "asset_id": "solution.kaggle.molecular_sequence_structure_modeling_topology",
+  "asset_version": "v1",
+  "family": "molecular_sequence_structure_modeling",
+  "paradigm": "neural_network",
+  "name": "Molecular Sequence and Structure Modeling Pipeline Template",
+  "summary": "Reusable base CDG for molecule, protein, RNA, chemistry, and perturbation tasks that combine tokenization or fingerprints, sequence/graph/3D structure encoders, biological or chemical context, and calibrated scientific objectives.",
+  "dejargonized_summary": "Represent molecules or biological sequences with tokens, fingerprints, graphs, or 3D coordinates; train sequence, graph, or geometric neural models; add context such as cell type or assay metadata; and calibrate scientific predictions.",
+  "canonical_for_paradigm": false,
+  "variant_hints": ["smiles", "protein_structure", "rna_sequence", "molecular_graph", "geometric_deep_learning", "cell_perturbation", "chemical_fingerprint"],
+  "inputs": [{"name": "molecular_records", "type_desc": "MolecularDataset", "constraints": "SMILES, sequence, graph, 3D coordinates, assay metadata, or cell context.", "required": true}],
+  "outputs": [{"name": "molecular_predictions", "type_desc": "SubmissionArtifact", "constraints": "Predictions for molecular, protein, RNA, or assay targets.", "required": true}],
+  "applicability": {
+    "use_when": ["Inputs are molecules, proteins, RNA, cell perturbations, chemical fingerprints, or 3D molecular structures.", "Winning solutions depend on tokenization, fingerprints, graph neural networks, geometric transformers, or assay/cell context."],
+    "do_not_use_when": ["Inputs are ordinary text or tabular records without molecular sequence, graph, or structure semantics.", "Molecular metadata is already represented by ordinary handcrafted tabular features and no sequence, graph, structure, assay, or scaffold-aware stage is load-bearing."],
+    "key_insight": "The durable topology is molecular representation construction before sequence/graph/geometric modeling and assay-aware calibration.",
+    "critical_stages": ["molecular_representation", "sequence_graph_structure_encoder", "scientific_objective"],
+    "swappable_stages": {"sequence_graph_structure_encoder": "Can be a transformer, graph neural network, geometric transformer, SchNet-like model, or fingerprint plus tree ensemble."},
+    "scaling_notes": "Cache fingerprints, conformers, and graph construction; keep train/test chemistry splits explicit.",
+    "failure_modes": ["Random splits can overestimate performance when scaffolds or assay contexts leak.", "Invalid tokenization or conformer generation can silently drop important molecules."]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "representation_before_encoder",
+      "statement": "Construct molecular tokens, fingerprints, graphs, sequences, or 3D inputs before training sequence, graph, or geometric encoders.",
+      "rationale": "The encoder architecture depends on the representation contract and cannot be chosen independently of it.",
+      "confidence": 0.95,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    },
+    {
+      "category": "validation",
+      "subject": "scaffold_assay_leakage_guard",
+      "statement": "Preserve scaffold, assay, organism, cell type, or target grouping when calibrating and validating scientific predictions.",
+      "rationale": "Random splits can leak near-duplicate chemistry or assay context and inflate molecular benchmark estimates.",
+      "confidence": 0.9,
+      "source_stage": "true_novel_validation_audit",
+      "source_reference": "research/validation_results_expansion_support3_gap_mining_cleanup.json"
+    }
+  ],
+  "audit": {
+    "review_status": "draft",
+    "rationale": "Added after expansion validation left repeated unmatched molecular, RNA, protein, chemistry, and cell perturbation solutions where representation construction and scientific objectives define a distinct topology.",
+    "dejargonized_summary": "This captures tasks where molecular or biological structure must be represented before sequence, graph, geometric, or assay-aware modeling.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_support3_full.json",
+      "Gap mining cleanup: research/validation_results_expansion_support3_gap_mining_cleanup.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Future ingestion should decide which chemistry feature generators are base-stage refinements versus new atoms."
+    ],
+    "references": [
+      {
+        "title": "Sciona expansion support-3 validation audit",
+        "citation": "research/validation_results_expansion_support3_gap_mining_cleanup.json",
+        "note": "Local deterministic and semantic audit of unmatched solution patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "molecular_representation", "name": "Molecular Representation", "description": "Create SMILES tokens, BPE tokens, RDKit/ECFP fingerprints, sequence features, graph edges, or 3D coordinate inputs.", "dejargonized_description": "Convert molecular or biological records into model-ready sequence, fingerprint, graph, or geometry representations.", "concept_type": "data_assembly", "inputs": [{"name": "molecular_records", "type_desc": "MolecularDataset", "constraints": "Raw molecular records.", "required": true}], "outputs": [{"name": "molecular_features", "type_desc": "MolecularFeatures", "constraints": "Token, graph, fingerprint, or geometry features.", "required": true}], "preconditions": ["Molecular strings, sequences, or structures are parseable."], "guarantees": ["Features preserve molecular identity and assay metadata."], "matched_primitive": ""},
+    {"stage_id": "context_conditioning", "name": "Context Conditioning", "description": "Attach assay, cell type, organism, scaffold, target, or experimental context embeddings.", "dejargonized_description": "Add biological or chemical context that changes target behavior.", "concept_type": "data_assembly", "inputs": [{"name": "molecular_features", "type_desc": "MolecularFeatures", "constraints": "Base molecular features.", "required": true}], "outputs": [{"name": "conditioned_features", "type_desc": "MolecularFeatures", "constraints": "Context-aware features.", "required": true}], "preconditions": ["Context metadata is aligned to records."], "guarantees": ["Context is available to downstream models."], "matched_primitive": ""},
+    {"stage_id": "sequence_graph_structure_encoder", "name": "Sequence Graph Structure Encoder", "description": "Train a transformer, graph neural network, geometric transformer, SchNet-like model, or fingerprint-based ensemble over molecular features.", "dejargonized_description": "Model sequence, graph, or 3D structure interactions.", "concept_type": "neural_network", "inputs": [{"name": "conditioned_features", "type_desc": "MolecularFeatures", "constraints": "Context-aware features.", "required": true}], "outputs": [{"name": "molecular_embeddings", "type_desc": "Tensor", "constraints": "Learned molecular representations.", "required": true}], "preconditions": ["Representation type matches model architecture."], "guarantees": ["Embeddings preserve target-relevant molecular signal."], "matched_primitive": ""},
+    {"stage_id": "scientific_objective", "name": "Scientific Objective", "description": "Train with assay-specific classification, regression, ranking, stability, binding, or perturbation objectives.", "dejargonized_description": "Optimize the loss that matches the scientific target.", "concept_type": "loss_function", "inputs": [{"name": "molecular_embeddings", "type_desc": "Tensor", "constraints": "Molecular embeddings.", "required": true}], "outputs": [{"name": "raw_molecular_predictions", "type_desc": "NDArray", "constraints": "Raw predictions.", "required": true}], "preconditions": ["Target type and metric are known."], "guarantees": ["Predictions align to scientific targets."], "matched_primitive": ""},
+    {"stage_id": "scaffold_assay_calibration", "name": "Scaffold and Assay Calibration", "description": "Apply scaffold-aware validation, assay-specific calibration, uncertainty aggregation, or thresholding.", "dejargonized_description": "Calibrate predictions while respecting chemical or assay groups.", "concept_type": "optimization", "inputs": [{"name": "raw_molecular_predictions", "type_desc": "NDArray", "constraints": "Raw predictions.", "required": true}], "outputs": [{"name": "molecular_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final molecular predictions.", "required": true}], "preconditions": ["Groups, scaffolds, or assay context are known if needed."], "guarantees": ["Outputs are calibrated for the benchmark metric."], "matched_primitive": ""}
+  ]
+}
