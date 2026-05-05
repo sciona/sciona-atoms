@@ -1,0 +1,112 @@
+{
+  "asset_id": "family.ode_solver.expansions.v1",
+  "asset_version": "phase3.v1",
+  "family": "ode_solver",
+  "domain": "scientific_computing",
+  "name": "ODE Solver Expansion Inventory",
+  "summary": "Provider refinements for ordinary differential equation solver CDGs and SciPy solve_ivp-style atoms.",
+  "operations": [
+    {
+      "rule_name": "insert_stiffness_detection_before_advance",
+      "operation_type": "precondition",
+      "applies_to": "ode_solver.evaluate_derivative_to_advance_state",
+      "source_cdg_path": "src/sciona/atoms/scipy/integrate.py",
+      "runtime_diagnostic": "stiffness_ratio",
+      "name": "Detect Stiffness",
+      "intent": "Flag derivative dynamics that may require a stiff solver before advancing the state.",
+      "dejargonized_summary": "Add a check for equations whose fastest and slowest changes are too different for a simple stepper.",
+      "trigger": {
+        "metric_name": "stiffness_ratio",
+        "comparison": "gt",
+        "threshold": 1000000.0,
+        "required_intermediate_keys": ["stiffness_ratio"]
+      },
+      "action_classes": ["precondition", "gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Derivative evaluation feeds state advancement directly.",
+        "after_summary": "A stiffness detector is inserted before advancing the state.",
+        "information_flow_effect": "Adds solver-suitability evidence before numerical integration proceeds."
+      }
+    },
+    {
+      "rule_name": "insert_energy_conservation_check_after_advance",
+      "operation_type": "validation",
+      "applies_to": "ode_solver.advance_state",
+      "source_cdg_path": "src/sciona/atoms/scipy/integrate.py",
+      "runtime_diagnostic": "energy_drift",
+      "name": "Check Energy Conservation",
+      "intent": "Validate whether state advancement preserves expected invariants.",
+      "dejargonized_summary": "Add a check for energy drift after each solver advance.",
+      "trigger": {
+        "metric_name": "energy_drift",
+        "comparison": "gt",
+        "threshold": 0.000001,
+        "required_intermediate_keys": ["energy_drift"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Advanced states flow downstream without invariant checks.",
+        "after_summary": "An energy-conservation check is inserted after state advancement.",
+        "information_flow_effect": "Adds invariant-quality evidence without changing the state trajectory contract."
+      }
+    },
+    {
+      "rule_name": "insert_order_validation_after_estimate_error",
+      "operation_type": "validation",
+      "applies_to": "ode_solver.estimate_error",
+      "source_cdg_path": "src/sciona/atoms/scipy/integrate.py",
+      "runtime_diagnostic": "empirical_convergence_order",
+      "name": "Validate Order Of Accuracy",
+      "intent": "Check whether observed error reduction matches expected solver order.",
+      "dejargonized_summary": "Add a check that smaller steps are reducing error at the expected rate.",
+      "trigger": {
+        "metric_name": "empirical_convergence_order",
+        "comparison": "lt",
+        "threshold": 0.8,
+        "required_intermediate_keys": ["empirical_convergence_order"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Error estimates flow downstream without empirical order evidence.",
+        "after_summary": "An order-of-accuracy validator is inserted after error estimation.",
+        "information_flow_effect": "Adds numerical reliability evidence for the solver step."
+      }
+    },
+    {
+      "rule_name": "insert_step_rejection_monitor_after_adapt",
+      "operation_type": "diagnostic",
+      "applies_to": "ode_solver.adapt_step_size",
+      "source_cdg_path": "src/sciona/atoms/scipy/integrate.py",
+      "runtime_diagnostic": "step_rejection_rate",
+      "name": "Monitor Step Rejection Rate",
+      "intent": "Detect excessive rejected steps after adaptive step-size control.",
+      "dejargonized_summary": "Add a check for an adaptive solver that is rejecting too many attempted steps.",
+      "trigger": {
+        "metric_name": "step_rejection_rate",
+        "comparison": "gt",
+        "threshold": 0.5,
+        "required_intermediate_keys": ["step_rejection_rate"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Adaptive step-size decisions flow downstream without rejection-rate evidence.",
+        "after_summary": "A step-rejection monitor is inserted after step-size adaptation.",
+        "information_flow_effect": "Adds efficiency and stability evidence for the adaptive solver."
+      }
+    }
+  ],
+  "audit": {
+    "provenance": "sciona-atoms CDG expansion standardization",
+    "source_kind": "provider_asset",
+    "review_status": "transitional",
+    "rationale": "sciona-atoms owns SciPy integrate wrappers, including solve_ivp, that provide an obvious provider context for matcher ODE solver refinements.",
+    "dejargonized_summary": "These checks make ODE solver pipelines report stiffness, conservation, accuracy order, and adaptive-step rejection behavior.",
+    "references": [
+      {
+        "title": "Matcher ODE solver expansion rules",
+        "note": "Rule names and trigger metrics mirror sciona/principal/expansion_rules/ode_solver.py."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  }
+}

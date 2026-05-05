@@ -1,0 +1,108 @@
+{
+  "asset_id": "family.baseline_analysis.expansions.v1",
+  "asset_version": "phase3.v1",
+  "family": "baseline_analysis",
+  "domain": "signal_processing",
+  "name": "Baseline Analysis Expansion Inventory",
+  "summary": "Provider refinements for baseline-analysis CDGs with windowed fitting, padding, normalization, combination, and regionization.",
+  "operations": [
+    {
+      "rule_name": "insert_onset_coverage_check_after_qualify",
+      "operation_type": "validation",
+      "applies_to": "baseline_analysis.qualify_events",
+      "runtime_diagnostic": "onset_density",
+      "name": "Check Onset Coverage",
+      "intent": "Detect when qualified events are too sparse for reliable downstream baseline construction.",
+      "dejargonized_summary": "Add a check that enough event onsets were found before padding and normalization.",
+      "trigger": {
+        "metric_name": "onset_density",
+        "comparison": "lt",
+        "threshold": 0.00001,
+        "required_intermediate_keys": ["onset_density"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Qualified events feed padding directly.",
+        "after_summary": "An onset-coverage check is inserted after event qualification.",
+        "information_flow_effect": "Adds event-density evidence before baseline padding."
+      }
+    },
+    {
+      "rule_name": "insert_padding_saturation_after_pad",
+      "operation_type": "validation",
+      "applies_to": "baseline_analysis.pad",
+      "runtime_diagnostic": "padding_overlap_fraction",
+      "name": "Detect Padding Saturation",
+      "intent": "Flag baseline padding that occupies too much of the signal support.",
+      "dejargonized_summary": "Add a check for padding that covers too much of the output.",
+      "trigger": {
+        "metric_name": "padding_overlap_fraction",
+        "comparison": "gt",
+        "threshold": 0.5,
+        "required_intermediate_keys": ["padding_overlap_fraction"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Padded baselines feed normalization directly.",
+        "after_summary": "A padding-saturation detector is inserted after padding.",
+        "information_flow_effect": "Adds coverage evidence before normalized baseline values are trusted."
+      }
+    },
+    {
+      "rule_name": "insert_normalization_clipping_after_normalize",
+      "operation_type": "diagnostic",
+      "applies_to": "baseline_analysis.normalize",
+      "runtime_diagnostic": "clipped_fraction",
+      "name": "Monitor Normalization Clipping",
+      "intent": "Detect normalization that clips too much signal information.",
+      "dejargonized_summary": "Add a check for normalized values that are being clipped too often.",
+      "trigger": {
+        "metric_name": "clipped_fraction",
+        "comparison": "gt",
+        "threshold": 0.25,
+        "required_intermediate_keys": ["clipped_fraction"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Normalized baselines feed combination directly.",
+        "after_summary": "A clipping monitor is inserted after normalization.",
+        "information_flow_effect": "Adds scale-quality evidence before combining baseline components."
+      }
+    },
+    {
+      "rule_name": "insert_component_balance_after_combine",
+      "operation_type": "validation",
+      "applies_to": "baseline_analysis.combine",
+      "runtime_diagnostic": "component_balance_ratio",
+      "name": "Validate Component Balance",
+      "intent": "Detect combined baselines dominated by a single component.",
+      "dejargonized_summary": "Add a check that one baseline component is not overwhelming the rest.",
+      "trigger": {
+        "metric_name": "component_balance_ratio",
+        "comparison": "gt",
+        "threshold": 10.0,
+        "required_intermediate_keys": ["component_balance_ratio"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Combined baseline components feed regionization directly.",
+        "after_summary": "A component-balance validator is inserted after combination.",
+        "information_flow_effect": "Adds mixture-quality evidence before region extraction."
+      }
+    }
+  ],
+  "audit": {
+    "provenance": "sciona-atoms CDG expansion standardization",
+    "source_kind": "provider_asset",
+    "review_status": "transitional",
+    "rationale": "sciona-atoms carries baseline-analysis expansion atoms and tests; this asset externalizes the matcher runtime rules onto the common provider schema.",
+    "dejargonized_summary": "These checks make baseline-analysis pipelines report event coverage, padding saturation, clipping, and component balance.",
+    "references": [
+      {
+        "title": "Matcher baseline-analysis expansion rules",
+        "note": "Rule names and trigger metrics mirror sciona/principal/expansion_rules/baseline_analysis.py."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  }
+}

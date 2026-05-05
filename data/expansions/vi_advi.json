@@ -1,0 +1,112 @@
+{
+  "asset_id": "family.vi_advi.expansions.v1",
+  "asset_version": "phase3.v1",
+  "family": "vi_advi",
+  "domain": "probabilistic_inference",
+  "name": "VI ADVI Expansion Inventory",
+  "summary": "Provider refinements for variational inference and ADVI CDGs.",
+  "operations": [
+    {
+      "rule_name": "insert_elbo_convergence_monitoring_after_elbo_eval",
+      "operation_type": "diagnostic",
+      "applies_to": "vi_advi.elbo_eval",
+      "source_cdg_path": "src/sciona/atoms/inference/jax_advi/optimize_advi/cdg.json",
+      "runtime_diagnostic": "elbo_relative_improvement",
+      "name": "Monitor ELBO Convergence",
+      "intent": "Check whether variational optimization has plateaued before posterior use.",
+      "dejargonized_summary": "Add a convergence check to see whether the optimization objective is still improving too much.",
+      "trigger": {
+        "metric_name": "elbo_relative_improvement",
+        "comparison": "gt",
+        "threshold": 0.01,
+        "required_intermediate_keys": ["elbo_relative_improvement"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "ELBO values flow into optimization without explicit plateau evidence.",
+        "after_summary": "An ELBO convergence monitor is inserted after objective evaluation.",
+        "information_flow_effect": "Adds stopping-quality evidence for variational optimization."
+      }
+    },
+    {
+      "rule_name": "insert_gradient_variance_analysis_after_reparameterization",
+      "operation_type": "diagnostic",
+      "applies_to": "vi_advi.reparameterization",
+      "source_cdg_path": "src/sciona/atoms/inference/advancedvi/core_cdg.json",
+      "runtime_diagnostic": "gradient_mean_cv",
+      "name": "Analyze Gradient Variance",
+      "intent": "Detect noisy stochastic gradients after reparameterized sampling.",
+      "dejargonized_summary": "Add a check for gradients that vary too much across samples.",
+      "trigger": {
+        "metric_name": "gradient_mean_cv",
+        "comparison": "gt",
+        "threshold": 1.0,
+        "required_intermediate_keys": ["gradient_mean_cv"]
+      },
+      "action_classes": ["gate_or_validate", "smooth_or_aggregate"],
+      "rewrite": {
+        "before_summary": "Reparameterized samples feed gradient estimates directly.",
+        "after_summary": "A gradient-variance analyzer is inserted after reparameterization.",
+        "information_flow_effect": "Adds evidence that stochastic gradients are stable enough to optimize."
+      }
+    },
+    {
+      "rule_name": "insert_posterior_collapse_detection_after_shape_alloc",
+      "operation_type": "diagnostic",
+      "applies_to": "vi_advi.shape_alloc",
+      "source_cdg_path": "src/sciona/atoms/inference/advancedvi/core_cdg.json",
+      "runtime_diagnostic": "posterior_collapse_fraction",
+      "name": "Detect Posterior Collapse",
+      "intent": "Flag latent dimensions whose KL contribution has effectively vanished.",
+      "dejargonized_summary": "Add a check for latent variables that the variational posterior has stopped using.",
+      "trigger": {
+        "metric_name": "posterior_collapse_fraction",
+        "comparison": "gt",
+        "threshold": 0.1,
+        "required_intermediate_keys": ["posterior_collapse_fraction"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Latent shape allocation proceeds without explicit collapse evidence.",
+        "after_summary": "A posterior-collapse detector is inserted after shape allocation.",
+        "information_flow_effect": "Adds latent-use evidence before interpreting the variational posterior."
+      }
+    },
+    {
+      "rule_name": "insert_step_size_stability_check_after_optimizer",
+      "operation_type": "diagnostic",
+      "applies_to": "vi_advi.optimizer",
+      "source_cdg_path": "src/sciona/atoms/inference/jax_advi/optimize_advi/cdg.json",
+      "runtime_diagnostic": "step_size_cv",
+      "name": "Check Step Size Stability",
+      "intent": "Detect unstable optimizer step sizes after variational optimization updates.",
+      "dejargonized_summary": "Add a check for optimizer steps that fluctuate too much.",
+      "trigger": {
+        "metric_name": "step_size_cv",
+        "comparison": "gt",
+        "threshold": 0.5,
+        "required_intermediate_keys": ["step_size_cv"]
+      },
+      "action_classes": ["gate_or_validate"],
+      "rewrite": {
+        "before_summary": "Optimizer updates flow downstream without step stability evidence.",
+        "after_summary": "A step-size stability check is inserted after the optimizer.",
+        "information_flow_effect": "Adds optimizer health evidence for the variational fit."
+      }
+    }
+  ],
+  "audit": {
+    "provenance": "sciona-atoms CDG expansion standardization",
+    "source_kind": "provider_asset",
+    "review_status": "transitional",
+    "rationale": "sciona-atoms owns ADVI and advanced VI CDGs that map to matcher VI/ADVI runtime rules.",
+    "dejargonized_summary": "These checks make variational inference pipelines report convergence, gradient stability, latent collapse, and optimizer stability.",
+    "references": [
+      {
+        "title": "Matcher VI/ADVI expansion rules",
+        "note": "Rule names and trigger metrics mirror sciona/principal/expansion_rules/vi_advi.py."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  }
+}
