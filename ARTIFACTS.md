@@ -56,18 +56,55 @@ pickle file to `.json` will still fail.
 | ONNX with custom ops | Unless the custom op library is a separately audited logic artifact. |
 | Any format with pickle magic bytes (`\x80\x02` through `\x80\x05`) | Detected by magic byte scan. |
 
-### Converting blocked formats
+### Not allowed but convertible
 
-If your upstream resource ships as pickle:
+These formats are not in the allowlist but can be converted to an
+allowed format before ingestion:
 
-- **PyTorch models**: Convert to Safetensors (`safetensors.torch.save_file`)
-  or ONNX (`torch.onnx.export`).
-- **NumPy pickle archives**: Re-save with `numpy.savez` (the resulting
-  `.npz` will pass `allow_pickle=False`).
-- **NLTK pickle taggers**: Use the newer JSON-based variants (e.g.,
-  `averaged_perceptron_tagger_eng` ships as `.json` files).
-- **Joblib models**: Extract the underlying arrays and save as
-  Safetensors, `.npy`, or Parquet.
+| Format | Conversion |
+|--------|------------|
+| SentencePiece `.model` | Convert to `tokenizer.json` (see below) |
+| PyTorch `.pt` / `.pth` | Convert to Safetensors or ONNX |
+| Joblib `.joblib` | Extract arrays to Safetensors, `.npy`, or Parquet |
+| NLTK pickle taggers | Use the newer JSON-based variants |
+| NumPy pickle archives | Re-save with `numpy.savez` |
+
+### Converting blocked and non-allowed formats
+
+**SentencePiece `.model` to `tokenizer.json`:**
+
+SentencePiece models are protobuf binaries — not pickle-dangerous, but
+not in the allowlist. Convert them to HuggingFace fast tokenizer JSON
+format, which passes the scanner as a standard `.json` file:
+
+```bash
+/Users/conrad/personal/sciona-matcher/.venv/bin/python \
+  scripts/convert_sentencepiece.py input.model -o tokenizer.json --validate
+```
+
+The script parses the protobuf wire format directly (no `sentencepiece`
+wheel needed) and builds a `tokenizers.Tokenizer` with the extracted
+vocabulary. The `--validate` flag runs a round-trip encode/decode test.
+
+**PyTorch models** to Safetensors or ONNX:
+
+```python
+# To Safetensors:
+from safetensors.torch import save_file
+save_file(model.state_dict(), "model.safetensors")
+
+# To ONNX:
+torch.onnx.export(model, dummy_input, "model.onnx")
+```
+
+**NumPy pickle archives** — re-save with `numpy.savez` (the resulting
+`.npz` will pass `allow_pickle=False`).
+
+**NLTK pickle taggers** — use the newer JSON-based variants (e.g.,
+`averaged_perceptron_tagger_eng` ships as `.json` files).
+
+**Joblib models** — extract the underlying arrays and save as
+Safetensors, `.npy`, or Parquet.
 
 ## Writing an artifact-backed atom
 
