@@ -1,0 +1,233 @@
+{
+  "schema_version": "v1",
+  "tricks": [
+    {
+      "trick_id": "trick.kaggle.public_lb_probe_thresholding",
+      "name": "Public leaderboard probe thresholding",
+      "kind": "public_lb_overfit_risk",
+      "status": "cataloged",
+      "risk_level": "high",
+      "generalization_level": "competition_specific",
+      "summary": "Tune post-processing thresholds against public leaderboard feedback when local validation is too weak or distribution-shifted.",
+      "applies_when": [
+        "A competition exposes repeated public leaderboard feedback and the objective is a thresholded or discretized metric.",
+        "The architect has already selected a valid base CDG and needs to catalog leaderboard-specific tactical risk."
+      ],
+      "do_not_use_when": [
+        "The target setting has no public feedback loop or prohibits leaderboard probing.",
+        "A held-out validation split is reliable enough to tune thresholds without public feedback."
+      ],
+      "validation_requirements": [
+        "Record a local validation score before and after the threshold change.",
+        "Document the number of public feedback probes and show the tactic is not being encoded as base CDG structure."
+      ],
+      "architect_hint": "Mention only as a high-risk post-processing tactic for novel or under-covered cases; never use it to choose the base CDG.",
+      "related_cdgs": [
+        "solution.kaggle.classical_tabular_ensemble_topology"
+      ],
+      "related_operations": [
+        "metric_calibration"
+      ],
+      "source_competitions": [
+        "generic-kaggle-public-lb"
+      ],
+      "source_references": [
+        "research/validation_results_expansion_142_finalbatch_gap_mining.json"
+      ],
+      "tags": [
+        "leaderboard",
+        "thresholding",
+        "postprocessing"
+      ],
+      "audit": {
+        "source_kind": "manual_analysis",
+        "review_status": "draft",
+        "notes": "Cataloged for architect awareness because public-feedback tuning can explain some solution writeups but should not become CDG topology."
+      }
+    },
+    {
+      "trick_id": "trick.kaggle.hidden_group_leakage_diagnostic",
+      "name": "Hidden group leakage diagnostic",
+      "kind": "leak",
+      "status": "cataloged",
+      "risk_level": "high",
+      "generalization_level": "domain_specific",
+      "summary": "Look for repeated users, devices, sessions, files, or collection batches whose membership can leak target information across nominal train/test boundaries.",
+      "applies_when": [
+        "Rows share opaque IDs, timestamps, batches, files, cameras, devices, or locations that may define hidden groups.",
+        "The base CDG is tabular, image, sensor, or multimodal and missing techniques mention magic groups, counts, folds, or leakage diagnostics."
+      ],
+      "do_not_use_when": [
+        "The benchmark contract explicitly forbids exploiting non-causal group artifacts.",
+        "Group structure is already represented as a standard validation constraint or feature-engineering stage."
+      ],
+      "validation_requirements": [
+        "Confirm the group signal on a leakage-safe split.",
+        "Document whether the tactic is a diagnostic, a validation split constraint, or an allowed feature."
+      ],
+      "architect_hint": "Surface as a leakage-risk diagnostic and validation constraint before suggesting any feature that uses hidden groups.",
+      "related_cdgs": [
+        "solution.kaggle.classical_tabular_ensemble_topology",
+        "solution.kaggle.large_scale_temporal_tabular_ensemble_topology"
+      ],
+      "related_operations": [
+        "force_cv_strategy"
+      ],
+      "source_competitions": [
+        "generic-group-leakage"
+      ],
+      "source_references": [
+        "research/validation_results_expansion_142_finalbatch_gap_mining.json"
+      ],
+      "tags": [
+        "leakage",
+        "groups",
+        "validation"
+      ],
+      "audit": {
+        "source_kind": "manual_analysis",
+        "review_status": "draft",
+        "notes": "Kept as a trick because it may be an invalid leak, a valid split rule, or a legitimate feature depending on benchmark policy."
+      }
+    },
+    {
+      "trick_id": "trick.kaggle_metric_bound_target_clipping",
+      "name": "Metric-bound target clipping",
+      "kind": "metric_hack",
+      "status": "allowed_with_validation",
+      "risk_level": "medium",
+      "generalization_level": "general",
+      "summary": "Clip predictions or transformed targets to known metric bounds, physical ranges, or submission limits after model inference.",
+      "applies_when": [
+        "The metric or benchmark rules define valid numeric ranges.",
+        "Training targets have outliers that destabilize MAE, RMSLE, R2, or ranking-sensitive metrics."
+      ],
+      "do_not_use_when": [
+        "The clipping range is inferred from public test feedback rather than a domain or metric constraint.",
+        "The base CDG already models clipping as a normal metric post-processing stage."
+      ],
+      "validation_requirements": [
+        "Show clipping improves or preserves held-out validation.",
+        "Record the source of bounds: metric, physics, business rule, or training-label support."
+      ],
+      "architect_hint": "Treat as optional metric post-processing for a selected CDG, not as a reason to create a new CDG.",
+      "related_cdgs": [
+        "solution.kaggle.classical_tabular_ensemble_topology",
+        "solution.kaggle.large_scale_temporal_tabular_ensemble_topology"
+      ],
+      "related_operations": [
+        "metric_postprocessing"
+      ],
+      "source_competitions": [
+        "predict-future-sales",
+        "large-scale-tabular"
+      ],
+      "source_references": [
+        "data/solution_cdgs/predict_future_sales_benchmark.json"
+      ],
+      "tags": [
+        "clipping",
+        "metric",
+        "postprocessing"
+      ],
+      "audit": {
+        "source_kind": "manual_analysis",
+        "review_status": "draft",
+        "notes": "This is often legitimate, but it should remain a tactic because the valid bounds are benchmark-specific."
+      }
+    },
+    {
+      "trick_id": "trick.kaggle_test_distribution_pseudolabeling",
+      "name": "Test-distribution pseudo-labeling",
+      "kind": "data_artifact",
+      "status": "allowed_with_validation",
+      "risk_level": "medium",
+      "generalization_level": "domain_specific",
+      "summary": "Use confident predictions on public or unlabeled test-distribution data as additional training signal after validating that the feedback loop is stable.",
+      "applies_when": [
+        "Unlabeled target-domain examples are available and distribution shift is a major source of error.",
+        "The selected CDG already has a training loop that can ingest extra labeled or weakly labeled examples."
+      ],
+      "do_not_use_when": [
+        "Pseudo-labels are derived from prohibited private labels or leaderboard probes.",
+        "The first-stage model has weak precision and would amplify errors."
+      ],
+      "validation_requirements": [
+        "Use out-of-fold or held-out validation to set confidence thresholds.",
+        "Track performance before and after pseudo-labeling and inspect class-balance drift."
+      ],
+      "architect_hint": "Present as a validation-gated training tactic for domain adaptation, especially in image, text, and tabular competitions.",
+      "related_cdgs": [
+        "solution.kaggle.large_scale_fine_grained_image_classification_topology",
+        "solution.kaggle.classical_tabular_ensemble_topology"
+      ],
+      "related_operations": [
+        "insert_pseudo_labeling_loop_before_training"
+      ],
+      "source_competitions": [
+        "generic-domain-adaptation"
+      ],
+      "source_references": [
+        "research/validation_results_expansion_142_finalbatch_gap_mining.json"
+      ],
+      "tags": [
+        "pseudo-labeling",
+        "domain-adaptation",
+        "unlabeled-data"
+      ],
+      "audit": {
+        "source_kind": "manual_analysis",
+        "review_status": "draft",
+        "notes": "Pseudo-labeling is reusable, but test-distribution use and confidence policy are benchmark-specific enough to catalog here."
+      }
+    },
+    {
+      "trick_id": "trick.kaggle_inference_budget_bruteforce_search",
+      "name": "Inference-budget brute-force search",
+      "kind": "inference_budget_trick",
+      "status": "cataloged",
+      "risk_level": "medium",
+      "generalization_level": "domain_specific",
+      "summary": "Spend unusually large inference or submission-time compute on repeated sampling, local repair, solver retries, or exhaustive candidate search.",
+      "applies_when": [
+        "The benchmark permits heavyweight offline inference, repeated sampling, solver loops, or local search.",
+        "The selected CDG is planning, search, LLM tool use, or constrained optimization and candidate quality improves with more attempts."
+      ],
+      "do_not_use_when": [
+        "Strict latency, cost, or real-time constraints are part of the target setting.",
+        "The tactic exploits an execution environment quirk rather than a permitted search budget."
+      ],
+      "validation_requirements": [
+        "Report compute budget, number of samples or retries, and marginal return curves.",
+        "Confirm generated candidates remain valid under the benchmark constraints."
+      ],
+      "architect_hint": "Offer as a costed inference tactic after a planning/search or LLM tool-use CDG is selected.",
+      "related_cdgs": [
+        "solution.kaggle.agent_simulation_search_planning_topology",
+        "solution.kaggle.aimo_llm_tool_use_topology"
+      ],
+      "related_operations": [
+        "search_or_rollout",
+        "majority_voting"
+      ],
+      "source_competitions": [
+        "ai-mathematical-olympiad-progress-prize-2",
+        "traveling-santa"
+      ],
+      "source_references": [
+        "data/solution_cdgs/aimo_llm_tool_use_topology.json",
+        "data/solution_cdgs/agent_simulation_search_planning_topology.json"
+      ],
+      "tags": [
+        "inference-budget",
+        "search",
+        "solver"
+      ],
+      "audit": {
+        "source_kind": "manual_analysis",
+        "review_status": "draft",
+        "notes": "Cataloged as a tactic because it changes compute allocation rather than the core CDG topology."
+      }
+    }
+  ]
+}

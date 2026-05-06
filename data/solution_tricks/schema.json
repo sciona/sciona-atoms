@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sciona.dev/schemas/solution_trick_registry.schema.json",
+  "title": "Sciona Solution Trick Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "tricks"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^v[0-9]+$"
+    },
+    "tricks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trick"
+      }
+    }
+  },
+  "$defs": {
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1
+    },
+    "string_list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/non_empty_string"
+      }
+    },
+    "trick": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trick_id",
+        "name",
+        "kind",
+        "status",
+        "risk_level",
+        "generalization_level",
+        "summary",
+        "applies_when",
+        "do_not_use_when",
+        "validation_requirements",
+        "architect_hint",
+        "related_cdgs",
+        "related_operations",
+        "source_competitions",
+        "source_references",
+        "tags",
+        "audit"
+      ],
+      "properties": {
+        "trick_id": {
+          "type": "string",
+          "pattern": "^trick\\.[a-z0-9_.-]+$"
+        },
+        "name": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "kind": {
+          "enum": [
+            "leak",
+            "metric_hack",
+            "postprocess",
+            "data_artifact",
+            "public_lb_overfit_risk",
+            "domain_prior",
+            "solver_shortcut",
+            "inference_budget_trick"
+          ]
+        },
+        "status": {
+          "enum": ["cataloged", "allowed_with_validation", "deprecated", "disallowed"]
+        },
+        "risk_level": {
+          "enum": ["low", "medium", "high", "disallowed"]
+        },
+        "generalization_level": {
+          "enum": ["general", "domain_specific", "competition_specific"]
+        },
+        "summary": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "applies_when": {
+          "$ref": "#/$defs/string_list"
+        },
+        "do_not_use_when": {
+          "$ref": "#/$defs/string_list"
+        },
+        "validation_requirements": {
+          "$ref": "#/$defs/string_list"
+        },
+        "architect_hint": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "related_cdgs": {
+          "$ref": "#/$defs/string_list"
+        },
+        "related_operations": {
+          "$ref": "#/$defs/string_list"
+        },
+        "source_competitions": {
+          "$ref": "#/$defs/string_list"
+        },
+        "source_references": {
+          "$ref": "#/$defs/string_list"
+        },
+        "tags": {
+          "$ref": "#/$defs/string_list"
+        },
+        "audit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source_kind", "review_status", "notes"],
+          "properties": {
+            "source_kind": {
+              "enum": ["manual_analysis", "kaggle_solution", "manual_hypothesis"]
+            },
+            "review_status": {
+              "enum": ["draft", "reviewed", "deprecated"]
+            },
+            "notes": {
+              "$ref": "#/$defs/non_empty_string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
