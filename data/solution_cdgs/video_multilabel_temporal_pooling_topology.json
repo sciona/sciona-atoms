@@ -1,0 +1,108 @@
+{
+  "asset_id": "solution.kaggle.video_multilabel_temporal_pooling_topology",
+  "asset_version": "v1",
+  "family": "video_multilabel_temporal_pooling",
+  "paradigm": "neural_network",
+  "name": "Video Multilabel Temporal Pooling Pipeline Template",
+  "summary": "Reusable base CDG for large-scale video understanding and multilabel tagging competitions such as YouTube-8M, where frame or segment features are pooled with NetVLAD, NetFV, LSTM/GRU, mixture-of-experts, context gating, hierarchy-aware multitask losses, bag-of-words fusion, and rank-averaged ensembles.",
+  "dejargonized_summary": "Load frame or segment features from many videos, pool them over time with sequence models or learned pooling, reweight labels with context gates and hierarchy-aware heads, blend with bag-of-words or sparse baselines, and rank-average the ensemble for multilabel video predictions.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "youtube8m",
+    "video_multilabel",
+    "video_understanding",
+    "temporal_pooling",
+    "netvlad_pooling",
+    "netfv_pooling",
+    "bidirectional_lstm_gru",
+    "mixture_of_experts_pooling",
+    "context_gating",
+    "multitask_label_hierarchy",
+    "bag_of_words_feature_fusion",
+    "rank_averaging_ensemble",
+    "label_specific_threshold_optimization",
+    "large_scale_video_features",
+    "frame_level_features",
+    "segment_level_features"
+  ],
+  "inputs": [
+    {"name": "video_feature_table", "type_desc": "VideoFeatureDataset", "constraints": "Frame-level, segment-level, audio, visual, or sparse features with multilabel targets.", "required": true}
+  ],
+  "outputs": [
+    {"name": "video_label_predictions", "type_desc": "SubmissionArtifact", "constraints": "Multilabel scores or ranked labels formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The task predicts multiple labels, tags, or classes from videos or precomputed frame/segment features.",
+      "Winning techniques include NetVLAD, NetFV, LSTM/GRU pooling, mixture-of-experts pooling, context gating, hierarchy-aware multitask learning, bag-of-words fusion, or rank-averaged ensembles.",
+      "Temporal aggregation over many frames or segments is load-bearing."
+    ],
+    "do_not_use_when": [
+      "The task is event localization in short video clips where dense object detection or frame stacking is the main topology.",
+      "The task is audio-only sound event detection with no video/frame feature stream.",
+      "The target is a single class from still images rather than multilabel video ranking."
+    ],
+    "key_insight": "The durable topology is many-to-one temporal pooling over large video feature streams before multilabel calibration. This differs from generic video detection CDGs because the key operations are global pooling, context gating, label hierarchy, and rank-based ensembling.",
+    "critical_stages": ["feature_stream_loading", "temporal_pooling", "context_gated_multilabel_head", "sparse_baseline_fusion", "rank_ensemble_calibration"],
+    "swappable_stages": {
+      "temporal_pooling": "Can use NetVLAD, NetFV, LSTM, GRU, attention pooling, transformer pooling, or mixture-of-experts pooling.",
+      "context_gated_multilabel_head": "Can use sigmoid heads, hierarchy-aware multitask heads, context gating, or label-embedding heads.",
+      "sparse_baseline_fusion": "Can use bag-of-words, logistic regression, linear models, or metadata baselines."
+    },
+    "scaling_notes": "Shard features by video ID, stream batches from TFRecord/Parquet/NPY caches, and evaluate rank metrics with label-specific calibration.",
+    "failure_modes": [
+      "Mean pooling can erase rare short events if no attention or learned pooling is used.",
+      "Label hierarchy losses can reinforce noisy parent-child labels when the taxonomy is incomplete.",
+      "Rank averaging can hide poorly calibrated rare labels unless thresholds are tuned per label."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "pooling_before_multilabel_head",
+      "statement": "Aggregate frame or segment features into video-level representations before training multilabel heads or rank ensembles.",
+      "rationale": "The final labels are video-level predictions and require a stable pooled representation.",
+      "confidence": 0.95,
+      "source_stage": "newcdg_divergent_gap_audit",
+      "source_reference": "research/validation_results_expansion_132_newcdg_gap_mining.json"
+    },
+    {
+      "category": "metric",
+      "subject": "rank_metric_calibration",
+      "statement": "Calibrate label scores and rank averaging against the benchmark ranking metric rather than raw logloss alone.",
+      "rationale": "Video multilabel competitions often reward top-ranked labels, not just independent class probabilities.",
+      "confidence": 0.9,
+      "source_stage": "newcdg_divergent_gap_audit",
+      "source_reference": "research/validation_results_expansion_132_newcdg_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added after validation left repeated divergent YouTube-8M style video understanding solutions whose missing techniques were bidirectional LSTM/GRU ensembles, NetVLAD temporal pooling, context gating, multitask label hierarchy, bag-of-words fusion, mixture-of-experts pooling, and rank-averaged ensembling. Semantic comparison found existing video event CDGs too focused on localization or frame detectors.",
+    "dejargonized_summary": "This covers video tagging solutions where temporal feature pooling and multilabel ranking are the main reusable structure.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_132_newcdg_full.json",
+      "Gap mining: research/validation_results_expansion_132_newcdg_gap_mining.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Short-window sports event localization remains better represented by dfl_bundesliga_1st and related video event CDGs."
+    ],
+    "references": [
+      {
+        "title": "Sciona 132-CDG expansion validation audit",
+        "citation": "research/validation_results_expansion_132_newcdg_gap_mining.json",
+        "note": "Local deterministic and semantic audit of unmatched video multilabel pooling patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "feature_stream_loading", "name": "Feature Stream Loading", "description": "Load precomputed frame-level, segment-level, audio, visual, metadata, or sparse features for each video with sharded and memory-aware access.", "dejargonized_description": "Read the sequence of features associated with each video.", "concept_type": "data_extraction", "inputs": [{"name": "video_feature_table", "type_desc": "VideoFeatureDataset", "constraints": "Raw video feature streams.", "required": true}], "outputs": [{"name": "video_feature_streams", "type_desc": "SequenceFeatureDataset", "constraints": "Per-video feature sequences.", "required": true}], "preconditions": ["Video IDs and feature schema are available."], "guarantees": ["Feature streams are grouped by video ID."], "matched_primitive": ""},
+    {"stage_id": "temporal_pooling", "name": "Temporal Pooling", "description": "Aggregate frame or segment features with NetVLAD, NetFV, attention pooling, bidirectional LSTM/GRU, transformer pooling, mean/max pooling, or mixture-of-experts pooling.", "dejargonized_description": "Summarize each video's sequence of frames into a video-level representation.", "concept_type": "neural_network", "inputs": [{"name": "video_feature_streams", "type_desc": "SequenceFeatureDataset", "constraints": "Per-video sequence features.", "required": true}], "outputs": [{"name": "video_representations", "type_desc": "Tensor", "constraints": "Video-level representations.", "required": true}], "preconditions": ["Sequence padding and truncation policy are fixed."], "guarantees": ["Each video has one or more pooled representations."], "matched_primitive": ""},
+    {"stage_id": "context_gated_multilabel_head", "name": "Context-Gated Multilabel Head", "description": "Train multilabel sigmoid, hierarchy-aware multitask, context gating, label-embedding, or mixture-of-experts heads for video label prediction.", "dejargonized_description": "Predict many labels for each video while using label context and hierarchy.", "concept_type": "loss_function", "inputs": [{"name": "video_representations", "type_desc": "Tensor", "constraints": "Pooled video representations.", "required": true}], "outputs": [{"name": "raw_label_scores", "type_desc": "NDArray", "constraints": "Raw multilabel scores.", "required": true}], "preconditions": ["Multilabel targets and taxonomy are available."], "guarantees": ["Produces a score for each candidate label."], "matched_primitive": ""},
+    {"stage_id": "sparse_baseline_fusion", "name": "Sparse Baseline Fusion", "description": "Blend neural scores with bag-of-words, sparse linear, metadata, audio-only, or visual-only baselines to improve rare-label coverage.", "dejargonized_description": "Combine neural video predictions with simpler sparse or metadata models.", "concept_type": "optimization", "inputs": [{"name": "raw_label_scores", "type_desc": "NDArray", "constraints": "Neural label scores.", "required": true}], "outputs": [{"name": "blended_label_scores", "type_desc": "NDArray", "constraints": "Blended multilabel scores.", "required": true}], "preconditions": ["Baseline predictions are aligned by video and label."], "guarantees": ["Blended scores preserve label indexing."], "matched_primitive": ""},
+    {"stage_id": "rank_ensemble_calibration", "name": "Rank Ensemble Calibration", "description": "Apply rank averaging, fold/model ensembling, label-specific threshold optimization, class-prior correction, or metric-specific top-k formatting.", "dejargonized_description": "Turn blended scores into final ranked labels for each video.", "concept_type": "optimization", "inputs": [{"name": "blended_label_scores", "type_desc": "NDArray", "constraints": "Blended label scores.", "required": true}], "outputs": [{"name": "video_label_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final ranked or scored multilabel predictions.", "required": true}], "preconditions": ["Metric and label vocabulary are known."], "guarantees": ["Predictions are calibrated and formatted for submission."], "matched_primitive": ""}
+  ]
+}

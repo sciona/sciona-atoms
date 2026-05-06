@@ -4,12 +4,23 @@
   "family": "trajectory_prediction",
   "paradigm": "optimization",
   "name": "NFL Big Data Bowl - 1st Place (2020) - Pipeline Template",
-  "summary": "Spatial Trajectory / 1D CNN solution template for NFL Big Data Bowl - 1st Place (2020), modeled as a 5-stage deterministic pipeline: Spatial normalization, Relative coordinate mapping, Spatial tensor formatting, 1D CNN Architecture, and downstream competition-specific finalization.",
-  "dejargonized_summary": "This template captures the ordered steps used by NFL Big Data Bowl - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "summary": "Spatial trajectory, player-tracking, and football field-control solution template for NFL Big Data Bowl style tasks, modeled as a deterministic pipeline with spatial normalization, relative coordinate mapping, Voronoi or space-control features, time-to-contact and pursuit-angle features, spatial tensor formatting, CNN/GBDT trajectory or risk modeling, and CRPS or tackle-risk metric finalization.",
+  "dejargonized_summary": "This template prepares player tracking data by flipping field coordinates to a common direction, expressing players relative to the ball carrier, building field-control features such as Voronoi areas, pursuit angles, time-to-contact, risk surfaces, and relative speeds, then trains a neural or gradient-boosted model and formats the football metric output.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "spatial",
     "trajectory",
+    "nfl_tracking",
+    "football_player_tracking",
+    "voronoi_space_control",
+    "voronoi_tessellation",
+    "field_control_surfaces",
+    "time_to_contact",
+    "pursuit_angle",
+    "tackle_risk_surface",
+    "physics_informed_pursuit",
+    "gradient_boosting_tracking_features",
+    "player_relative_coordinates",
     "competition_solution",
     "pipeline_template"
   ],
@@ -31,8 +42,9 @@
   ],
   "applicability": {
     "use_when": [
-      "The new task has the same broad problem type: Spatial Trajectory / 1D CNN.",
-      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "The new task has the same broad problem type: spatial trajectory, football player tracking, field-control estimation, tackle-risk modeling, or 1D CNN/GBDT tracking prediction.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline, including player coordinates, ball carrier or event anchors, velocities, accelerations, team direction, or field geometry.",
+      "Winning techniques include Voronoi diagrams, space-control surfaces, time-to-contact, pursuit angles, physics-informed pursuit or trajectory features, tackle risk, CNN sequence models, or gradient boosting over tracking features.",
       "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
     ],
     "do_not_use_when": [
@@ -40,12 +52,16 @@
       "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
       "The evaluation metric rewards a fundamentally different output structure than the source competition."
     ],
-    "key_insight": "The load-bearing idea is the pipeline topology: Spatial normalization creates the representation needed by Continuous Ranked Probability Score (CRPS), so later stages optimize the metric without solving raw-data routing from scratch.",
+    "key_insight": "The load-bearing idea is the pipeline topology: spatial normalization and player-relative feature construction create a stable football tracking representation before CNN, GBDT, CRPS, or tackle-risk modeling.",
     "critical_stages": [
       "spatial_normalization",
-      "relative_coordinate_mapping"
+      "relative_coordinate_mapping",
+      "spatial_tensor_formatting",
+      "continuous_ranked_probability_score_crps"
     ],
     "swappable_stages": {
+      "relative_coordinate_mapping": "Can include ball-carrier-relative positions, velocities, accelerations, pursuit angle, time-to-contact, Voronoi space-control, or field-control risk surfaces.",
+      "1d_cnn_architecture": "Can be replaced by a CNN, MLP, GBDT, graph model, or ensemble over the same tracking feature contract.",
       "continuous_ranked_probability_score_crps": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
     },
     "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
@@ -109,8 +125,8 @@
     {
       "stage_id": "relative_coordinate_mapping",
       "name": "Relative coordinate mapping",
-      "description": "recalculate all 21 players' X/Y positions relative to the exact X/Y position of the ball carrier (pandas)",
-      "dejargonized_description": "This stage recalculate all 21 players' X/Y positions relative to the exact X/Y position of the ball carrier (pandas).",
+      "description": "recalculate all players' X/Y positions, velocities, accelerations, pursuit angles, time-to-contact, and optional Voronoi or space-control surfaces relative to the ball carrier, event point, or target player (pandas)",
+      "dejargonized_description": "This stage expresses each player's movement and field control relative to the key player or event.",
       "concept_type": "data_assembly",
       "inputs": [
         {
@@ -139,8 +155,8 @@
     {
       "stage_id": "spatial_tensor_formatting",
       "name": "Spatial tensor formatting",
-      "description": "flatten the 22 players' features into a 1D sequence and sort them deterministically (e.g., offense first, defense second, sorted by distance to ball) (numpy)",
-      "dejargonized_description": "This stage flatten the 22 players' features into a 1D sequence and sort them deterministically (e.g., offense first, defense second, sorted by distance to ball) (numpy).",
+      "description": "flatten player features, relative coordinates, field-control grids, tackle-risk surfaces, and Voronoi/nearest-defender summaries into a deterministic 1D sequence or tabular matrix (numpy)",
+      "dejargonized_description": "This stage turns football tracking features into a stable model input.",
       "concept_type": "data_assembly",
       "inputs": [
         {
@@ -169,8 +185,8 @@
     {
       "stage_id": "1d_cnn_architecture",
       "name": "1D CNN Architecture",
-      "description": "pass the 1D sequence through a 1D Convolutional Neural Network (instead of an MLP) to naturally capture localized spatial relationships between adjacent players (Keras)",
-      "dejargonized_description": "This stage pass the 1D sequence through a 1D Convolutional Neural Network (instead of an MLP) to naturally capture localized spatial relationships between adjacent players (Keras).",
+      "description": "pass the 1D sequence through a 1D CNN, MLP, graph model, or gradient boosting model to capture localized spatial, pursuit, and interaction relationships between players (Keras, XGBoost, LightGBM)",
+      "dejargonized_description": "This stage models how nearby players and field-control features affect the football outcome.",
       "concept_type": "neural_network",
       "inputs": [
         {
@@ -199,8 +215,8 @@
     {
       "stage_id": "continuous_ranked_probability_score_crps",
       "name": "Continuous Ranked Probability Score (CRPS)",
-      "description": "output a cumulative distribution function (CDF) of expected yards gained, strictly optimizing for CRPS loss (Keras)",
-      "dejargonized_description": "This stage output a cumulative distribution function (CDF) of expected yards gained, strictly optimizing for CRPS loss (Keras).",
+      "description": "output a cumulative distribution function of expected yards, tackle-risk probability, route/rush outcome, or metric-specific tracking score, optimizing CRPS, logloss, Brier score, or the competition metric (Keras)",
+      "dejargonized_description": "This stage converts raw tracking predictions into the required football metric output.",
       "concept_type": "loss_function",
       "inputs": [
         {

@@ -1,0 +1,112 @@
+{
+  "asset_id": "solution.kaggle.efficient_llm_adapter_finetuning_topology",
+  "asset_version": "v1",
+  "family": "efficient_llm_adapter_finetuning",
+  "paradigm": "neural_network",
+  "name": "Efficient LLM Adapter Fine-Tuning Pipeline Template",
+  "summary": "Reusable base CDG for LLM efficiency, model adaptation, instruction tuning, and resource-constrained fine-tuning competitions that combine curated prompt data, distillation or quality filtering, LoRA/QLoRA or LoRA-MoE adapters, memory-efficient training controls such as FlashAttention-2, bf16, gradient accumulation, paged optimizers, and adapter routing or merge-time calibration.",
+  "dejargonized_summary": "Prepare filtered instruction or prompt data, fine-tune a large language model through lightweight adapters such as LoRA, QLoRA, or LoRA-MoE, use memory-saving training controls so the model fits on available hardware, optionally route or merge task adapters, and calibrate outputs for the benchmark metric.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "llm_efficiency_challenge",
+    "neurips_llm_fine_tuning",
+    "efficient_llm_training",
+    "adapter_finetuning",
+    "lora_finetuning",
+    "qlora_4bit_training",
+    "quantized_4bit_lora",
+    "lora_moe",
+    "task_specific_adapter_routing",
+    "flashattention2",
+    "paged_optimizers",
+    "gradient_accumulation",
+    "mixed_precision_bf16",
+    "data_distillation",
+    "quality_filtering",
+    "instruction_tuning",
+    "open_orca_instruction_data",
+    "elastic_weight_consolidation",
+    "synthetic_self_play_data",
+    "adapter_merge_calibration"
+  ],
+  "inputs": [
+    {"name": "instruction_or_prompt_data", "type_desc": "LLMFineTuningDataset", "constraints": "Prompts, instructions, responses, preference labels, or task examples.", "required": true}
+  ],
+  "outputs": [
+    {"name": "fine_tuned_llm_outputs", "type_desc": "SubmissionArtifact", "constraints": "Generated answers, scores, labels, or adapter artifacts formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The solution is dominated by adapting a pretrained LLM under memory, speed, or parameter-budget constraints.",
+      "Winning techniques include LoRA, QLoRA, LoRA-MoE, adapter routing, FlashAttention-2, paged optimizers, bf16, gradient accumulation, EWC, data distillation, curated Open-Orca style instruction data, or synthetic self-play examples.",
+      "The task requires model training or adapter selection rather than only prompt engineering or shallow cross-encoder scoring."
+    ],
+    "do_not_use_when": [
+      "The task is classic text-pair matching with handcrafted lexical features and no LLM fine-tuning.",
+      "The task is LLM preference ranking where the key topology is paired response scoring rather than efficient adapter training.",
+      "The task can be solved with static embeddings, tabular models, or retrieval without updating model weights."
+    ],
+    "key_insight": "The durable topology is adapter-based model adaptation under explicit resource controls. This is separate from generic LLM preference CDGs because memory layout, quantization, optimizer choice, and adapter routing are load-bearing stages.",
+    "critical_stages": ["data_curation_distillation", "adapter_initialization", "memory_efficient_training", "adapter_routing_or_merging", "metric_calibration"],
+    "swappable_stages": {
+      "adapter_initialization": "Can use LoRA, QLoRA, LoRA-MoE, IA3, prefix tuning, or task-specific adapters if the adapted weights remain parameter-efficient.",
+      "memory_efficient_training": "Can use FlashAttention-2, gradient checkpointing, paged optimizers, bf16/fp16, quantized base weights, or gradient accumulation.",
+      "data_curation_distillation": "Can use quality filtering, teacher distillation, Open-Orca style instruction data, synthetic self-play, or hard-example mining."
+    },
+    "scaling_notes": "Cache tokenization, keep sequence-length policy fixed before training, validate memory controls on the target hardware, and evaluate adapter merges on held-out prompts.",
+    "failure_modes": [
+      "Low-quality distilled data can degrade adapters even when training loss improves.",
+      "Changing quantization, precision, or sequence length between validation and final training can shift results.",
+      "Adapter routing can overfit task IDs or prompt templates if validation is not split-aware."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "curation_before_adapter_training",
+      "statement": "Filter, distill, or construct instruction data before adapter initialization and training.",
+      "rationale": "Adapter updates inherit bias and noise from the training examples; training controls cannot recover from poor data curation.",
+      "confidence": 0.95,
+      "source_stage": "newcdg_divergent_gap_audit",
+      "source_reference": "research/validation_results_expansion_132_newcdg_gap_mining.json"
+    },
+    {
+      "category": "resource",
+      "subject": "memory_policy_before_training",
+      "statement": "Fix quantization, attention implementation, precision, optimizer paging, gradient accumulation, and checkpointing before model selection.",
+      "rationale": "The feasible batch size and context length determine the adapter training regime and can change model quality.",
+      "confidence": 0.9,
+      "source_stage": "newcdg_divergent_gap_audit",
+      "source_reference": "research/validation_results_expansion_132_newcdg_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added after validation left repeated divergent LLM efficiency and LLM fine-tuning solutions whose missing techniques were QLoRA, LoRA-MoE, FlashAttention-2, paged optimizers, bf16, gradient accumulation, data distillation, EWC, adapter routing, and curated instruction tuning. Semantic comparison found the existing LLM preference reasoning topology too focused on prompt-pair scoring and preference heads.",
+    "dejargonized_summary": "This covers competitions where the main reusable operation is memory-efficient fine-tuning of a pretrained language model with adapters.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_132_newcdg_full.json",
+      "Gap mining: research/validation_results_expansion_132_newcdg_gap_mining.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Preference-head and prompt-pair techniques remain in llm_preference_reasoning_topology; this CDG should stay focused on adapter training and resource policy."
+    ],
+    "references": [
+      {
+        "title": "Sciona 132-CDG expansion validation audit",
+        "citation": "research/validation_results_expansion_132_newcdg_gap_mining.json",
+        "note": "Local deterministic and semantic audit of unmatched efficient LLM fine-tuning patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "data_curation_distillation", "name": "Data Curation and Distillation", "description": "Filter noisy prompt-response data, select high-quality instruction examples, add teacher-distilled responses, Open-Orca style instruction data, synthetic self-play examples, or hard examples.", "dejargonized_description": "Build a clean training set before updating the language model.", "concept_type": "data_assembly", "inputs": [{"name": "instruction_or_prompt_data", "type_desc": "LLMFineTuningDataset", "constraints": "Raw prompt, instruction, response, or label data.", "required": true}], "outputs": [{"name": "curated_examples", "type_desc": "LLMFineTuningDataset", "constraints": "Filtered and augmented examples.", "required": true}], "preconditions": ["Raw examples and split policy are available."], "guarantees": ["Training data provenance and validation boundaries are explicit."], "matched_primitive": ""},
+    {"stage_id": "adapter_initialization", "name": "Adapter Initialization", "description": "Attach LoRA, QLoRA, LoRA-MoE, prefix, or task-specific adapters to a pretrained LLM, including 4-bit quantized base weights when needed.", "dejargonized_description": "Add small trainable modules to a pretrained language model instead of updating every weight.", "concept_type": "neural_network", "inputs": [{"name": "curated_examples", "type_desc": "LLMFineTuningDataset", "constraints": "Curated training examples.", "required": true}], "outputs": [{"name": "adapter_training_plan", "type_desc": "AdapterTrainingPlan", "constraints": "Backbone, tokenizer, adapter, and quantization policy.", "required": true}], "preconditions": ["Backbone model, tokenizer, and adapter rank policy are selected."], "guarantees": ["Trainable parameter set is explicit."], "matched_primitive": ""},
+    {"stage_id": "memory_efficient_training", "name": "Memory-Efficient Training", "description": "Train adapters with FlashAttention-2, bf16/fp16 mixed precision, gradient accumulation, paged optimizers, gradient checkpointing, quantized 4-bit weights, and sequence-length controls.", "dejargonized_description": "Fine-tune the model while staying inside memory and runtime limits.", "concept_type": "optimization", "inputs": [{"name": "adapter_training_plan", "type_desc": "AdapterTrainingPlan", "constraints": "Adapter and resource policy.", "required": true}], "outputs": [{"name": "trained_adapters", "type_desc": "AdapterWeights", "constraints": "Fine-tuned adapter weights and training logs.", "required": true}], "preconditions": ["Hardware budget and validation split are fixed."], "guarantees": ["Training uses the declared memory policy."], "matched_primitive": ""},
+    {"stage_id": "adapter_routing_or_merging", "name": "Adapter Routing or Merging", "description": "Route task examples through specialized adapters, merge adapters, apply LoRA-MoE gating, or use EWC to retain prior capabilities across tasks.", "dejargonized_description": "Choose or combine the trained adapters for each task or prompt type.", "concept_type": "conditional_routing", "inputs": [{"name": "trained_adapters", "type_desc": "AdapterWeights", "constraints": "One or more trained adapters.", "required": true}], "outputs": [{"name": "adapted_model", "type_desc": "LanguageModel", "constraints": "Routed or merged adapted model.", "required": true}], "preconditions": ["Adapter selection or merge policy is known."], "guarantees": ["Inference uses the intended adapter path."], "matched_primitive": ""},
+    {"stage_id": "metric_calibration", "name": "Metric Calibration", "description": "Tune decoding, thresholds, rank aggregation, validation checkpoints, or adapter merge weights against the benchmark metric.", "dejargonized_description": "Convert adapted model outputs into the exact final format required by the competition.", "concept_type": "optimization", "inputs": [{"name": "adapted_model", "type_desc": "LanguageModel", "constraints": "Adapted model ready for inference.", "required": true}], "outputs": [{"name": "fine_tuned_llm_outputs", "type_desc": "SubmissionArtifact", "constraints": "Final benchmark outputs.", "required": true}], "preconditions": ["Metric and submission format are known."], "guarantees": ["Outputs are calibrated and formatted for submission."], "matched_primitive": ""}
+  ]
+}

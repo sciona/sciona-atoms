@@ -1,0 +1,107 @@
+{
+  "asset_id": "solution.kaggle.image_tabular_hybrid_classification_topology",
+  "asset_version": "v1",
+  "family": "image_tabular_hybrid_classification",
+  "paradigm": "neural_network",
+  "name": "Image and Tabular Hybrid Classification Pipeline Template",
+  "summary": "Reusable base CDG for competitions that combine visual images with handcrafted, metadata, or tabular feature vectors, including leaf shape classification, medical image plus metadata classification, product image plus attributes, and CNN-MLP hybrid models with feature scaling, feature concatenation, dropout, label smoothing, and stratified cross-validation.",
+  "dejargonized_summary": "Extract features from images with a CNN, prepare metadata or handcrafted shape/color/texture features with standard scaling, concatenate the visual and tabular features, train a hybrid classifier with dropout and label smoothing, and validate with stratified or group-aware folds.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "image_tabular_hybrid",
+    "cnn_mlp_hybrid",
+    "leaf_classification",
+    "handcrafted_features",
+    "metadata_image_classification",
+    "feature_concatenation",
+    "vision_tabular_fusion",
+    "standardscaler_handcrafted_features",
+    "heavy_dropout_regularization",
+    "label_smoothing_logloss",
+    "stratified_kfold",
+    "groupkfold_patient_id",
+    "shape_texture_color_features",
+    "cnn_feature_extractor",
+    "mlp_regression_or_classification_head"
+  ],
+  "inputs": [
+    {"name": "image_records", "type_desc": "ImageTabularDataset", "constraints": "Images aligned with metadata, handcrafted features, labels, or group IDs.", "required": true}
+  ],
+  "outputs": [
+    {"name": "class_predictions", "type_desc": "SubmissionArtifact", "constraints": "Class probabilities or labels formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The solution requires both image-derived features and non-image tabular, metadata, handcrafted, shape, color, or texture features.",
+      "Winning techniques include CNN-MLP hybrid architecture, feature concatenation, StandardScaler for handcrafted features, heavy dropout, label smoothing, or stratified/group cross-validation.",
+      "The image branch alone is insufficient because metadata or engineered numeric descriptors carry load-bearing signal."
+    ],
+    "do_not_use_when": [
+      "The task is pure image classification, detection, or segmentation with no tabular or handcrafted feature branch.",
+      "The tabular features are only weak covariates and the winning solution is dominated by a medical 3D image model or whole-slide MIL pipeline.",
+      "The task is multimodal image-text retrieval where contrastive image/text encoders are load-bearing."
+    ],
+    "key_insight": "The durable topology is late or mid-level fusion between a visual representation and a scaled numeric feature table. This is distinct from pure image classification because feature alignment, scaling, and fusion regularization are load-bearing.",
+    "critical_stages": ["image_feature_extraction", "tabular_feature_preparation", "feature_fusion", "hybrid_head_training"],
+    "swappable_stages": {
+      "image_feature_extraction": "Can use CNN, EfficientNet, ResNet, SENet, ViT, or custom image descriptors.",
+      "tabular_feature_preparation": "Can use StandardScaler, missing-value indicators, PCA, shape descriptors, color histograms, metadata encoders, or handcrafted statistics.",
+      "hybrid_head_training": "Can be a concatenated MLP, gradient boosting over extracted features, or a blended CNN and tabular ensemble."
+    },
+    "scaling_notes": "Cache image embeddings and fit tabular scalers inside each fold; keep image IDs and tabular rows aligned before fusion.",
+    "failure_modes": [
+      "Fitting scalers or feature selection outside folds leaks validation information.",
+      "A high-capacity CNN can ignore the tabular branch unless fusion dropout or branch weighting is tuned.",
+      "Metadata and image records can silently misalign when augmentation or duplicate images are expanded."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "data",
+      "subject": "alignment_before_fusion",
+      "statement": "Align image embeddings and tabular feature rows by stable record IDs before concatenation or blending.",
+      "rationale": "The hybrid head assumes each visual vector is paired with the correct metadata and label.",
+      "confidence": 0.95,
+      "source_stage": "newcdg_divergent_gap_audit",
+      "source_reference": "research/validation_results_expansion_132_newcdg_gap_mining.json"
+    },
+    {
+      "category": "validation",
+      "subject": "fold_local_scaling",
+      "statement": "Fit StandardScaler, PCA, and tabular encoders within each stratified or group-aware fold.",
+      "rationale": "Handcrafted features can leak validation statistics if preprocessing is fit globally.",
+      "confidence": 0.9,
+      "source_stage": "newcdg_divergent_gap_audit",
+      "source_reference": "research/validation_results_expansion_132_newcdg_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added after validation left divergent image-plus-tabular cases such as leaf classification whose missing techniques were CNN-MLP hybrid architecture, vision and tabular feature concatenation, StandardScaler for handcrafted features, heavy dropout, label smoothing, and stratified cross-validation. Semantic comparison found pure image classification CDGs and medical image tabular regression CDGs too narrow or domain-specific.",
+    "dejargonized_summary": "This covers classification solutions where a neural image branch and a numeric feature branch are both necessary.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_132_newcdg_full.json",
+      "Gap mining: research/validation_results_expansion_132_newcdg_gap_mining.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "3D medical multiview classification may later warrant its own CDG if support grows beyond a simple hybrid-fusion refinement."
+    ],
+    "references": [
+      {
+        "title": "Sciona 132-CDG expansion validation audit",
+        "citation": "research/validation_results_expansion_132_newcdg_gap_mining.json",
+        "note": "Local deterministic and semantic audit of unmatched image plus tabular hybrid patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "image_feature_extraction", "name": "Image Feature Extraction", "description": "Extract visual embeddings from images with a CNN, EfficientNet, ResNet, SENet, ViT, or handcrafted shape, texture, and color descriptors.", "dejargonized_description": "Turn each image into a numeric representation.", "concept_type": "neural_network", "inputs": [{"name": "image_records", "type_desc": "ImageTabularDataset", "constraints": "Raw images and aligned labels.", "required": true}], "outputs": [{"name": "image_features", "type_desc": "FeatureMatrix", "constraints": "One visual feature vector per record.", "required": true}], "preconditions": ["Image preprocessing and augmentation policy are fixed."], "guarantees": ["Visual features preserve record alignment."], "matched_primitive": ""},
+    {"stage_id": "tabular_feature_preparation", "name": "Tabular Feature Preparation", "description": "Prepare metadata or handcrafted numeric features with imputation, StandardScaler, categorical encoding, shape descriptors, texture statistics, color histograms, or PCA.", "dejargonized_description": "Clean and scale the non-image features for each record.", "concept_type": "data_assembly", "inputs": [{"name": "image_records", "type_desc": "ImageTabularDataset", "constraints": "Metadata and handcrafted features aligned to images.", "required": true}], "outputs": [{"name": "tabular_features", "type_desc": "FeatureMatrix", "constraints": "Scaled numeric or encoded feature table.", "required": true}], "preconditions": ["Feature schema and validation folds are known."], "guarantees": ["Feature rows align to image rows without validation leakage."], "matched_primitive": ""},
+    {"stage_id": "feature_fusion", "name": "Feature Fusion", "description": "Concatenate, gate, blend, or jointly normalize image embeddings and tabular feature vectors before the final classifier.", "dejargonized_description": "Combine the visual and non-image feature vectors into one model input.", "concept_type": "data_assembly", "inputs": [{"name": "image_features", "type_desc": "FeatureMatrix", "constraints": "Visual features.", "required": true}, {"name": "tabular_features", "type_desc": "FeatureMatrix", "constraints": "Scaled tabular features.", "required": true}], "outputs": [{"name": "hybrid_features", "type_desc": "FeatureMatrix", "constraints": "Combined image and tabular features.", "required": true}], "preconditions": ["Image and tabular rows are aligned by ID."], "guarantees": ["Combined features contain both modalities for each record."], "matched_primitive": ""},
+    {"stage_id": "hybrid_head_training", "name": "Hybrid Head Training", "description": "Train a CNN-MLP hybrid, MLP over fused features, gradient-boosting blend, or class-probability ensemble with heavy dropout, label smoothing, and logloss-aware objectives.", "dejargonized_description": "Train the final classifier on the combined features.", "concept_type": "loss_function", "inputs": [{"name": "hybrid_features", "type_desc": "FeatureMatrix", "constraints": "Combined features.", "required": true}], "outputs": [{"name": "raw_class_scores", "type_desc": "NDArray", "constraints": "Class probabilities or logits.", "required": true}], "preconditions": ["Labels and fold plan are available."], "guarantees": ["Predictions are produced for each record."], "matched_primitive": ""},
+    {"stage_id": "fold_ensemble_calibration", "name": "Fold Ensemble Calibration", "description": "Use stratified K-fold, GroupKFold by patient or entity ID, fold ensembling, threshold tuning, class weighting, or label smoothing calibration against the benchmark metric.", "dejargonized_description": "Average and calibrate predictions from validation-safe folds.", "concept_type": "ml_model_selection", "inputs": [{"name": "raw_class_scores", "type_desc": "NDArray", "constraints": "Raw class predictions.", "required": true}], "outputs": [{"name": "class_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final class predictions.", "required": true}], "preconditions": ["Metric, labels, and fold groups are known."], "guarantees": ["Outputs are calibrated and formatted for submission."], "matched_primitive": ""}
+  ]
+}

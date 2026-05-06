@@ -4,8 +4,8 @@
   "family": "time_series_forecasting",
   "paradigm": "loss_function",
   "name": "Predict Future Sales - Kaggle Benchmark Standard (2015) - Pipeline Template",
-  "summary": "Tabular Time Series Forecasting solution template for Predict Future Sales - Kaggle Benchmark Standard (2015), modeled as a 5-stage deterministic pipeline: Time aggregation, Target clipping, Lag feature generation, Mean encoding, and downstream competition-specific finalization.",
-  "dejargonized_summary": "This template captures the ordered steps used by Predict Future Sales - Kaggle Benchmark Standard (2015): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "summary": "Tabular time-series and store-sales forecasting solution template for Predict Future Sales and Rossmann-style retail demand tasks, modeled as a deterministic pipeline with time aggregation, holiday and calendar feature engineering, target clipping, lag and rolling-window aggregate generation, entity/shop/store/category embeddings or encodings, Bayesian hyperparameter optimization, GBDT modeling, and downstream competition-specific finalization.",
+  "dejargonized_summary": "This template captures ordered retail forecasting steps: aggregate transactions or store sales by time, add calendar, holiday, promotion, store, and product features, build lag and rolling-window demand statistics, encode store/day/category entities, train XGBoost or LightGBM with tuned hyperparameters, and convert outputs into the final benchmark submission.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "lightgbm",
@@ -13,6 +13,17 @@
     "tabular",
     "series",
     "forecasting",
+    "retail_sales_forecasting",
+    "rossmann_store_sales",
+    "store_sales",
+    "holiday_effect_feature_engineering",
+    "promotion_calendar_features",
+    "rolling_window_aggregates",
+    "rolling_window_demand_statistics",
+    "entity_embeddings_store_day_categories",
+    "bayesian_hyperparameter_optimization",
+    "time_based_feature_engineering",
+    "day_of_week_month_features",
     "competition_solution",
     "pipeline_template"
   ],
@@ -34,8 +45,8 @@
   ],
   "applicability": {
     "use_when": [
-      "The new task has the same broad problem type: Tabular Time Series Forecasting.",
-      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "The new task has the same broad problem type: tabular time-series, retail sales, store sales, product demand, or grouped temporal forecasting.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline, including store/shop/product/date groups, holidays, promotions, calendar fields, lag features, or rolling windows.",
       "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
     ],
     "do_not_use_when": [
@@ -43,13 +54,18 @@
       "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
       "The evaluation metric rewards a fundamentally different output structure than the source competition."
     ],
-    "key_insight": "The load-bearing idea is the pipeline topology: Time aggregation creates the representation needed by GBDT modeling, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "key_insight": "The load-bearing idea is the pipeline topology: time aggregation plus leakage-safe lag, rolling-window, calendar, holiday, promotion, and entity encodings create the representation needed by GBDT modeling, so later stages optimize the metric without solving raw-data routing from scratch.",
     "critical_stages": [
       "time_aggregation",
-      "target_clipping"
+      "target_clipping",
+      "lag_feature_generation",
+      "mean_encoding",
+      "gbdt_modeling"
     ],
     "swappable_stages": {
-      "gbdt_modeling": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+      "lag_feature_generation": "Can use fixed lags, rolling-window aggregates, expanding means, recent demand statistics, or same-day/week/month offsets as long as future target leakage is excluded.",
+      "mean_encoding": "Can use store, shop, item, category, day-of-week, month, holiday, promotion, target encoding, or learned entity embeddings.",
+      "gbdt_modeling": "The final model, Bayesian hyperparameter search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
     },
     "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
     "failure_modes": [
@@ -71,8 +87,8 @@
     {
       "category": "data",
       "subject": "validation_leakage_guard",
-      "statement": "Splits, folds, time ordering, and group boundaries from the source task must be respected when adapting the template.",
-      "rationale": "Many winning pipelines depend on leakage-safe validation or temporal grouping.",
+      "statement": "Splits, folds, time ordering, store/product groups, holiday periods, and rolling windows from the source task must be respected when adapting the template.",
+      "rationale": "Many winning pipelines depend on leakage-safe validation, temporal grouping, and target encodings that exclude future rows.",
       "confidence": 0.9,
       "source_stage": "solution_analysis",
       "source_reference": "https://www.kaggle.com/c/competitive-data-science-predict-future-sales"
@@ -82,8 +98,8 @@
     {
       "stage_id": "time_aggregation",
       "name": "Time aggregation",
-      "description": "aggregate the raw daily transaction logs explicitly into monthly shop-item groupings (pandas)",
-      "dejargonized_description": "This stage aggregate the raw daily transaction logs explicitly into monthly shop-item groupings (pandas).",
+      "description": "aggregate the raw daily transaction logs or retail sales explicitly into monthly, weekly, daily, shop-item, store-day, product, or category groupings (pandas)",
+      "dejargonized_description": "This stage groups transaction or store-sales rows by the time and entity levels used for forecasting.",
       "concept_type": "data_assembly",
       "inputs": [
         {
@@ -142,8 +158,8 @@
     {
       "stage_id": "lag_feature_generation",
       "name": "Lag feature generation",
-      "description": "generate lag columns (shifting historical sales values by 1, 2, 3, 6, and 12 months) and append them as columns to the current row (pandas)",
-      "dejargonized_description": "This stage generate lag columns (shifting historical sales values by 1, 2, 3, 6, and 12 months) and append them as columns to the current row (pandas).",
+      "description": "generate lag columns and rolling-window aggregates such as recent store, shop, item, category, holiday, promotion, day-of-week, or month demand statistics, shifting historical sales values by safe offsets before appending them as columns (pandas)",
+      "dejargonized_description": "This stage summarizes each store, shop, product, or category's past sales without using future rows.",
       "concept_type": "analysis",
       "inputs": [
         {
@@ -172,8 +188,8 @@
     {
       "stage_id": "mean_encoding",
       "name": "Mean encoding",
-      "description": "calculate the expanding mean of sales per shop and per item over time to generate robust continuous features",
-      "dejargonized_description": "This stage calculate the expanding mean of sales per shop and per item over time to generate robust continuous features.",
+      "description": "calculate expanding means, target encodings, store/day/category encodings, entity embeddings, holiday effects, promotion effects, and calendar features over time to generate robust continuous features",
+      "dejargonized_description": "This stage creates stable store, product, holiday, calendar, and category features from historical data.",
       "concept_type": "data_assembly",
       "inputs": [
         {
@@ -202,8 +218,8 @@
     {
       "stage_id": "gbdt_modeling",
       "name": "GBDT modeling",
-      "description": "train a standard XGBoost or LightGBM model utilizing RMSE loss on the engineered row data",
-      "dejargonized_description": "This stage train a standard XGBoost or LightGBM model utilizing RMSE loss on the engineered row data.",
+      "description": "train a standard XGBoost or LightGBM model using RMSE/RMSLE/MAE-aligned loss on engineered row data, with Bayesian hyperparameter optimization, early stopping, and optional ensemble blending",
+      "dejargonized_description": "This stage trains and tunes a gradient-boosted retail forecasting model on the engineered features.",
       "concept_type": "loss_function",
       "inputs": [
         {

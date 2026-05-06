@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.image_tabular_hybrid_classification_topology.bindings",
+  "template": "image_tabular_hybrid_classification_topology",
+  "bindings": [
+    {"stage_id": "image_feature_extraction", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "The image branch can use many CNN or vision backbones depending on the competition."}},
+    {"stage_id": "tabular_feature_preparation", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Metadata, handcrafted features, scaling, and encoders are dataset-specific."}},
+    {"stage_id": "feature_fusion", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Concatenation, gating, and record alignment are orchestration-level fusion operations."}},
+    {"stage_id": "hybrid_head_training", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "The hybrid classifier may be a neural head, gradient-boosted model, or blended ensemble."}},
+    {"stage_id": "fold_ensemble_calibration", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Fold selection, label smoothing, and calibration are metric-specific."}}
+  ]
+}

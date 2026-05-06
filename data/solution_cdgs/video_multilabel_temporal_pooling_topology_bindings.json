@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.video_multilabel_temporal_pooling_topology.bindings",
+  "template": "video_multilabel_temporal_pooling_topology",
+  "bindings": [
+    {"stage_id": "feature_stream_loading", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Video feature loading depends on dataset storage format and sharding."}},
+    {"stage_id": "temporal_pooling", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Temporal pooling can be implemented by multiple neural video or sequence frameworks."}},
+    {"stage_id": "context_gated_multilabel_head", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Multilabel heads, context gates, and hierarchy losses are model-level components."}},
+    {"stage_id": "sparse_baseline_fusion", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Sparse baseline and metadata fusion is a competition-specific ensemble operation."}},
+    {"stage_id": "rank_ensemble_calibration", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Rank averaging and label-specific thresholding are validation-driven post-processing."}}
+  ]
+}

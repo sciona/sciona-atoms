@@ -4,12 +4,22 @@
   "family": "sensor_fusion",
   "paradigm": "sequential_filter",
   "name": "Google Smartphone Decimeter Challenge - 1st Place (2021) - Pipeline Template",
-  "summary": "GNSS sensor fusion and trajectory optimization template for smartphone decimeter localization, covering raw pseudorange and carrier-phase processing, outlier rejection, EKF or factor graph optimization (FGO), TDCP/double-difference phase features, forward-backward RTS smoothing, map matching, and satellite/phone bias correction.",
-  "dejargonized_summary": "Estimate a phone trajectory from raw satellite signals by cleaning noisy measurements, combining pseudorange, carrier phase, IMU, and optional visual odometry signals, optimizing the trajectory with an EKF or factor graph, smoothing it forward and backward, correcting satellite or phone biases, and matching the path to map constraints.",
+  "summary": "GNSS sensor fusion and trajectory optimization template for ultra-precise smartphone positioning, decimeter or centimeter-level latitude/longitude prediction, and Google Decimeter style multi-band GNSS tasks, covering raw pseudorange and carrier-phase processing, dual-frequency L1/L5 ionosphere-free combinations, high-rate IMU fusion, high-velocity motion artifact handling, EKF or factor graph optimization (FGO), TDCP/double-difference phase features, visual-inertial odometry fusion, forward-backward RTS smoothing, HMM map matching, and satellite/phone phase-bias correction.",
+  "dejargonized_summary": "Estimate a phone trajectory from raw smartphone satellite logs by cleaning noisy multi-band GNSS measurements, correcting ionospheric delay from L1/L5 signals, combining pseudorange, carrier phase, high-rate IMU, and optional visual-inertial odometry signals, optimizing the suburban driving trajectory with an EKF or factor graph, smoothing it forward and backward with RTS, correcting satellite or phone phase biases, and matching the path to map constraints.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "kalman_filter",
     "extended_kalman_filter",
+    "ultra_precise_smartphone_positioning",
+    "centimeter_level_positioning",
+    "latitude_longitude_prediction",
+    "multi_band_gnss",
+    "dual_frequency_l1_l5",
+    "raw_gnss_logs",
+    "high_rate_imu",
+    "ionospheric_delay_correction",
+    "high_velocity_motion_artifacts",
+    "suburban_driving_trajectory",
     "factor_graph_optimization",
     "fgo",
     "gnss_double_difference",
@@ -24,6 +34,9 @@
     "forward_backward_smoothing",
     "hmm_map_matching",
     "visual_inertial_odometry",
+    "visual_inertial_fusion",
+    "vio_fusion",
+    "rts_forward_backward_smoother",
     "multipath_rejection",
     "sensor",
     "fusion",
@@ -48,10 +61,10 @@
   ],
   "applicability": {
     "use_when": [
-      "The new task has the same broad problem type: GNSS, phone, satellite, or outdoor sensor fusion / trajectory optimization.",
-      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "The new task has the same broad problem type: GNSS, phone, satellite, ultra-precise smartphone positioning, centimeter-level latitude/longitude prediction, or outdoor sensor fusion / trajectory optimization.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline, including raw GNSS logs, dual-frequency L1/L5 chips, high-rate IMU data, suburban driving tracks, ionospheric-delay correction, or high-velocity motion artifacts.",
       "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages.",
-      "Winning techniques include factor graph optimization, double-difference GNSS, TDCP, carrier-phase smoothing, satellite-specific bias correction, visual-inertial fusion, or HMM/map-matching."
+      "Winning techniques include factor graph optimization, ionosphere-free L1/L5 combinations, double-difference GNSS, TDCP, carrier-phase smoothing, RTS smoothing, satellite-specific phase-bias correction, visual-inertial odometry fusion, or HMM/map matching."
     ],
     "do_not_use_when": [
       "The target task lacks the modality or metadata required by the early pipeline stages.",
@@ -97,7 +110,7 @@
     {
       "stage_id": "raw_gnss_processing",
       "name": "Raw GNSS processing",
-      "description": "Extract pseudoranges, carrier phase, Doppler, L1/L5 combinations, satellite metadata, and phone clock fields from raw Android GNSS log files.",
+      "description": "Extract pseudoranges, carrier phase, Doppler, ionosphere-free L1/L5 combinations, raw multi-band GNSS measurements, high-rate IMU alignment fields, satellite metadata, satellite-specific phase-bias fields, and phone clock fields from Android GNSS log files.",
       "dejargonized_description": "Read the raw phone satellite logs and turn them into usable distance, phase, and satellite measurement tables.",
       "concept_type": "data_extraction",
       "inputs": [
@@ -157,7 +170,7 @@
     {
       "stage_id": "state_estimation",
       "name": "State estimation",
-      "description": "Apply an Extended Kalman Filter (EKF) or factor graph optimization (FGO) to fuse GNSS pseudorange, carrier phase, TDCP, IMU, visual-inertial odometry, and bias-correction factors.",
+      "description": "Apply an Extended Kalman Filter (EKF) or factor graph optimization (FGO) to fuse GNSS pseudorange, carrier phase, TDCP, IMU, visual-inertial odometry (VIO), and satellite/phone phase-bias correction factors.",
       "dejargonized_description": "Estimate the full trajectory by combining all trustworthy satellite, motion, and bias-correction signals in one filter or graph optimizer.",
       "concept_type": "sequential_filter",
       "inputs": [

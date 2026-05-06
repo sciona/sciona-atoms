@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.efficient_llm_adapter_finetuning_topology.bindings",
+  "template": "efficient_llm_adapter_finetuning_topology",
+  "bindings": [
+    {"stage_id": "data_curation_distillation", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Data filtering, distillation, and synthetic self-play are competition-specific orchestration steps."}},
+    {"stage_id": "adapter_initialization", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Adapter setup is handled by LLM fine-tuning libraries and model-specific configuration."}},
+    {"stage_id": "memory_efficient_training", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "FlashAttention, paged optimizers, quantization, and precision policy are external training-stack controls."}},
+    {"stage_id": "adapter_routing_or_merging", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Adapter routing, merging, and EWC policy are model-level orchestration decisions."}},
+    {"stage_id": "metric_calibration", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Checkpoint selection, decoding, thresholding, and output formatting are metric-specific."}}
+  ]
+}
