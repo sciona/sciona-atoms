@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.classical_tabular_ensemble_topology.bindings",
+  "template": "classical_tabular_ensemble_topology",
+  "bindings": [
+    {"stage_id": "table_audit_cleaning", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Cleaning, imputation, and leakage-safe folds are schema-specific."}},
+    {"stage_id": "split_aware_feature_engineering", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Target encodings, aggregates, feature selection, and entity embeddings depend on the table schema."}},
+    {"stage_id": "tabular_model_zoo", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "XGBoost, LightGBM, CatBoost, tree ensembles, and neural tabular models are external implementations."}},
+    {"stage_id": "ensemble_stacking_blending", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Stacking and blending are validation-driven ensemble policies."}},
+    {"stage_id": "metric_calibration", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Thresholds, rank normalization, and output transforms are metric-specific."}}
+  ]
+}

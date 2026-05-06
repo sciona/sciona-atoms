@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.biosignal_spectrogram_sequence_classification_topology.bindings",
+  "template": "biosignal_spectrogram_sequence_classification_topology",
+  "bindings": [
+    {"stage_id": "subject_safe_windowing", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Windowing and group-safe folds depend on recording metadata."}},
+    {"stage_id": "spectral_signal_features", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "STFT, CWT, PSD, montage, and centering transforms are signal-processing implementations."}},
+    {"stage_id": "deep_signal_backbones", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "CNN, transformer, recurrent, and tree branches are external model implementations."}},
+    {"stage_id": "augmentation_and_loss", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Augmentations and objectives are tuned to label noise and metric."}},
+    {"stage_id": "window_aggregation_calibration", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Window aggregation and calibration are validation-driven."}}
+  ]
+}

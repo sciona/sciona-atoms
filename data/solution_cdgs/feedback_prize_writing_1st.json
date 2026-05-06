@@ -4,12 +4,23 @@
   "family": "nlp_span_detection",
   "paradigm": "neural_network",
   "name": "Feedback Prize — Evaluating Student Writing 1st Place — NLP Span Detection via DeBERTa Token Tagging",
-  "summary": "Token-level B-I-O span detection on long student essays using sliding-window DeBERTa-v3 models with character-to-token offset mapping, text-adapted Weighted Box Fusion for multi-seed span merging, and minimum-length class filtering.",
-  "dejargonized_summary": "Break long essays into overlapping chunks, train a model to label each word as the beginning, inside, or outside of a discourse element, then merge overlapping predictions from multiple models and discard unreasonably short spans.",
+  "summary": "Token-level B-I-O span detection, NER, clinical-note span extraction, PII detection, and long-document discourse extraction using sliding-window DeBERTa-v3 or transformer token classifiers with character-to-token offset mapping, contextual augmentation, custom recall-heavy F5/F-beta losses, text-adapted Weighted Box Fusion for multi-seed span merging, start/end offset cleanup, and minimum-length or trailing-punctuation filtering.",
+  "dejargonized_summary": "Break long text into overlapping chunks, map character annotations to token labels, train a model to label each word as beginning, inside, or outside a span, optionally augment sensitive entities or clinical snippets, merge overlapping predictions from multiple models, and clean the final character offsets.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "token_classification_span",
     "bio_tagging",
+    "b_i_o_labeling",
+    "beginning_inside_outside_tagging",
+    "ner_token_classification",
+    "clinical_note_span_extraction",
+    "nbme_patient_note_scoring",
+    "pii_detection_removal",
+    "deberta_v3_large_token_classifier",
+    "f5_loss_recall_weighted_token_detection",
+    "contextual_augmentation_faker_pii",
+    "trailing_punctuation_cleanup",
+    "start_end_offset_prediction",
     "sliding_window_nlp",
     "discourse_element_detection",
     "long_document_ner",
@@ -44,8 +55,9 @@
   ],
   "applicability": {
     "use_when": [
-      "Task requires extracting contiguous text spans with class labels from long documents (>512 tokens)",
+      "Task requires extracting contiguous text spans, entities, PII tokens, clinical findings, or discourse spans with class labels from documents or notes",
       "Annotations are at character-level offsets and must be mapped to subword token boundaries",
+      "Winning techniques include B-I-O labeling/tagging, DeBERTa-v3 token classification, contextual augmentation, F5/F-beta recall-heavy loss, start/end offset cleanup, or post-processing rules for trailing punctuation and honorifics.",
       "Multiple overlapping span predictions need to be merged into consensus spans (multi-model ensembling)",
       "Discourse elements or entity types have minimum length priors that can be exploited for filtering"
     ],
@@ -58,8 +70,8 @@
     "key_insight": "Text-adapted Weighted Box Fusion is the critical ensembling innovation: by treating character-offset spans as 1D bounding boxes and computing IoU as character overlap ratio, it merges multi-seed span predictions into high-confidence consensus spans. This is far more effective than majority voting on token labels because it resolves boundary disagreements smoothly rather than discretely.",
     "critical_stages": ["text_weighted_box_fusion", "char_to_token_offset_mapping"],
     "swappable_stages": {
-      "sequence_tagging_training": "Any token-level classifier works (Longformer, BigBird, DeBERTa variants). The value is in the span fusion pipeline, not the specific backbone.",
-      "length_constraint_filtering": "Can be replaced with confidence thresholding or class-specific post-processing rules. The filtering logic is domain-dependent.",
+      "sequence_tagging_training": "Any token-level classifier works (Longformer, BigBird, DeBERTa variants, CRF heads, or QA start/end heads). The value is in split-safe span labeling and decoding, not the specific backbone.",
+      "length_constraint_filtering": "Can be replaced with confidence thresholding, F5/F-beta recall tuning, trailing punctuation cleanup, honorific cleanup, or class-specific post-processing rules. The filtering logic is domain-dependent.",
       "sliding_window_tokenization": "Any chunking strategy that preserves overlap works. Stride and window size are tunable hyperparameters."
     },
     "failure_modes": [
@@ -167,7 +179,7 @@
     {
       "stage_id": "sequence_tagging_training",
       "name": "Sequence Tagging Training",
-      "description": "Train DeBERTa-v3 as a token-level B-I-O classifier using PyTorch and HuggingFace Transformers. Multiple seeds produce diverse models for downstream ensembling.",
+      "description": "Train DeBERTa-v3, Longformer, BigBird, or another transformer as a token-level B-I-O/NER classifier using PyTorch and HuggingFace Transformers, optionally with contextual augmentation, synthetic PII replacement, F5/F-beta recall-heavy loss, CRF decoding, or QA start/end offset heads. Multiple seeds produce diverse models for downstream ensembling.",
       "dejargonized_description": "Fine-tune a large language model to predict for each word whether it begins, continues, or is outside a discourse element.",
       "concept_type": "neural_network",
       "inputs": [
@@ -189,15 +201,15 @@
       "preconditions": ["Labeled tokens are properly aligned with B-I-O scheme."],
       "guarantees": ["Each token receives a probability distribution over B-I-O tags for each discourse class."],
       "family_notes": [
-        "DeBERTa-v3-large used as backbone. Multiple random seeds for ensemble diversity.",
-        "Training uses cross-entropy loss on token-level B-I-O labels."
+        "DeBERTa-v3-large used as a common backbone. Multiple random seeds improve ensemble diversity.",
+        "Training can use cross-entropy, focal, CRF, or F-beta/F5-style losses on token-level B-I-O labels."
       ],
       "matched_primitive": ""
     },
     {
       "stage_id": "span_extraction",
       "name": "Span Extraction",
-      "description": "Decode token-level B-I-O probabilities back into character-level string spans by applying argmax, grouping consecutive I-tags following B-tags, and mapping back to character offsets.",
+      "description": "Decode token-level B-I-O probabilities, CRF paths, or QA start/end offsets back into character-level string spans by applying argmax, grouping consecutive I-tags following B-tags, mapping back to character offsets, and preserving token-to-character alignment.",
       "dejargonized_description": "Convert the model's per-word predictions back into contiguous text spans with start and end positions in the original essay.",
       "concept_type": "data_extraction",
       "inputs": [
@@ -256,7 +268,7 @@
     {
       "stage_id": "length_constraint_filtering",
       "name": "Length Constraint Filtering",
-      "description": "Filter predicted spans shorter than a per-class minimum length threshold, removing noise predictions that are too short to represent valid discourse elements.",
+      "description": "Filter predicted spans shorter than a per-class minimum length threshold, tune recall-heavy F5/F-beta thresholds, remove trailing punctuation, clean honorifics, deduplicate overlaps, and remove noise predictions that are too short to represent valid spans.",
       "dejargonized_description": "Remove predictions that are unreasonably short for their type, since real discourse elements like thesis statements or evidence spans require a minimum number of words.",
       "concept_type": "analysis",
       "inputs": [

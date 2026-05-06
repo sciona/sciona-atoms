@@ -4,8 +4,8 @@
   "family": "llm_preference_reasoning",
   "paradigm": "neural_network",
   "name": "LLM Preference and Reasoning Pipeline Template",
-  "summary": "Reusable base CDG for LLM, language-model efficiency, fine-tuning, alignment, preference, and reasoning competitions that combine prompt construction, paired or sequence encoding, supervised/LoRA/QLoRA adapter fine-tuning, efficient training controls, preference/ranking heads, reasoning augmentation, RLHF-style supervision, and calibration or thresholding.",
-  "dejargonized_summary": "Prepare prompts or paired responses, encode them with an LLM or cross-encoder, adapt the model with supervised fine-tuning, LoRA, QLoRA, adapters, or instruction tuning, optionally use memory-efficient training such as FlashAttention, paged optimizers, mixed precision, and gradient accumulation, train a preference or reasoning head, and calibrate outputs for ranking, detection, or scoring tasks.",
+  "summary": "Reusable base CDG for LLM, language-model efficiency, fine-tuning, alignment, safety, hallucination, preference, and reasoning competitions that combine prompt construction, paired or sequence encoding, supervised/LoRA/QLoRA adapter fine-tuning, efficient training controls, Bradley-Terry or contrastive preference heads, safety-aware attention, Constitutional-AI or self-labeling data, NLI claim/proposition verification, RLHF-style supervision, and calibration or thresholding.",
+  "dejargonized_summary": "Prepare prompts, claims, or paired responses, encode them with an LLM or cross-encoder, adapt the model with supervised fine-tuning or lightweight adapters, optionally add safety labels, self-labeled examples, NLI evidence, or RLHF preference data, train a preference, safety, hallucination, or reasoning head, and calibrate outputs for ranking, detection, or scoring tasks.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "llm_preference",
@@ -14,6 +14,16 @@
     "language_model_efficiency",
     "efficient_llm_training",
     "pairwise_ranking",
+    "bradley_terry_preference",
+    "contrastive_preference_learning",
+    "safety_aware_attention",
+    "constitutional_ai_self_labeling",
+    "multi_label_safety_regression",
+    "llm_alignment_safety",
+    "hallucination_claim_verification",
+    "proposition_level_claim_atomization",
+    "nli_entailment_contradiction",
+    "retrieval_augmented_verification",
     "cross_encoder",
     "prompt_reasoning",
     "lora_finetuning",
@@ -31,6 +41,7 @@
     "elastic_weight_consolidation",
     "synthetic_self_play_data",
     "rlhf",
+    "reinforcement_learning_from_human_feedback",
     "hallucination_detection",
     "misconception_matching"
   ],
@@ -42,10 +53,10 @@
   ],
   "applicability": {
     "use_when": [
-      "The task is scored by pairwise preference, response quality, hallucination detection, misconception matching, reasoning quality, or prompt-response relevance.",
-      "Inputs contain prompts, answers, response pairs, generated text, candidate misconceptions, or query-document pairs.",
+      "The task is scored by pairwise preference, response quality, alignment, safety, hallucination detection, misconception matching, reasoning quality, or prompt-response relevance.",
+      "Inputs contain prompts, answers, response pairs, generated text, claims, evidence, candidate misconceptions, or query-document pairs.",
       "A pretrained LLM, DeBERTa-style cross-encoder, LoRA/QLoRA adapter, instruction-tuned model, or efficient fine-tuning stack is a load-bearing representation stage.",
-      "Winning techniques include QLoRA, LoRA-MoE, adapter routing, FlashAttention-2, paged optimizers, bf16/mixed precision, gradient accumulation, data distillation, instruction tuning, RLHF, or synthetic self-play data."
+      "Winning techniques include QLoRA, LoRA-MoE, adapter routing, FlashAttention-2, paged optimizers, bf16/mixed precision, gradient accumulation, Bradley-Terry ranking, contrastive preference learning, safety-aware attention, Constitutional AI self-labeling, NLI fine-tuning, retrieval-augmented verification, data distillation, instruction tuning, RLHF, or synthetic self-play data."
     ],
     "do_not_use_when": [
       "The task is ordinary tabular classification with no prompt, response, pair, or ranking structure.",
@@ -54,9 +65,9 @@
     "key_insight": "The durable topology is paired or prompt-aware representation before preference, reasoning, or ranking supervision; the exact LLM backbone is swappable.",
     "critical_stages": ["prompt_pair_construction", "llm_or_cross_encoder", "preference_reasoning_head"],
     "swappable_stages": {
-      "llm_or_cross_encoder": "Can be DeBERTa, Llama, QLoRA, LoRA-MoE, a cross-encoder, adapter-routed model, or another paired-input transformer if it preserves prompt-aware or pair-aware scoring.",
-      "reasoning_augmentation": "Can be external LLM data, data distillation, synthetic self-play, instruction data, rationale distillation, or RLHF-style preference examples.",
-      "metric_calibration": "Can be threshold tuning, rank averaging, Bradley-Terry normalization, or metric-specific rounding."
+      "llm_or_cross_encoder": "Can be DeBERTa, Llama, QLoRA, LoRA-MoE, a cross-encoder, adapter-routed model, NLI verifier, or another paired-input transformer if it preserves prompt-aware or pair-aware scoring.",
+      "reasoning_augmentation": "Can be external LLM data, data distillation, synthetic self-play, instruction data, Constitutional AI self-labels, rationale distillation, claim atomization, retrieval evidence, or RLHF-style preference examples.",
+      "metric_calibration": "Can be threshold tuning, rank averaging, Bradley-Terry normalization, multi-label safety calibration, or metric-specific rounding."
     },
     "scaling_notes": "Cache tokenization, use adapter or quantized fine-tuning for large models, and keep pair generation deterministic for reproducible validation.",
     "failure_modes": [
@@ -110,7 +121,7 @@
     {
       "stage_id": "prompt_pair_construction",
       "name": "Prompt Pair Construction",
-      "description": "Build prompt-response, query-document, misconception-answer, or answer-pair examples with symmetric swaps and task-specific markers.",
+      "description": "Build prompt-response, query-document, misconception-answer, claim-evidence, proposition-level NLI, safety-label, or answer-pair examples with symmetric swaps and task-specific markers.",
       "dejargonized_description": "Turn raw language records into paired or prompt-aware examples that preserve the comparison structure.",
       "concept_type": "data_assembly",
       "inputs": [{"name": "prompt_or_pair_data", "type_desc": "LLMCompetitionDataset", "constraints": "Raw text and labels.", "required": true}],
@@ -122,7 +133,7 @@
     {
       "stage_id": "llm_or_cross_encoder",
       "name": "LLM or Cross-Encoder Representation",
-      "description": "Encode examples with a DeBERTa cross-encoder, Llama-style model, LoRA/QLoRA adapter, LoRA-MoE adapter routing, or instruction-tuned transformer.",
+      "description": "Encode examples with a DeBERTa cross-encoder, NLI verifier, Llama-style model, LoRA/QLoRA adapter, LoRA-MoE adapter routing, safety-aware attention layer, or instruction-tuned transformer.",
       "dejargonized_description": "Use a pretrained language model, often with lightweight adapters, to create pair-aware or prompt-aware representations.",
       "concept_type": "neural_network",
       "inputs": [{"name": "paired_examples", "type_desc": "PairDataset", "constraints": "Constructed prompt or pair examples.", "required": true}],
@@ -134,7 +145,7 @@
     {
       "stage_id": "reasoning_augmentation",
       "name": "Reasoning Augmentation",
-      "description": "Optionally add chain-of-thought traces, rationale distillation, external LLM data, data distillation, quality filtering, synthetic self-play examples, instruction-tuning corpora, RLHF-style preference data, or prompt variants.",
+      "description": "Optionally add chain-of-thought traces, rationale distillation, external LLM data, data distillation, quality filtering, synthetic self-play examples, Constitutional AI self-labels, proposition-level claim atomization, retrieval evidence for verification, instruction-tuning corpora, RLHF-style preference data, or prompt variants.",
       "dejargonized_description": "Add reasoning traces, filtered training data, or extra generated examples when the task rewards explicit reasoning, alignment, or robust prompt coverage.",
       "concept_type": "external_tool",
       "inputs": [{"name": "text_representations", "type_desc": "Tensor", "constraints": "Language representations or prompt examples.", "required": true}],
@@ -146,7 +157,7 @@
     {
       "stage_id": "preference_reasoning_head",
       "name": "Preference or Reasoning Head",
-      "description": "Train a Bradley-Terry, pairwise ranking, hallucination detection, QWK, or calibrated classification/regression head.",
+      "description": "Train a Bradley-Terry, contrastive preference learning, pairwise ranking, hallucination detection, NLI entailment/contradiction, multi-label safety regression, QWK, or calibrated classification/regression head.",
       "dejargonized_description": "Convert language representations into the task-specific score, label, rank, or preference probability.",
       "concept_type": "loss_function",
       "inputs": [{"name": "augmented_representations", "type_desc": "Tensor", "constraints": "Reasoning-aware representations.", "required": true}],
@@ -158,7 +169,7 @@
     {
       "stage_id": "metric_calibration",
       "name": "Metric Calibration",
-      "description": "Apply thresholding, rank normalization, symmetric averaging, or integer rounding against the validation metric.",
+      "description": "Apply thresholding, rank normalization, symmetric averaging, Bradley-Terry normalization, safety-label calibration, retrieval-verification calibration, or integer rounding against the validation metric.",
       "dejargonized_description": "Convert raw model scores into final benchmark decisions or rankings.",
       "concept_type": "optimization",
       "inputs": [{"name": "raw_scores", "type_desc": "NDArray", "constraints": "Raw task scores.", "required": true}],

@@ -1,0 +1,103 @@
+{
+  "asset_id": "solution.kaggle.classical_tabular_ensemble_topology",
+  "asset_version": "v1",
+  "family": "classical_tabular_ensemble",
+  "paradigm": "optimization",
+  "name": "Classical Tabular Ensemble Pipeline Template",
+  "summary": "Reusable base CDG for classic Kaggle tabular classification and regression competitions dominated by leakage-safe feature cleaning, missing-value imputation, categorical/count/target/frequency encodings, group/time aggregate features, feature selection, XGBoost/LightGBM/CatBoost/ExtraTrees/RandomForest/MLP ensembles, stacking or rank averaging, pseudo-labeling when validation-safe, and metric-specific thresholding or calibration.",
+  "dejargonized_summary": "Clean a structured table, remove broken or duplicate columns, encode categorical and count features inside folds, build aggregate features, train several tree or neural tabular models, blend or stack them, and tune thresholds or post-processing for the competition metric.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "classic_tabular_competition",
+    "xgboost_lightgbm_catboost_ensemble",
+    "extratrees_randomforest_ensemble",
+    "tabular_model_stacking",
+    "rank_averaged_tabular_ensemble",
+    "target_encoding_smoothing",
+    "count_frequency_encoding",
+    "constant_duplicate_feature_removal",
+    "recursive_feature_elimination",
+    "permutation_importance_feature_selection",
+    "iterative_imputation_missing_values",
+    "entity_embeddings_for_categories",
+    "group_aggregate_features",
+    "session_log_aggregation",
+    "user_activity_aggregation",
+    "pseudo_labeling_tabular",
+    "qwk_threshold_optimization",
+    "multi_softprob_classification",
+    "metric_specific_postprocessing"
+  ],
+  "inputs": [
+    {"name": "tabular_records", "type_desc": "TabularDataset", "constraints": "Rows, labels, categorical fields, numeric fields, optional timestamps/groups/logs, and validation metadata.", "required": true}
+  ],
+  "outputs": [
+    {"name": "tabular_predictions", "type_desc": "SubmissionArtifact", "constraints": "Class probabilities, labels, ranks, or regression values formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The solution is dominated by structured tabular features and model ensembling rather than images, language generation, or physics operators.",
+      "Winning techniques include XGBoost, LightGBM, CatBoost, ExtraTrees, RandomForest, MLP/entity embeddings, target/count/frequency encoding, missing-value imputation, feature selection, stacking, rank averaging, pseudo-labeling, or metric-specific threshold search.",
+      "The data may include users, sessions, transactions, products, claims, credit records, or mixed categorical/numeric fields where leakage-safe validation and feature construction are load-bearing."
+    ],
+    "do_not_use_when": [
+      "The task is primarily time-series forecasting where lag/rolling windows and temporal refits dominate; use the temporal tabular CDG.",
+      "The primary signal is unstructured text, image, audio, graph, or 3D geometry and tabular features are incidental metadata.",
+      "The approach depends on a known competition leak rather than a reusable feature/model topology."
+    ],
+    "key_insight": "The durable topology is split-aware table cleaning and encoding before a heterogeneous tabular model ensemble, followed by metric-specific calibration. This differs from temporal tabular CDGs because time ordering is optional rather than the central contract.",
+    "critical_stages": ["table_audit_cleaning", "split_aware_feature_engineering", "tabular_model_zoo", "ensemble_stacking_blending", "metric_calibration"],
+    "swappable_stages": {
+      "table_audit_cleaning": "Can include constant/quasi-constant removal, duplicate feature detection, missing-value imputation, outlier clipping, and type normalization.",
+      "split_aware_feature_engineering": "Can include target encoding, count/frequency encoding, category interactions, entity embeddings, group/session/user aggregations, RFE, or permutation importance.",
+      "tabular_model_zoo": "Can use XGBoost, LightGBM, CatBoost, ExtraTrees, RandomForest, sparse linear models, MLPs, TabNet, or TabPFN-style models.",
+      "metric_calibration": "Can use threshold optimization, QWK tuning, rank averaging, probability calibration, target inverse transforms, or class-specific post-processing."
+    },
+    "scaling_notes": "Keep encoders and imputers fold-local, cache expensive aggregate features, and validate pseudo-labels or stacking with out-of-fold predictions only.",
+    "failure_modes": [
+      "Target encodings or imputation fit outside folds can leak validation labels.",
+      "Stacking on in-sample predictions inflates leaderboard expectations.",
+      "A broad ensemble can overfit noisy public validation if calibration is not held out."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "data",
+      "subject": "fold_local_feature_construction",
+      "statement": "Fit target encoders, imputers, feature selectors, and stacker training data inside validation folds.",
+      "rationale": "Most classic tabular gains become invalid if target statistics or out-of-fold predictions leak labels.",
+      "confidence": 0.95,
+      "source_stage": "nextbatch_gap_audit",
+      "source_reference": "research/validation_results_expansion_139_nextbatch_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added after the 139-CDG validation pass left repeated classic tabular ensemble cases divergent or partial. Semantic comparison found the existing temporal tabular CDG too time-window focused and individual tabular solution CDGs too competition-specific.",
+    "dejargonized_summary": "This covers tabular competitions where reusable cleaning, fold-local encodings, heterogeneous model ensembles, and metric calibration are the structure.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_139_nextbatch_full.json",
+      "Gap mining: research/validation_results_expansion_139_nextbatch_gap_mining.json",
+      "Representative source URL: https://www.kaggle.com/competitions/santander-customer-satisfaction/discussion"
+    ],
+    "uncertainty_notes": [
+      "Known leakage exploits should not be encoded here unless they generalize as a validation or feature-leakage diagnostic."
+    ],
+    "references": [
+      {
+        "title": "Sciona 139-CDG expansion validation audit",
+        "citation": "research/validation_results_expansion_139_nextbatch_gap_mining.json",
+        "note": "Local deterministic and semantic audit of remaining classic tabular ensemble gaps."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "table_audit_cleaning", "name": "Table Audit and Cleaning", "description": "Normalize schema and types, impute missing values, remove constant/quasi-constant or duplicate columns, clip outliers, and define leakage-safe train/validation folds.", "dejargonized_description": "Clean the table and decide validation boundaries before any target-aware features are created.", "concept_type": "data_assembly", "inputs": [{"name": "tabular_records", "type_desc": "TabularDataset", "constraints": "Raw rows and labels.", "required": true}], "outputs": [{"name": "clean_table", "type_desc": "TabularDataset", "constraints": "Cleaned rows with fold metadata.", "required": true}], "preconditions": ["Rows, labels, and schema are available."], "guarantees": ["Feature transforms can be fit without validation leakage."], "matched_primitive": ""},
+    {"stage_id": "split_aware_feature_engineering", "name": "Split-Aware Feature Engineering", "description": "Create target/count/frequency encodings, category interactions, entity embeddings, group/session/user aggregations, log transforms, RFE or permutation-selected features, and sparse or dense feature matrices inside folds.", "dejargonized_description": "Build useful model features while keeping validation labels hidden.", "concept_type": "data_assembly", "inputs": [{"name": "clean_table", "type_desc": "TabularDataset", "constraints": "Cleaned rows and folds.", "required": true}], "outputs": [{"name": "feature_matrix", "type_desc": "FeatureMatrix", "constraints": "Fold-safe tabular features.", "required": true}], "preconditions": ["Fold policy and target-aware feature policy are fixed."], "guarantees": ["Feature rows align with labels and prediction rows."], "matched_primitive": ""},
+    {"stage_id": "tabular_model_zoo", "name": "Tabular Model Zoo", "description": "Train XGBoost, LightGBM, CatBoost, ExtraTrees, RandomForest, sparse linear models, MLP/entity-embedding networks, TabNet, or TabPFN-style models with early stopping and metric-aware objectives.", "dejargonized_description": "Fit several complementary tabular models.", "concept_type": "optimization", "inputs": [{"name": "feature_matrix", "type_desc": "FeatureMatrix", "constraints": "Engineered features.", "required": true}], "outputs": [{"name": "oof_and_test_predictions", "type_desc": "PredictionSet", "constraints": "Out-of-fold and test predictions per model.", "required": true}], "preconditions": ["Training labels and validation folds are available."], "guarantees": ["Every stacked model has out-of-fold predictions."], "matched_primitive": ""},
+    {"stage_id": "ensemble_stacking_blending", "name": "Ensemble Stacking and Blending", "description": "Blend, rank-average, or train a second-level stacker over out-of-fold predictions, optionally adding validation-safe pseudo-labeling or model selection by fold stability.", "dejargonized_description": "Combine models without training the combiner on its own predictions.", "concept_type": "ml_model_selection", "inputs": [{"name": "oof_and_test_predictions", "type_desc": "PredictionSet", "constraints": "Per-model predictions.", "required": true}], "outputs": [{"name": "raw_tabular_scores", "type_desc": "NDArray", "constraints": "Blended raw scores.", "required": true}], "preconditions": ["OOF predictions are available for stacker training."], "guarantees": ["Blended predictions are fold-safe."], "matched_primitive": ""},
+    {"stage_id": "metric_calibration", "name": "Metric Calibration", "description": "Apply QWK threshold search, multi-class probability calibration, class-imbalance handling, rank normalization, regression clipping, inverse transforms, or benchmark-specific formatting.", "dejargonized_description": "Tune the final outputs for the metric without changing the learned features.", "concept_type": "optimization", "inputs": [{"name": "raw_tabular_scores", "type_desc": "NDArray", "constraints": "Raw blended scores.", "required": true}], "outputs": [{"name": "tabular_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final benchmark predictions.", "required": true}], "preconditions": ["Metric and output schema are known."], "guarantees": ["Predictions are calibrated and formatted."], "matched_primitive": ""}
+  ]
+}

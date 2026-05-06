@@ -1,0 +1,100 @@
+{
+  "asset_id": "solution.kaggle.biosignal_spectrogram_sequence_classification_topology",
+  "asset_version": "v1",
+  "family": "biosignal_spectrogram_sequence_classification",
+  "paradigm": "neural_network",
+  "name": "Biosignal Spectrogram and Sequence Classification Pipeline Template",
+  "summary": "Reusable base CDG for EEG, ECG, iEEG, seizure, harmful brain activity, sleep-state, and physiological signal competitions that combine subject/group-safe windowing, montage or channel feature engineering, STFT/CWT/log-mel spectrogram transforms, PSD and statistical features, subject-specific centering or scaling, 2D CNN/Swin/EfficientNet spectrogram backbones, 1D CNN/LSTM/GRU sequence branches, entropy or event-aware activations, augmentation such as mixup/masking, and segment-level aggregation/calibration.",
+  "dejargonized_summary": "Split multichannel physiological recordings into windows, build signal features and spectrogram images, normalize by subject or recording, train image and sequence models, combine their predictions across windows, and calibrate the result for the benchmark.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "eeg_spectrogram_classification",
+    "ieeg_seizure_detection",
+    "hms_harmful_brain_activity",
+    "biosignal_window_classification",
+    "stft_spectrogram",
+    "continuous_wavelet_transform",
+    "cwt_scalogram",
+    "log_power_spectral_density",
+    "bipolar_montage_features",
+    "subject_specific_feature_centering",
+    "subject_specific_feature_scaling",
+    "2d_cnn_spectrogram_backbone",
+    "swin_v2_efficientnet_signal_images",
+    "bidirectional_lstm_gru_sequence",
+    "xy_masking_mixup",
+    "entmax_activation",
+    "segment_level_aggregation"
+  ],
+  "inputs": [
+    {"name": "biosignal_recordings", "type_desc": "SignalDataset", "constraints": "Multichannel physiological recordings, labels, subject IDs, sampling rates, and optional event annotations.", "required": true}
+  ],
+  "outputs": [
+    {"name": "signal_predictions", "type_desc": "SubmissionArtifact", "constraints": "Class probabilities, event scores, or segment labels formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The input is a multichannel physiological time series such as EEG, iEEG, ECG, EMG, sleep, seizure, or brain-activity recordings.",
+      "Winning techniques include STFT, CWT/scalograms, PSD/log-power features, bipolar montage, subject-specific centering/scaling, 2D CNNs on spectrograms, 1D CNN/LSTM/GRU sequence branches, mixup, masking, or segment/window aggregation.",
+      "Subject or recording splits and window aggregation are load-bearing."
+    ],
+    "do_not_use_when": [
+      "The primary representation is an SPD covariance manifold and Riemannian tangent-space classification dominates; use the Riemannian BCI CDG.",
+      "The signal is ordinary transactional time series with tabular features rather than sampled waveforms.",
+      "The benchmark requires real-time sample-by-sample control rather than offline segment classification."
+    ],
+    "key_insight": "The durable topology is windowed signal to spectral/sequence representations to neural and feature ensembles, with subject-safe validation and segment-level calibration.",
+    "critical_stages": ["subject_safe_windowing", "spectral_signal_features", "deep_signal_backbones", "window_aggregation_calibration"],
+    "swappable_stages": {
+      "spectral_signal_features": "Can use STFT, CWT/scalogram, mel spectrogram, PSD, bipolar montage, bandpower, entropy, or handcrafted statistical features.",
+      "deep_signal_backbones": "Can use 2D CNNs, Swin/EfficientNet/timm image backbones, 1D CNNs, bidirectional LSTM/GRU, transformers, or blended tree models on handcrafted features.",
+      "window_aggregation_calibration": "Can use max/mean attention pooling, sequence-level aggregation, rank averaging, thresholding, or metric-specific probability calibration."
+    },
+    "scaling_notes": "Cache spectrogram tensors by fold, keep subject normalization fold-local, and avoid leaking adjacent windows from the same subject across train and validation.",
+    "failure_modes": [
+      "Random window splits leak subject or recording identity.",
+      "Spectrogram transforms can erase transient events if the time-frequency resolution is wrong.",
+      "Subject-specific normalization can leak validation distribution if fit globally."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "data",
+      "subject": "subject_safe_validation_before_normalization",
+      "statement": "Define subject or recording groups before fitting centering, scaling, spectrogram caches, or calibration.",
+      "rationale": "Adjacent biosignal windows from the same subject can leak identity and event statistics across folds.",
+      "confidence": 0.95,
+      "source_stage": "nextbatch_gap_audit",
+      "source_reference": "research/validation_results_expansion_139_nextbatch_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added after the 139-CDG validation pass left repeated EEG and physiological signal cases where Riemannian covariance CDGs were too narrow and did not capture spectrogram/CWT, deep sequence, montage, and subject-normalization pipelines.",
+    "dejargonized_summary": "This covers biosignal solutions where time-frequency images, sequence models, and subject-safe window aggregation define the solution.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_139_nextbatch_full.json",
+      "Gap mining: research/validation_results_expansion_139_nextbatch_gap_mining.json",
+      "Representative source URL: https://www.kaggle.com/competitions/hms-harmful-brain-activity-classification/discussion"
+    ],
+    "uncertainty_notes": [
+      "Pure Riemannian covariance pipelines should remain on barachant_seizure_1st unless spectrogram or neural sequence branches are central."
+    ],
+    "references": [
+      {
+        "title": "Sciona 139-CDG expansion validation audit",
+        "citation": "research/validation_results_expansion_139_nextbatch_gap_mining.json",
+        "note": "Local deterministic and semantic audit of remaining biosignal spectrogram and sequence gaps."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "subject_safe_windowing", "name": "Subject-Safe Windowing", "description": "Group by subject, patient, recording, or session; split signals into fixed or event-centered windows; and preserve sampling-rate and channel metadata.", "dejargonized_description": "Cut recordings into examples without leaking the same subject across folds.", "concept_type": "data_extraction", "inputs": [{"name": "biosignal_recordings", "type_desc": "SignalDataset", "constraints": "Raw recordings and metadata.", "required": true}], "outputs": [{"name": "signal_windows", "type_desc": "SignalWindowDataset", "constraints": "Windowed signals with fold metadata.", "required": true}], "preconditions": ["Subject IDs and sampling rates are known or inferable."], "guarantees": ["Windows preserve group-safe validation metadata."], "matched_primitive": ""},
+    {"stage_id": "spectral_signal_features", "name": "Spectral and Signal Features", "description": "Compute STFT, CWT/scalogram, log-mel or PSD spectrograms, bipolar montage channels, bandpower, log-power, entropy, statistics, subject-specific centering, and subject-specific scaling.", "dejargonized_description": "Turn waveforms into time-frequency images and normalized feature tables.", "concept_type": "signal_transform", "inputs": [{"name": "signal_windows", "type_desc": "SignalWindowDataset", "constraints": "Windowed signals.", "required": true}], "outputs": [{"name": "signal_representations", "type_desc": "TensorOrFeatureMatrix", "constraints": "Spectrograms, sequences, and handcrafted signal features.", "required": true}], "preconditions": ["Windowing and fold policy are fixed."], "guarantees": ["Representations are fold-local and channel-aware."], "matched_primitive": ""},
+    {"stage_id": "deep_signal_backbones", "name": "Deep Signal Backbones", "description": "Train 2D CNN, Swin-v2, EfficientNet, timm image backbones on spectrograms plus 1D CNN, bidirectional LSTM/GRU, transformer, or tree branches on sequences and handcrafted features.", "dejargonized_description": "Model the signal both as an image and as a time sequence.", "concept_type": "neural_network", "inputs": [{"name": "signal_representations", "type_desc": "TensorOrFeatureMatrix", "constraints": "Signal features and tensors.", "required": true}], "outputs": [{"name": "window_scores", "type_desc": "NDArray", "constraints": "Per-window raw class or event scores.", "required": true}], "preconditions": ["Backbones and branch weights are selected."], "guarantees": ["Every window receives a model score."], "matched_primitive": ""},
+    {"stage_id": "augmentation_and_loss", "name": "Augmentation and Loss", "description": "Apply XYMasking, time/frequency masking, mixup, noisy-to-clean two-stage training, class weighting, focal loss, entmax, or metric-aware objectives for imbalanced or ambiguous biosignal labels.", "dejargonized_description": "Make the model robust to noisy and imbalanced signal labels.", "concept_type": "loss_function", "inputs": [{"name": "window_scores", "type_desc": "NDArray", "constraints": "Raw window scores.", "required": true}], "outputs": [{"name": "calibrated_window_scores", "type_desc": "NDArray", "constraints": "Loss-calibrated per-window scores.", "required": true}], "preconditions": ["Label quality and metric are understood."], "guarantees": ["Scores reflect class imbalance and label uncertainty."], "matched_primitive": ""},
+    {"stage_id": "window_aggregation_calibration", "name": "Window Aggregation and Calibration", "description": "Aggregate windows to recording or patient predictions with max/mean/attention pooling, fold ensembling, rank averaging, threshold tuning, or metric-specific probability calibration.", "dejargonized_description": "Combine window predictions into final patient or recording outputs.", "concept_type": "ml_model_selection", "inputs": [{"name": "calibrated_window_scores", "type_desc": "NDArray", "constraints": "Calibrated window scores.", "required": true}], "outputs": [{"name": "signal_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final benchmark predictions.", "required": true}], "preconditions": ["Window-to-recording mapping and metric are known."], "guarantees": ["Outputs are grouped and calibrated for submission."], "matched_primitive": ""}
+  ]
+}
