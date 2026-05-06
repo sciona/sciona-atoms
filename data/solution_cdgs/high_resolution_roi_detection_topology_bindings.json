@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.high_resolution_roi_detection_topology.bindings",
+  "template": "high_resolution_roi_detection_topology",
+  "bindings": [
+    {"stage_id": "resolution_preserving_preprocessing", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "High-resolution image loading, tiling, and coordinate bookkeeping are dataset-specific orchestration."}},
+    {"stage_id": "detector_backbone_ensemble", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Faster R-CNN, Mask R-CNN, YOLO, DETR, and related detectors are external framework implementations."}},
+    {"stage_id": "roi_refinement", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "ROI refinement depends on benchmark output structure and available annotations."}},
+    {"stage_id": "overlap_postprocessing", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "NMS, Soft-NMS, WBF, and mask/box merging are standard detection post-processing choices."}},
+    {"stage_id": "detection_metric_calibration", "status": "active", "action_class": "ml_model_selection", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Threshold and per-image limit tuning is metric-specific."}}
+  ]
+}

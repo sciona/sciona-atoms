@@ -1,0 +1,108 @@
+{
+  "asset_id": "solution.kaggle.high_resolution_roi_detection_topology",
+  "asset_version": "v1",
+  "family": "high_resolution_roi_detection",
+  "paradigm": "neural_network",
+  "name": "High-Resolution ROI Detection Pipeline Template",
+  "summary": "Reusable base CDG for 2D object, ROI, chart-component, medical finding, document, industrial defect, wildlife face, and small-target detection competitions that combine high-resolution training at 640px, 1024px, 1280x1280, or tiled crops; ImageNet-pretrained ResNet, ResNeSt, EfficientNet, ConvNeXt, Swin, or HRNet-W32 backbones; Faster R-CNN, Mask R-CNN, Cascade R-CNN, RetinaNet, YOLO, DETR, or segmentation-detector hybrids; multi-scale feature extraction; ROI cropping or component detection; optional attribute-aware classification heads; class-imbalance handling; NMS, Soft-NMS, weighted box fusion, PointRend boundary refinement, or mask/box post-processing; and metric-specific threshold calibration.",
+  "dejargonized_summary": "Keep enough image resolution to see small regions, train one or more object detectors or segmentation-assisted ROI models, crop or refine likely regions, merge overlapping boxes or masks, and tune thresholds for the benchmark metric.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "high_resolution_object_detection",
+    "roi_detection_pipeline",
+    "faster_rcnn_roi_detection",
+    "faster_rcnn_chart_component_detection",
+    "mask_rcnn_roi_detection",
+    "cascade_rcnn_detection",
+    "retinanet_yolo_detector_ensemble",
+    "imagenet_pretrained_detection_backbone",
+    "hrnet_w32_detection_backbone",
+    "1280x1280_high_resolution_training",
+    "640px_high_resolution_training",
+    "multi_scale_feature_extraction",
+    "multi_scale_training",
+    "tiling_sliding_window_detection",
+    "small_object_detection",
+    "chart_component_detection",
+    "medical_roi_detection",
+    "wildlife_face_detection",
+    "document_object_detection",
+    "industrial_defect_detection",
+    "attribute_aware_classification_head",
+    "pointrend_boundary_refinement",
+    "weighted_box_fusion",
+    "soft_nms_postprocessing",
+    "box_mask_threshold_calibration"
+  ],
+  "inputs": [
+    {"name": "high_resolution_images", "type_desc": "ImageDataset", "constraints": "Images, boxes, masks, keypoints, component labels, study IDs, or metadata for 2D detection or ROI localization.", "required": true}
+  ],
+  "outputs": [
+    {"name": "roi_detections", "type_desc": "SubmissionArtifact", "constraints": "Boxes, masks, component labels, coordinates, or detection scores formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The solution must localize objects, chart elements, defects, text regions, medical findings, faces, or other regions of interest in 2D images.",
+      "Winning techniques include Faster R-CNN, Mask R-CNN, Cascade R-CNN, RetinaNet, YOLO, DETR, ImageNet-pretrained detection backbones, HRNet-W32, high-resolution 640px+ or 1280x1280 training, tiled inference, ROI cropping, multi-scale feature extraction, attribute-aware classification heads, PointRend boundary refinement, weighted box fusion, Soft-NMS, or threshold calibration.",
+      "Small objects, high-resolution source images, overlapping detections, or component-level structure are load-bearing for the metric."
+    ],
+    "do_not_use_when": [
+      "The task is primarily image classification with no spatial output.",
+      "The output is a retrieval list or nearest-neighbor match rather than boxes, masks, coordinates, or ROI-level predictions.",
+      "The task is 3D volumetric medical segmentation where voxel geometry and 3D ROI crops dominate."
+    ],
+    "key_insight": "The durable topology is resolution-preserving preprocessing before detector or segmentation-assisted ROI localization, followed by overlap-aware post-processing and metric calibration. This differs from fine-grained classification because spatial localization is the primary artifact.",
+    "critical_stages": ["resolution_preserving_preprocessing", "detector_backbone_ensemble", "roi_refinement", "overlap_postprocessing", "detection_metric_calibration"],
+    "swappable_stages": {
+      "detector_backbone_ensemble": "Can use Faster R-CNN, Mask R-CNN, Cascade R-CNN, RetinaNet, YOLO, DETR, Detectron2, MMDetection, or segmentation-assisted detectors with ImageNet-pretrained CNN/Transformer backbones such as HRNet-W32.",
+      "roi_refinement": "Can use tiled crops, multi-scale feature pyramids, ROIAlign, component graph cleanup, mask-to-box conversion, keypoint heads, attribute-aware classification heads, PointRend boundary refinement, or a second-stage classifier over detected regions.",
+      "overlap_postprocessing": "Can use NMS, Soft-NMS, weighted box fusion, mask voting, connected components, or class-specific score thresholds."
+    },
+    "scaling_notes": "Cache resized tiles or crops, keep box transforms invertible back to source coordinates, and validate resolution, crop, and threshold choices on held-out folds.",
+    "failure_modes": [
+      "Downsampling can erase small targets before the detector sees them.",
+      "Tiling without overlap can cut objects at crop boundaries.",
+      "Aggressive NMS can suppress true adjacent objects, while weak NMS can duplicate detections."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "data",
+      "subject": "preserve_coordinates_through_tiling",
+      "statement": "Track tile, crop, scale, and padding transforms so detections can be mapped back to source-image coordinates.",
+      "rationale": "Detection submissions are invalid if ROI coordinates are calibrated in crop space instead of original-image space.",
+      "confidence": 0.95,
+      "source_stage": "final_tail_gap_audit",
+      "source_reference": "research/validation_results_expansion_141_nextbatch_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added in the final broad enrichment pass after repeated support-2 gaps shared high-resolution training, Faster R-CNN/ROI detection, ImageNet-pretrained backbones, multi-scale feature extraction, and overlap-aware detection post-processing across chart, medical, document, wildlife, and industrial image tasks.",
+    "dejargonized_summary": "This covers spatial detection tasks where preserving image resolution and merging detector outputs are the reusable structure.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_141_nextbatch_full.json",
+      "Gap mining: research/validation_results_expansion_141_nextbatch_gap_mining.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Domain-specific label ontologies, chart parsers, and medical-windowing choices should stay as refinements unless they change the detection topology."
+    ],
+    "references": [
+      {
+        "title": "Sciona 141-CDG final tail gap audit",
+        "citation": "research/validation_results_expansion_141_nextbatch_gap_mining.json",
+        "note": "Deterministic and semantic audit of remaining support-2 ROI/object detection gaps."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "resolution_preserving_preprocessing", "name": "Resolution-Preserving Preprocessing", "description": "Decode source images, preserve coordinate metadata, resize or tile at high resolution such as 640px, 1024px, or 1280x1280, normalize channels, and apply box-safe augmentations.", "dejargonized_description": "Prepare images without losing small objects or breaking box coordinates.", "concept_type": "data_assembly", "inputs": [{"name": "high_resolution_images", "type_desc": "ImageDataset", "constraints": "Raw images and annotations.", "required": true}], "outputs": [{"name": "detector_inputs", "type_desc": "ImageDataset", "constraints": "High-resolution images or tiles with transformed annotations.", "required": true}], "preconditions": ["Images and spatial annotations are available."], "guarantees": ["Coordinate transforms are invertible back to source images."], "matched_primitive": ""},
+    {"stage_id": "detector_backbone_ensemble", "name": "Detector Backbone Ensemble", "description": "Train Faster R-CNN, Mask R-CNN, Cascade R-CNN, RetinaNet, YOLO, DETR, or segmentation-assisted detectors with ImageNet-pretrained ResNet, ResNeSt, EfficientNet, ConvNeXt, Swin, HRNet-W32, or feature-pyramid backbones.", "dejargonized_description": "Train one or more detectors to find the target regions.", "concept_type": "neural_network", "inputs": [{"name": "detector_inputs", "type_desc": "ImageDataset", "constraints": "Images or tiles with boxes/masks.", "required": true}], "outputs": [{"name": "raw_detections", "type_desc": "DetectionSet", "constraints": "Boxes, masks, classes, and confidence scores.", "required": true}], "preconditions": ["Detector architecture and validation folds are selected."], "guarantees": ["Candidate regions are produced with scores."], "matched_primitive": ""},
+    {"stage_id": "roi_refinement", "name": "ROI Refinement", "description": "Refine detections with ROIAlign, crop-level classifiers, component grouping, mask-to-box conversion, multi-scale feature extraction, keypoint heads, attribute-aware classification heads, PointRend boundary refinement, or second-stage region scoring.", "dejargonized_description": "Clean up likely regions and rescore them with focused context.", "concept_type": "analysis", "inputs": [{"name": "raw_detections", "type_desc": "DetectionSet", "constraints": "Raw detector outputs.", "required": true}], "outputs": [{"name": "refined_detections", "type_desc": "DetectionSet", "constraints": "Refined boxes, masks, classes, and scores.", "required": true}], "preconditions": ["Candidate detections are available."], "guarantees": ["ROI predictions are spatially consistent."], "matched_primitive": ""},
+    {"stage_id": "overlap_postprocessing", "name": "Overlap Postprocessing", "description": "Apply NMS, Soft-NMS, weighted box fusion, mask voting, connected components, duplicate removal, and coordinate remapping from tiles to source images.", "dejargonized_description": "Merge duplicate detections and put coordinates back in the original image.", "concept_type": "optimization", "inputs": [{"name": "refined_detections", "type_desc": "DetectionSet", "constraints": "Refined detections.", "required": true}], "outputs": [{"name": "merged_detections", "type_desc": "DetectionSet", "constraints": "Merged detections in source-image coordinates.", "required": true}], "preconditions": ["Overlap policy and coordinate transforms are known."], "guarantees": ["Duplicate detections are reduced without losing source coordinates."], "matched_primitive": ""},
+    {"stage_id": "detection_metric_calibration", "name": "Detection Metric Calibration", "description": "Tune class-specific thresholds, box or mask score cutoffs, per-image limits, precision-recall operating points, and output formatting for the benchmark metric.", "dejargonized_description": "Convert merged detector outputs into final predictions for the scoring rule.", "concept_type": "ml_model_selection", "inputs": [{"name": "merged_detections", "type_desc": "DetectionSet", "constraints": "Merged detections.", "required": true}], "outputs": [{"name": "roi_detections", "type_desc": "SubmissionArtifact", "constraints": "Final benchmark detections.", "required": true}], "preconditions": ["Metric and output schema are known."], "guarantees": ["Predictions are calibrated and formatted."], "matched_primitive": ""}
+  ]
+}

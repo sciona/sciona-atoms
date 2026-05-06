@@ -4,13 +4,23 @@
   "family": "llm_tool_use",
   "paradigm": "external_tool",
   "name": "AI Mathematical Olympiad (AIMO) Prize - Top Solution Topology (2024) - Pipeline Template",
-  "summary": "Automated Reasoning / LLM Tool Use solution template for AI Mathematical Olympiad (AIMO) Prize - Top Solution Topology (2024), modeled as a 5-stage deterministic pipeline: Prompt injection, Code Generation, Sandbox Execution, Reflection Loop, and downstream competition-specific finalization.",
-  "dejargonized_summary": "This template captures the ordered steps used by AI Mathematical Olympiad (AIMO) Prize - Top Solution Topology (2024): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "summary": "Automated reasoning and LLM tool-use solution template for math, code, puzzle, and tool-mediated reasoning tasks, modeled as a deterministic pipeline with prompt construction, code or tool-call generation, sandbox execution, reflection/error repair, optional Monte Carlo Tree Search or backtracking MCTS over reasoning branches, RLHF or preference-tuned reasoning models when available, self-consistency sampling, and majority voting or verifier-based answer selection.",
+  "dejargonized_summary": "Ask an LLM to reason or write code, execute or check the result in a sandbox, feed failures back for repair, optionally search over many reasoning branches with MCTS-style control, and select the final answer by voting or verification.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "llm_tool_use",
-    "automated",
-    "reasoning",
+    "automated_reasoning",
+    "tool_mediated_reasoning",
+    "code_generation_execution",
+    "sandbox_execution",
+    "reflection_loop",
+    "self_consistency_sampling",
+    "majority_voting",
+    "mcts_reasoning",
+    "backtracking_mcts",
+    "monte_carlo_tree_search",
+    "rlhf_reasoning_model",
+    "reinforcement_learning_from_human_feedback",
     "competition_solution",
     "pipeline_template"
   ],
@@ -32,22 +42,24 @@
   ],
   "applicability": {
     "use_when": [
-      "The new task has the same broad problem type: Automated Reasoning / LLM Tool Use.",
-      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
-      "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
+      "The task requires tool-mediated reasoning, generated code execution, mathematical proof/search, program synthesis, or answer verification rather than ordinary text classification.",
+      "Winning techniques include prompt construction, code generation, sandbox execution, traceback repair, reflection loops, self-consistency sampling, majority voting, verifier scoring, MCTS/backtracking MCTS over reasoning branches, RLHF or preference-tuned reasoning models, or external solver calls.",
+      "Offline processing is acceptable, including repeated sampling, search, solver loops, execution, or verifier-based post-processing."
     ],
     "do_not_use_when": [
       "The target task lacks the modality or metadata required by the early pipeline stages.",
       "Strict real-time inference is required and the template depends on heavyweight extraction, search, ensembling, or test-time augmentation.",
       "The evaluation metric rewards a fundamentally different output structure than the source competition."
     ],
-    "key_insight": "The load-bearing idea is the pipeline topology: Prompt injection creates the representation needed by Majority Voting, so later stages optimize the metric without solving raw-data routing from scratch.",
+    "key_insight": "The load-bearing idea is the pipeline topology: prompt/tool construction creates executable or verifiable candidates, search and reflection improve candidate quality, and voting or verifier selection turns noisy generations into a robust final answer.",
     "critical_stages": [
       "prompt_injection",
       "code_generation"
     ],
     "swappable_stages": {
-      "majority_voting": "The final model, search policy, or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+      "code_generation": "Can use a general LLM, code-specialized LLM, math-tuned model, RLHF/preference-tuned reasoning model, or external solver interface.",
+      "reflection_loop": "Can be traceback repair, verifier feedback, unit-test repair, symbolic checking, or critique-and-retry prompting.",
+      "majority_voting": "Can be replaced with self-consistency voting, verifier ranking, MCTS/backtracking MCTS branch selection, or ensemble answer selection if it preserves the final answer contract."
     },
     "scaling_notes": "Scale bottlenecks are usually in feature extraction, graph/retrieval stages, neural inference, solver loops, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
     "failure_modes": [
@@ -110,7 +122,7 @@
     {
       "stage_id": "code_generation",
       "name": "Code Generation",
-      "description": "run a fine-tuned Code Llama or DeepSeek-Math LLM to generate the raw Python code (vLLM)",
+      "description": "run a fine-tuned Code Llama, DeepSeek-Math, RLHF/preference-tuned reasoning model, or tool-use LLM to generate raw Python code, solver calls, or structured reasoning steps (vLLM)",
       "dejargonized_description": "This stage run a fine-tuned Code Llama or DeepSeek-Math LLM to generate the raw Python code (vLLM).",
       "concept_type": "external_tool",
       "inputs": [
@@ -170,7 +182,7 @@
     {
       "stage_id": "reflection_loop",
       "name": "Reflection Loop",
-      "description": "if the code errors, feed the traceback directly back into the LLM prompt and ask it to fix the bug (up to 3 retries)",
+      "description": "if code, solver calls, or reasoning traces fail, feed the traceback, verifier result, unit-test output, or critique directly back into the LLM prompt and ask it to repair the candidate",
       "dejargonized_description": "This stage if the code errors, feed the traceback directly back into the LLM prompt and ask it to fix the bug (up to 3 retries).",
       "concept_type": "external_tool",
       "inputs": [
@@ -200,7 +212,7 @@
     {
       "stage_id": "majority_voting",
       "name": "Majority Voting",
-      "description": "run the generation/execution loop 50 times at high temperature, collect all successful integer outputs, and submit the mode (most common answer) (numpy)",
+      "description": "run the generation/execution loop many times at high temperature, optionally organize branches with Monte Carlo Tree Search or backtracking MCTS, collect successful outputs, and submit the majority-vote, self-consistency, or verifier-selected answer (numpy)",
       "dejargonized_description": "This stage run the generation/execution loop 50 times at high temperature, collect all successful integer outputs, and submit the mode (most common answer) (numpy).",
       "concept_type": "optimization",
       "inputs": [
