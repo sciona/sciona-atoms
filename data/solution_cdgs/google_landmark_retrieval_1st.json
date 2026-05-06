@@ -4,13 +4,51 @@
   "family": "multimodal_retrieval",
   "paradigm": "loss_function",
   "name": "Google Landmark Retrieval - 1st Place (2020) - Pipeline Template",
-  "summary": "Image Retrieval / Metric Learning solution template for Google Landmark Retrieval - 1st Place (2020), modeled as a 5-stage deterministic pipeline: Image preprocessing, Metric learning model, Embedding extraction, Nearest neighbor search, and downstream competition-specific post-processing.",
-  "dejargonized_summary": "This template captures the ordered steps used by Google Landmark Retrieval - 1st Place (2020): prepare the data, build task-specific representations, train or apply the main model, and convert outputs into the final competition submission.",
+  "summary": "Image retrieval, Google Landmark Recognition, Google Landmark Retrieval, world landmark ID prediction, open-set landmark recognition, extreme class-cardinality visual recognition across 100,000 to 200,000+ landmark classes, fine-grained architectural landmark identification, and metric-learning solution template, modeled as a deterministic pipeline with high-resolution image preprocessing, ArcFace/Sub-center ArcFace or triplet metric learning, ResNet-101/DenseNet-161/EfficientNet-B7/ConvNeXt-XL/DeiT-Large/CLIP ViT-H/14 backbones, GeM pooling, descriptor fusion, embedding extraction, cosine similarity search, DELF/local-feature or spatial verification re-ranking, non-landmark image filtering, landmark ID and confidence calibration, retrieval-augmented classification, cross-modal ArcFace for image-plus-text landmark metadata, and downstream post-processing.",
+  "dejargonized_summary": "Prepare images for a large world landmark recognition or retrieval task, train a metric-learning model with ArcFace, Sub-center ArcFace, triplet loss, GeM pooling, or strong image and vision-language backbones, extract normalized embeddings, search by cosine similarity, optionally re-rank with local features such as DELF or SuperPoint/RANSAC, reject non-landmark or new classes, and format landmark ID, confidence, or retrieval results.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "faiss",
     "nearest_neighbor",
     "metric_learning",
+    "landmark_recognition",
+    "google_landmark_recognition",
+    "google_landmark_recognition_2019",
+    "google_landmark_recognition_2025",
+    "google_landmark_recognition_2026_multimodal",
+    "google_landmark_retrieval_2021",
+    "world_landmark_id_prediction",
+    "global_average_precision_gap",
+    "large_scale_image_recognition",
+    "fine_grained_species_recognition",
+    "whale_identification",
+    "humpback_whale_identification",
+    "inaturalist_species_classification",
+    "arcface_large_scale_softmax",
+    "sub_center_arcface_loss",
+    "cross_modal_arcface_loss",
+    "triplet_loss_siamese_network",
+    "hard_triplet_mining",
+    "gem_pooling",
+    "generalized_mean_pooling",
+    "global_average_pooling_gem",
+    "delf_local_feature_reranking",
+    "delf_deep_local_features",
+    "ransac_geometric_verification",
+    "cosine_similarity_reranking",
+    "non_landmark_classifier",
+    "binary_non_landmark_classifier",
+    "descriptor_fusion",
+    "retrieval_augmented_classification",
+    "clip_vit_h14_joint_encoder",
+    "textual_context_attention_gating",
+    "convnext_xl_deit_large_ensemble",
+    "efficientnet_b7_deit_arcface",
+    "new_whale_detection",
+    "progressive_image_resizing",
+    "large_scale_tpu_training",
+    "resnet_dense_net_senet_backbones",
+    "convnext_deit_clip_ensemble",
     "image",
     "retrieval",
     "metric",
@@ -34,8 +72,10 @@
   ],
   "applicability": {
     "use_when": [
-      "The new task has the same broad problem type: Image Retrieval / Metric Learning.",
-      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "The new task has the same broad problem type: image retrieval, Google Landmark Recognition, world landmark ID prediction, open-set landmark recognition, fine-grained architectural landmark identification, whale identification, or visual metric learning.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline, including image IDs, labels or index/query splits, visual classes, candidate retrieval, or metric-learning embeddings.",
+      "The benchmark has extreme class cardinality, 100k/200k+ landmark classes, landmark ID plus confidence outputs, non-landmark images that must be filtered, or Global Average Precision scoring.",
+      "Winning techniques include ArcFace, Sub-center ArcFace, cross-modal ArcFace, triplet loss, Siamese networks, hard triplet mining, descriptor fusion, GeM pooling, DELF/local-feature re-ranking, RANSAC geometric verification, query expansion, database augmentation, cosine similarity search, progressive resizing, non-landmark/new-class detection, retrieval-augmented classification, textual-context attention gating, CLIP-style joint encoders, or large-scale backbone ensembles.",
       "Offline batch processing is acceptable, including feature extraction, model ensembling, or post-processing stages."
     ],
     "do_not_use_when": [
@@ -43,13 +83,17 @@
       "Strict real-time inference is required and the template depends on heavyweight extraction, retrieval, ensembling, or test-time augmentation.",
       "The evaluation metric rewards a fundamentally different output structure than the source competition."
     ],
-    "key_insight": "The load-bearing idea is the pipeline topology: Image preprocessing creates the representation needed by Spatial verification, so later stages can optimize the competition metric without solving raw-data ingestion from scratch.",
+    "key_insight": "The load-bearing idea is the pipeline topology: image preprocessing and metric-learning embeddings create a shared visual space that supports retrieval, recognition, re-ranking, and new/non-target class rejection.",
     "critical_stages": [
       "image_preprocessing",
-      "metric_learning_model"
+      "metric_learning_model",
+      "embedding_extraction",
+      "nearest_neighbor_search"
     ],
     "swappable_stages": {
-      "spatial_verification": "The final model or ensemble can often be replaced if it preserves the same input/output contract and metric semantics."
+      "metric_learning_model": "Can use ArcFace, Sub-center ArcFace, cross-modal ArcFace, triplet loss, contrastive loss, Siamese networks, GeM pooling, ResNet-101, DenseNet-161, SENet, EfficientNet-B7, ConvNeXt-XL, DeiT-Large, CLIP ViT-H/14, or backbone ensembles if embeddings remain comparable.",
+      "nearest_neighbor_search": "Can use exact cosine search, FAISS ANN, class prototypes, kNN voting, thresholding, query expansion, database augmentation, retrieval-augmented classification, or candidate retrieval.",
+      "spatial_verification": "The final re-ranking or rejection stage can use DELF, SuperPoint/RANSAC, local feature matching, RANSAC geometric verification, non-landmark detection, new-class detection, textual-context attention gating, or threshold calibration."
     },
     "scaling_notes": "Scale bottlenecks are usually in feature extraction, nearest-neighbor/retrieval stages, neural model inference, and ensemble evaluation; cache intermediate artifacts when adapting this CDG.",
     "failure_modes": [
@@ -82,8 +126,8 @@
     {
       "stage_id": "image_preprocessing",
       "name": "Image preprocessing",
-      "description": "resize and centrally crop landmark images (OpenCV)",
-      "dejargonized_description": "This stage resize and centrally crop landmark images (OpenCV).",
+      "description": "resize, centrally crop, progressively resize, align object/whale-tail/world-landmark crops, preserve optional landmark text metadata, and prepare high-resolution images across 100k to 200k+ landmark classes for landmark ID and confidence prediction (OpenCV)",
+      "dejargonized_description": "This stage prepares and optionally aligns images before metric-learning training.",
       "concept_type": "data_assembly",
       "inputs": [
         {
@@ -112,8 +156,8 @@
     {
       "stage_id": "metric_learning_model",
       "name": "Metric learning model",
-      "description": "train a ResNet-101 with a Generalized Mean (GeM) pooling layer and ArcFace loss to separate class embeddings radially (PyTorch)",
-      "dejargonized_description": "This stage train a ResNet-101 with a Generalized Mean (GeM) pooling layer and ArcFace loss to separate class embeddings radially (PyTorch).",
+      "description": "train a ResNet-101, DenseNet-161, SENet-154, EfficientNet-B7, ConvNeXt-XL, DeiT-Large, CLIP ViT-H/14, or Siamese backbone with Generalized Mean (GeM) pooling, ArcFace/Sub-center ArcFace, large-scale softmax, Cross-Modal ArcFace, triplet loss, contrastive loss, descriptor fusion, label smoothing, or hard triplet mining to separate extreme-cardinality visual class embeddings (PyTorch)",
+      "dejargonized_description": "This stage trains an image model so visually similar examples are close in embedding space and different classes are separated.",
       "concept_type": "loss_function",
       "inputs": [
         {
@@ -142,8 +186,8 @@
     {
       "stage_id": "embedding_extraction",
       "name": "Embedding extraction",
-      "description": "extract 512-dimensional L2-normalized embeddings for all index and query images",
-      "dejargonized_description": "This stage extract 512-dimensional L2-normalized embeddings for all index and query images.",
+      "description": "extract L2-normalized embeddings, class prototypes, fold/backbone ensemble embeddings, or test-time augmented embeddings for all index, query, recognition, or fine-grained classification images",
+      "dejargonized_description": "This stage turns every image into a normalized vector for matching or classification.",
       "concept_type": "data_extraction",
       "inputs": [
         {
@@ -172,8 +216,8 @@
     {
       "stage_id": "nearest_neighbor_search",
       "name": "Nearest neighbor search",
-      "description": "perform exact cosine similarity search to find the top 100 index images for every query image (FAISS)",
-      "dejargonized_description": "This stage perform exact cosine similarity search to find the top 100 index images for every query image (FAISS).",
+      "description": "perform exact or approximate cosine similarity search, query expansion, database augmentation, kNN voting, class-prototype retrieval, retrieval-augmented classification, or thresholded matching to find nearest candidates, recognition labels, landmark IDs, non-landmark images, or new classes (FAISS)",
+      "dejargonized_description": "This stage finds the closest known examples or decides when an image does not match known classes.",
       "concept_type": "searching",
       "inputs": [
         {
@@ -202,8 +246,8 @@
     {
       "stage_id": "spatial_verification",
       "name": "Spatial verification",
-      "description": "run SuperPoint and RANSAC on the top retrieved pairs to rerank the candidates based on actual geometric feature matching (OpenCV/PyTorch)",
-      "dejargonized_description": "This stage run SuperPoint and RANSAC on the top retrieved pairs to rerank the candidates based on actual geometric feature matching (OpenCV/PyTorch).",
+      "description": "run DELF Deep Local Features, SuperPoint, local feature matching, RANSAC geometric verification, spatial verification, textual-context attention gating, cosine re-ranking, non-landmark binary filtering, landmark confidence calibration, new-whale detection, or metric-specific threshold calibration on top candidates (OpenCV/PyTorch)",
+      "dejargonized_description": "This stage re-checks the best visual matches and calibrates final labels or retrieval rankings.",
       "concept_type": "searching",
       "inputs": [
         {

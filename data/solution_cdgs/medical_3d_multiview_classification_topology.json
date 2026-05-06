@@ -1,0 +1,125 @@
+{
+  "asset_id": "solution.kaggle.medical_3d_multiview_classification_topology",
+  "asset_version": "v1",
+  "family": "medical_3d_multiview_classification",
+  "paradigm": "neural_network",
+  "name": "RSNA 3D Medical Multiview Classification Pipeline Template",
+  "summary": "Reusable base CDG for RSNA-style 3D medical imaging classification, knee injury MRI, hip fracture X-ray identification, lumbar/cervical spine grading, multiview injury detection, fracture detection, and cancer-risk classification competitions that combine anatomy or ROI localization, 2.5D/3D backbones such as 3D ConvNeXt, MaxViT, ConvNeXt-v2, or Swin Transformer encoders, sagittal/coronal/axial cross-view attention, coordinate-regression auxiliary losses, 3D elastic augmentation, weighted multiclass or asymmetric losses, patient-level GroupKFold, and metric-specific calibration.",
+  "dejargonized_summary": "Find or crop the relevant part of a 3D scan or medical image, build views from sagittal, coronal, and axial slices or full volumes, train a 3D or multiview model with patient-safe validation, use auxiliary coordinate or ROI losses when localization matters, and calibrate class probabilities for the medical benchmark metric.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "3d_medical_classification",
+    "medical_multiview_classification",
+    "rsna_knee_injury_classification",
+    "rsna_2025_knee_injury_classification_mri",
+    "knee_acl_mcl_meniscus_bone_bruise_mri",
+    "sagittal_coronal_axial_knee_mri",
+    "rsna_pancreatic_cancer",
+    "rsna_lumbar_spine",
+    "rsna_hip_fracture",
+    "rsna_2024_hip_fracture_identification",
+    "pelvic_xray_femoral_neck_intertrochanteric_subtrochanteric",
+    "yolov8x_roi_localization",
+    "cervical_spine_fracture_detection",
+    "rsna_cervical_lumbar_spine_fracture_grading",
+    "sagittal_coronal_axial_fusion",
+    "multi_view_roi_fusion",
+    "planar_roi_fusion",
+    "3d_convnext",
+    "3d_convnext_tiny",
+    "3d_swin_unet",
+    "swin_transformer_backbone",
+    "convnext_v2",
+    "maxvit",
+    "convnext_v2_maxvit_ensemble",
+    "transformer_cross_view_attention",
+    "coordinate_regression_auxiliary_loss",
+    "weighted_multiclass_log_loss",
+    "asymmetric_loss_class_imbalance",
+    "mixup_cutmix_roi_crops",
+    "3d_elastic_deformation_augmentation",
+    "coarse_to_fine_roi_localization",
+    "groupkfold_patient_id",
+    "mixed_precision_bf16"
+  ],
+  "inputs": [
+    {"name": "medical_images", "type_desc": "MedicalImageDataset", "constraints": "3D volumes, 2.5D slices, multiview studies, labels, patient IDs, or ROI annotations.", "required": true}
+  ],
+  "outputs": [
+    {"name": "medical_predictions", "type_desc": "SubmissionArtifact", "constraints": "Class probabilities, diagnosis labels, injury labels, or risk scores formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The task predicts medical classes, injuries, fractures, grades, or cancer-risk labels from 3D volumes, multiview MRI/CT studies, pelvic X-rays, or ROI-centered medical images.",
+      "Winning techniques include 3D ConvNeXt-Tiny, ConvNeXt-v2, MaxViT, Swin Transformer encoders, cross-view attention, YOLOv8-X ROI localization, coarse-to-fine ROI cropping, coordinate-regression auxiliary loss, 3D elastic deformation, MixUp/CutMix on ROI crops, weighted multiclass log loss, asymmetric loss, or patient GroupKFold.",
+      "Patient/study grouping and view fusion are load-bearing, not just ordinary image classification."
+    ],
+    "do_not_use_when": [
+      "The task is pure 2D natural image classification with no medical study grouping or anatomy localization.",
+      "The output is a pixel-level segmentation mask and the solution is dominated by segmentation tiling rather than classification or risk scoring.",
+      "The task is medical tabular prediction where images are only optional metadata."
+    ],
+    "key_insight": "The durable topology is anatomy-aware localization followed by 3D or multiview feature fusion under patient-safe validation. This differs from generic 3D imaging CDGs because cross-view attention, auxiliary coordinates, and patient grouping are load-bearing.",
+    "critical_stages": ["study_localization", "multiview_volume_assembly", "cross_view_backbone", "auxiliary_and_weighted_losses", "patient_level_calibration"],
+    "swappable_stages": {
+      "study_localization": "Can use coarse-to-fine ROI cropping, YOLOv8-X/Faster R-CNN ROI detection, coordinate regression, segmentation pretraining, or anatomy-specific slice selection.",
+      "cross_view_backbone": "Can use 3D ConvNeXt, Swin-UNet, 3D ResNet, EfficientNet-3D, ConvNeXt-v2, MaxViT, 2.5D CNNs, or transformer cross-view attention.",
+      "auxiliary_and_weighted_losses": "Can use weighted multiclass log loss, asymmetric loss, focal loss, coordinate regression auxiliary loss, or multi-task structure labels."
+    },
+    "scaling_notes": "Cache resampled volumes and ROI crops, use mixed precision for 3D backbones, and fit all preprocessing inside patient-safe folds.",
+    "failure_modes": [
+      "Random image-level folds leak patient information and overstate performance.",
+      "ROI localization errors can dominate the classifier even when the backbone is strong.",
+      "Aggressive 3D augmentation can distort anatomy if spacing and orientation are not normalized first."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "data",
+      "subject": "patient_grouping_before_validation",
+      "statement": "Define patient or study groups before model selection, augmentation tuning, or calibration.",
+      "rationale": "Medical images from the same patient or study can leak across folds if grouping is applied late.",
+      "confidence": 0.95,
+      "source_stage": "nextbatch_gap_audit",
+      "source_reference": "research/validation_results_expansion_135_nextbatch_gap_mining.json"
+    },
+    {
+      "category": "stage",
+      "subject": "localization_before_cross_view_fusion",
+      "statement": "Localize the anatomy or ROI before assembling multiview or 3D representations for classification.",
+      "rationale": "Cross-view attention and 3D backbones assume the informative anatomy is consistently framed.",
+      "confidence": 0.9,
+      "source_stage": "nextbatch_gap_audit",
+      "source_reference": "research/validation_results_expansion_135_nextbatch_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added after validation left repeated divergent RSNA and medical imaging cases with missing techniques around 3D ConvNeXt/Swin-UNet backbones, multiview ROI fusion, transformer cross-view attention, coordinate-regression auxiliary losses, 3D elastic augmentation, weighted multiclass/asymmetric losses, and GroupKFold by patient. Semantic comparison found existing RSNA brain tumor and cervical spine CDGs too competition-specific.",
+    "dejargonized_summary": "This covers medical classification solutions where 3D anatomy, multiple imaging views, ROI localization, and patient-safe validation are the reusable structure.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_135_nextbatch_full.json",
+      "Gap mining: research/validation_results_expansion_135_nextbatch_gap_mining.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "Pure segmentation and whole-slide MIL cases should remain on their existing segmentation or MIL CDGs unless classification fusion is central."
+    ],
+    "references": [
+      {
+        "title": "Sciona 135-CDG expansion validation audit",
+        "citation": "research/validation_results_expansion_135_nextbatch_gap_mining.json",
+        "note": "Local deterministic and semantic audit of unmatched 3D medical multiview patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "study_localization", "name": "Study Localization", "description": "Normalize orientation and spacing, then localize anatomy or ROI with coordinate regression, coarse-to-fine cropping, YOLOv8-X/Faster R-CNN ROI detection, segmentation pretraining, or slice selection for knee MRI, pelvic X-ray, hip fracture, or spine studies.", "dejargonized_description": "Find the relevant anatomy or crop before classification.", "concept_type": "data_assembly", "inputs": [{"name": "medical_images", "type_desc": "MedicalImageDataset", "constraints": "Raw studies and metadata.", "required": true}], "outputs": [{"name": "localized_studies", "type_desc": "MedicalImageDataset", "constraints": "Aligned and ROI-aware studies.", "required": true}], "preconditions": ["Image orientation, spacing, and patient IDs are available."], "guarantees": ["Relevant anatomy is framed consistently enough for view fusion."], "matched_primitive": ""},
+    {"stage_id": "multiview_volume_assembly", "name": "Multiview Volume Assembly", "description": "Build 3D volumes, 2.5D slice stacks, sagittal/coronal/axial views, planar ROI crops, hip-joint crops, or spatio-temporal feature stacks with fold-local normalization plus 3D elastic deformation, MixUp, CutMix, and ROI-crop TTA when appropriate.", "dejargonized_description": "Create the model inputs from full volumes, slices, or multiple medical views.", "concept_type": "signal_transform", "inputs": [{"name": "localized_studies", "type_desc": "MedicalImageDataset", "constraints": "Localized studies.", "required": true}], "outputs": [{"name": "view_tensors", "type_desc": "Tensor", "constraints": "Aligned 3D or multiview tensors.", "required": true}], "preconditions": ["ROI and view policy are fixed."], "guarantees": ["Each patient or study has aligned model inputs."], "matched_primitive": ""},
+    {"stage_id": "cross_view_backbone", "name": "Cross-View Backbone", "description": "Train 3D ConvNeXt-Tiny, 3D ConvNeXt, 3D ResNet, EfficientNet-3D, ConvNeXt-v2, MaxViT, Swin Transformer encoders, 2.5D CNN ensembles, or transformer-based cross-view attention over sagittal/coronal/axial MRI and ROI inputs.", "dejargonized_description": "Learn medical features from 3D data or multiple views of the same study.", "concept_type": "neural_network", "inputs": [{"name": "view_tensors", "type_desc": "Tensor", "constraints": "3D or multiview tensors.", "required": true}], "outputs": [{"name": "study_representations", "type_desc": "Tensor", "constraints": "Patient or study-level features.", "required": true}], "preconditions": ["Backbone and memory policy are selected."], "guarantees": ["Representations fuse the required views or volumes."], "matched_primitive": ""},
+    {"stage_id": "auxiliary_and_weighted_losses", "name": "Auxiliary and Weighted Losses", "description": "Train classification heads with weighted multiclass log loss, asymmetric loss, focal loss, coordinate-regression auxiliary loss, structure segmentation auxiliary loss, fracture-type labels, surgical-level tear weights, or multi-task labels.", "dejargonized_description": "Use losses that handle class imbalance and help the model localize anatomy.", "concept_type": "loss_function", "inputs": [{"name": "study_representations", "type_desc": "Tensor", "constraints": "Study-level features.", "required": true}], "outputs": [{"name": "raw_medical_scores", "type_desc": "NDArray", "constraints": "Raw class, coordinate, or risk scores.", "required": true}], "preconditions": ["Labels, class weights, and auxiliary targets are available."], "guarantees": ["Scores align with the benchmark target labels."], "matched_primitive": ""},
+    {"stage_id": "patient_level_calibration", "name": "Patient-Level Calibration", "description": "Use patient or study GroupKFold, fold ensembling, mixed-precision checkpoint selection, TTA over ROI crops, threshold tuning, and metric-specific probability calibration.", "dejargonized_description": "Validate and calibrate predictions without leaking patient information.", "concept_type": "ml_model_selection", "inputs": [{"name": "raw_medical_scores", "type_desc": "NDArray", "constraints": "Raw predictions.", "required": true}], "outputs": [{"name": "medical_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final benchmark predictions.", "required": true}], "preconditions": ["Patient groups and metric are known."], "guarantees": ["Outputs are patient-safe and formatted for submission."], "matched_primitive": ""}
+  ]
+}

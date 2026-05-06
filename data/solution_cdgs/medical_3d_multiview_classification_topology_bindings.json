@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.medical_3d_multiview_classification_topology.bindings",
+  "template": "medical_3d_multiview_classification_topology",
+  "bindings": [
+    {"stage_id": "study_localization", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "ROI localization, slice selection, and coordinate targets are anatomy- and dataset-specific."}},
+    {"stage_id": "multiview_volume_assembly", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Volume resampling, view construction, and 3D augmentation depend on scan geometry."}},
+    {"stage_id": "cross_view_backbone", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "The 3D or multiview backbone can be implemented with MONAI, PyTorch, or competition-specific model code."}},
+    {"stage_id": "auxiliary_and_weighted_losses", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Auxiliary coordinate, segmentation, and weighted classification losses are benchmark-specific."}},
+    {"stage_id": "patient_level_calibration", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Patient GroupKFold, TTA, and calibration are validation-driven operations."}}
+  ]
+}

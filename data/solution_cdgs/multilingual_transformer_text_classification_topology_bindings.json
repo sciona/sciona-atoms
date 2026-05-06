@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.multilingual_transformer_text_classification_topology.bindings",
+  "template": "multilingual_transformer_text_classification_topology",
+  "bindings": [
+    {"stage_id": "language_aware_preprocessing", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Language normalization, taxonomy mapping, and fold construction are dataset-specific."}},
+    {"stage_id": "multilingual_encoder", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "The multilingual transformer is selected from external model libraries."}},
+    {"stage_id": "cross_lingual_adaptation", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Language adapters, projection heads, and taxonomy embeddings are model-level components."}},
+    {"stage_id": "pseudo_label_transfer", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Pseudo-label filtering and translation transfer are validation-driven orchestration steps."}},
+    {"stage_id": "metric_calibration", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Macro-F1 weighting, thresholds, and language-group calibration are metric-specific."}}
+  ]
+}

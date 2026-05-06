@@ -4,15 +4,24 @@
   "family": "structured_prediction",
   "paradigm": "loss_function",
   "name": "Google American Sign Language Fingerspelling - 1st Place (2023) - Pipeline Template",
-  "summary": "Sequence-to-Sequence (Spatial Landmarks to Text) solution template for Google American Sign Language Fingerspelling - 1st Place (2023), modeled as a 5-stage deterministic pipeline: Landmark interpolation, Affine Augmentation, Feature engineering, CNN + Transformer Architecture, and downstream competition-specific finalization.",
-  "dejargonized_summary": "This template captures the ordered steps used by Google American Sign Language Fingerspelling - 1st Place (2023): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs into the final benchmark submission.",
+  "summary": "Sequence-to-Sequence (Spatial Landmarks to Text) solution template for Google American Sign Language Fingerspelling, ASL fingerspelling from MediaPipe hand-landmark coordinate sequences, and character-string recognition tasks, modeled as a deterministic pipeline with landmark interpolation, MediaPipe pose normalization, affine and temporal augmentation, Temporal-Drop or MixUp on coordinate sequences, feature engineering, 1D CNN or 12-layer Squeeze-and-Excitation Transformer encoders, CTC Connectionist Temporal Classification loss, Levenshtein distance optimization, and downstream competition-specific finalization.",
+  "dejargonized_summary": "Prepare MediaPipe hand-landmark coordinate sequences for ASL fingerspelling, normalize and augment the temporal landmarks, model the sequence with CNN/Transformer or Squeeze-and-Excitation Transformer blocks, train with CTC when frame-to-character alignment is unknown, optimize Levenshtein distance, and convert outputs into the final benchmark submission.",
   "canonical_for_paradigm": false,
   "variant_hints": [
     "transformer",
     "ctc",
+    "connectionist_temporal_classification",
+    "levenshtein_distance",
     "sequence",
     "spatial",
     "landmarks",
+    "mediapipe_landmark_sequences",
+    "asl_fingerspelling",
+    "google_asl_fingerspelling",
+    "temporal_drop_augmentation",
+    "mixup_coordinate_sequences",
+    "squeeze_and_excitation_transformer",
+    "12_layer_se_transformer",
     "competition_solution",
     "pipeline_template"
   ],
@@ -34,8 +43,9 @@
   ],
   "applicability": {
     "use_when": [
-      "The new task has the same broad problem type: Sequence-to-Sequence (Spatial Landmarks to Text).",
-      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline.",
+      "The new task has the same broad problem type: Sequence-to-Sequence (Spatial Landmarks to Text), ASL fingerspelling, character-string decoding, or landmark-coordinate sequence recognition.",
+      "The available data supports the same ordered transformations and intermediate artifacts as the documented winning pipeline, including MediaPipe hands/pose coordinates, temporal frames, or character transcripts.",
+      "Winning techniques include CTC loss, Squeeze-and-Excitation Transformer blocks, Temporal-Drop, MixUp on coordinate sequences, Levenshtein distance optimization, MediaPipe pose normalization, or heavy temporal data augmentation.",
       "Offline processing is acceptable, including search, feature extraction, model ensembling, or post-processing stages."
     ],
     "do_not_use_when": [
@@ -111,8 +121,8 @@
     },
     {
       "stage_id": "affine_augmentation",
-      "name": "Affine Augmentation",
-      "description": "apply random 3D rotations, scaling, and sheer to the skeletal coordinates to simulate different camera angles during training (numpy)",
+      "name": "Affine and Temporal Augmentation",
+      "description": "apply random 3D rotations, scaling, shear, MediaPipe landmark pose-normalization, heavy temporal data augmentation, Temporal-Drop, and MixUp on coordinate sequences to simulate camera angles and dropped frames during training (numpy)",
       "dejargonized_description": "This stage apply random 3D rotations, scaling, and sheer to the skeletal coordinates to simulate different camera angles during training (numpy).",
       "concept_type": "sampler",
       "inputs": [
@@ -171,8 +181,8 @@
     },
     {
       "stage_id": "cnn_transformer_architecture",
-      "name": "CNN + Transformer Architecture",
-      "description": "pass the coordinates through a 1D CNN to extract local temporal features, followed by a Transformer Encoder for global sequence context (PyTorch)",
+      "name": "CNN / SE Transformer Architecture",
+      "description": "pass the coordinates through a 1D CNN, CNN + Transformer encoder, 12-layer Squeeze-and-Excitation Transformer, or SE blocks to extract local temporal features and global sequence context (PyTorch)",
       "dejargonized_description": "This stage pass the coordinates through a 1D CNN to extract local temporal features, followed by a Transformer Encoder for global sequence context (PyTorch).",
       "concept_type": "neural_network",
       "inputs": [
@@ -202,7 +212,7 @@
     {
       "stage_id": "ctc_loss_translation",
       "name": "CTC Loss Translation",
-      "description": "decode the sequence into raw text tokens using Connectionist Temporal Classification (CTC) loss to handle the misalignment between sequence length and text length (PyTorch)",
+      "description": "decode the sequence into raw text tokens using Connectionist Temporal Classification (CTC) loss, CTC beam decoding, and Levenshtein distance optimization to handle the misalignment between sequence length and text length (PyTorch)",
       "dejargonized_description": "This stage decode the sequence into raw text tokens using Connectionist Temporal Classification (CTC) loss to handle the misalignment between sequence length and text length (PyTorch).",
       "concept_type": "loss_function",
       "inputs": [

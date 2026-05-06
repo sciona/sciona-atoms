@@ -1,0 +1,120 @@
+{
+  "asset_id": "solution.kaggle.multilingual_transformer_text_classification_topology",
+  "asset_version": "v1",
+  "family": "multilingual_transformer_text_classification",
+  "paradigm": "neural_network",
+  "name": "XLM-R Multilingual Transformer Text Classification Pipeline Template",
+  "summary": "Reusable base CDG for Jigsaw multilingual toxic comment classification, multilingual toxicity, low-resource sentiment, Amazon-style multilingual product classification, cross-lingual product taxonomy, and high-cardinality multilingual text classification competitions that combine language-aware cleaning, XLM-RoBERTa-Large or multilingual transformer encoders, language-specific fine-tuning/adapters, taxonomy or label embeddings, intermediate-task transfer, cross-lingual projection/alignment, back-translation, cross-lingual pseudo-labeling, multi-sample dropout, layer-wise learning-rate decay, class-balanced or macro-F1 weighted losses, and calibration.",
+  "dejargonized_summary": "Clean text from multiple languages, encode it with a multilingual transformer such as XLM-RoBERTa-Large, adapt the model with language or task adapters, optionally align languages or add taxonomy embeddings, create pseudo-labels across languages, train with a metric-aware loss, and calibrate predictions.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "multilingual_text_classification",
+    "cross_lingual_classification",
+    "low_resource_sentiment",
+    "multilingual_product_classification",
+    "amazon_multilingual_ecommerce_product_classification",
+    "multilingual_product_taxonomy_5000_classes",
+    "jigsaw_multilingual_toxic_comment",
+    "jigsaw_multilingual_toxic_comment_classification",
+    "spanish_french_italian_turkish_portuguese_russian_toxicity",
+    "xlm_roberta_large",
+    "xlm_r_large",
+    "language_adapters",
+    "language_specific_fine_tuning",
+    "taxonomy_embedding",
+    "taxonomy_embedding_head",
+    "product_titles_descriptions_multilingual",
+    "cross_lingual_projection",
+    "cross_lingual_alignment",
+    "cross_lingual_pseudo_labeling",
+    "back_translation_augmentation",
+    "multi_sample_dropout",
+    "layerwise_learning_rate_decay",
+    "intermediate_task_transfer_learning",
+    "macro_f1_weighted_loss",
+    "auc_multilingual_toxicity",
+    "class_balanced_loss",
+    "multilingual_toxicity",
+    "language_aware_tokenization"
+  ],
+  "inputs": [
+    {"name": "multilingual_text", "type_desc": "MultilingualTextDataset", "constraints": "Text, labels, language IDs, optional taxonomy or hierarchy metadata.", "required": true}
+  ],
+  "outputs": [
+    {"name": "text_class_predictions", "type_desc": "SubmissionArtifact", "constraints": "Class labels, probabilities, or ranked taxonomy predictions formatted for the benchmark metric.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The task predicts labels from text in multiple languages, low-resource languages, translated data, multilingual toxicity comments, product titles/descriptions, or product/category taxonomies.",
+      "Winning techniques include XLM-RoBERTa-Large/XLM-R, language-specific fine-tuning, language adapters, taxonomy embeddings, cross-lingual alignment/projection, cross-lingual pseudo-labeling, back-translation, multi-sample dropout, layer-wise learning-rate decay, intermediate-task transfer, AUC calibration, or macro-F1 weighted loss.",
+      "Language transfer and label imbalance are load-bearing rather than incidental."
+    ],
+    "do_not_use_when": [
+      "The task is English-only toxic comment classification with no cross-lingual transfer requirement.",
+      "The solution is classic handcrafted text-pair matching with no multilingual transformer fine-tuning.",
+      "The main output is generated text or an LLM reasoning answer rather than a fixed classification label."
+    ],
+    "key_insight": "The durable topology is multilingual representation plus cross-lingual adaptation and metric-aware calibration. This differs from English-only toxic-comment CDGs because language transfer, adapter routing, and cross-lingual pseudo-labels are load-bearing.",
+    "critical_stages": ["language_aware_preprocessing", "multilingual_encoder", "cross_lingual_adaptation", "pseudo_label_transfer", "metric_calibration"],
+    "swappable_stages": {
+      "multilingual_encoder": "Can use XLM-RoBERTa, mBERT, LaBSE, multilingual DeBERTa, or another cross-lingual transformer.",
+      "cross_lingual_adaptation": "Can use language adapters, task adapters, taxonomy embeddings, contrastive alignment, intermediate-task transfer, or projection heads.",
+      "pseudo_label_transfer": "Can use translated pseudo-labels, teacher-student self-training, confidence filtering, back-translation augmentation, or language-balanced sampling."
+    },
+    "scaling_notes": "Cache tokenization by language, balance batches across languages, and evaluate calibration separately for high- and low-resource language groups.",
+    "failure_modes": [
+      "Pseudo-labels can amplify mistakes in low-resource languages if confidence filtering is too loose.",
+      "Adapters can overfit language IDs rather than transferable semantics.",
+      "Macro-F1 or class-balanced losses can improve rare classes while hurting frequent-class calibration."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "data",
+      "subject": "language_split_before_pseudolabeling",
+      "statement": "Define language and validation splits before cross-lingual pseudo-label generation or transfer learning.",
+      "rationale": "Pseudo-labeling can leak validation distribution or translated duplicates if language boundaries are not fixed first.",
+      "confidence": 0.95,
+      "source_stage": "nextbatch_gap_audit",
+      "source_reference": "research/validation_results_expansion_135_nextbatch_gap_mining.json"
+    },
+    {
+      "category": "stage",
+      "subject": "multilingual_encoder_before_alignment",
+      "statement": "Tokenize and encode text with a multilingual backbone before applying language adapters, taxonomy embeddings, or cross-lingual projection heads.",
+      "rationale": "Cross-lingual alignment operates on shared multilingual representations, not raw strings.",
+      "confidence": 0.9,
+      "source_stage": "nextbatch_gap_audit",
+      "source_reference": "research/validation_results_expansion_135_nextbatch_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added after validation left repeated multilingual classification cases with missing XLM-RoBERTa-Large/XLM-R, language-specific fine-tuning, cross-lingual pseudo-labeling, back-translation, multi-sample dropout, layer-wise learning-rate decay, taxonomy embeddings, cross-lingual projection, intermediate-task transfer, and macro-F1 weighted losses. Semantic comparison found English toxic-comment and bias-aware transformer CDGs too narrow.",
+    "dejargonized_summary": "This covers classification solutions where cross-lingual transformer transfer and language-aware calibration are the reusable structure.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_135_nextbatch_full.json",
+      "Gap mining: research/validation_results_expansion_135_nextbatch_gap_mining.json",
+      "Repository context: https://github.com/search?q=sciona-atoms+solution_cdgs&type=repositories"
+    ],
+    "uncertainty_notes": [
+      "English-only moderation and fairness tasks should remain on toxic_comment_1st or jigsaw_toxicity_bias_1st unless multilingual transfer is central."
+    ],
+    "references": [
+      {
+        "title": "Sciona 135-CDG expansion validation audit",
+        "citation": "research/validation_results_expansion_135_nextbatch_gap_mining.json",
+        "note": "Local deterministic and semantic audit of unmatched multilingual transformer patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "language_aware_preprocessing", "name": "Language-Aware Preprocessing", "description": "Normalize multilingual comments, product titles, and descriptions, preserve language-specific characters, attach language IDs, map product taxonomies or label hierarchies, and build language-balanced folds.", "dejargonized_description": "Clean text without erasing language-specific information and record each example's language.", "concept_type": "data_assembly", "inputs": [{"name": "multilingual_text", "type_desc": "MultilingualTextDataset", "constraints": "Raw multilingual text and labels.", "required": true}], "outputs": [{"name": "prepared_text", "type_desc": "MultilingualTextDataset", "constraints": "Cleaned text with language and label metadata.", "required": true}], "preconditions": ["Text, labels, and language metadata are available or inferable."], "guarantees": ["Language and label metadata are aligned to each text example."], "matched_primitive": ""},
+    {"stage_id": "multilingual_encoder", "name": "Multilingual Encoder", "description": "Encode text with XLM-RoBERTa-Large/XLM-R, mBERT, LaBSE, multilingual DeBERTa, or another cross-lingual transformer using language-aware tokenization, multi-sample dropout, layer-wise learning-rate decay, and sequence handling.", "dejargonized_description": "Use a pretrained multilingual language model to represent text from many languages in a shared space.", "concept_type": "neural_network", "inputs": [{"name": "prepared_text", "type_desc": "MultilingualTextDataset", "constraints": "Prepared multilingual text.", "required": true}], "outputs": [{"name": "multilingual_representations", "type_desc": "Tensor", "constraints": "Shared multilingual text representations.", "required": true}], "preconditions": ["Tokenizer and maximum sequence length are fixed."], "guarantees": ["Representations are comparable across languages."], "matched_primitive": ""},
+    {"stage_id": "cross_lingual_adaptation", "name": "Cross-Lingual Adaptation", "description": "Apply language-specific fine-tuning, language adapters, task adapters, taxonomy embeddings, product category embeddings, cross-lingual projection/alignment heads, intermediate-task transfer learning, or contrastive language alignment.", "dejargonized_description": "Adapt the multilingual model so labels transfer across languages and taxonomies.", "concept_type": "neural_network", "inputs": [{"name": "multilingual_representations", "type_desc": "Tensor", "constraints": "Multilingual representations.", "required": true}], "outputs": [{"name": "adapted_representations", "type_desc": "Tensor", "constraints": "Cross-lingually adapted features.", "required": true}], "preconditions": ["Adapter or alignment policy is selected."], "guarantees": ["Adapted representations preserve target label semantics."], "matched_primitive": ""},
+    {"stage_id": "pseudo_label_transfer", "name": "Pseudo-Label Transfer", "description": "Generate cross-lingual pseudo-labels with confidence filtering, translated teacher-student transfer, back-translation augmentation, language-balanced sampling, or low-resource self-training.", "dejargonized_description": "Use confident predictions or translations to add training signal in languages with less labeled data.", "concept_type": "data_assembly", "inputs": [{"name": "adapted_representations", "type_desc": "Tensor", "constraints": "Adapted features.", "required": true}], "outputs": [{"name": "augmented_training_signal", "type_desc": "TrainingSignal", "constraints": "Original and pseudo-labeled examples.", "required": true}], "preconditions": ["Validation boundaries and confidence thresholds are fixed."], "guarantees": ["Pseudo-label provenance and language coverage are explicit."], "matched_primitive": ""},
+    {"stage_id": "metric_calibration", "name": "Metric Calibration", "description": "Train and calibrate classification heads with AUC-aware toxicity calibration, macro-F1 weighted loss, class-balanced BCE/CE, taxonomy-aware loss, threshold tuning, language-group calibration, or fold ensembling.", "dejargonized_description": "Convert multilingual model outputs into metric-calibrated class predictions.", "concept_type": "loss_function", "inputs": [{"name": "augmented_training_signal", "type_desc": "TrainingSignal", "constraints": "Augmented training signal.", "required": true}], "outputs": [{"name": "text_class_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final predictions.", "required": true}], "preconditions": ["Metric, labels, and language groups are known."], "guarantees": ["Predictions are calibrated and formatted for submission."], "matched_primitive": ""}
+  ]
+}

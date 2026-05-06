@@ -1,0 +1,121 @@
+{
+  "asset_id": "solution.kaggle.large_scale_fine_grained_image_classification_topology",
+  "asset_version": "v1",
+  "family": "large_scale_fine_grained_image_classification",
+  "paradigm": "neural_network",
+  "name": "Large-Scale Fine-Grained Image Classification Pipeline Template",
+  "summary": "Reusable base CDG for Herbarium, iNaturalist-style, plant species, plant disease, rare species, high-cardinality fine-grained visual classification, and scientific specimen image competitions that combine high-resolution image preprocessing, EfficientNet-B4/B5/B6, Inception-ResNet-v2, Xception, ResNeXt-101, DenseNet-201, ViT-Base/ViT-Large, or ConvNeXt ensembles, optional location/date covariate fusion, hierarchical taxonomy heads for family/genus/species, balanced oversampling or balanced fine-tuning for rare classes, pseudo-labeling from related prior-year datasets, label smoothing for uncertain labels, macro-F1 or class-balanced losses, cosine annealing with warm restarts, large-scale distributed TPU training, stochastic weight averaging, and calibrated class prediction.",
+  "dejargonized_summary": "Prepare many high-resolution images, train strong image models, use taxonomy levels such as family and genus to regularize the species label, oversample rare classes, soften noisy labels, and calibrate predictions for a macro or long-tail metric.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "herbarium_2021_fgvc8",
+    "plant_species_classification",
+    "plant_pathology_leaf_disease_classification",
+    "herbarium_specimen_classification",
+    "inaturalist_species_classification",
+    "large_scale_fine_grained_visual_classification",
+    "high_cardinality_species_labels",
+    "efficientnet_b5_b6_ensemble",
+    "efficientnet_b4_vit_small_ensemble",
+    "inception_resnet_v2_xception_ensemble",
+    "resnext101_densenet201_ensemble",
+    "vit_base_vit_large_vision_transformers",
+    "imagenet21k_pretraining",
+    "hierarchical_taxonomy_family_genus_species",
+    "family_genus_species_heads",
+    "location_date_covariate_fusion",
+    "balanced_oversampling_rare_species",
+    "balanced_fine_tuning_rare_species",
+    "two_stage_full_training_balanced_finetuning",
+    "pseudo_labeling_prior_year_dataset",
+    "label_smoothing_historical_noise",
+    "heavy_color_geometric_augmentation",
+    "macro_f1_score",
+    "groupkfold_by_cultivar",
+    "cosine_annealing_warm_restarts",
+    "hsv_green_masking_segmentation",
+    "cnn_mlp_hybrid_architecture",
+    "vision_tabular_feature_concatenation",
+    "standardscaler_handcrafted_features",
+    "stratified_10_fold_cross_validation",
+    "mask_rcnn_resnest101",
+    "multilabel_attribute_head",
+    "weighted_cross_entropy_rare_attributes",
+    "soft_nms_overlapping_garments",
+    "pointrend_mask_refinement",
+    "large_scale_distributed_tpu_training",
+    "stochastic_weight_averaging",
+    "long_tail_class_balanced_loss"
+  ],
+  "inputs": [
+    {"name": "fine_grained_images", "type_desc": "ImageDataset", "constraints": "High-resolution images, class labels, optional taxonomy hierarchy, source dataset IDs, and fold metadata.", "required": true}
+  ],
+  "outputs": [
+    {"name": "class_predictions", "type_desc": "SubmissionArtifact", "constraints": "Species, category, or fine-grained class probabilities formatted for macro-F1 or challenge scoring.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The task predicts one of many visually similar classes such as plant species, animal species, product variants, or scientific specimens.",
+      "Winning techniques include EfficientNet-B4/B5/B6, Inception-ResNet-v2, Xception, ResNeXt-101, DenseNet-201, ViT-Small/Base/Large, ConvNeXt, ImageNet-21k pretraining, hierarchical taxonomy heads, location/date covariate fusion, family/genus/species regularization, balanced oversampling or balanced fine-tuning, pseudo-labeling from related prior-year datasets, label smoothing for uncertain labels, HSV green-masking segmentation, CNN-MLP hybrid heads with handcrafted image features, cosine annealing with warm restarts, stochastic weight averaging, cultivar/source GroupKFold, or distributed TPU training.",
+      "The metric or data distribution makes rare image classes, taxonomy structure, and class imbalance load-bearing."
+    ],
+    "do_not_use_when": [
+      "The output is a retrieval list or nearest-neighbor match rather than a class probability.",
+      "The main task is object detection or segmentation with masks/boxes as the primary output.",
+      "There are only a small number of broad visual classes and no fine-grained or long-tail structure."
+    ],
+    "key_insight": "The durable topology is high-capacity image classification regularized by taxonomy and long-tail sampling. It differs from landmark retrieval because the primary artifact is a calibrated class distribution, not an embedding index or local-feature re-ranking.",
+    "critical_stages": ["image_quality_preprocessing", "taxonomy_label_assembly", "fine_grained_backbone_ensemble", "long_tail_regularized_training", "macro_metric_calibration"],
+    "swappable_stages": {
+      "fine_grained_backbone_ensemble": "Can use EfficientNet-B4/B5/B6, EfficientNetV2, ResNeXt-101, DenseNet-201, ViT-Small/Base/Large, ConvNeXt, ResNeSt, or other strong image classifiers.",
+      "taxonomy_label_assembly": "Can use family/genus/species heads, parent-child label smoothing, hierarchy-aware losses, location/date covariate fusion, source-dataset indicators, cultivar folds, or covariate-conditioned heads.",
+      "long_tail_regularized_training": "Can use balanced oversampling, two-stage full training then balanced fine-tuning, class-balanced loss, class-balanced softmax, focal loss, LDAM, label smoothing, mixup/cutmix, pseudo-labeling, SWA, cosine annealing warm restarts, or rare-class fold weighting."
+    },
+    "scaling_notes": "Shard image decoding, cache resized images, distribute training across TPUs/GPUs, and keep taxonomy, cultivar, source-dataset, and prior-year pseudo-label splits leakage-safe.",
+    "failure_modes": [
+      "Oversampling rare classes can overfit duplicated specimens if augmentation is weak.",
+      "Taxonomy heads can propagate incorrect family or genus labels into the species prediction.",
+      "Source-dataset leakage can hide domain shift between historical specimens or collection conditions."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "data",
+      "subject": "taxonomy_before_model_heads",
+      "statement": "Assemble and validate family/genus/species mappings before defining hierarchical classifier heads.",
+      "rationale": "The classifier topology and losses depend on consistent parent-child taxonomy labels.",
+      "confidence": 0.9,
+      "source_stage": "nextbatch_gap_audit",
+      "source_reference": "research/validation_results_expansion_135_nextbatch_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added after validation showed Herbarium and similar high-cardinality species cases were not semantically captured by landmark retrieval or generic image classification CDGs. Semantic comparison found the key missing contract was taxonomy-regularized class prediction with long-tail sampling, not embedding retrieval.",
+    "dejargonized_summary": "This covers fine-grained classification where many visually similar rare classes and taxonomy structure define the solution.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_135_nextbatch_full.json",
+      "Gap mining: research/validation_results_expansion_135_nextbatch_gap_mining.json",
+      "Representative source URL: https://www.kaggle.com/competitions/herbarium-2021-fgvc8/discussion/243644"
+    ],
+    "uncertainty_notes": [
+      "Metric-learning identification tasks such as whales or landmarks should stay on retrieval/metric-learning CDGs unless calibrated class prediction and taxonomy heads dominate."
+    ],
+    "references": [
+      {
+        "title": "Sciona 135-CDG expansion validation audit",
+        "citation": "research/validation_results_expansion_135_nextbatch_gap_mining.json",
+        "note": "Local deterministic and semantic audit of unmatched fine-grained species classification patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "image_quality_preprocessing", "name": "Image Quality Preprocessing", "description": "Decode high-resolution specimen, species, or plant disease images, normalize source-specific quality shifts, resize/crop progressively, apply heavy color/geometric augmentation and HSV-based green-masking segmentation when appropriate, and preserve location, date, source dataset, cultivar, or collection-period covariates.", "dejargonized_description": "Prepare many detailed images without losing the small features that distinguish classes.", "concept_type": "data_assembly", "inputs": [{"name": "fine_grained_images", "type_desc": "ImageDataset", "constraints": "Raw images and image-side covariates.", "required": true}], "outputs": [{"name": "prepared_images", "type_desc": "ImageDataset", "constraints": "Preprocessed images with image-side covariates.", "required": true}], "preconditions": ["Images and labels are available."], "guarantees": ["Images are ready for high-capacity classification training."], "matched_primitive": ""},
+    {"stage_id": "taxonomy_label_assembly", "name": "Taxonomy Label Assembly", "description": "Build high-cardinality image labels, family/genus/species mappings, location/date covariate features, source-dataset or cultivar GroupKFold splits, prior-year pseudo-label pools, handcrafted image features, and rare-class sampling weights.", "dejargonized_description": "Organize the labels and taxonomy that the classifier will predict.", "concept_type": "data_assembly", "inputs": [{"name": "prepared_images", "type_desc": "ImageDataset", "constraints": "Prepared images and labels.", "required": true}], "outputs": [{"name": "taxonomy_training_data", "type_desc": "ImageDataset", "constraints": "Images with taxonomy labels and weights.", "required": true}], "preconditions": ["Taxonomy hierarchy is available or inferable."], "guarantees": ["Training examples have consistent class, parent, covariate, and sampling information."], "matched_primitive": ""},
+    {"stage_id": "fine_grained_backbone_ensemble", "name": "Fine-Grained Backbone Ensemble", "description": "Train EfficientNet-B4/B5/B6, EfficientNetV2, Inception-ResNet-v2, Xception, ResNeXt-101, DenseNet-201, ViT-Small/Base/Large, ConvNeXt, ResNeSt, Mask R-CNN with ResNeSt-101, or related high-resolution image backbones, optionally initialized from ImageNet-21k, for species, specimen, plant disease, leaf, garment, or fine-grained image discrimination.", "dejargonized_description": "Train strong image classifiers that can separate visually similar classes.", "concept_type": "neural_network", "inputs": [{"name": "taxonomy_training_data", "type_desc": "ImageDataset", "constraints": "Images with taxonomy labels.", "required": true}], "outputs": [{"name": "image_representations", "type_desc": "Tensor", "constraints": "Fine-grained image features and logits.", "required": true}], "preconditions": ["Backbone, image size schedule, and training budget are fixed."], "guarantees": ["Model outputs preserve fine-grained visual distinctions."], "matched_primitive": ""},
+    {"stage_id": "long_tail_regularized_training", "name": "Long-Tail Regularized Training", "description": "Apply hierarchical family/genus/species heads, multi-label attribute heads, CNN-MLP hybrid architecture with vision-plus-handcrafted feature concatenation, StandardScaler for handcrafted features, balanced oversampling for rare species, two-stage full training then balanced fine-tuning, class-balanced softmax/loss, weighted cross-entropy for rare attributes, focal losses, label smoothing for uncertain labels, pseudo-labeling from related prior-year datasets, mixup/cutmix, cosine annealing with warm restarts, stochastic weight averaging, and TPU/GPU distributed training.", "dejargonized_description": "Handle rare classes and uncertain labels while training the classifier.", "concept_type": "loss_function", "inputs": [{"name": "image_representations", "type_desc": "Tensor", "constraints": "Backbone features and logits.", "required": true}], "outputs": [{"name": "class_scores", "type_desc": "NDArray", "constraints": "Raw class probabilities or logits.", "required": true}], "preconditions": ["Sampling weights, taxonomy heads, and metric are known."], "guarantees": ["Scores are trained for rare-class and taxonomy-aware performance."], "matched_primitive": ""},
+    {"stage_id": "macro_metric_calibration", "name": "Macro Metric Calibration", "description": "Calibrate class predictions for Macro F1, average precision, logloss, or long-tail metrics using fold ensembling, Stratified 10-fold cross-validation, threshold tuning, source-dataset checks, stochastic weight averaging checkpoints, PointRend mask refinement, Soft-NMS for overlapping garments, and test-time augmentation.", "dejargonized_description": "Turn raw class scores into predictions that respect the competition metric.", "concept_type": "ml_model_selection", "inputs": [{"name": "class_scores", "type_desc": "NDArray", "constraints": "Raw class scores.", "required": true}], "outputs": [{"name": "class_predictions", "type_desc": "SubmissionArtifact", "constraints": "Final class predictions.", "required": true}], "preconditions": ["Validation folds and metric are fixed."], "guarantees": ["Predictions are calibrated for the benchmark scoring rule."], "matched_primitive": ""}
+  ]
+}

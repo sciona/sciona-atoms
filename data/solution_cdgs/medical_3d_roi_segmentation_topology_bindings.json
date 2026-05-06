@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.medical_3d_roi_segmentation_topology.bindings",
+  "template": "medical_3d_roi_segmentation_topology",
+  "bindings": [
+    {"stage_id": "volume_normalization", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Spacing, windowing, and phase normalization are dataset-specific."}},
+    {"stage_id": "coarse_roi_localization", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Organ localization can be a trained detector, atlas crop, or segmentation prepass."}},
+    {"stage_id": "high_resolution_segmentation", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "3D Swin-UNet, nnU-Net, UNETR, and related models are external model implementations."}},
+    {"stage_id": "boundary_metric_training", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Boundary, Dice, Hausdorff, and surface losses are metric- and label-specific."}},
+    {"stage_id": "mask_postprocessing", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Connected components, thresholds, and coordinate reinsertion are challenge-specific."}}
+  ]
+}

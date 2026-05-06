@@ -1,0 +1,100 @@
+{
+  "asset_id": "solution.kaggle.medical_3d_roi_segmentation_topology",
+  "asset_version": "v1",
+  "family": "medical_3d_roi_segmentation",
+  "paradigm": "neural_network",
+  "name": "3D Medical Coarse-to-Fine ROI Segmentation Pipeline Template",
+  "summary": "Reusable base CDG for 3D medical segmentation, RSNA pancreatic cancer detection, contrast-enhanced CT tumor segmentation, organ-and-lesion mask prediction, and coarse-to-fine ROI segmentation competitions that combine volume normalization, first-stage organ localization, high-resolution 3D Swin-UNet or Swin Transformer UNet segmentation, boundary-refinement/Dice/Hausdorff losses, 3D elastic augmentation, spatio-temporal or multi-phase CT feature fusion, mixed-precision bf16 training, and post-processed 3D masks.",
+  "dejargonized_summary": "Normalize a 3D medical scan, find the organ or anatomy first, crop a high-resolution region, segment the lesion or organ with a 3D UNet-style model, train with losses that care about boundaries and overlap, and clean the final mask for the medical metric.",
+  "canonical_for_paradigm": false,
+  "variant_hints": [
+    "medical_3d_segmentation",
+    "rsna_2026_pancreatic_cancer",
+    "pancreatic_cancer_detection",
+    "pancreatic_ductal_adenocarcinoma",
+    "contrast_enhanced_ct_segmentation",
+    "pancreas_tumor_roi",
+    "coarse_to_fine_roi_localization",
+    "3d_swin_unet",
+    "swin_transformer_unet",
+    "boundary_refinement_loss",
+    "dice_hausdorff_metric",
+    "hausdorff_distance",
+    "3d_elastic_deformation_augmentation",
+    "spatio_temporal_feature_fusion",
+    "multi_phase_ct_fusion",
+    "mixed_precision_bf16",
+    "organ_lesion_mask_postprocessing"
+  ],
+  "inputs": [
+    {"name": "medical_volumes", "type_desc": "MedicalImageDataset", "constraints": "3D CT/MRI volumes, spacing/orientation metadata, masks, patient IDs, and optional multi-phase studies.", "required": true}
+  ],
+  "outputs": [
+    {"name": "segmentation_masks", "type_desc": "SubmissionArtifact", "constraints": "3D organ, lesion, or tumor masks formatted for Dice, Hausdorff, or challenge-specific scoring.", "required": true}
+  ],
+  "applicability": {
+    "use_when": [
+      "The task outputs 3D medical segmentation masks for organs, lesions, tumors, or subtle boundaries rather than only class labels.",
+      "Winning techniques include coarse-to-fine ROI localization, 3D Swin-UNet, Swin Transformer UNet, boundary-refinement loss, Dice/Hausdorff optimization, 3D elastic deformation, multi-phase or spatio-temporal CT fusion, mixed-precision bf16 training, or connected-component mask post-processing.",
+      "The hard part is localizing a small anatomy or lesion and preserving boundary quality in a high-resolution crop."
+    ],
+    "do_not_use_when": [
+      "The target is only a patient-level class probability with no mask output.",
+      "The input is gigapixel histopathology tiles where stain normalization and tile stitching dominate.",
+      "The solution is natural image semantic segmentation with no 3D scan geometry or medical ROI localization."
+    ],
+    "key_insight": "The durable topology is coarse organ localization followed by high-resolution 3D ROI segmentation and boundary-aware metric calibration. It differs from 3D medical classification because the output artifact is a spatial mask and boundary losses are load-bearing.",
+    "critical_stages": ["volume_normalization", "coarse_roi_localization", "high_resolution_segmentation", "boundary_metric_training", "mask_postprocessing"],
+    "swappable_stages": {
+      "coarse_roi_localization": "Can use a low-resolution 3D model, organ detector, atlas crop, connected-component prior, or segmentation prepass.",
+      "high_resolution_segmentation": "Can use 3D Swin-UNet, nnU-Net, UNETR, V-Net, 3D U-Net, or Swin Transformer UNet backbones.",
+      "boundary_metric_training": "Can use Boundary-Refinement, Dice, Tversky, focal Dice, Hausdorff, surface distance, or hybrid segmentation losses."
+    },
+    "scaling_notes": "Precompute resampled volumes and coarse crops, keep normalization fold-local, and use mixed precision plus patch sampling to fit high-resolution 3D models.",
+    "failure_modes": [
+      "A poor first-stage crop can exclude the lesion before the high-resolution model sees it.",
+      "Optimizing Dice alone can miss thin infiltrative boundaries that dominate Hausdorff distance.",
+      "Patient leakage through repeated studies or augmentation caches can inflate validation scores."
+    ]
+  },
+  "planning_constraints": [
+    {
+      "category": "stage",
+      "subject": "coarse_localization_before_high_resolution_segmentation",
+      "statement": "Run organ or anatomy localization before high-resolution lesion segmentation unless the full scan can be processed at target resolution.",
+      "rationale": "Small 3D lesions are hard to segment when the model's receptive field and memory budget are spent on irrelevant anatomy.",
+      "confidence": 0.9,
+      "source_stage": "nextbatch_gap_audit",
+      "source_reference": "research/validation_results_expansion_135_nextbatch_gap_mining.json"
+    }
+  ],
+  "audit": {
+    "source_kind": "manual_analysis",
+    "review_status": "draft",
+    "rationale": "Added after validation left 3D medical segmentation cases divergent and semantic comparison showed classification-focused RSNA CDGs and gigapixel histopathology segmentation CDGs did not capture coarse-to-fine 3D ROI masks, boundary-refinement losses, and Dice/Hausdorff output contracts.",
+    "dejargonized_summary": "This covers medical segmentation solutions where finding the organ first and preserving 3D lesion boundaries are the reusable structure.",
+    "provenance_notes": [
+      "Local validation audit: research/validation_results_expansion_135_nextbatch_full.json",
+      "Gap mining: research/validation_results_expansion_135_nextbatch_gap_mining.json",
+      "Representative source URL: https://www.kaggle.com/competitions/rsna-pancreatic-cancer-2026/discussion"
+    ],
+    "uncertainty_notes": [
+      "If a future case uses segmentation only as an auxiliary pretraining signal and outputs class probabilities, use the multiview classification CDG instead."
+    ],
+    "references": [
+      {
+        "title": "Sciona 135-CDG expansion validation audit",
+        "citation": "research/validation_results_expansion_135_nextbatch_gap_mining.json",
+        "note": "Local deterministic and semantic audit of unmatched 3D medical segmentation patterns."
+      }
+    ],
+    "maintainers": ["sciona-atoms"]
+  },
+  "stages": [
+    {"stage_id": "volume_normalization", "name": "Volume Normalization", "description": "Normalize orientation, spacing, intensity windows, contrast phases, and patient grouping for CT or MRI volumes before segmentation.", "dejargonized_description": "Put all 3D scans into a comparable coordinate and intensity space.", "concept_type": "data_assembly", "inputs": [{"name": "medical_volumes", "type_desc": "MedicalImageDataset", "constraints": "Raw 3D studies and metadata.", "required": true}], "outputs": [{"name": "normalized_volumes", "type_desc": "MedicalImageDataset", "constraints": "Resampled and grouped 3D volumes.", "required": true}], "preconditions": ["Spacing, orientation, and patient metadata are available."], "guarantees": ["Volumes are aligned enough for ROI localization."], "matched_primitive": ""},
+    {"stage_id": "coarse_roi_localization", "name": "Coarse ROI Localization", "description": "Use a first-stage 3D model, organ detector, atlas crop, or low-resolution segmentation pass to localize the pancreas, organ, tumor neighborhood, or target anatomy.", "dejargonized_description": "Find the organ or region before doing detailed segmentation.", "concept_type": "data_extraction", "inputs": [{"name": "normalized_volumes", "type_desc": "MedicalImageDataset", "constraints": "Normalized 3D volumes.", "required": true}], "outputs": [{"name": "roi_volumes", "type_desc": "MedicalImageDataset", "constraints": "High-resolution crops or ROI-aligned volumes.", "required": true}], "preconditions": ["Coarse localization model or crop rule is selected."], "guarantees": ["Target anatomy is retained in the high-resolution crop."], "matched_primitive": ""},
+    {"stage_id": "high_resolution_segmentation", "name": "High-Resolution Segmentation", "description": "Train 3D Swin-UNet, Swin Transformer UNet, nnU-Net, UNETR, V-Net, or 3D U-Net models on ROI crops with patch sampling, 3D elastic deformation, and multi-phase or spatio-temporal feature fusion.", "dejargonized_description": "Segment the organ or lesion in the focused high-resolution crop.", "concept_type": "neural_network", "inputs": [{"name": "roi_volumes", "type_desc": "MedicalImageDataset", "constraints": "ROI-aligned 3D crops.", "required": true}], "outputs": [{"name": "raw_masks", "type_desc": "NDArray", "constraints": "Raw voxel probabilities or logits.", "required": true}], "preconditions": ["Segmentation labels and patch sampling policy are fixed."], "guarantees": ["Voxel predictions are produced for the target anatomy."], "matched_primitive": ""},
+    {"stage_id": "boundary_metric_training", "name": "Boundary Metric Training", "description": "Optimize Boundary-Refinement, Dice, Tversky, focal Dice, Hausdorff, or surface-distance losses with mixed-precision bf16 training and fold ensembling.", "dejargonized_description": "Train the model to get both overlap and lesion boundaries right.", "concept_type": "loss_function", "inputs": [{"name": "raw_masks", "type_desc": "NDArray", "constraints": "Raw voxel probabilities.", "required": true}], "outputs": [{"name": "calibrated_masks", "type_desc": "NDArray", "constraints": "Metric-calibrated voxel probabilities.", "required": true}], "preconditions": ["Metric and class weights are known."], "guarantees": ["Mask probabilities are optimized for boundary-sensitive scoring."], "matched_primitive": ""},
+    {"stage_id": "mask_postprocessing", "name": "Mask Postprocessing", "description": "Apply connected-component filtering, hole filling, anatomical constraints, threshold tuning, crop-to-volume reinsertion, and submission formatting for Dice/Hausdorff scoring.", "dejargonized_description": "Clean the predicted mask and put it back into the original scan space.", "concept_type": "signal_transform", "inputs": [{"name": "calibrated_masks", "type_desc": "NDArray", "constraints": "Calibrated mask probabilities.", "required": true}], "outputs": [{"name": "segmentation_masks", "type_desc": "SubmissionArtifact", "constraints": "Final 3D masks.", "required": true}], "preconditions": ["Original volume geometry and thresholds are available."], "guarantees": ["Masks are valid in the challenge coordinate system."], "matched_primitive": ""}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "asset_id": "solution.kaggle.large_scale_fine_grained_image_classification_topology.bindings",
+  "template": "large_scale_fine_grained_image_classification_topology",
+  "bindings": [
+    {"stage_id": "image_quality_preprocessing", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Image resizing, quality normalization, and source metadata handling are dataset-specific."}},
+    {"stage_id": "taxonomy_label_assembly", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Taxonomy mappings and rare-class weights depend on the label set."}},
+    {"stage_id": "fine_grained_backbone_ensemble", "status": "active", "action_class": "external_tool", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "EfficientNet, ViT, ConvNeXt, and related backbones are external model implementations."}},
+    {"stage_id": "long_tail_regularized_training", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Sampling weights, hierarchical heads, losses, and SWA checkpoints are training-policy operations."}},
+    {"stage_id": "macro_metric_calibration", "status": "active", "action_class": "orchestration", "bound_artifact_fqdn": "", "evidence_summary": {"binding_rationale": "Macro-F1 and long-tail calibration are metric-specific."}}
+  ]
+}
