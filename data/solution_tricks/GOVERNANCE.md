@@ -36,6 +36,33 @@ A trick can graduate into an expansion/refinement operation only when:
 
 A trick can graduate into a new base CDG only when it represents a distinct reusable topology, not a shortcut, leakage pattern, or metric-specific post-processing rule.
 
+Graduation review is recorded with an optional `graduation` block. Omit the block when no review has happened yet. When present, use:
+
+```json
+{
+  "candidate_kind": "none",
+  "decision": "not_reviewed",
+  "recurrence_evidence": [],
+  "stable_io_contract": false,
+  "repeatable_operation_change": "",
+  "distinct_reusable_topology": false,
+  "semantic_comparison": [],
+  "target_asset_id": ""
+}
+```
+
+For `candidate_kind: expansion_operation`, the validator requires:
+
+- `recurrence_evidence` from at least two unrelated competitions;
+- `stable_io_contract: true`;
+- a non-empty `repeatable_operation_change`;
+- non-empty `semantic_comparison` against the closest CDGs or operations;
+- `risk_level` below `high`.
+
+For `candidate_kind: base_cdg`, the validator also requires `distinct_reusable_topology: true`.
+
+Leakage and public-leaderboard probing tricks cannot graduate into canonical CDG or expansion assets. Keep them cataloged for detection/suppression only.
+
 ## Review Checklist
 
 - The trick has a unique `trick_id`.
@@ -44,4 +71,4 @@ A trick can graduate into a new base CDG only when it represents a distinct reus
 - The related CDGs exist.
 - High-risk tricks are clearly labeled and do not include instructions to exploit prohibited data.
 - Source references or local audit references are present.
-
+- Graduation candidates include recurrence, semantic comparison, and stable contract evidence.

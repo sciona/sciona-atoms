@@ -34,6 +34,17 @@ VALID_RISK_LEVELS = {"low", "medium", "high", "disallowed"}
 VALID_GENERALIZATION_LEVELS = {"general", "domain_specific", "competition_specific"}
 VALID_AUDIT_SOURCE_KINDS = {"manual_analysis", "kaggle_solution", "manual_hypothesis"}
 VALID_AUDIT_REVIEW_STATUSES = {"draft", "reviewed", "deprecated"}
+VALID_GRADUATION_CANDIDATE_KINDS = {"none", "expansion_operation", "base_cdg"}
+VALID_GRADUATION_DECISIONS = {
+    "not_reviewed",
+    "rejected",
+    "candidate",
+    "graduated",
+}
+NON_GRADUATING_TRICK_KINDS = {
+    "leak",
+    "public_lb_overfit_risk",
+}
 
 REQUIRED_TRICK_FIELDS = [
     "trick_id",
@@ -118,6 +129,96 @@ def _solution_asset_ids(repo_root: Path) -> set[str]:
     return asset_ids
 
 
+def _check_optional_bool(
+    data: dict[str, Any],
+    field: str,
+    violations: list[Violation],
+    fname: str,
+    tid: str,
+) -> None:
+    if field in data and not isinstance(data[field], bool):
+        violations.append(Violation(fname, "error", f"{tid}.graduation.{field} must be a boolean"))
+
+
+def _check_graduation(
+    trick: dict[str, Any],
+    violations: list[Violation],
+    fname: str,
+) -> None:
+    tid = trick.get("trick_id", "<unknown>")
+    graduation = trick.get("graduation")
+    if graduation is None:
+        return
+    if not isinstance(graduation, dict):
+        violations.append(Violation(fname, "error", f"{tid}.graduation must be an object"))
+        return
+
+    candidate_kind = graduation.get("candidate_kind")
+    decision = graduation.get("decision")
+    if candidate_kind not in VALID_GRADUATION_CANDIDATE_KINDS:
+        violations.append(Violation(fname, "error", f"{tid}.graduation.candidate_kind has invalid value"))
+    if decision not in VALID_GRADUATION_DECISIONS:
+        violations.append(Violation(fname, "error", f"{tid}.graduation.decision has invalid value"))
+
+    for field in ["recurrence_evidence", "semantic_comparison"]:
+        if field in graduation:
+            _check_string_list(
+                {"trick_id": f"{tid}.graduation", field: graduation[field]},
+                field,
+                violations,
+                fname,
+                allow_empty=True,
+            )
+    for field in ["stable_io_contract", "distinct_reusable_topology"]:
+        _check_optional_bool(graduation, field, violations, fname, tid)
+
+    repeatable_operation_change = graduation.get("repeatable_operation_change", "")
+    if repeatable_operation_change is not None and not isinstance(repeatable_operation_change, str):
+        violations.append(Violation(fname, "error", f"{tid}.graduation.repeatable_operation_change must be a string"))
+    target_asset_id = graduation.get("target_asset_id", "")
+    if target_asset_id is not None and not isinstance(target_asset_id, str):
+        violations.append(Violation(fname, "error", f"{tid}.graduation.target_asset_id must be a string"))
+
+    if candidate_kind == "none":
+        return
+
+    recurrence = graduation.get("recurrence_evidence", [])
+    semantic_comparison = graduation.get("semantic_comparison", [])
+    if not isinstance(recurrence, list) or len(recurrence) < 2:
+        violations.append(
+            Violation(
+                fname,
+                "error",
+                f"{tid}.graduation requires recurrence_evidence from at least two unrelated competitions",
+            )
+        )
+    if graduation.get("stable_io_contract") is not True:
+        violations.append(Violation(fname, "error", f"{tid}.graduation requires stable_io_contract=true"))
+    if not isinstance(semantic_comparison, list) or not semantic_comparison:
+        violations.append(Violation(fname, "error", f"{tid}.graduation requires semantic_comparison evidence"))
+    if trick.get("kind") in NON_GRADUATING_TRICK_KINDS:
+        violations.append(Violation(fname, "error", f"{tid}.{trick.get('kind')} cannot graduate into canonical assets"))
+    if trick.get("risk_level") in {"high", "disallowed"}:
+        violations.append(Violation(fname, "error", f"{tid}.graduation requires risk_level below high"))
+
+    if candidate_kind == "expansion_operation" and not str(repeatable_operation_change or "").strip():
+        violations.append(
+            Violation(
+                fname,
+                "error",
+                f"{tid}.graduation expansion_operation requires repeatable_operation_change",
+            )
+        )
+    if candidate_kind == "base_cdg" and graduation.get("distinct_reusable_topology") is not True:
+        violations.append(
+            Violation(
+                fname,
+                "error",
+                f"{tid}.graduation base_cdg requires distinct_reusable_topology=true",
+            )
+        )
+
+
 def validate_registry(path: Path, *, strict: bool = False, repo_root: Path | None = None) -> list[Violation]:
     violations: list[Violation] = []
     fname = path.name
@@ -196,11 +297,18 @@ def validate_registry(path: Path, *, strict: bool = False, repo_root: Path | Non
             "validation_requirements",
             "related_cdgs",
             "source_competitions",
-            "source_references",
             "tags",
         ]:
             if field in trick:
                 _check_string_list(trick, field, violations, fname)
+        if "source_references" in trick:
+            _check_string_list(
+                trick,
+                "source_references",
+                violations,
+                fname,
+                allow_empty=trick.get("audit", {}).get("source_kind") == "manual_hypothesis",
+            )
         if "related_operations" in trick:
             _check_string_list(trick, "related_operations", violations, fname, allow_empty=True)
 
@@ -231,6 +339,8 @@ def validate_registry(path: Path, *, strict: bool = False, repo_root: Path | Non
             refs = trick.get("source_references", [])
             if not refs:
                 violations.append(Violation(fname, "error", f"{tid} requires source_references in strict mode"))
+
+        _check_graduation(trick, violations, fname)
 
     return violations
 

@@ -28,6 +28,46 @@
         "$ref": "#/$defs/non_empty_string"
       }
     },
+    "graduation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_kind",
+        "decision",
+        "recurrence_evidence",
+        "stable_io_contract",
+        "repeatable_operation_change",
+        "distinct_reusable_topology",
+        "semantic_comparison",
+        "target_asset_id"
+      ],
+      "properties": {
+        "candidate_kind": {
+          "enum": ["none", "expansion_operation", "base_cdg"]
+        },
+        "decision": {
+          "enum": ["not_reviewed", "rejected", "candidate", "graduated"]
+        },
+        "recurrence_evidence": {
+          "$ref": "#/$defs/string_list"
+        },
+        "stable_io_contract": {
+          "type": "boolean"
+        },
+        "repeatable_operation_change": {
+          "type": "string"
+        },
+        "distinct_reusable_topology": {
+          "type": "boolean"
+        },
+        "semantic_comparison": {
+          "$ref": "#/$defs/string_list"
+        },
+        "target_asset_id": {
+          "type": "string"
+        }
+      }
+    },
     "trick": {
       "type": "object",
       "additionalProperties": false,
@@ -124,6 +164,9 @@
               "$ref": "#/$defs/non_empty_string"
             }
           }
+        },
+        "graduation": {
+          "$ref": "#/$defs/graduation"
         }
       }
     }
