@@ -7,7 +7,10 @@
     "agent_simulation",
     "planning",
     "reinforcement_learning",
-    "multi_agent"
+    "multi_agent",
+    "reasoning_search",
+    "tree_search",
+    "llm_preference_reasoning"
   ],
   "domain": "planning",
   "name": "Agent Simulation Search Planning Expansion Inventory",
@@ -47,6 +50,44 @@
       },
       "uncertainty_notes": [
         "Only use when policy optimization is load-bearing; ordinary greedy local search or hand-coded heuristics should use lighter planning refinements."
+      ]
+    },
+    {
+      "rule_name": "insert_mcts_backtracking_search_after_rollout",
+      "operation_id": "sciona.expansions.agent_simulation_search_planning.mcts_backtracking_search",
+      "operation_type": "insert",
+      "applies_to": "agent_simulation_search_planning.search_or_rollout->constraint_repair",
+      "runtime_rule_builder": "insert_mcts_backtracking_search_after_rollout",
+      "runtime_diagnostic": "requires_mcts_backtracking_search",
+      "name": "MCTS Backtracking Search",
+      "intent": "Insert Monte Carlo Tree Search or backtracking tree search between candidate generation/rollout and final repair or plan selection.",
+      "dejargonized_summary": "Use Monte Carlo Tree Search (MCTS), Backtracking MCTS, or deterministic backtracking search to explore candidate reasoning, ranking, game, or planning states before choosing a final answer or plan.",
+      "trigger": {
+        "metric_name": "requires_mcts_backtracking_search",
+        "comparison": "gt",
+        "threshold": 0.0,
+        "required_any_intermediate_keys": [
+          "agent_simulation.requires_mcts_backtracking_search",
+          "agent_simulation.use_mcts_backtracking_search",
+          "requires_mcts_backtracking_search",
+          "use_mcts_backtracking_search",
+          "requires_mcts",
+          "use_mcts",
+          "requires_backtracking_search",
+          "use_backtracking_search"
+        ]
+      },
+      "action_classes": [
+        "replace_stage",
+        "gate_or_validate"
+      ],
+      "rewrite": {
+        "before_summary": "Candidates are generated and evaluated by a generic search or rollout before feasibility repair or plan selection.",
+        "after_summary": "MCTS or backtracking tree search expands, scores, and prunes candidate paths before feasibility repair or plan selection.",
+        "information_flow_effect": "Preserves final answer or plan-selection semantics while adding explicit tree exploration, rollout scoring, and backtracking over candidate states."
+      },
+      "uncertainty_notes": [
+        "Use when branching candidate states and lookahead are load-bearing; ordinary reranking, beam search, or greedy repair should use lighter search or ranking refinements."
       ]
     }
   ],
