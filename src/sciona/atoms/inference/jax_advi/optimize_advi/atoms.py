@@ -142,7 +142,7 @@ def _elbo_estimate(
 @icontract.require(lambda M: M > 0, "M must be positive")
 @icontract.require(lambda n_draws: n_draws is None or n_draws >= 0, "n_draws must be non-negative when provided")
 @icontract.ensure(lambda result: all(r is not None for r in result), "MeanFieldVariationalFit all outputs must not be None")
-def meanfieldvariationalfit(
+def mean_field_variational_fit(
     theta_shape_dict: ThetaShapeDict,
     log_prior_fun: LogDensityFn,
     log_lik_fun: LogDensityFn,
@@ -231,7 +231,7 @@ Returns:
         return _objective_for_state(packed_state)
 
     if verbose:
-        print(f"meanfieldvariationalfit optimized ELBO={objective_fun():.6g} success={result.success}")
+        print(f"mean_field_variational_fit optimized ELBO={objective_fun():.6g} success={result.success}")
 
     rng_state_out = seed_int + 1
     return (free_means, free_sds, objective_fun, rng_state_out)
@@ -244,7 +244,7 @@ Returns:
 @icontract.require(lambda n_draws: n_draws >= 0, "n_draws must be non-negative")
 @icontract.require(lambda rng_state_in: rng_state_in is not None, "rng_state_in cannot be None")
 @icontract.ensure(lambda result: all(r is not None for r in result), "PosteriorDrawSampling all outputs must not be None")
-def posteriordrawsampling(
+def posterior_draw_sampling(
     free_means: ParameterDict,
     free_sds: ParameterDict,
     constrain_fun_dict: ConstraintMap,

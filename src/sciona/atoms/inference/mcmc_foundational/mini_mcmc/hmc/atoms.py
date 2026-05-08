@@ -90,7 +90,7 @@ def _leapfrog(
 @icontract.require(lambda initial_positions: initial_positions is not None, "initial_positions cannot be None")
 @icontract.require(lambda step_size: isinstance(step_size, (float, int, np.number)), "step_size must be numeric")
 @icontract.ensure(lambda result: all(r is not None for r in result), "InitializeHMCState all outputs must not be None")
-def initializehmcstate(target: Callable[[np.ndarray], float], initial_positions: np.ndarray, step_size: float, n_leapfrog: int, seed: int) -> tuple[np.ndarray, np.ndarray]:
+def initialize_hmc_state(target: Callable[[np.ndarray], float], initial_positions: np.ndarray, step_size: float, n_leapfrog: int, seed: int) -> tuple[np.ndarray, np.ndarray]:
     """Construct immutable Hamiltonian Monte Carlo (HMC) state and static kernel parameters, including explicit random number generator (RNG) state (PRNGKey/seed-derived state).
 
 Args:
@@ -126,7 +126,7 @@ Returns:
 @icontract.require(lambda kernel_static: kernel_static is not None, "kernel_static cannot be None")
 @icontract.require(lambda log_prob_oracle: log_prob_oracle is not None, "log_prob_oracle cannot be None")
 @icontract.ensure(lambda result: result is not None, "LeapfrogProposalKernel output must not be None")
-def leapfrogproposalkernel(proposal_state_in: np.ndarray, kernel_static: np.ndarray, log_prob_oracle: Callable[[np.ndarray], float]) -> np.ndarray:
+def leapfrog_proposal_kernel(proposal_state_in: np.ndarray, kernel_static: np.ndarray, log_prob_oracle: Callable[[np.ndarray], float]) -> np.ndarray:
     """Pure Hamiltonian proposal transition: consumes current position/momenta and returns proposed position/momenta plus refreshed log-probability gradient.
 
     Args:
@@ -174,7 +174,7 @@ def leapfrogproposalkernel(proposal_state_in: np.ndarray, kernel_static: np.ndar
 @icontract.require(lambda kernel_static: kernel_static is not None, "kernel_static cannot be None")
 @icontract.require(lambda log_prob_oracle: callable(log_prob_oracle), "log_prob_oracle must be callable")
 @icontract.ensure(lambda result: all(r is not None for r in result), "MetropolisHMCTransition all outputs must not be None")
-def metropolishmctransition(chain_state_in: np.ndarray, kernel_static: np.ndarray, log_prob_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray]:
+def metropolis_hmc_transition(chain_state_in: np.ndarray, kernel_static: np.ndarray, log_prob_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray]:
     """Run one source-shaped Hamiltonian Monte Carlo transition.
 
 Args:
@@ -232,7 +232,7 @@ Returns:
 @icontract.require(lambda n_discard: n_discard is not None, "n_discard cannot be None")
 @icontract.require(lambda log_prob_oracle: callable(log_prob_oracle), "log_prob_oracle must be callable")
 @icontract.ensure(lambda result: all(r is not None for r in result), "RunSamplingLoop all outputs must not be None")
-def runsamplingloop(hmc_state_in: np.ndarray, kernel_static: np.ndarray, n_collect: int, n_discard: int, log_prob_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def run_sampling_loop(hmc_state_in: np.ndarray, kernel_static: np.ndarray, n_collect: int, n_discard: int, log_prob_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Run discard and collection iterations by threading the HMC transition state.
 
 Args:
@@ -257,7 +257,7 @@ Returns:
     collected = 0
 
     for iteration in range(total_iters):
-        current_state, stats = metropolishmctransition(current_state, kernel_static, log_prob_oracle)
+        current_state, stats = metropolis_hmc_transition(current_state, kernel_static, log_prob_oracle)
         trace_list.append(stats)
         if iteration >= n_discard:
             samples[collected] = current_state[:dim]
@@ -279,7 +279,7 @@ def _initializehmcstate_ffi(target: Callable[[np.ndarray], float], initial_posit
     """Wrapper that calls the Rust version of initialize hmc state. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'initializehmcstate'
+    _func_name = 'initialize_hmc_state'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p
@@ -289,7 +289,7 @@ def _leapfrogproposalkernel_ffi(proposal_state_in: np.ndarray, kernel_static: np
     """Wrapper that calls the Rust version of leapfrog proposal kernel. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'leapfrogproposalkernel'
+    _func_name = 'leapfrog_proposal_kernel'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p
@@ -299,7 +299,7 @@ def _metropolishmctransition_ffi(chain_state_in: np.ndarray, kernel_static: np.n
     """Wrapper that calls the Rust version of metropolis hmc transition. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'metropolishmctransition'
+    _func_name = 'metropolis_hmc_transition'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p
@@ -309,7 +309,7 @@ def _runsamplingloop_ffi(hmc_state_in: np.ndarray, n_collect: int, n_discard: in
     """Wrapper that calls the Rust version of run sampling loop. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'runsamplingloop'
+    _func_name = 'run_sampling_loop'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p

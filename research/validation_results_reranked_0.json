@@ -1,0 +1,2657 @@
+[
+  {
+    "competition_id": "hms-harmful-brain-activity-classification",
+    "title": "HMS - Harmful Brain Activity Classification",
+    "domain": "medical",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "vsb_power_line_1st",
+        "overlap_score": 15.73097891861907,
+        "family": "signal_classification",
+        "paradigm": "signal_transform",
+        "summary": "Detect electrical faults in power lines by cleaning up noisy voltage signals, finding discharge spikes, and combining a tree-based model on spike statistics with a neural network on the cleaned raw si",
+        "llm_score": 0.68,
+        "llm_reasoning": "Strong modality and structural match: 50s \u00d7 200Hz = 10,000 samples per segment fits the '1D-to-2D reshape' stage directly, and the problem already supplies spectrograms \u2014 precisely the 2D representation this template generates. The hybrid handcrafted-feature + end-to-end DL blend naturally accommodates both raw EEG and spectrogram inputs, and wavelet denoising addresses the stated high-noise challenge. Primary gap: template is binary; a 6-class softmax extension and soft-label handling for inter-rater variability require non-trivial adaptation."
+      },
+      {
+        "template": "barachant_seizure_1st",
+        "overlap_score": 27.29545570920006,
+        "family": "riemannian_bci",
+        "paradigm": "signal_filter",
+        "summary": "Split each EEG recording into short windows, extract four different kinds of features from each window (frequency power, statistical summaries, time-delay patterns projected from a curved mathematical",
+        "llm_score": 0.63,
+        "llm_reasoning": "Domain is a near-perfect match \u2014 the template was designed for exactly this signal type (multichannel EEG, seizure events), and tangent-space Riemannian features are well-suited to the spatial covariance structure of EEG. The windower + segment_max_aggregation pipeline handles the non-stationarity of seizure activity well. Key gaps: the template assumes binary classification and has no stage for spectrogram fusion or soft multi-annotator targets; extending to 6-class probability calibration and fusing the provided spectrograms requires significant architectural additions."
+      },
+      {
+        "template": "plasticc_1st",
+        "overlap_score": 26.492299633457783,
+        "family": "time_series_classification",
+        "paradigm": "optimization",
+        "summary": "Classify astronomical objects by extracting statistical features from their brightness measurements over time, smoothing the irregular measurements with Gaussian Processes, and combining gradient boos",
+        "llm_score": 0.21,
+        "llm_reasoning": "Shares the multi-class probability output format and addresses inter-rater/noisy-label calibration implicitly through Platt scaling, but is contraindicated by a core design criterion: EEG is regularly sampled at 200Hz, making GP interpolation cost-without-benefit and kernel hyperparameters non-discriminative \u2014 the template's own do-not-use condition is triggered. Class counts (6) also fall below the threshold that motivates its minority augmentation machinery."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 7,
+      "bound_active": 4,
+      "bound_approximate": 2,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "Continuous Wavelet Transform (CWT) for scalograms",
+        "2-stage training (noisy to clean labels)"
+      ],
+      "missing_techniques": [
+        "2D CNN with timm (Swin-v2, EfficientNet-B0)",
+        "Bipolar montage feature engineering",
+        "Entmax activation for crisp probabilities",
+        "XYMasking and Mixup augmentation"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Ensemble of 1D and 2D CNN models. 1st place team (Sony) transformed raw EEG into 2D scalogram images using Continuous Wavelet Transform (CWT) and bipolar montages. They used a 2-stage training process",
+    "rerank": {
+      "best_match": "vsb_power_line_1st",
+      "should_compose_novel": true,
+      "novel_reasoning": "No single template handles the three compounding challenges simultaneously: (1) multimodal fusion of raw multichannel EEG with pre-computed spectrograms, (2) a 6-class soft probability target derived from inter-rater disagreement (labels are distributions, not hard classes, requiring KL-divergence or soft-label cross-entropy loss rather than standard CE), and (3) the need to leverage Riemannian spatial covariance structure (barachant's strength) alongside frequency-domain 2D representations (vsb's strength). A novel template should compose: Riemannian tangent-space features (barachant stages 1\u20134) as a tabular branch, a spectrogram CNN branch (vsb signal_to_matrix_transform + dl_model), raw EEG 1D CNN/LSTM branch, late fusion via stacking, and a soft-label training objective with temperature calibration to match the probability-distribution evaluation metric."
+    }
+  },
+  {
+    "competition_id": "leash-BELKA",
+    "title": "NeurIPS 2024 - Predict New Medicines with BELKA",
+    "domain": "scientific",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "neurips_open_polymer_1st",
+        "overlap_score": 25.59242782575053,
+        "family": "multilabel_tabular",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by NeurIPS Open Polymer Prediction - 1st Place (2025): prepare the data, build task-specific representations, train or apply the main model, and convert o"
+      },
+      {
+        "template": "melanoma_1st",
+        "overlap_score": 22.01606039703704,
+        "family": "medical_image_tabular",
+        "paradigm": "neural_network",
+        "summary": "Detect skin cancer from photographs by training image-recognition networks with realistic data distortions, combining image features with patient information, adding pseudo-labeled historical data, an"
+      },
+      {
+        "template": "dsb2017_1st",
+        "overlap_score": 19.854453897302566,
+        "family": "medical_imaging_3d",
+        "paradigm": "neural_network",
+        "summary": "Find suspicious lumps in a 3D lung scan, crop and classify each one, then combine the per-lump cancer probabilities into a single patient-level prediction using a formula that accounts for the detecto"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 7,
+      "bound_active": 0,
+      "bound_approximate": 0,
+      "orchestration": 5,
+      "trivial_inline": 0,
+      "external": 2,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "Masked Language Modeling (MLM) pre-training",
+        "SMILES-to-ECFP fingerprint prediction"
+      ],
+      "missing_techniques": [
+        "Vanilla Transformer Encoder (4 layers, 8 heads)",
+        "SMILES character-level tokenization",
+        "CategoricalFocalCrossEntropy loss",
+        "Dynamic mini-batch alpha weights"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "A minimalist Transformer-based approach. The winning solution used a simple 4-layer Transformer encoder with 8 heads, treating SMILES as a character-level text problem. The critical success factor was",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate clears the ~0.70 threshold needed to confidently reuse a template. The problem has a rare combination of requirements not covered by any single candidate: (1) SMILES-to-molecular-representation ingestion at 133M-compound scale, (2) multi-label binary classification across three protein targets simultaneously, (3) extreme positive-class sparsity typical of DEL screens (<<1% binders), and (4) explicit out-of-distribution generalization to held-out chemical building blocks \u2014 a structural domain-shift challenge distinct from mere label imbalance. A novel pipeline should combine molecular fingerprinting or graph neural network encoding (e.g., ECFP4, ChemBERTa, or MPNN), oversampling or focal-loss strategies for imbalance, scaffold/building-block-aware cross-validation splits to measure true OOD generalization, and a multi-head binary classifier with per-protein calibration."
+    }
+  },
+  {
+    "competition_id": "ubc-ocean",
+    "title": "UBC-OCEAN: Ovarian Cancer Subtype Classification and Outlier Detection",
+    "domain": "medical",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "panda_prostate_mil_1st",
+        "overlap_score": 15.54864081534676,
+        "family": "gigapixel_segmentation",
+        "paradigm": "loss_function",
+        "summary": "This template captures the ordered steps used by Prostate cANcer graDe Assessment (PANDA) - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loo",
+        "llm_score": 0.82,
+        "llm_reasoning": "Near-perfect modality and paradigm match: gigapixel histopathology WSIs, cancer subtype classification via Multi-Instance Learning, and the white-space culling \u2192 n-tile generation \u2192 CNN backbone pipeline maps directly onto ovarian WSI/TMA processing; ordinal regression head swaps cleanly for a 6-class softmax, and the MIL aggregation naturally handles the 'Other'/OOD challenge through confidence thresholding."
+      },
+      {
+        "template": "hubmap_kidney_1st",
+        "overlap_score": 25.938262330873357,
+        "family": "gigapixel_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized",
+        "llm_score": 0.38,
+        "llm_reasoning": "Strong match on gigapixel infrastructure (tiling, Macenko stain normalization, overlapping-tile stitching) and H&E histopathology modality, but the task is fundamentally segmentation-oriented with a Lovasz-BCE loss, making it a poor fit for slide-level multi-class subtype classification where no pixel-level mask targets exist."
+      },
+      {
+        "template": "rsna_mammography_breast_cancer_1st",
+        "overlap_score": 17.837980681590786,
+        "family": "medical_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by RSNA Screening Mammography Breast Cancer Detection - 1st Place (2023): prepare the data, build task-specific representations, run the main modeling or ",
+        "llm_score": 0.28,
+        "llm_reasoning": "Shares the medical imaging classification family and multi-view aggregation concept, but the DICOM/mammography-specific stages (ROI extraction, multi-view grouping, probabilistic pooling) do not translate to WSI/TMA histopathology, and the template has no gigapixel or MIL mechanism."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 0,
+      "bound_approximate": 0,
+      "orchestration": 1,
+      "trivial_inline": 1,
+      "external": 3,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "Phikon (foundation model) feature extraction",
+        "Chowder Multiple Instance Learning (MIL)",
+        "High entropy outlier detection",
+        "Tiling at 20x magnification",
+        "Balanced training strategy for rare subtypes",
+        "Ensemble of MIL models"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Multiple Instance Learning (MIL) pipeline using foundation model embeddings. The 1st place solution (Owkin) extracted features from image tiles using Phikon (a digital pathology foundation model). The",
+    "rerank": {
+      "best_match": "panda_prostate_mil_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": ""
+    }
+  },
+  {
+    "competition_id": "optiver-trading-at-the-close",
+    "title": "Optiver - Trading at the Close",
+    "domain": "time_series",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "optiver_realized_volatility_1st",
+        "overlap_score": 28.121933941804873,
+        "family": "time_series_forecasting",
+        "paradigm": "loss_function",
+        "summary": "This template captures the ordered steps used by Optiver Realized Volatility Prediction - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or search loop,",
+        "llm_score": 0.91,
+        "llm_reasoning": "Near-perfect match: same modality (high-frequency limit order book data with order book imbalance, WAP, and reference prices), same problem type (financial time-series regression/forecasting), and identical pipeline stages (LOB parsing \u2192 time bucketing \u2192 feature engineering \u2192 GBDT). The do-not-use warning about strict real-time inference is a mild concern given the 60-second prediction window and inference time constraints, but the core LOB-parsing-to-custom-objective-GBDT topology is directly applicable."
+      },
+      {
+        "template": "g_research_crypto_1st",
+        "overlap_score": 13.077376941962546,
+        "family": "time_series_classification",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by G-Research Crypto Forecasting - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert out",
+        "llm_score": 0.62,
+        "llm_reasoning": "Shares the financial time-series / multi-asset regression problem type and cross-asset feature engineering stages, but G-Research focuses on coarser crypto price returns over longer horizons rather than intraday LOB imbalance microstructure; the data_alignment and target_neutralization stages are less directly applicable to Nasdaq intraday 60-second WAP shift prediction."
+      },
+      {
+        "template": "two_sigma_news_stock_1st",
+        "overlap_score": 18.77796452572223,
+        "family": "tabular_text_regression",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by Two Sigma: Using News to Predict Stock Movements - 1st Place (2019): prepare the data, build task-specific representations, run the main modeling or se",
+        "llm_score": 0.18,
+        "llm_reasoning": "Shares a stock-movement prediction goal but is fundamentally a multimodal NLP+tabular problem requiring news sentiment aggregation \u2014 the entire news_aggregation stage and NLP pipeline are irrelevant since this problem has no text/news data, only order book microstructure signals."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 3,
+      "bound_approximate": 0,
+      "orchestration": 2,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "LightGBM + CatBoost ensemble",
+        "Online model refitting every 6-12 days",
+        "Zero-sum post-processing",
+        "Revealed target lag features (1, 2, 3 day lags)",
+        "Market imbalance indicators (RSI, MACD, Bollinger)",
+        "Streaming Cross-Validation"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Ensemble of LightGBM and CatBoost models with a custom online refitting strategy. The 1st place solution focused on 'lead-lag' features and rolling window statistics. They implemented a streaming CV s",
+    "rerank": {
+      "best_match": "optiver_realized_volatility_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": ""
+    }
+  },
+  {
+    "competition_id": "isic-2024-skin-cancer-detection-with-3d-tbp",
+    "title": "ISIC 2024 - Skin Cancer Detection with 3D-TBP",
+    "domain": "medical",
+    "problem_type": "classification",
+    "assessment": "partial",
+    "template_matches": [
+      {
+        "template": "melanoma_1st",
+        "overlap_score": 34.654653949431484,
+        "family": "medical_image_tabular",
+        "paradigm": "neural_network",
+        "summary": "Detect skin cancer from photographs by training image-recognition networks with realistic data distortions, combining image features with patient information, adding pseudo-labeled historical data, an",
+        "llm_score": 0.87,
+        "llm_reasoning": "Near-identical problem domain: binary skin cancer classification with extreme class imbalance (<1% positive), 2D image crops paired with rich patient/lesion metadata, and a multi-backbone rank-average ensemble strategy. The only meaningful gap is that the dermoscopy-specific augmentations (hair overlay, microscope borders) do not map cleanly to low-resolution TBP crops, but the core pipeline \u2014 backbone + metadata concatenation + pseudo-labeling + ensemble \u2014 transfers almost directly."
+      },
+      {
+        "template": "dsb2017_1st",
+        "overlap_score": 27.542431735882367,
+        "family": "medical_imaging_3d",
+        "paradigm": "neural_network",
+        "summary": "Find suspicious lumps in a 3D lung scan, crop and classify each one, then combine the per-lump cancer probabilities into a single patient-level prediction using a formula that accounts for the detecto",
+        "llm_score": 0.13,
+        "llm_reasoning": "Shares the 'focal lesion in a larger field' framing and the medical-imaging domain, but is architected around 3D volumetric CT data with a detector-then-classify decomposition and noisy-OR aggregation \u2014 none of which apply to pre-cropped 2D image tiles where each crop IS the lesion and the task is direct binary classification."
+      },
+      {
+        "template": "severstal_steel_1st",
+        "overlap_score": 25.1883802033181,
+        "family": "semantic_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Detect steel defects by first using a classifier to decide if an image has any defect at all, then applying detailed segmentation models only to images likely containing defects, and finally removing ",
+        "llm_score": 0.06,
+        "llm_reasoning": "The classifier-gate concept for high-negative-rate data is loosely analogous to the 0.1% imbalance here, but the template is fundamentally a segmentation pipeline with tile boundary handling and area thresholding \u2014 structurally incompatible with per-crop malignancy probability prediction."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 2,
+      "bound_approximate": 4,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.667,
+      "covered_techniques": [
+        "EfficientNetV2-S and ConvNeXt-Tiny backbones",
+        "LightGBM on lesion/patient metadata",
+        "Pre-training on ISIC 2020/2019 high-res data",
+        "Heavy down-sampling augmentation"
+      ],
+      "missing_techniques": [
+        "Partial AUC optimization via loss weighting",
+        "Center-crop normalization"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Multimodal fusion of image and tabular features. The top solutions combined 2D CNN backbones (EfficientNetV2, ConvNeXt) for image feature extraction with Gradient Boosting Machines (XGBoost/LightGBM) ",
+    "rerank": {
+      "best_match": "melanoma_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": ""
+    }
+  },
+  {
+    "competition_id": "llm-detect-ai-generated-text",
+    "title": "LLM - Detect AI Generated Text",
+    "domain": "nlp",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "jigsaw_toxicity_bias_1st",
+        "overlap_score": 19.408454653244306,
+        "family": "nlp_fairness",
+        "paradigm": "neural_network",
+        "summary": "Detect toxic comments while being fair across demographic groups by training multiple large language models with a custom loss function that pays extra attention to comments mentioning specific identi"
+      },
+      {
+        "template": "severstal_steel_1st",
+        "overlap_score": 17.202876093302763,
+        "family": "semantic_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Detect steel defects by first using a classifier to decide if an image has any defect at all, then applying detailed segmentation models only to images likely containing defects, and finally removing "
+      },
+      {
+        "template": "flavours_physics_1st",
+        "overlap_score": 15.120136917007777,
+        "family": "constrained_ml",
+        "paradigm": "optimization",
+        "summary": "Train three separate classifiers with different strategies for avoiding bias toward a protected variable (particle mass): one uses only safe features, one penalizes mass-correlated predictions during "
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 4,
+      "bound_approximate": 1,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "DeBERTa-v3-Large sequence classification",
+        "TF-IDF with large vocabulary (100k+ features)",
+        "LGBM/XGBoost on top of TF-IDF scores",
+        "Data augmentation with external LLM datasets",
+        "Freezing early transformer layers for stability",
+        "Byte-Pair Encoding (BPE) feature analysis"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "A hybrid approach combining traditional NLP with Deep Learning. The 1st place solution (Team 'The 1st') relied on an ensemble of TF-IDF / N-gram models and DeBERTa-v3-Large fine-tuned on a massive ext",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate template adequately covers the core challenges of this problem: (1) transformer-based binary text classification optimized for AUC/log-loss, (2) out-of-distribution generalization to unseen writing prompts and unseen LLMs, and (3) stylometric/statistical feature engineering to distinguish AI vs. human writing patterns. The closest template (jigsaw_toxicity_bias_1st) is explicitly contraindicated because its load-bearing components require demographic identity annotations and a fairness-penalized loss that do not apply here. A novel template should combine robust transformer fine-tuning (e.g., DeBERTa), OOD-aware training strategies (adversarial prompts, augmented AI samples from diverse models), stylometric handcrafted features (perplexity, burstiness, vocabulary richness), and a stacking ensemble that blends neural and statistical signals."
+    }
+  },
+  {
+    "competition_id": "rsna-2023-abdominal-trauma-detection",
+    "title": "RSNA 2023 Abdominal Trauma Detection",
+    "domain": "medical",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "rsna_pe_1st",
+        "overlap_score": 14.73178398046079,
+        "family": "structured_prediction",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by RSNA STR Pulmonary Embolism Detection - 1st Place (2020): prepare the data, build task-specific representations, train or apply the main model, and con",
+        "llm_score": 0.74,
+        "llm_reasoning": "Strong structural match: both tasks are multi-task medical CT classification (per-series, multi-label outputs) with 3D context handled via DICOM windowing \u2192 2D CNN feature extraction \u2192 sequence modeling across slices, and both face severe class imbalance for rare positive findings; the multi-head output stage maps cleanly onto per-organ injury status + severity heads. Slight penalty because PE labels are binary per-slice while organ injury requires ordinal grading per organ, and the sequence axis (axial slices through abdomen) is coarser than PE's vessel-following axis."
+      },
+      {
+        "template": "rsna_miccai_brain_tumor_1st",
+        "overlap_score": 14.089930094288396,
+        "family": "structured_prediction",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by RSNA-MICCAI Brain Tumor Radiogenomic Classification - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or",
+        "llm_score": 0.63,
+        "llm_reasoning": "Reasonable fit: both problems require classifying 3D volumetric medical scans using weak image-level labels (genomic status \u2194 organ injury grade) without pixel-level supervision, and the multi-plane 2.5D fallback + late fusion stages transfer well to multi-organ abdominal CT; the 3D volume registration and brain masking stages have direct analogues in organ-specific cropping and registration, but the source task's single-patient single-label output is simpler than predicting four independent organ severities simultaneously."
+      },
+      {
+        "template": "dsb2017_1st",
+        "overlap_score": 18.063965076275966,
+        "family": "medical_imaging_3d",
+        "paradigm": "neural_network",
+        "summary": "Find suspicious lumps in a 3D lung scan, crop and classify each one, then combine the per-lump cancer probabilities into a single patient-level prediction using a formula that accounts for the detecto",
+        "llm_score": 0.41,
+        "llm_reasoning": "Shares the 3D CT medical imaging modality and the challenge of rare high-severity findings, and the detect-then-classify decomposition could apply if organ segmentation masks are used to crop ROIs before grading; however, the noisy-OR aggregation over independent nodule instances does not transfer to multi-organ injury grading where organs are large anatomical structures (not small focal lesions), and the contraindication for diffuse pathology partially applies to bowel and spleen injuries."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 1,
+      "bound_approximate": 1,
+      "orchestration": 2,
+      "trivial_inline": 1,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "2.5D CNN (EfficientNet/ConvNeXt) for slice extraction",
+        "GroupKFold by Patient ID"
+      ],
+      "missing_techniques": [
+        "3D Segmentation for organ localization",
+        "Transformer-based sequence aggregation",
+        "Heavy slice-sampling augmentation",
+        "Weighted Cross-Entropy Loss"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "A multi-stage pipeline utilizing 2.5D and 3D CNNs. 1st place used a 2D model (EfficientNet-B0) to segment/locate organs and extract relevant slices. These slices were then aggregated using a 3D-ConvNe",
+    "rerank": {
+      "best_match": "rsna_pe_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": ""
+    }
+  },
+  {
+    "competition_id": "blood-vessel-segmentation",
+    "title": "SenNet + HOA - Hacking the Human Vasculature",
+    "domain": "medical",
+    "problem_type": "segmentation",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "rsna_cervical_spine_1st",
+        "overlap_score": 17.519924500126017,
+        "family": "semantic_segmentation",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by RSNA Cervical Spine Fracture Detection - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and co",
+        "llm_score": 0.62,
+        "llm_reasoning": "Best modality match \u2014 3D medical CT volumes with voxel-level semantic segmentation and mask generation stages directly apply; however, cervical spine structures are geometrically compact and thick, so the template has no topology-preserving loss or thin-structure handling needed for microvascular networks, and its 2.5D cropping + sequential classification stages are irrelevant to dense vessel segmentation."
+      },
+      {
+        "template": "vesuvius_ink_detection_1st",
+        "overlap_score": 22.088190129178656,
+        "family": "semantic_segmentation",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by Vesuvius Challenge 2023 - 1st Place (2023): prepare the data, build task-specific representations, train or apply the main model, and convert outputs i",
+        "llm_score": 0.38,
+        "llm_reasoning": "Shares the core challenge of processing massive 3D volumetric data with Z-axis slicing and a 2.5D architecture, which partially addresses memory constraints; critically disqualified because its pipeline produces 2D output projections rather than a full 3D binary voxel mask, and its handcrafted thresholds are tuned for planar ink contrast rather than tubular vessel topology."
+      },
+      {
+        "template": "hubmap_kidney_1st",
+        "overlap_score": 14.310664133957257,
+        "family": "gigapixel_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized",
+        "llm_score": 0.35,
+        "llm_reasoning": "Shares the same target organ (kidney) and the tile-chunk-stitch strategy for memory-constrained gigapixel inference, and Lov\u00e1sz-BCE loss suits IoU-evaluated binary segmentation; disqualified by modality mismatch (2D H&E histology vs. 3D CT volumes), inapplicable Macenko stain normalization, and the explicit contraindication that distributed structures spanning many tiles (i.e., a vascular network) lose global connectivity context under tile-based processing."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 1,
+      "bound_approximate": 0,
+      "orchestration": 3,
+      "trivial_inline": 0,
+      "external": 2,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "3D SegResNet and 2.5D ConvNeXt-UNet"
+      ],
+      "missing_techniques": [
+        "Mixed-precision training (FP16)",
+        "Pseudo-labeling for unlabeled regions",
+        "Morphological vessel-hole filling",
+        "Overlapping patch inference",
+        "Surface Dice optimization"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Ensemble of 2.5D and 3D UNet architectures. The 1st place solution utilized a 3D SegResNet and a 2.5D ConvNeXt-UNet, training on small overlapping crops (patches). They applied heavy morphological pos",
+    "rerank": {
+      "best_match": "rsna_cervical_spine_1st",
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate addresses the three defining constraints simultaneously: (1) terabyte-scale true 3D volumetric data requiring streaming patch-based I/O and 3D sliding-window inference, not 2D tiling or 2.5D slicing; (2) thin, highly-connected microvascular topology demanding topology-preserving losses such as clDice or Betti-number regularization that are absent from all templates; and (3) micron-resolution contrast specific to phase-contrast tomography, which differs from both clinical CT HU-windowing (rsna/dsb2017) and optical staining (hubmap/vesuvius). A novel pipeline should combine 3D patch streaming with overlap-tile inference, a topology-aware segmentation loss, and vesselness-guided data augmentation."
+    }
+  },
+  {
+    "competition_id": "ariel-data-challenge-2024",
+    "title": "NeurIPS - Ariel Data Challenge 2024",
+    "domain": "scientific",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "plasticc_1st",
+        "overlap_score": 17.698482480705398,
+        "family": "time_series_classification",
+        "paradigm": "optimization",
+        "summary": "Classify astronomical objects by extracting statistical features from their brightness measurements over time, smoothing the irregular measurements with Gaussian Processes, and combining gradient boos"
+      },
+      {
+        "template": "moa_prediction_1st",
+        "overlap_score": 17.21112921312455,
+        "family": "multilabel_tabular",
+        "paradigm": "neural_network",
+        "summary": "Predict which biological mechanisms a drug activates by enriching gene and cell features with compressed representations, training multiple neural network architectures, and combining their prediction"
+      },
+      {
+        "template": "flavours_physics_1st",
+        "overlap_score": 15.220113334014695,
+        "family": "constrained_ml",
+        "paradigm": "optimization",
+        "summary": "Train three separate classifiers with different strategies for avoiding bias toward a protected variable (particle mass): one uses only safe features, one penalizes mass-correlated predictions during "
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 2,
+      "bound_approximate": 3,
+      "orchestration": 1,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Gaussian Log-Likelihood optimization"
+      ],
+      "missing_techniques": [
+        "Levenberg-Marquardt / Dogbox optimization",
+        "Polynomial baseline detrending",
+        "Lorentzian spike modeling for jitter",
+        "Moving average smoothing with Taylor windows",
+        "Weighted Least Squares for depth estimation"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Physics-informed regression using least-squares optimization. The winning approach involved modeling the transit signal as a product of a polynomial (for baseline/noise) and a step function (for trans",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "This problem (Ariel-style exoplanet atmospheric retrieval) requires a pipeline with no close analogue among the candidates: (1) focal-plane image reduction per wavelength channel, (2) aperture/spectral extraction to collapse 2-D frames into per-wavelength light curves, (3) spacecraft jitter and systematic detrending (e.g., pixel-level centroid regression, PCA/ICA systematics removal, Gaussian Process correlated noise models), (4) transit model fitting (Mandel-Agol or similar) at each of 283 wavelengths to recover transit depth, and (5) principled uncertainty propagation (MCMC or nested sampling) to yield depth + credible interval per wavelength. The combination of image-to-spectra reduction, correlated-noise detrending, and per-channel regression with calibrated uncertainties is not addressed by any available template."
+    }
+  },
+  {
+    "competition_id": "leap-atmospheric-physics-ai-climsim",
+    "title": "LEAP - Atmospheric Physics using AI (ClimSim)",
+    "domain": "scientific",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "flavours_physics_1st",
+        "overlap_score": 15.313822232452045,
+        "family": "constrained_ml",
+        "paradigm": "optimization",
+        "summary": "Train three separate classifiers with different strategies for avoiding bias toward a protected variable (particle mass): one uses only safe features, one penalizes mass-correlated predictions during "
+      },
+      {
+        "template": "global_wheat_1st",
+        "overlap_score": 14.491598009616958,
+        "family": "object_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Detect wheat heads in field images by training two different detection models with aggressive image augmentation, using the models to generate labels on unlabeled test data, retraining on the combined"
+      },
+      {
+        "template": "google_contrails_1st",
+        "overlap_score": 13.869006299712499,
+        "family": "semantic_segmentation",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by Google - Identify Contrails to Reduce Global Warming - 1st Place (2023): prepare the data, build task-specific representations, run the main modeling o"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 5,
+      "bound_approximate": 0,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "Bf16 / FP32 mixed training for precision",
+        "Weighted MSE + L1 multi-loss"
+      ],
+      "missing_techniques": [
+        "Transformer Encoder with Beit-v2 blocks",
+        "FNO1D (Fourier Neural Operator) decoder",
+        "HDF5 fast data loading",
+        "Handcrafted vertical difference features"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Deep learning architecture using Transformers and Fourier Neural Operators (FNO). The 1st place solution (Greysnow) employed a vanilla Transformer encoder to process vertical features, coupled with an",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate template addresses the core requirements of this problem: (1) large-scale multi-output regression over tabular/vertical-profile data (80M samples, 700GB+), (2) physics-informed learning with hard conservation-law constraints (mass, energy, moisture conservation across vertical levels), and (3) numerical precision requirements characteristic of climate model emulation. The problem is a physics surrogate / parameterization emulation task \u2014 a paradigm absent from all five candidates, which cover constrained classification, 2D object detection, spatiotemporal segmentation, 3D medical detection-classification, and dermoscopic image classification. A novel template should incorporate: memory-efficient streaming data loaders with chunked HDF5/zarr I/O, vertically-aware architecture (e.g., columnwise MLP or 1D U-Net over pressure levels), conservation-law residual penalty layers (soft or hard constraints via Lagrange multipliers), output normalization anchored to physical units, and ensemble/MC-dropout uncertainty quantification for downstream climate model integration."
+    }
+  },
+  {
+    "competition_id": "learning-agency-lab-automated-essay-scoring-2",
+    "title": "Learning Agency Lab - Automated Essay Scoring 2.0",
+    "domain": "nlp",
+    "problem_type": "ranking",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "aimo_llm_tool_use_topology",
+        "overlap_score": 17.27653949982374,
+        "family": "llm_tool_use",
+        "paradigm": "external_tool",
+        "summary": "This template captures the ordered steps used by AI Mathematical Olympiad (AIMO) Prize - Top Solution Topology (2024): prepare the data, build task-specific representations, run the main modeling or s"
+      },
+      {
+        "template": "santander_transaction_1st",
+        "overlap_score": 13.08048106286401,
+        "family": "tabular_classification",
+        "paradigm": "optimization",
+        "summary": "Predict which bank customers will make a transaction by first figuring out which test-set rows are fake padding (added by the competition organizers), removing them so they do not corrupt frequency st"
+      },
+      {
+        "template": "jigsaw_toxicity_bias_1st",
+        "overlap_score": 12.860111438432526,
+        "family": "nlp_fairness",
+        "paradigm": "neural_network",
+        "summary": "Detect toxic comments while being fair across demographic groups by training multiple large language models with a custom loss function that pays extra attention to comments mentioning specific identi"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 0,
+      "bound_approximate": 0,
+      "orchestration": 3,
+      "trivial_inline": 0,
+      "external": 2,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "DeBERTa-v3-Large with custom QWK head",
+        "LightGBM on linguistic features",
+        "Differential thresholding for integer conversion",
+        "Prompt-specific normalization",
+        "Self-distillation for model efficiency",
+        "Iterative pseudo-labeling"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Ensemble of fine-tuned Transformer models and feature-based regressors. The 1st place approach combined DeBERTa-v3-Large fine-tuned with a custom QWK loss function and LightGBM models trained on 1,500",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "No template adequately covers this problem. Essay scoring is an ordinal text regression/classification task (6-class, document-level) over long-form student writing across heterogeneous prompts. The critical needs \u2014 (1) long-document encoder fine-tuning with ordinal loss (e.g., MSE or ordinal cross-entropy over integer scores 1\u20136), (2) prompt-aware modeling to handle distribution shift across writing prompts, (3) QWK (quadratic weighted kappa) as the primary optimization target, and (4) lightweight inference for classroom deployment \u2014 are not addressed by any candidate. A novel template should compose: prompt-stratified cross-validation, transformer fine-tuning with ordinal/regression head, QWK-optimized threshold search, and optional prompt-conditioned feature augmentation."
+    }
+  },
+  {
+    "competition_id": "linking-writing-processes-to-writing-quality",
+    "title": "Linking Writing Processes to Writing Quality",
+    "domain": "nlp",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "commonlit_readability_1st",
+        "overlap_score": 15.050479317349014,
+        "family": "nlp_regression",
+        "paradigm": "neural_network",
+        "summary": "Predict how easy a text passage is to read by first teaching language models on similar literature, then using attention-based feature extraction and model averaging to produce stable readability scor"
+      },
+      {
+        "template": "flavours_physics_1st",
+        "overlap_score": 12.274240171819041,
+        "family": "constrained_ml",
+        "paradigm": "optimization",
+        "summary": "Train three separate classifiers with different strategies for avoiding bias toward a protected variable (particle mass): one uses only safe features, one penalizes mass-correlated predictions during "
+      },
+      {
+        "template": "dsb2017_1st",
+        "overlap_score": 11.76074431949717,
+        "family": "medical_imaging_3d",
+        "paradigm": "neural_network",
+        "summary": "Find suspicious lumps in a 3D lung scan, crop and classify each one, then combine the per-lump cancer probabilities into a single patient-level prediction using a formula that accounts for the detecto"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 3,
+      "bound_approximate": 3,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Burst-level feature engineering (P-burst, R-burst)"
+      ],
+      "missing_techniques": [
+        "LightGBM / XGBoost ensemble",
+        "Keystroke frequency and transition matrices",
+        "Recursive Feature Elimination (RFE)",
+        "Sentence-level aggregate stats",
+        "Time-since-last-event rolling averages"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Feature engineering-centric approach using Gradient Boosting. The winning solution (Tomoo) developed over 1,000 features characterizing writing 'bursts' (Productive periods), 'R-bursts' (Revision peri",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "The problem is a time-series feature-engineering regression task: raw, extremely granular event logs must be compressed into behavioral aggregates (pause duration distributions, revision rates, burst lengths, inter-key intervals) before any model is trained. No candidate template covers this paradigm. A novel pipeline should compose: (1) event-stream segmentation and temporal binning, (2) hand-crafted and learned feature extraction capturing pauses, revision bursts, and cursor activity, (3) sequence-model encoding (e.g., LSTM or Transformer over fixed-length windows) optionally fused with aggregated tabular features, (4) gradient-boosted or MLP regression head with cross-validated calibration, and (5) target-aware stratified CV given the ordinal 0.5\u20136.0 score scale. This is closest to the process-mining / educational data mining family of competitions (e.g., Kaggle 'Linking Writing Processes to Writing Quality' 2023), which none of the five candidates represent."
+    }
+  },
+  {
+    "competition_id": "rsna-2024-lumbar-spine-degenerative-classification",
+    "title": "RSNA 2024 Lumbar Spine Degenerative Classification",
+    "domain": "medical",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "rsna_miccai_brain_tumor_1st",
+        "overlap_score": 23.23210217707643,
+        "family": "structured_prediction",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by RSNA-MICCAI Brain Tumor Radiogenomic Classification - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or",
+        "llm_score": 0.63,
+        "llm_reasoning": "Modality alignment is strong \u2014 multi-sequence 3D MRI with multi-plane slicing (2.5D fallback) and late fusion directly maps to sagittal/axial view coordination across T1/T2/T2-STIR sequences; however, the source task targets whole-volume genomic weak-label prediction rather than per-anatomical-level ordinal severity classification, and the 'brain_masking' stage has no analogue for vertebral-level localization, leaving the critical spine-level coordinate assignment stage unaddressed."
+      },
+      {
+        "template": "dsb2017_1st",
+        "overlap_score": 19.368067346842178,
+        "family": "medical_imaging_3d",
+        "paradigm": "neural_network",
+        "summary": "Find suspicious lumps in a 3D lung scan, crop and classify each one, then combine the per-lump cancer probabilities into a single patient-level prediction using a formula that accounts for the detecto",
+        "llm_score": 0.41,
+        "llm_reasoning": "The detect-then-classify decomposition is architecturally relevant since lumbar level localization is analogous to nodule detection before per-lesion classification, and the 3D U-Net backbone transfers to spinal MRI volumes; however, the noisy-OR aggregation assumes independent focal lesions rather than ordered anatomical levels, the pathology (disc/facet degeneration) is structural rather than nodular, and the template explicitly contraindicates use without ground-truth bounding boxes for detector training."
+      },
+      {
+        "template": "passenger_screening_dhs_1st",
+        "overlap_score": 15.538734489862252,
+        "family": "time_series_anomaly_detection",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by Passenger Screening Algorithm Challenge (DHS) - 1st Place (2018): prepare the data, build task-specific representations, run the main modeling or searc",
+        "llm_score": 0.22,
+        "llm_reasoning": "Multi-view 2D projection and body zoning stages are loosely analogous to projecting sagittal/axial slices and segmenting spinal levels, but the source domain (mmWave point-cloud anomaly detection) diverges sharply in signal physics, label structure, and aggregation logic from multi-sequence MRI ordinal classification."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 0,
+      "bound_approximate": 0,
+      "orchestration": 4,
+      "trivial_inline": 0,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "Multi-sequence fusion (T1/T2/T2-STIR)",
+        "Symmetrized axial-sagittal attention"
+      ],
+      "missing_techniques": [
+        "3D ConvNeXt for coordinate/slice localization",
+        "MIL-LSTM head for slice aggregation",
+        "Coordinate regression auxiliary loss",
+        "GroupKFold split by patient"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "A 2-stage pipeline consisting of localization and classification. 1st place used a 3D ConvNeXt model to predict 'instance numbers' (slice indices) and coordinates for each vertebrae level. In the seco",
+    "rerank": {
+      "best_match": "rsna_miccai_brain_tumor_1st",
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate adequately handles the two defining challenges of this problem in combination: (1) vertebral-level localization \u2014 identifying and aligning L1/L2/L3/L4/L5/S1 disc levels across sagittal and axial planes before classification \u2014 and (2) per-level ordinal severity prediction (Normal/Mild \u2192 Moderate \u2192 Severe) across five anatomically distinct conditions. The closest template (rsna_miccai_brain_tumor_1st) provides useful scaffolding for multi-sequence 3D MRI and multi-plane fusion but was designed for a single whole-volume weak label and has no mechanism for coordinate-aware level extraction or ordinal output heads. A novel template should compose: multi-sequence volume registration \u2192 sagittal-based vertebral level detection (keypoint or segmentation) \u2192 axial slice sampling per level \u2192 2.5D CNN per condition per level \u2192 ordinal classification head with cross-level context."
+    }
+  },
+  {
+    "competition_id": "predict-student-performance-from-game-play",
+    "title": "Predict Student Performance from Game Play",
+    "domain": "time_series",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "plasticc_1st",
+        "overlap_score": 15.377422802279062,
+        "family": "time_series_classification",
+        "paradigm": "optimization",
+        "summary": "Classify astronomical objects by extracting statistical features from their brightness measurements over time, smoothing the irregular measurements with Gaussian Processes, and combining gradient boos",
+        "llm_score": 0.42,
+        "llm_reasoning": "Shares the time-series classification paradigm and uses tsfresh-style statistical feature extraction from sequential observations, which maps reasonably onto clickstream behavioral logs; however, the Gaussian Process interpolation stage is tailored for sparse, irregular continuous astronomical measurements \u2014 not discrete categorical game events (room, level) \u2014 and the severe class-imbalance machinery is unnecessary for a balanced binary question-answer outcome."
+      },
+      {
+        "template": "predict_future_sales_benchmark",
+        "overlap_score": 14.622797302273202,
+        "family": "time_series_forecasting",
+        "paradigm": "loss_function",
+        "summary": "This template captures the ordered steps used by Predict Future Sales - Kaggle Benchmark Standard (2015): prepare the data, build task-specific representations, run the main modeling or search loop, a",
+        "llm_score": 0.32,
+        "llm_reasoning": "The GBDT-over-temporal-features pipeline (time aggregation, lag features, mean encoding) is generically applicable to clickstream tabular data, but the template is a regression/forecasting paradigm targeting a numeric sales quantity, not binary per-question classification, so the loss function, target engineering, and output structure all need fundamental rework."
+      },
+      {
+        "template": "eedi_misconception_1st",
+        "overlap_score": 13.990084231265735,
+        "family": "learning_to_rank",
+        "paradigm": "loss_function",
+        "summary": "This template captures the ordered steps used by EEDI Misconception Prediction - 1st Place (2025): prepare the data, build task-specific representations, train or apply the main model, and convert out",
+        "llm_score": 0.12,
+        "llm_reasoning": "Shares the educational assessment domain superficially, but the entire pipeline is built around NLP text processing (prefix formatting, attention masking, SFT fine-tuning, LLM merging) for retrieving math misconceptions from language \u2014 completely mismatched to clickstream game-log modality and binary outcome prediction."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 2,
+      "bound_approximate": 3,
+      "orchestration": 1,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Temporal aggregation features"
+      ],
+      "missing_techniques": [
+        "Question-specific LightGBM models",
+        "Level-wise click count and duration stats",
+        "Coordinate-based heatmap features",
+        "Binary cross-entropy optimization",
+        "Stratified GroupKFold by Session ID"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Session-level feature engineering with Gradient Boosting. The 1st place solution created sophisticated aggregate features over 'levels' and 'rooms' within the game, such as 'time spent per page' and '",
+    "rerank": {
+      "best_match": "plasticc_1st",
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate adequately covers the core pipeline needed here: (1) per-session clickstream aggregation into fixed-length behavioral feature vectors (action counts, time-in-room distributions, level-completion sequences), (2) per-question binary classification heads trained on those vectors, and (3) handling of the 18-question multi-label structure where early questions' predictions may inform later ones. The plasticc template's time-series classification family is the closest ancestor, but its GP interpolation and astronomical feature engineering are not transferable to discrete categorical game events, and none of the candidates address the sequential dependency between the 18 ordered prediction targets or the session-level vs. question-level label alignment problem unique to educational clickstream data."
+    }
+  },
+  {
+    "competition_id": "icr-identify-age-related-conditions",
+    "title": "ICR - Identifying Age-Related Conditions",
+    "domain": "medical",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "mercari_price_1st",
+        "overlap_score": 25.171020242455622,
+        "family": "tabular_text_regression",
+        "paradigm": "optimization",
+        "summary": "Predict product prices by converting item names, descriptions, brands, and categories into sparse numerical features, training a factorization machine for feature interactions, a neural network for te"
+      },
+      {
+        "template": "melanoma_1st",
+        "overlap_score": 19.451733581263454,
+        "family": "medical_image_tabular",
+        "paradigm": "neural_network",
+        "summary": "Detect skin cancer from photographs by training image-recognition networks with realistic data distortions, combining image features with patient information, adding pseudo-labeled historical data, an"
+      },
+      {
+        "template": "global_wheat_1st",
+        "overlap_score": 19.078647654491853,
+        "family": "object_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Detect wheat heads in field images by training two different detection models with aggressive image augmentation, using the models to generate labels on unlabeled test data, retraining on the combined"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 3,
+      "bound_approximate": 1,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Leave-One-Out validation strategy"
+      ],
+      "missing_techniques": [
+        "TabPFN (Prior-Data Fitted Network)",
+        "XGBoost + LightGBM + CatBoost ensemble",
+        "Pseudo-labeling on test set",
+        "Custom Balanced Log Loss function",
+        "Iterative Imputation for missing markers"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Ensemble of diverse tabular models including TabPFN and Gradient Boosting. 1st place used TabPFN (a Prior-Data Fitted Network) which excels on small datasets, alongside XGBoost and LightGBM. They impl",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate template adequately covers the core constraint trio: (1) binary single-label classification, (2) dense mixed tabular modality with ~50 features, and (3) an extremely small labeled set (~600 rows) under severe class imbalance. The closest template (moa_prediction_1st) targets multi-label targets on larger data and its UMAP/pseudo-label components are explicitly unsafe at this scale. A novel template should center on stratified k-fold GBM ensembles (LightGBM/XGBoost/CatBoost) with aggressive regularization, SMOTE or class-weight balancing, threshold calibration via Platt scaling, and Optuna-driven hyperparameter search with CV-stability as the primary stopping criterion \u2014 none of which are adequately represented in the candidate pool."
+    }
+  },
+  {
+    "competition_id": "godaddy-microbusiness-density-forecasting",
+    "title": "GoDaddy - Microbusiness Density Forecasting",
+    "domain": "time_series",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "severstal_steel_1st",
+        "overlap_score": 14.799801717789535,
+        "family": "semantic_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Detect steel defects by first using a classifier to decide if an image has any defect at all, then applying detailed segmentation models only to images likely containing defects, and finally removing "
+      },
+      {
+        "template": "hubmap_kidney_1st",
+        "overlap_score": 14.425108268348126,
+        "family": "gigapixel_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized"
+      },
+      {
+        "template": "instacart_basket_1st",
+        "overlap_score": 12.26402273762778,
+        "family": "set_prediction",
+        "paradigm": "optimization",
+        "summary": "Predict which grocery products a customer will reorder by first estimating the probability of each product being reordered using gradient boosting, then using a clever algorithm to pick the exact set "
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 1,
+      "bound_approximate": 3,
+      "orchestration": 1,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "Linear Regression with Trend Capping",
+        "Last Value (Naive) persistence",
+        "CatBoost for high-volatility counties",
+        "DBSCAN for outlier county detection",
+        "Symmetric MAPE optimization",
+        "Census ACS feature integration"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "A 'last-value-plus' strategy with selective ML overrides. The winning approach relied on a weighted combination of 'Last Observed Value' and Linear Regression with trend capping for most counties. The",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "The problem is a tabular panel time-series forecasting task (regression over ~3,000 U.S. counties across monthly time steps) with a bimodal volatility structure \u2014 most series are near-flat while a minority are highly volatile. None of the five candidates address this domain: two are image segmentation pipelines, one is NLP regression, one is set prediction for e-commerce, and one is physics-based 3-D tracking. A novel template should be composed around: (1) county-level lag/rolling feature engineering from the dense stable majority, (2) a volatility-segmentation or clustering step to identify and separately model the unstable minority, (3) tree-based models (LightGBM/XGBoost) as primary regressors on the tabular feature matrix, (4) lightweight linear/AR baselines blended in for the flat-series counties where they are hard to beat, and (5) an ensemble/calibration layer accounting for the asymmetric difficulty across stability regimes."
+    }
+  },
+  {
+    "competition_id": "stable-diffusion-image-to-prompts",
+    "title": "Stable Diffusion - Image to Prompts",
+    "domain": "nlp",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "llm_prompt_recovery_1st",
+        "overlap_score": 16.31982512801622,
+        "family": "nlp_retrieval",
+        "paradigm": "external_tool",
+        "summary": "This template captures the ordered steps used by LLM Prompt Recovery - 1st Place (2024): prepare the data, build task-specific representations, run the main modeling or search loop, and convert output",
+        "llm_score": 0.82,
+        "llm_reasoning": "Near-identical problem structure: both tasks are inverse-generation problems where the goal is to recover a prompt from a model's output, evaluated via cosine similarity in a 384-dimensional embedding space. The stages\u2014synthetic data generation (augmenting image/prompt pairs), embedding extraction, delta vector arithmetic in embedding space, and retrieval/selection\u2014map directly onto this image-to-prompt-embedding task, with the only deviation being that input modality shifts from transformed text to image features."
+      },
+      {
+        "template": "facebook_image_similarity_1st",
+        "overlap_score": 17.169626118621544,
+        "family": "multimodal_retrieval",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by Facebook AI Image Similarity Challenge - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or search loop,",
+        "llm_score": 0.34,
+        "llm_reasoning": "Contrastive backbone training and FAISS-based nearest-neighbor retrieval are relevant building blocks for aligning images to a prompt embedding space, but the template is fundamentally designed for image-to-image retrieval/ranking rather than regressing a continuous 384-dim target vector, so its spatial-verification and database-augmentation stages are misaligned with the actual output structure."
+      },
+      {
+        "template": "shopee_price_match_1st",
+        "overlap_score": 18.660531428830133,
+        "family": "multimodal_retrieval",
+        "paradigm": "neural_network",
+        "summary": "Find matching products by computing visual and textual similarity scores, combining them, finding all pairs above a confidence threshold, and grouping connected matches together.",
+        "llm_score": 0.18,
+        "llm_reasoning": "The problem is single-modality at inference time (image-only input), which is explicitly listed as a contraindication for this template; the ArcFace + connected-components pipeline assumes paired image+text signals and a flat class structure, neither of which applies to continuous prompt-embedding regression."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 0,
+      "bound_approximate": 1,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 4,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Cosine Similarity Loss"
+      ],
+      "missing_techniques": [
+        "CLIP ViT-L-14 and ViT-H-14 backbones",
+        "Auxiliary training on LAION-5B dataset",
+        "EMA (Exponential Moving Average) weights",
+        "MLP Regression Head",
+        "Prompt-length-aware feature scaling"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Fine-tuning Large Vision-Language Models for embedding regression. The 1st place solution fine-tuned CLIP-based backbones (ViT-L-14 and ViT-H-14) using a custom head that mapped visual features direct",
+    "rerank": {
+      "best_match": "llm_prompt_recovery_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": ""
+    }
+  },
+  {
+    "competition_id": "feedback-prize-english-language-learning",
+    "title": "Feedback Prize - English Language Learning",
+    "domain": "nlp",
+    "problem_type": "regression",
+    "assessment": "competitive",
+    "template_matches": [
+      {
+        "template": "toxic_comment_1st",
+        "overlap_score": 20.636237150579145,
+        "family": "nlp_classification",
+        "paradigm": "neural_network",
+        "summary": "Classify online comments into six toxicity categories by generating extra training data through round-trip translation, feeding word embeddings through bidirectional recurrent networks with parallel p"
+      },
+      {
+        "template": "moa_prediction_1st",
+        "overlap_score": 13.191988501082438,
+        "family": "multilabel_tabular",
+        "paradigm": "neural_network",
+        "summary": "Predict which biological mechanisms a drug activates by enriching gene and cell features with compressed representations, training multiple neural network architectures, and combining their prediction"
+      },
+      {
+        "template": "halite_two_sigma_1st",
+        "overlap_score": 13.031277890341446,
+        "family": "reinforcement_learning",
+        "paradigm": "searching",
+        "summary": "This template captures the ordered steps used by Halite by Two Sigma - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loop, and convert output"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 0,
+      "bound_approximate": 5,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.833,
+      "covered_techniques": [
+        "DeBERTa-v3-Large multi-task backbone",
+        "Mean-Pooling of final 4 layers",
+        "Multi-Sample Dropout",
+        "Pseudo-Labeling for multi-target regression",
+        "Differential Learning Rate by layer"
+      ],
+      "missing_techniques": [
+        "Stochastic Weight Averaging (SWA)"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Multi-task learning with Large Language Models. 1st place used an ensemble of DeBERTa-v3-Large models with a shared backbone and six task-specific regression heads. They applied Multi-Sample Dropout t",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate template covers the core requirement: transformer-based multi-target continuous regression on long-form text. The ideal pipeline for this ELL problem would center on a pretrained encoder (e.g., DeBERTa-v3) fine-tuned with a multi-head regression output layer and a loss that exploits inter-target correlation (e.g., multi-task MSE with target covariance weighting or a Pearson-correlation-aware loss). Key novel stages would include: (1) long-document chunking or hierarchical pooling to handle essay length beyond 512 tokens, (2) multi-target regression head with shared lower layers and task-specific upper layers to balance joint vs. per-dimension learning, (3) cross-validation with stratification on the joint score distribution, and (4) optional post-hoc score clipping/calibration to the [1.0, 5.0] range. None of the five templates provide a scaffold for any of these stages."
+    }
+  },
+  {
+    "competition_id": "us-patent-phrase-to-phrase-matching",
+    "title": "U.S. Patent Phrase to Phrase Matching",
+    "domain": "nlp",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "shopee_price_match_1st",
+        "overlap_score": 19.226073835435194,
+        "family": "multimodal_retrieval",
+        "paradigm": "neural_network",
+        "summary": "Find matching products by computing visual and textual similarity scores, combining them, finding all pairs above a confidence threshold, and grouping connected matches together."
+      },
+      {
+        "template": "cause_effect_2nd",
+        "overlap_score": 17.99921673727567,
+        "family": "causal_inference",
+        "paradigm": "analysis",
+        "summary": "For each pair of variables, compute features that are different depending on which causes which, then train classifiers on those features and enforce the physical constraint that if A causes B then B "
+      },
+      {
+        "template": "mercari_price_1st",
+        "overlap_score": 11.335309485755067,
+        "family": "tabular_text_regression",
+        "paradigm": "optimization",
+        "summary": "Predict product prices by converting item names, descriptions, brands, and categories into sparse numerical features, training a factorization machine for feature interactions, a neural network for te"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 2,
+      "bound_approximate": 3,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "DeBERTa-v3-Large and ELECTRA-Large",
+        "Context string concatenation",
+        "Attention-based pooling (Custom Head)",
+        "Layer-wise Learning Rate Decay (LLRD)",
+        "Adversarial Weight Perturbation (AWP)",
+        "Pearson correlation optimization"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Context-aware Transformer models. The winning solution concatenated anchor, target, and context description into a single sequence: '[CLS] anchor [SEP] target [SEP] context_description'. They used DeB",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "The problem is a domain-specific Semantic Textual Similarity (STS) regression task over short phrase triplets (anchor, target, CPC context). No candidate template covers the core requirements: (1) a cross-encoder or bi-encoder transformer fine-tuned with a regression head on sentence pairs, (2) explicit injection of the CPC context token to modulate phrase meaning, (3) handling of technical patent jargon via domain-adaptive pre-training or in-domain vocabulary augmentation, and (4) a continuous MSE/Pearson-optimised output rather than a binary match or grouping structure. A novel template should be composed around stages: context-conditioned input formatting \u2192 pre-trained language model fine-tuning (cross-encoder preferred for scoring) \u2192 regression head with Pearson/MSE loss \u2192 optional pseudo-label augmentation from CPC hierarchy."
+    }
+  },
+  {
+    "competition_id": "nbme-score-clinical-patient-notes",
+    "title": "NBME - Score Clinical Patient Notes",
+    "domain": "nlp",
+    "problem_type": "detection",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "kaggle_ner_1st",
+        "overlap_score": 13.283691823955769,
+        "family": "nlp_span_detection",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by Kaggle Feature Engineering / NER - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert ",
+        "llm_score": 0.82,
+        "llm_reasoning": "The QA-reformulation stage maps perfectly to this problem: each clinical 'feature' (e.g., 'chest pain') becomes a natural-language question posed against the patient note, letting the model find synonyms and abbreviations through semantic understanding rather than exact matching. The span_prediction and decoding stages directly produce character offsets, and the paradigm handles the concept-lookup structure better than generic B-I-O tagging."
+      },
+      {
+        "template": "feedback_prize_writing_1st",
+        "overlap_score": 23.79976288036418,
+        "family": "nlp_span_detection",
+        "paradigm": "neural_network",
+        "summary": "Break long essays into overlapping chunks, train a model to label each word as the beginning, inside, or outside of a discourse element, then merge overlapping predictions from multiple models and dis",
+        "llm_score": 0.58,
+        "llm_reasoning": "The sliding-window tokenization, char-to-token offset mapping, and text-WBF ensembling stages are all directly applicable to character-offset span extraction from clinical notes; however, the B-I-O tagging formulation cannot represent non-contiguous spans (an explicit contraindication), and the template has no mechanism for concept-conditioned lookup, making synonym/abbreviation generalisation harder."
+      },
+      {
+        "template": "melanoma_1st",
+        "overlap_score": 17.17751348345471,
+        "family": "medical_image_tabular",
+        "paradigm": "neural_network",
+        "summary": "Detect skin cancer from photographs by training image-recognition networks with realistic data distortions, combining image features with patient information, adding pseudo-labeled historical data, an",
+        "llm_score": 0.04,
+        "llm_reasoning": "Wrong modality (dermoscopic images vs. clinical text) and wrong task type (binary image classification vs. span extraction); none of the critical stages apply and all domain-specific augmentations are irrelevant."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 1,
+      "bound_approximate": 1,
+      "orchestration": 3,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "DeBERTa-v3-Large for token classification"
+      ],
+      "missing_techniques": [
+        "B-I-O (Beginning-Inside-Outside) labeling",
+        "Span merging post-processing",
+        "GroupKFold by Case ID",
+        "Multi-sample Dropout",
+        "Adversarial Weight Perturbation (AWP)"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Token classification (NER) with multi-head attention. 1st place treated this as a Question-Answering/NER task using DeBERTa-v3-Large. They formatted the input as 'feature [SEP] patient_note'. The mode",
+    "rerank": {
+      "best_match": "kaggle_ner_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": "kaggle_ner_1st covers the core need well enough \u2014 QA reformulation elegantly encodes each clinical concept as a query, enabling synonym/abbreviation robustness, and the span_prediction stage yields character offsets directly. The one unaddressed gap is non-contiguous spans, which would require augmenting the decoding stage with a multi-span or list-extraction head (e.g., multi-answer QA or a secondary linkage model) rather than building an entirely novel pipeline."
+    }
+  },
+  {
+    "competition_id": "mayo-clinic-strip-ai",
+    "title": "Mayo Clinic - STRIP AI",
+    "domain": "medical",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "panda_prostate_mil_1st",
+        "overlap_score": 12.751954541527917,
+        "family": "gigapixel_segmentation",
+        "paradigm": "loss_function",
+        "summary": "This template captures the ordered steps used by Prostate cANcer graDe Assessment (PANDA) - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loo",
+        "llm_score": 0.87,
+        "llm_reasoning": "Nearly identical problem structure: binary/ordinal WSI classification via Multi-Instance Learning with white-space culling, tile generation, and CNN backbone \u2014 all directly applicable to blood-clot CE/LAA classification from gigapixel pathology slides. The only friction is ordinal regression vs. binary cross-entropy, which is a trivial head swap."
+      },
+      {
+        "template": "hubmap_kidney_1st",
+        "overlap_score": 22.5086654746895,
+        "family": "gigapixel_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized",
+        "llm_score": 0.42,
+        "llm_reasoning": "Shares the critical gigapixel histopathology modality and the tiling + stain-normalization infrastructure, but the task type is segmentation (pixel masks) rather than slide-level classification, and the Lovasz-BCE loss and stitching stages are irrelevant overhead for a CE/LAA label prediction goal."
+      },
+      {
+        "template": "bengali_grapheme_1st",
+        "overlap_score": 14.55168218040515,
+        "family": "multitask_image_classification",
+        "paradigm": "neural_network",
+        "summary": "Classify handwritten Bengali characters by breaking them into three components (root shape, vowel mark, consonant mark), training a shared neural network with three separate output heads, focusing tra",
+        "llm_score": 0.18,
+        "llm_reasoning": "Correct paradigm family (image classification) and the multi-head / ensemble mechanics are reusable, but the template is designed for standard-resolution character images with compositional label structure \u2014 it has no machinery for gigapixel tiling, MIL aggregation, or stain-color variation, which are the dominant challenges here."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 0,
+      "bound_approximate": 0,
+      "orchestration": 1,
+      "trivial_inline": 1,
+      "external": 3,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "EfficientNet-B1 tile encoder",
+        "Otsu thresholding for tissue detection"
+      ],
+      "missing_techniques": [
+        "Gated Attention MIL aggregation",
+        "Hard negative mining",
+        "Weighted cross-entropy for CE/LAA",
+        "Heavy color jitter and stain normalization"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Tile-based Multiple Instance Learning (MIL). The winning solution used a 'receptive field' approach, extracting thousands of 512x512 tiles from tissue areas. These tiles were encoded by an EfficientNe",
+    "rerank": {
+      "best_match": "panda_prostate_mil_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": ""
+    }
+  },
+  {
+    "competition_id": "uw-madison-gi-tract-image-segmentation",
+    "title": "UW-Madison GI Tract Image Segmentation",
+    "domain": "medical",
+    "problem_type": "segmentation",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "hubmap_hpa_human_body_1st",
+        "overlap_score": 14.174387949263682,
+        "family": "semantic_segmentation",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by HuBMAP + HPA - Hacking the Human Body - 1st Place (2022): prepare the data, build task-specific representations, run the main modeling or search loop, ",
+        "llm_score": 0.72,
+        "llm_reasoning": "Multi-organ segmentation paradigm is an exact problem-type match (stomach + large bowel + small bowel mirrors HuBMAP's multi-organ setup), and stages like multi_organ_backbone, organ_specific_thresholds, and contour_smoothing transfer directly; the primary penalty is modality mismatch \u2014 stain_translation is histology-specific and inapplicable to MRI, and the low-contrast soft-tissue challenge in MRI is harder than stained histology boundaries."
+      },
+      {
+        "template": "rsna_cervical_spine_1st",
+        "overlap_score": 17.32553036209779,
+        "family": "semantic_segmentation",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by RSNA Cervical Spine Fracture Detection - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and co",
+        "llm_score": 0.58,
+        "llm_reasoning": "Semantic segmentation in 3D medical imaging with a 2.5D cropping and multi-objective blending pipeline maps well onto multi-slice abdominal MRI; however, cervical spine CT offers high bone-to-tissue contrast while GI organ segmentation faces the inverse challenge of extremely low inter-organ contrast, so the voxel preprocessing and mask generation assumptions may need heavy adaptation."
+      },
+      {
+        "template": "vesuvius_ink_detection_1st",
+        "overlap_score": 15.66034480492676,
+        "family": "semantic_segmentation",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by Vesuvius Challenge 2023 - 1st Place (2023): prepare the data, build task-specific representations, train or apply the main model, and convert outputs i",
+        "llm_score": 0.43,
+        "llm_reasoning": "The z_axis_slicing and 2_5d_architecture stages are directly relevant \u2014 stacking adjacent MRI slices as pseudo-channels is a standard and effective approach for abdominal organ segmentation \u2014 but the template's overall framing is 3D-volume-to-2D-projection (ink on papyrus), whereas GI tract requires per-slice 2D mask output, making the decoder_projection and thresholding stages a poor fit without significant rework."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 1,
+      "bound_approximate": 0,
+      "orchestration": 2,
+      "trivial_inline": 0,
+      "external": 2,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "2.5D slice stacking (3-channel input)",
+        "UNet++ with Swin-Transformer backbone",
+        "SegFormer (B2/B4) ensemble",
+        "Dice + Binary Cross-Entropy loss",
+        "Test-Time Augmentation (TTA)",
+        "Post-processing to remove small components"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "2.5D UNet ensemble with heavy spatial context. 1st place used an ensemble of UNet++ and SegFormer architectures. They used '2.5D' input by stacking 3 consecutive slices (t-1, t, t+1) into RGB channels",
+    "rerank": {
+      "best_match": "hubmap_hpa_human_body_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": ""
+    }
+  },
+  {
+    "competition_id": "hubmap-organ-segmentation",
+    "title": "HuBMAP + HPA - Hacking the Human Body",
+    "domain": "medical",
+    "problem_type": "segmentation",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "hubmap_hpa_human_body_1st",
+        "overlap_score": 21.206346831705126,
+        "family": "semantic_segmentation",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by HuBMAP + HPA - Hacking the Human Body - 1st Place (2022): prepare the data, build task-specific representations, run the main modeling or search loop, ",
+        "llm_score": 0.95,
+        "llm_reasoning": "This is a direct match to the HuBMAP + HPA 'Hacking the Human Body' competition \u2014 multi-organ histopathology segmentation with domain shift across organs and staining protocols is the exact problem, and its stages (stain_translation, pseudo_labeling, multi_organ_backbone, organ_specific_thresholds, contour_smoothing) address every stated challenge including cross-source generalization and organ-type diversity."
+      },
+      {
+        "template": "hubmap_kidney_1st",
+        "overlap_score": 32.51337822363308,
+        "family": "gigapixel_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized",
+        "llm_score": 0.72,
+        "llm_reasoning": "Shares the same modality (H&E histopathology), output type (binary mask), and core technical challenges (gigapixel tiling, stain color variation, IoU-optimized loss), but is scoped to a single organ/structure type; its stain normalization and Lovasz-BCE pipeline components are highly reusable but must be extended with a multi-organ routing mechanism."
+      },
+      {
+        "template": "panda_prostate_mil_1st",
+        "overlap_score": 13.090164398047671,
+        "family": "gigapixel_segmentation",
+        "paradigm": "loss_function",
+        "summary": "This template captures the ordered steps used by Prostate cANcer graDe Assessment (PANDA) - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loo",
+        "llm_score": 0.28,
+        "llm_reasoning": "Shares the gigapixel histopathology modality and white-space culling/tile-generation preprocessing, but the target output is an ordinal cancer grade rather than a pixel-level binary mask, making its ordinal regression head and MIL aggregation incompatible with the FTU segmentation objective."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 1,
+      "bound_approximate": 0,
+      "orchestration": 2,
+      "trivial_inline": 0,
+      "external": 2,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Organ-specific fine-tuning"
+      ],
+      "missing_techniques": [
+        "EfficientNet-B7 and ConvNeXt-Large UNets",
+        "1024x1024 input resolution",
+        "Heavy stain augmentation (Macenko)",
+        "Dice + Lovasz Hinge loss",
+        "Stochastic Weight Averaging (SWA)"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "An ensemble of high-resolution UNets. The 1st place solution utilized UNet backbones with EfficientNet-B7 and ConvNeXt-Large encoders. They used a large crop size (1024x1024) to capture sufficient FTU",
+    "rerank": {
+      "best_match": "hubmap_hpa_human_body_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": ""
+    }
+  },
+  {
+    "competition_id": "feedback-prize-effectiveness",
+    "title": "Feedback Prize - Predicting Effective Arguments",
+    "domain": "nlp",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "feedback_prize_writing_1st",
+        "overlap_score": 11.656627474604603,
+        "family": "nlp_span_detection",
+        "paradigm": "neural_network",
+        "summary": "Break long essays into overlapping chunks, train a model to label each word as the beginning, inside, or outside of a discourse element, then merge overlapping predictions from multiple models and dis"
+      },
+      {
+        "template": "dsb2017_1st",
+        "overlap_score": 9.577185932924767,
+        "family": "medical_imaging_3d",
+        "paradigm": "neural_network",
+        "summary": "Find suspicious lumps in a 3D lung scan, crop and classify each one, then combine the per-lump cancer probabilities into a single patient-level prediction using a formula that accounts for the detecto"
+      },
+      {
+        "template": "dcase2020_sound_event_detection_1st",
+        "overlap_score": 9.017570144989344,
+        "family": "audio_classification",
+        "paradigm": "loss_function",
+        "summary": "This template captures the ordered steps used by DCASE 2020 Task 4 (Sound Event Detection) - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search lo"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 2,
+      "bound_approximate": 3,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Full essay context windowing"
+      ],
+      "missing_techniques": [
+        "DeBERTa-v3-Large with special markers",
+        "Multi-Sample Dropout",
+        "Second-stage LGBM ensemble",
+        "Pseudo-labeling from Feedback 1.0 competition",
+        "Stratified GroupKFold"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Full-essay context modeling with Transformers. 1st place used DeBERTa-v3-Large where the entire essay was input, and specific markers ([START], [END]) were added around the target discourse element. T",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "This problem is span-level multi-class text classification with inter-span contextual dependencies \u2014 the spans (Claim, Evidence, etc.) are already identified; the task is predicting their quality (Effective/Adequate/Ineffective) as a function of the entire essay context. No candidate template addresses this: the closest (feedback_prize_writing_1st) solves the upstream span-detection problem from the Feedback Prize 1 competition, not the downstream effectiveness-scoring problem from Feedback Prize 2. A novel template should center on: (1) encoding each discourse element together with its full essay context via a long-context transformer, (2) explicitly modeling inter-span relational structure (e.g., graph over discourse elements or cross-attention between Claim and its supporting Evidence), (3) handling ordinal label imbalance across Effective/Adequate/Ineffective, and (4) position-aware pooling to capture essay-flow signals that determine whether a claim is adequately supported."
+    }
+  },
+  {
+    "competition_id": "coleridge-initiative-show-us-the-data",
+    "title": "Coleridge Initiative - Show US the Data",
+    "domain": "nlp",
+    "problem_type": "detection",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "mercari_price_1st",
+        "overlap_score": 14.433076437997302,
+        "family": "tabular_text_regression",
+        "paradigm": "optimization",
+        "summary": "Predict product prices by converting item names, descriptions, brands, and categories into sparse numerical features, training a factorization machine for feature interactions, a neural network for te"
+      },
+      {
+        "template": "commonlit_readability_1st",
+        "overlap_score": 12.130491345003257,
+        "family": "nlp_regression",
+        "paradigm": "neural_network",
+        "summary": "Predict how easy a text passage is to read by first teaching language models on similar literature, then using attention-based feature extraction and model averaging to produce stable readability scor"
+      },
+      {
+        "template": "santander_transaction_1st",
+        "overlap_score": 10.074766329940736,
+        "family": "tabular_classification",
+        "paradigm": "optimization",
+        "summary": "Predict which bank customers will make a transaction by first figuring out which test-set rows are fake padding (added by the competition organizers), removing them so they do not corrupt frequency st"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 3,
+      "bound_approximate": 1,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "SciBERT for Named Entity Recognition (NER)",
+        "Dictionary-based literal string matching",
+        "Acronym-to-expansion mapping",
+        "Heuristic cleaning of text spans",
+        "External data scraping (government portals)",
+        "Jaccard similarity thresholding"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Hybrid NER and String Matching approach. 1st place combined a transformer-based NER model (SciBERT) to find potential dataset candidates with a 'literal string matching' algorithm against a large dict",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "The task is scientific Named Entity Recognition (NER) / span extraction \u2014 a sequence-labeling problem on domain-specific text. None of the candidates address this paradigm. A purpose-built pipeline should include: (1) scientific domain-adapted transformer pre-training or use of an existing model such as SciBERT/PubMedBERT, (2) BIO/BIOES token-level or span-boundary sequence labeling head, (3) acronym/alias expansion handling (e.g., abbreviation detection with rule-based or learned expansion to resolve 'WMT14' \u2192 'WMT 2014 News Translation Dataset'), (4) cross-sentence context windows to capture dataset names split across clauses, (5) span-level post-processing to deduplicate and normalize predicted mention strings, and (6) weak supervision or distant supervision bootstrapping from existing dataset knowledge bases (e.g., PapersWithCode) to handle the absence of a canonical entity list."
+    }
+  },
+  {
+    "competition_id": "ventilator-pressure-prediction",
+    "title": "Google Brain - Ventilator Pressure Prediction",
+    "domain": "time_series",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "passenger_screening_dhs_1st",
+        "overlap_score": 12.394701061269895,
+        "family": "time_series_anomaly_detection",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by Passenger Screening Algorithm Challenge (DHS) - 1st Place (2018): prepare the data, build task-specific representations, run the main modeling or searc"
+      },
+      {
+        "template": "osic_pulmonary_1st",
+        "overlap_score": 9.822452401326746,
+        "family": "survival_regression",
+        "paradigm": "neural_network",
+        "summary": "Predict how a patient's lung capacity will change over time by combining features from their CT scan images with clinical measurements, training a neural network that outputs both the predicted value "
+      },
+      {
+        "template": "mercari_price_1st",
+        "overlap_score": 9.534770328874966,
+        "family": "tabular_text_regression",
+        "paradigm": "optimization",
+        "summary": "Predict product prices by converting item names, descriptions, brands, and categories into sparse numerical features, training a factorization machine for feature interactions, a neural network for te"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 0,
+      "bound_approximate": 0,
+      "orchestration": 1,
+      "trivial_inline": 0,
+      "external": 4,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "Deep Bidirectional LSTM / GRU",
+        "Temporal 'delta' and 'lag' features",
+        "Cumulative sum (integral) of air input",
+        "Huber Loss for outlier robustness",
+        "Ensemble of different window sizes",
+        "Multi-stage training with LR scheduler"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Deep sequence modeling with bidirectional LSTMs and GRUs. 1st place used an ensemble of deep (4-8 layers) Bi-LSTMs. They heavily engineered 'delta' features (change in u_in over time) and 'integral' f",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "None of the candidates address sequence-to-sequence time-series regression on regularly-sampled, fixed-length sensor logs. The correct template family would be recurrent/attention-based sequence modeling (LSTM, GRU, Transformer encoder-decoder) or 1-D CNN/TCN regression, with stages covering: (1) breath-level normalization and positional encoding of the 80-step window, (2) sequence model training with a pointwise MSE/MAE objective, (3) optional physical-feature augmentation (e.g., cumulative u_in integral as a proxy for volume), and (4) per-timestep prediction post-processing. No provided template contains these stages or was built for this problem type + modality combination."
+    }
+  },
+  {
+    "competition_id": "g2net-gravitational-wave-detection",
+    "title": "G2Net Gravitational Wave Detection",
+    "domain": "scientific",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "vsb_power_line_1st",
+        "overlap_score": 16.15809210582256,
+        "family": "signal_classification",
+        "paradigm": "signal_transform",
+        "summary": "Detect electrical faults in power lines by cleaning up noisy voltage signals, finding discharge spikes, and combining a tree-based model on spike statistics with a neural network on the cleaned raw si",
+        "llm_score": 0.72,
+        "llm_reasoning": "Strong alignment on problem type (binary signal classification from 1D high-frequency time-series with transient events buried in noise) and key challenges (low SNR, colored noise, physics-informed feature engineering + learned representations). The multi-detector setup (3 channels) maps well to the hybrid pipeline, though gravitational wave strain lacks the discrete spike/discharge structure that wavelet peak detection targets, and the 1D-to-2D reshape is less natural for GW chirp morphology."
+      },
+      {
+        "template": "plasticc_1st",
+        "overlap_score": 16.817263415655102,
+        "family": "time_series_classification",
+        "paradigm": "optimization",
+        "summary": "Classify astronomical objects by extracting statistical features from their brightness measurements over time, smoothing the irregular measurements with Gaussian Processes, and combining gradient boos",
+        "llm_score": 0.38,
+        "llm_reasoning": "Shares the astronomical/physics domain and time-series classification paradigm, but PLAsTiCC targets multi-class irregularly-sampled sparse light curves whereas GW detection is binary classification on dense, regularly-sampled strain data \u2014 GP interpolation and tsfresh feature extraction add unnecessary complexity and the O(n\u00b3) GP cost is prohibitive for GW sample rates (~4096 Hz continuous streams)."
+      },
+      {
+        "template": "moa_prediction_1st",
+        "overlap_score": 20.474594512034113,
+        "family": "multilabel_tabular",
+        "paradigm": "neural_network",
+        "summary": "Predict which biological mechanisms a drug activates by enriching gene and cell features with compressed representations, training multiple neural network architectures, and combining their prediction",
+        "llm_score": 0.1,
+        "llm_reasoning": "Wrong modality entirely \u2014 this template is built for high-dimensional tabular biological assay data with multi-label targets; gravitational wave strain is a 1D time-series binary problem with no tabular structure to exploit via PCA/UMAP enrichment or stacking."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 7,
+      "bound_active": 4,
+      "bound_approximate": 2,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "SpecAugment (frequency/time masking)",
+        "Weighted ensemble of 1D and 2D models"
+      ],
+      "missing_techniques": [
+        "Constant-Q Transform (CQT) for spectrograms",
+        "EfficientNet-B7 and NFNet backbones",
+        "Whitening and Bandpass filtering",
+        "Large-scale synthetic data generation"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Spectrogram-based Computer Vision. 1st place converted the 1D strain data into 2D spectrograms using Constant-Q Transform (CQT). They used an ensemble of EfficientNet-B7 and NFNet-F0 models. They appl",
+    "rerank": {
+      "best_match": "vsb_power_line_1st",
+      "should_compose_novel": true,
+      "novel_reasoning": "While vsb_power_line_1st is the closest analogue (1D signal binary classification with high noise), the gravitational wave problem has critical differences that reduce its applicability below a reliable threshold: (1) GW chirp signals are smooth, broadband, frequency-sweeping waveforms \u2014 not discrete transient spikes \u2014 so wavelet peak detection will miss them; (2) matched filtering against theoretical waveform templates (CBC templates via PyCBC/LALSuite) is the dominant physics-informed feature, which no template encodes; (3) the three-detector coherence/time-delay constraint (inter-site consistency check across Hanford, Livingston, Virgo with light-travel-time windows) is a unique multi-channel correlation structure absent from all candidates; (4) the noise is non-white 'colored' Gaussian with known spectral shape (detector PSD), motivating whitening as a mandatory preprocessing step not represented in any template. A novel pipeline should combine: PSD-based signal whitening \u2192 bandpass filtering (20\u2013500 Hz) \u2192 matched filter bank or spectrogram (Q-transform) \u2192 multi-detector coherence features \u2192 1D CNN or transformer on whitened strain + gradient boosting on matched filter SNR time series."
+    }
+  },
+  {
+    "competition_id": "vinbigdata-chest-xray-abnormalities-detection",
+    "title": "VinBigData Chest X-ray Abnormalities Detection",
+    "domain": "medical",
+    "problem_type": "detection",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "rsna_pneumonia_1st",
+        "overlap_score": 40.395747671206564,
+        "family": "medical_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Find pneumonia in chest X-rays by running two different object detection models (RetinaNet and Mask R-CNN) on the same images, removing duplicate detections within each model, then merging their bound",
+        "llm_score": 0.61,
+        "llm_reasoning": "Exact domain and modality match \u2014 DICOM chest X-rays with dual-detector ensemble and NMS post-processing directly applies \u2014 but the explicit contraindication for multi-class detection with >10 categories (this problem has 14) means the IoU-based box ensemble will produce ambiguous cross-class merges, undermining the core ensembling mechanism."
+      },
+      {
+        "template": "global_wheat_1st",
+        "overlap_score": 22.56984915801486,
+        "family": "object_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Detect wheat heads in field images by training two different detection models with aggressive image augmentation, using the models to generate labels on unlabeled test data, retraining on the combined",
+        "llm_score": 0.42,
+        "llm_reasoning": "2D bounding-box detection with WBF ensemble and architectural diversity (two-stage + one-stage) is structurally relevant, and 14 classes is under the >20-class contraindication threshold, but the template assumes natural-image inputs with significant train/test domain shift and lacks any DICOM windowing or medical-noise handling that the radiologist-disagreement challenge demands."
+      },
+      {
+        "template": "dsb2017_1st",
+        "overlap_score": 19.524698042715098,
+        "family": "medical_imaging_3d",
+        "paradigm": "neural_network",
+        "summary": "Find suspicious lumps in a 3D lung scan, crop and classify each one, then combine the per-lump cancer probabilities into a single patient-level prediction using a formula that accounts for the detecto",
+        "llm_score": 0.18,
+        "llm_reasoning": "Shares the medical imaging domain and a detect-then-classify paradigm, but is built entirely around 3D CT volumes and patient-level aggregation via Noisy-OR \u2014 none of these stages transfer to 2D chest X-ray multi-class bounding-box prediction."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 1,
+      "bound_approximate": 4,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "Weighted Boxes Fusion (WBF)",
+        "2-stage detection: Global classifier + BBox detector"
+      ],
+      "missing_techniques": [
+        "YOLOv5 and Faster R-CNN (ResNet101)",
+        "Heavy mixup and mosaic augmentation",
+        "Radiologist-specific 'Consensus' filtering",
+        "Test-Time Augmentation (TTA)"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Ensemble of Object Detectors with box fusion. 1st place used an ensemble of YOLOv5 and Faster R-CNN (Detectron2). They utilized 'Weighted Boxes Fusion' (WBF) to consolidate overlapping predictions fro",
+    "rerank": {
+      "best_match": "rsna_pneumonia_1st",
+      "should_compose_novel": true,
+      "novel_reasoning": "No template cleanly fits. rsna_pneumonia_1st is the closest domain match but carries an explicit contraindication for >10-class detection, which is the exact regime here (14 classes). More critically, none of the candidates address the defining challenge of this problem: noisy multi-annotator consensus labels and radiologist disagreement. A purpose-built pipeline would need to combine (a) a multi-class 2D medical detector backbone (e.g., YOLOX or EfficientDet) with DICOM-aware preprocessing, (b) a label-noise-robust training objective such as soft labels derived from annotator agreement scores or Noisy-Student distillation, (c) class-aware WBF ensemble rather than the class-agnostic IoU merge in rsna_pneumonia_1st, and (d) a false-positive reduction stage calibrated per pathology class to handle the 14-way imbalance."
+    }
+  },
+  {
+    "competition_id": "riiid-test-answer-prediction",
+    "title": "Riiid AIEd Challenge 2020",
+    "domain": "time_series",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "mercari_price_1st",
+        "overlap_score": 17.913966588568705,
+        "family": "tabular_text_regression",
+        "paradigm": "optimization",
+        "summary": "Predict product prices by converting item names, descriptions, brands, and categories into sparse numerical features, training a factorization machine for feature interactions, a neural network for te"
+      },
+      {
+        "template": "cause_effect_2nd",
+        "overlap_score": 12.49595716534263,
+        "family": "causal_inference",
+        "paradigm": "analysis",
+        "summary": "For each pair of variables, compute features that are different depending on which causes which, then train classifiers on those features and enforce the physical constraint that if A causes B then B "
+      },
+      {
+        "template": "facebook_image_similarity_1st",
+        "overlap_score": 11.923324748212188,
+        "family": "multimodal_retrieval",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by Facebook AI Image Similarity Challenge - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or search loop,"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 3,
+      "bound_approximate": 1,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "SAINT+ Transformer (Encoder-Decoder)",
+        "Temporal embedding for 'time since last action'",
+        "Handcrafted rolling features (LGBM)",
+        "Target encoding for Question IDs",
+        "Memory-efficient data processing (Numpy/CUDF)",
+        "Embedding for content 'tags'"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Transformer-based sequence modeling (SAINT+). 1st place used an encoder-decoder Transformer architecture that separately processed question features (ID, tags) and response features (correctness, elap",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "This is a Knowledge Tracing problem \u2014 sequential binary classification over 100M+ timestamped (student, question, response) tuples \u2014 and none of the candidates address its two defining requirements. First, long-range temporal dependency: the correctness of interaction t depends on the full ordered history of prior interactions, demanding sequence models (Transformer encoder with causal masking, LSTM, or a dedicated architecture like DKVMN/SAINT/AKT). Second, massive-scale online inference: 100M interactions require memory-efficient data pipelines (chunked HDF5 or TFRecord ingestion), mixed-precision training, and optionally approximate attention (Performer, Longformer) to handle long context windows. A novel template should compose: (1) interaction sequence featurization with elapsed-time encoding, (2) a causal Transformer or LSTM knowledge-tracing backbone, (3) large-batch distributed training with gradient checkpointing, (4) binary cross-entropy with AUC as the primary metric, and (5) sliding-window or streaming inference to handle arbitrarily long student histories at serving time."
+    }
+  },
+  {
+    "competition_id": "ashrae-energy-prediction",
+    "title": "ASHRAE - Great Energy Predictor III",
+    "domain": "time_series",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "nasa_pushback_phase1_1st",
+        "overlap_score": 10.459075238081589,
+        "family": "tabular_regression",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by NASA Airport Pushback Phase 1 - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert out",
+        "llm_score": 0.42,
+        "llm_reasoning": "Problem type (tabular regression) and offline batch processing paradigm match; the entity_splitting and parallel_modeling stages map naturally onto the buildings \u00d7 meter-type structure, enabling per-meter models trained in parallel. However, the template's airline_sequencing stage is domain-specific and the pipeline lacks any temporal/time-series feature engineering, seasonality handling, or anomaly/zero-reading treatment that are load-bearing for the energy-forecasting problem."
+      },
+      {
+        "template": "nasa_airport_pushback_phase_1_3rd_place_1st",
+        "overlap_score": 10.650130474844298,
+        "family": "tabular_regression",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by NASA Airport Pushback Phase 1 - 3rd Place (2022): prepare the data, build task-specific representations, train or apply the main model, and convert out",
+        "llm_score": 0.34,
+        "llm_reasoning": "Tabular regression family and feature_engineering \u2192 primary_regression \u2192 residual_calculation pipeline topology are directionally correct, and the secondary_classification + probabilistic_adjustment stages could loosely model the 'is this reading anomalous/zero?' decision; but the template is optimized for discrete-event airport prediction rather than continuous multi-meter time-series forecasting, and none of its stages address temporal autocorrelation, lag features, or the data-leak/outlier challenges central to this problem."
+      },
+      {
+        "template": "lyft_motion_1st",
+        "overlap_score": 10.109357774710356,
+        "family": "trajectory_prediction",
+        "paradigm": "neural_network",
+        "summary": "Predict where nearby cars will drive by converting road maps and vehicle histories into overhead images, feeding them through image-recognition neural networks that output three possible future paths ",
+        "llm_score": 0.04,
+        "llm_reasoning": "Wrong problem type (trajectory prediction) and wrong modality (BEV rasterized images); no overlap with tabular time-series regression for building energy meters."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 0,
+      "bound_approximate": 0,
+      "orchestration": 4,
+      "trivial_inline": 0,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Weather data imputation (bidirectional)"
+      ],
+      "missing_techniques": [
+        "LightGBM with custom loss",
+        "Site-specific unit correction (site 0)",
+        "Removal of long 'zero' reading streaks",
+        "Lagged weather features (3h, 6h, 72h)",
+        "Ensemble with CatBoost and XGBoost"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "LightGBM ensemble with extensive cleaning. 1st place identified that 'site 0' (UCF) had meter readings in different units (kWh vs kBTU) and corrected them. They used a cross-validation strategy that a",
+    "rerank": {
+      "best_match": "nasa_pushback_phase1_1st",
+      "should_compose_novel": true,
+      "novel_reasoning": "The energy consumption problem is fundamentally a multi-entity time-series regression task (buildings \u00d7 4 meter types, hourly resolution over 3 years) with domain-specific challenges \u2014 temporal seasonality, lag/rolling-window features, weather-interaction terms, zero-reading anomaly detection, and outlier clipping \u2014 that none of the five candidates address. The two tabular-regression templates (candidates 2 and 3) provide a plausible skeleton (entity splitting, parallel modeling, feature engineering) but were designed for discrete-event airport prediction and lack the time-series preprocessing, temporal cross-validation strategy, and anomaly/data-leak handling stages that are the actual load-bearing elements for this problem. A novel template should compose: (1) temporal feature extraction (hour-of-day, day-of-week, holiday flags, lag/rolling stats), (2) building metadata enrichment, (3) weather join and interpolation, (4) zero/anomaly detection and flagging, (5) per-meter-type entity splitting, (6) parallel gradient-boosted tree training with time-series CV, (7) optional neural sequence model blending, and (8) post-processing / outlier capping on predictions."
+    }
+  },
+  {
+    "competition_id": "recursion-cellular-image-classification",
+    "title": "Recursion Cellular Image Classification",
+    "domain": "medical",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "moa_prediction_1st",
+        "overlap_score": 21.166878409856,
+        "family": "multilabel_tabular",
+        "paradigm": "neural_network",
+        "summary": "Predict which biological mechanisms a drug activates by enriching gene and cell features with compressed representations, training multiple neural network architectures, and combining their prediction"
+      },
+      {
+        "template": "global_wheat_1st",
+        "overlap_score": 17.821430335647108,
+        "family": "object_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Detect wheat heads in field images by training two different detection models with aggressive image augmentation, using the models to generate labels on unlabeled test data, retraining on the combined"
+      },
+      {
+        "template": "melanoma_1st",
+        "overlap_score": 14.58317284749652,
+        "family": "medical_image_tabular",
+        "paradigm": "neural_network",
+        "summary": "Detect skin cancer from photographs by training image-recognition networks with realistic data distortions, combining image features with patient information, adding pseudo-labeled historical data, an"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 2,
+      "bound_approximate": 4,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Pseudo-labeling for batch alignment"
+      ],
+      "missing_techniques": [
+        "ArcFace (Additive Angular Margin Loss)",
+        "EfficientNet-B2 and DenseNet121 ensemble",
+        "Adaptive Batch Normalization (per-plate)",
+        "Plate-level feature centering",
+        "6-channel image input handling"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "ArcFace with batch-normalization correction. 1st place used an ensemble of DenseNet and EfficientNet models. To combat batch effects, they implemented a 'Adaptive Batch Norm' where BN statistics were ",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate covers the defining requirements of this problem: (1) raw multi-channel fluorescence microscopy as input requiring channel-aware CNN or ViT backbones, (2) 1,108-way single-label classification rather than binary or ordinal targets, and (3) plate/site batch-effect correction as a first-class concern \u2014 typically addressed via well-level normalization, CORAL/MMD domain adaptation, or contrastive/metric-learning objectives that penalize plate-identity signals. A novel template should combine cell-painting-aware augmentation (channel dropout, intensity jitter per channel), batch-effect normalization (sphering/whitening per plate), a metric-learning or large-margin classification loss tolerant of 1 K+ classes, and an ensemble that aggregates predictions across multiple wells of the same treatment to reduce within-plate variance."
+    }
+  },
+  {
+    "competition_id": "elo-merchant-category-recommendation",
+    "title": "Elo Merchant Category Recommendation",
+    "domain": "recommender",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "santander_transaction_1st",
+        "overlap_score": 15.128726748775366,
+        "family": "tabular_classification",
+        "paradigm": "optimization",
+        "summary": "Predict which bank customers will make a transaction by first figuring out which test-set rows are fake padding (added by the competition organizers), removing them so they do not corrupt frequency st"
+      },
+      {
+        "template": "predict_future_sales_benchmark",
+        "overlap_score": 13.824670485892447,
+        "family": "time_series_forecasting",
+        "paradigm": "loss_function",
+        "summary": "This template captures the ordered steps used by Predict Future Sales - Kaggle Benchmark Standard (2015): prepare the data, build task-specific representations, run the main modeling or search loop, a"
+      },
+      {
+        "template": "mercari_price_1st",
+        "overlap_score": 12.651788268636542,
+        "family": "tabular_text_regression",
+        "paradigm": "optimization",
+        "summary": "Predict product prices by converting item names, descriptions, brands, and categories into sparse numerical features, training a factorization machine for feature interactions, a neural network for te"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 2,
+      "bound_approximate": 1,
+      "orchestration": 0,
+      "trivial_inline": 3,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "2-stage outlier detection (Classifier + Regressor)",
+        "Target encoding for merchant/category IDs"
+      ],
+      "missing_techniques": [
+        "LightGBM with early stopping",
+        "Transaction aggregation (Mean, Max, Sum, Std)",
+        "Feature selection using permutation importance",
+        "Bayesian Optimization for hyper-parameters"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Feature engineering-heavy LightGBM ensemble. 1st place focused on aggregating transaction data at different time grains (monthly, weekly). They used a 'Binary Classifier' as a first stage to detect po",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate template addresses the three defining characteristics of this problem: (1) tabular regression on a single continuous loyalty target per cardholder, (2) an extremely noisy target that warrants outlier-aware loss functions (e.g., Huber loss, clipped MSE) or a two-model strategy separating outlier vs. non-outlier cardholders, and (3) the need to engineer dense aggregate features (spend statistics, recency, frequency, merchant-category distributions) from millions of transaction rows up to the card level before GBDT modeling. The closest template (predict_future_sales_benchmark) handles transaction aggregation and GBDT but is designed for rolling-window time-series forecasting, not cross-sectional loyalty score regression with noisy-label outlier detection. A novel template should compose: transaction_aggregation \u2192 outlier_flag_detection \u2192 dual_track_gbdt (outlier vs. non-outlier) \u2192 robust_loss_training \u2192 stacked_ensemble."
+    }
+  },
+  {
+    "competition_id": "humpback-whale-identification",
+    "title": "Humpback Whale Identification",
+    "domain": "scientific",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "petfinder_adoption_1st",
+        "overlap_score": 17.390297480790366,
+        "family": "multimodal_classification",
+        "paradigm": "optimization",
+        "summary": "Predict how quickly a pet will be adopted by combining information from its photos, text description, and profile data, training multiple models and then optimizing the cutoff points between adoption "
+      },
+      {
+        "template": "moa_prediction_1st",
+        "overlap_score": 16.645455263105198,
+        "family": "multilabel_tabular",
+        "paradigm": "neural_network",
+        "summary": "Predict which biological mechanisms a drug activates by enriching gene and cell features with compressed representations, training multiple neural network architectures, and combining their prediction"
+      },
+      {
+        "template": "santander_transaction_1st",
+        "overlap_score": 14.89625540829594,
+        "family": "tabular_classification",
+        "paradigm": "optimization",
+        "summary": "Predict which bank customers will make a transaction by first figuring out which test-set rows are fake padding (added by the competition organizers), removing them so they do not corrupt frequency st"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 0,
+      "bound_approximate": 1,
+      "orchestration": 3,
+      "trivial_inline": 1,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.0,
+      "covered_techniques": [],
+      "missing_techniques": [
+        "Siamese Network with Triplet Loss",
+        "ResNet-101 and Senet-154 backbones",
+        "Whale-tail alignment (bounding box crop)",
+        "Pseudo-labeling of unlabeled images",
+        "Hard triplet mining",
+        "Binary classifier for 'New Whale' detection"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Metric Learning with Siamese Networks. 1st place used an ensemble of ResNet-101 and Senet-154 models. They utilized a 'Triplet Loss' architecture to learn an embedding space where images of the same w",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "The humpback whale problem is a few-shot fine-grained image retrieval / open-set recognition task: 5,000+ nominal identity classes, heavy class imbalance (many single-image individuals), and subtle inter-class visual similarity. None of the candidates address metric learning, contrastive/triplet/ArcFace losses, nearest-neighbor retrieval in embedding space, or test-time augmentation for identity matching. A novel template should be composed around: (1) backbone fine-tuning with ArcFace or CosFace loss for discriminative embeddings, (2) heavy fluke-specific augmentation (horizontal flip, brightness, occlusion), (3) gallery embedding indexing with approximate nearest-neighbor search (FAISS), (4) re-ranking with query expansion or reciprocal-neighbor re-scoring, and (5) a 'new_whale' threshold calibration step to handle unseen individuals."
+    }
+  },
+  {
+    "competition_id": "quora-insincere-questions-classification",
+    "title": "Quora Insincere Questions Classification",
+    "domain": "nlp",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "jigsaw_toxicity_bias_1st",
+        "overlap_score": 17.243268655476694,
+        "family": "nlp_fairness",
+        "paradigm": "neural_network",
+        "summary": "Detect toxic comments while being fair across demographic groups by training multiple large language models with a custom loss function that pays extra attention to comments mentioning specific identi"
+      },
+      {
+        "template": "dsb2017_1st",
+        "overlap_score": 15.737947587935162,
+        "family": "medical_imaging_3d",
+        "paradigm": "neural_network",
+        "summary": "Find suspicious lumps in a 3D lung scan, crop and classify each one, then combine the per-lump cancer probabilities into a single patient-level prediction using a formula that accounts for the detecto"
+      },
+      {
+        "template": "feedback_prize_writing_1st",
+        "overlap_score": 14.381783143609752,
+        "family": "nlp_span_detection",
+        "paradigm": "neural_network",
+        "summary": "Break long essays into overlapping chunks, train a model to label each word as the beginning, inside, or outside of a discourse element, then merge overlapping predictions from multiple models and dis"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 4,
+      "bound_approximate": 1,
+      "orchestration": 0,
+      "trivial_inline": 1,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "Text cleaning (contraction expansion, punctuation)",
+        "Efficient batch padding"
+      ],
+      "missing_techniques": [
+        "Bidirectional GRU + Attention",
+        "GloVe and Paragram embedding fusion",
+        "Threshold optimization for F1 score",
+        "Cyclic Learning Rate (CLR)"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Ensemble of Bi-GRU/LSTM with pre-trained embeddings. 1st place used an ensemble of RNN architectures (Bidirectional GRU and LSTM) with Attention layers. They combined multiple pre-trained word embeddi",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "The problem is the Quora Insincere Questions Classification setup: short-text binary NLP classification under a strict 2-hour single-GPU no-internet inference budget. The closest template (jigsaw_toxicity_bias_1st) shares the toxicity-classification domain but is disqualified by its two core contraindications \u2014 no demographic identity columns exist, and its multi-transformer ensemble exceeds the inference time budget. A novel template should center on: (1) lightweight single-model or two-model transformer fine-tuning (e.g., BERT-base or DistilBERT) with standard binary cross-entropy, (2) aggressive sequence length truncation given short question text, (3) threshold tuning on the validation F1 (the competition metric), (4) optional single-pass multi-sample dropout for calibration without inference overhead, and (5) offline embedding of pretrained weights to satisfy the no-internet constraint."
+    }
+  },
+  {
+    "competition_id": "google-ai-open-images-visual-relationship-detection",
+    "title": "Google AI Open Images - Visual Relationship Detection",
+    "domain": "cv",
+    "problem_type": "detection",
+    "assessment": "partial",
+    "template_matches": [
+      {
+        "template": "global_wheat_1st",
+        "overlap_score": 20.103143854156066,
+        "family": "object_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Detect wheat heads in field images by training two different detection models with aggressive image augmentation, using the models to generate labels on unlabeled test data, retraining on the combined"
+      },
+      {
+        "template": "bengali_grapheme_1st",
+        "overlap_score": 15.619670603145495,
+        "family": "multitask_image_classification",
+        "paradigm": "neural_network",
+        "summary": "Classify handwritten Bengali characters by breaking them into three components (root shape, vowel mark, consonant mark), training a shared neural network with three separate output heads, focusing tra"
+      },
+      {
+        "template": "rsna_pneumonia_1st",
+        "overlap_score": 15.534112714783848,
+        "family": "medical_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Find pneumonia in chest X-rays by running two different object detection models (RetinaNet and Mask R-CNN) on the same images, removing duplicate detections within each model, then merging their bound"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 4,
+      "bound_approximate": 2,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.5,
+      "covered_techniques": [
+        "Faster R-CNN with Feature Pyramid Network (FPN)",
+        "Union box feature extraction",
+        "Multi-scale training/inference"
+      ],
+      "missing_techniques": [
+        "Relationship-specific Triplet Head",
+        "Class-specific frequency priors",
+        "Non-Maximum Suppression (NMS) for triplets"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Relation Proposal Network (RelPN). 1st place used a Faster R-CNN with an FPN backbone to detect subjects and objects. They then used a 'Triplet Head' that took the concatenated features of the subject",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "Visual Relationship Detection is a distinct paradigm not covered by any candidate. It requires: (1) dual-stream ROI feature extraction \u2014 separate appearance features for subject and object crops plus a union-region feature for the interaction context; (2) spatial configuration encoding (relative bounding-box offsets, size ratios, spatial masks) as an explicit input channel; (3) a predicate classifier over a highly imbalanced, long-tailed label space (combinatorial explosion of S\u00d7P\u00d7O triplets); and (4) likely a graph or attention module to propagate context across all detected object pairs in the scene. None of the templates (dense detection, grapheme decomposition, medical detection, basket prediction, geometric matching) provide scaffolding for pairwise relational reasoning over region proposals, so a novel template grounded in the VRD/scene-graph literature (e.g., VTransE, RelDN, or BGNN-style approaches) should be composed."
+    }
+  },
+  {
+    "competition_id": "landmark-recognition-2020",
+    "title": "Google Landmark Recognition 2020",
+    "domain": "cv",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "bengali_grapheme_1st",
+        "overlap_score": 22.866885672067983,
+        "family": "multitask_image_classification",
+        "paradigm": "neural_network",
+        "summary": "Classify handwritten Bengali characters by breaking them into three components (root shape, vowel mark, consonant mark), training a shared neural network with three separate output heads, focusing tra"
+      },
+      {
+        "template": "petfinder_adoption_1st",
+        "overlap_score": 19.646693191315034,
+        "family": "multimodal_classification",
+        "paradigm": "optimization",
+        "summary": "Predict how quickly a pet will be adopted by combining information from its photos, text description, and profile data, training multiple models and then optimizing the cutoff points between adoption "
+      },
+      {
+        "template": "melanoma_1st",
+        "overlap_score": 19.637136804594817,
+        "family": "medical_image_tabular",
+        "paradigm": "neural_network",
+        "summary": "Detect skin cancer from photographs by training image-recognition networks with realistic data distortions, combining image features with patient information, adding pseudo-labeled historical data, an"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 3,
+      "bound_approximate": 3,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "Progressive image resizing during training",
+        "Large-scale distributed training (TPU)"
+      ],
+      "missing_techniques": [
+        "EfficientNet-B7 with GeM pooling",
+        "Sub-center ArcFace Loss",
+        "Dynamic Margin Scaling",
+        "Test-Time Augmentation (TTA)"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Sub-center ArcFace with Global Descriptors. 1st place used an ensemble of EfficientNet (B7) and ResNet backbones. They used Generalized Mean Pooling (GeM) to extract global descriptors and a 'Sub-cent",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "This is a large-scale metric learning / image retrieval problem disguised as classification. With 80K+ classes and many having only 1-2 training examples, a standard softmax head cannot be trained end-to-end; the winning paradigm requires (1) ArcFace/CosFace angular margin loss to learn a discriminative embedding space rather than class probabilities, (2) a gallery index (FAISS or similar approximate nearest-neighbor) for test-time retrieval, (3) a confidence score derived from embedding cosine similarity or re-ranking (QE/DBA), (4) aggressive hard-negative mining or global descriptor aggregation (GeM pooling, DELG local features) to handle visually similar landmarks, and (5) class-conditioned augmentation or oversampling for the extreme long tail. None of the five candidates model embedding-space retrieval, angular margin losses, or ANN index construction, so a novel template combining metric learning + retrieval + long-tail augmentation is required."
+    }
+  },
+  {
+    "competition_id": "generative-dog-images",
+    "title": "Generative Dog Images",
+    "domain": "cv",
+    "problem_type": "generation",
+    "assessment": "partial",
+    "template_matches": [
+      {
+        "template": "hubmap_kidney_1st",
+        "overlap_score": 15.680295224961931,
+        "family": "gigapixel_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized"
+      },
+      {
+        "template": "global_wheat_1st",
+        "overlap_score": 13.029874136696357,
+        "family": "object_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Detect wheat heads in field images by training two different detection models with aggressive image augmentation, using the models to generate labels on unlabeled test data, retraining on the combined"
+      },
+      {
+        "template": "vesuvius_ink_detection_1st",
+        "overlap_score": 12.922912339671557,
+        "family": "semantic_segmentation",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by Vesuvius Challenge 2023 - 1st Place (2023): prepare the data, build task-specific representations, train or apply the main model, and convert outputs i"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 2,
+      "bound_approximate": 4,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.5,
+      "covered_techniques": [
+        "BigGAN architecture",
+        "Spectral Normalization",
+        "Differentiable Augmentation"
+      ],
+      "missing_techniques": [
+        "Self-Attention modules",
+        "Two-timescale Update Rule (TTUR)",
+        "Hinge Loss for GANs"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Customized BigGAN architecture. The winning solution utilized a BigGAN-inspired model with 'Spectral Normalization' in both the generator and discriminator. They applied 'Self-Attention' modules to ca",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "All five candidates are discriminative pipelines (segmentation, detection, or adversarial attack) operating on existing images; none address unconditional generative modeling. The target problem requires a GAN (or diffusion-based) template covering: progressive growing or StyleGAN-style architecture for 64x64 synthesis, FID/IS-aware training loops, truncation-trick diversity control, data augmentation strategies for limited training data (DiffAugment, ADA), multi-breed conditioning or class-conditional generation for diversity, and GPU-budget-aware training schedules. A novel template should be composed around these generative-specific stages."
+    }
+  },
+  {
+    "competition_id": "recognizing-faces-in-the-wild",
+    "title": "Northeastern SMILE Lab - Recognizing Faces in the Wild",
+    "domain": "cv",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "melanoma_1st",
+        "overlap_score": 15.085264791293756,
+        "family": "medical_image_tabular",
+        "paradigm": "neural_network",
+        "summary": "Detect skin cancer from photographs by training image-recognition networks with realistic data distortions, combining image features with patient information, adding pseudo-labeled historical data, an"
+      },
+      {
+        "template": "global_wheat_1st",
+        "overlap_score": 14.233228449286614,
+        "family": "object_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Detect wheat heads in field images by training two different detection models with aggressive image augmentation, using the models to generate labels on unlabeled test data, retraining on the combined"
+      },
+      {
+        "template": "bengali_grapheme_1st",
+        "overlap_score": 11.910840728996389,
+        "family": "multitask_image_classification",
+        "paradigm": "neural_network",
+        "summary": "Classify handwritten Bengali characters by breaking them into three components (root shape, vowel mark, consonant mark), training a shared neural network with three separate output heads, focusing tra"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 2,
+      "bound_approximate": 4,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "VGGFace2 pre-training",
+        "Kinship-specific data augmentation"
+      ],
+      "missing_techniques": [
+        "Siamese Network (ResNet-50)",
+        "Contrastive / Triplet Loss",
+        "MTCNN for face alignment",
+        "Parent-Child feature fusion"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Kinship-specific Metric Learning. 1st place used a Siamese network with a ResNet-50 backbone pre-trained on the VGGFace2 dataset. They used a 'Contrastive Loss' to minimize the distance between relate",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "Kinship verification is a Siamese / contrastive pair-verification problem that none of the candidates address directly. The ideal template would center on: (1) face detection + alignment preprocessing (MTCNN or RetinaFace), (2) a shared backbone trained with a contrastive or triplet loss (or ArcFace fine-tuned on kinship pairs) to produce identity-disentangled yet kinship-sensitive embeddings, (3) a pairwise feature-fusion head (element-wise difference, product, or concatenation) fed into a binary MLP, (4) hard-negative mining to surface subtle non-kin pairs that look superficially similar, and (5) test-time augmentation over pose/lighting variations with score averaging. The closest candidate (shopee_price_match_1st) covers embedding + similarity scoring but is missing the Siamese training objective, hard-negative mining, and the face-specific preprocessing chain that are load-bearing for kinship."
+    }
+  },
+  {
+    "competition_id": "airbus-ship-detection",
+    "title": "Airbus Ship Detection Challenge",
+    "domain": "cv",
+    "problem_type": "segmentation",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "severstal_steel_1st",
+        "overlap_score": 27.673276530578736,
+        "family": "semantic_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Detect steel defects by first using a classifier to decide if an image has any defect at all, then applying detailed segmentation models only to images likely containing defects, and finally removing ",
+        "llm_score": 0.88,
+        "llm_reasoning": "Near-perfect challenge alignment: the ship problem has the same structural signature as steel defect detection \u2014 a high negative-image rate (mostly empty sea mirrors mostly defect-free steel), small targets relative to image area (tiny ships mirror small defect regions), and a need to suppress false positives on negative images. The classifier-gate \u2192 segmentation \u2192 area-threshold pipeline directly addresses all three stated challenges (class imbalance, tiny ships, close-proximity false positives), and the 'use when >70% images contain no target' criterion is squarely met by an ocean imagery dataset."
+      },
+      {
+        "template": "dstl_satellite_features_1st",
+        "overlap_score": 15.007951742402852,
+        "family": "geospatial_segmentation",
+        "paradigm": "neural_network",
+        "summary": "This template captures the ordered steps used by Dstl Satellite Imagery Feature Detection - 1st Place (2017): prepare the data, build task-specific representations, run the main modeling or search loo",
+        "llm_score": 0.72,
+        "llm_reasoning": "Exact modality match (satellite imagery, geospatial segmentation) and the multi-resolution concatenation stage is well-suited for detecting tiny ships in large scenes; however, the template is oriented toward polygon/vector output and multi-class land-cover features rather than binary instance masks with RLE encoding, and it does not explicitly address the extreme class imbalance or the classifier-gating strategy that is critical for mostly-empty-sea images."
+      },
+      {
+        "template": "hubmap_kidney_1st",
+        "overlap_score": 16.094455433536133,
+        "family": "gigapixel_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized",
+        "llm_score": 0.22,
+        "llm_reasoning": "Shares the binary segmentation objective and the Lovasz-BCE loss is useful for IoU-evaluated mask prediction, but the template is designed for gigapixel histopathology (>10,000px) whereas ship images are 768\u00d7768 \u2014 the 'do not use when images are standard resolution' contraindication applies directly \u2014 and stain normalization is entirely irrelevant for satellite RGB data."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 1,
+      "bound_approximate": 3,
+      "orchestration": 1,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "U-Net with ResNet-34 encoder",
+        "Binary classifier for image filtering"
+      ],
+      "missing_techniques": [
+        "Dice + Binary Cross-Entropy Loss",
+        "Border/Edge weighted loss",
+        "Test-Time Augmentation (TTA)",
+        "SWA (Stochastic Weight Averaging)"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "2-stage Detection and Segmentation. 1st place used a 'U-Net' architecture with a ResNet-34 backbone for segmentation. They preceded this with a 'Ship Classifier' (Binary) to remove empty images from t",
+    "rerank": {
+      "best_match": "severstal_steel_1st",
+      "should_compose_novel": false,
+      "novel_reasoning": ""
+    }
+  },
+  {
+    "competition_id": "pubg-finish-placement-prediction",
+    "title": "PUBG Finish Placement Prediction",
+    "domain": "tabular",
+    "problem_type": "regression",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "nfl_big_data_bowl_1st",
+        "overlap_score": 15.716434271577803,
+        "family": "trajectory_prediction",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by NFL Big Data Bowl - 1st Place (2020): prepare the data, build task-specific representations, run the main modeling or search loop, and convert outputs "
+      },
+      {
+        "template": "hubmap_kidney_1st",
+        "overlap_score": 11.177483030193939,
+        "family": "gigapixel_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized"
+      },
+      {
+        "template": "image_matching_1st",
+        "overlap_score": 11.011259769132412,
+        "family": "geometric_matching",
+        "paradigm": "geometry",
+        "summary": "Find matching points between two photos using multiple neural-network detectors, combine all the matches, then use a robust algorithm to throw out wrong matches and compute the geometric relationship "
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 1,
+      "bound_approximate": 0,
+      "orchestration": 1,
+      "trivial_inline": 2,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "Multi-Layer Perceptron (MLP) with Embeddings",
+        "Rank-based features within matches"
+      ],
+      "missing_techniques": [
+        "Group-level feature aggregation",
+        "LightGBM for feature importance",
+        "Target rescaling post-processing",
+        "Feature engineering for 'kill-streaks'"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Group-aware MLP and LightGBM. 1st place solution heavily relied on 'group-aggregated' features (mean/max kills in a squad, rank within a match). They used a Deep Neural Network (MLP) with categorical ",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "The PUBG problem is a hierarchical tabular regression task: pure structured data (kills, damage, distance, etc.) grouped by match and squad, with a target (winPlacePerc) that is relative within each match \u2014 making naive row-level regression incorrect without group-aware normalization or rank-based post-processing. None of the five candidates cover tabular feature engineering, within-group rank normalization, gradient-boosted tree ensembles (LightGBM/XGBoost), or the group-leakage pitfalls unique to this competition structure. A novel template should include: match-level feature aggregation, group-relative feature encoding, stratified group k-fold CV (split on matchId to prevent leakage), a GBDT backbone, and a rank-to-percentile post-processing step that enforces the 0\u20131 output range within each match."
+    }
+  },
+  {
+    "competition_id": "talkingdata-adtracking-fraud-detection",
+    "title": "TalkingData AdTracking Fraud Detection Challenge",
+    "domain": "tabular",
+    "problem_type": "classification",
+    "assessment": "partial",
+    "template_matches": [
+      {
+        "template": "outbrain_click_prediction_1st",
+        "overlap_score": 15.098646850787013,
+        "family": "structured_prediction",
+        "paradigm": "optimization",
+        "summary": "This template captures the ordered steps used by Outbrain Click Prediction - 1st Place (2017): prepare the data, build task-specific representations, run the main modeling or search loop, and convert ",
+        "llm_score": 0.72,
+        "llm_reasoning": "Strongest match by domain: AdTech structured click logs, massive scale, and stages like feature_hashing, FFM, and FTRL are industry-standard for click-level binary prediction at 200M+ rows. However, the source task is learning-to-rank (CTR relevance), not fraud/anomaly detection, so the data_leak_extraction stage and rank_averaging may not transfer cleanly to a probability-of-download target with heavy class imbalance and IP-level temporal burst patterns."
+      },
+      {
+        "template": "porto_seguro_1st",
+        "overlap_score": 12.267600558975662,
+        "family": "tabular_classification",
+        "paradigm": "neural_network",
+        "summary": "Predict which drivers will file insurance claims by first training a neural network to reconstruct noisy versions of the input data, then using its internal representations as extra features alongside",
+        "llm_score": 0.42,
+        "llm_reasoning": "Tabular binary classification with severe class imbalance (fraud clicks are rare) aligns well, and the DAE stage handles heterogeneous feature interactions across IP/app/device/OS/channel columns; the explicit 'do not use' warning against time-series data with temporal ordering is a significant contraindication here since IP click-burst timing is the core discriminative signal."
+      },
+      {
+        "template": "ogb_wikikg90m_1st",
+        "overlap_score": 12.601317681000456,
+        "family": "graph_inference",
+        "paradigm": "graph_signal_processing",
+        "summary": "This template captures the ordered steps used by OGB Large-Scale Challenge - WikiKG90M - 1st Place (2021): prepare the data, build task-specific representations, run the main modeling or search loop, ",
+        "llm_score": 0.05,
+        "llm_reasoning": "Graph/link-prediction paradigm is entirely mismatched; the only tenuous connection is that IP-to-app click relationships could be modeled as a bipartite graph, but none of the stages (TransE, ComplEx, language embedding) apply to tabular click logs."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 1,
+      "bound_approximate": 0,
+      "orchestration": 3,
+      "trivial_inline": 0,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.5,
+      "covered_techniques": [
+        "Next-click time-delta features",
+        "Count-based features (clicks per IP/hour)",
+        "Efficient data loading (FFM format)"
+      ],
+      "missing_techniques": [
+        "LightGBM with large leaf nodes",
+        "Target Encoding with smoothing",
+        "XGBoost/CatBoost ensemble"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Extensive Feature Engineering with LightGBM. 1st place focused on 'Next Click' and 'Previous Click' time-delta features for various feature combinations (e.g., same IP + same App). They used 'Target E",
+    "rerank": {
+      "best_match": "outbrain_click_prediction_1st",
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate fully captures the defining challenge: temporal aggregation of IP-level click behavior (click velocity, inter-click intervals, burst detection per IP/device/channel across sliding time windows) combined with massive-scale binary fraud classification under extreme class imbalance. The closest template (outbrain) was optimized for relevance ranking with a data-leak shortcut unavailable here, and its rank_averaging output structure conflicts with a calibrated fraud-probability target. A novel template should compose: (1) time-window aggregation feature engineering over IP/device/channel keys, (2) FTRL or LightGBM on hashed + aggregated features at scale, (3) isotonic or Platt calibration for well-formed probabilities, and (4) threshold-tuned evaluation aligned to log-loss or AUC on the heavily imbalanced target."
+    }
+  },
+  {
+    "competition_id": "ga-customer-revenue-prediction",
+    "title": "Google Analytics Customer Revenue Prediction",
+    "domain": "tabular",
+    "problem_type": "regression",
+    "assessment": "partial",
+    "template_matches": [
+      {
+        "template": "predict_future_sales_benchmark",
+        "overlap_score": 11.553807758445801,
+        "family": "time_series_forecasting",
+        "paradigm": "loss_function",
+        "summary": "This template captures the ordered steps used by Predict Future Sales - Kaggle Benchmark Standard (2015): prepare the data, build task-specific representations, run the main modeling or search loop, a",
+        "llm_score": 0.55,
+        "llm_reasoning": "Problem type (tabular regression over time), modality (structured session logs), and key stages all align reasonably well \u2014 time_aggregation, lag_feature_generation, mean_encoding, and gbdt_modeling are directly applicable to user-level revenue prediction. However, the template has no mechanism for the zero-inflated target (only 1% purchasers), and target_clipping alone is insufficient to replace the two-stage classifier+regressor architecture that the 99% zero mass demands."
+      },
+      {
+        "template": "instacart_basket_1st",
+        "overlap_score": 16.234886243078858,
+        "family": "set_prediction",
+        "paradigm": "optimization",
+        "summary": "Predict which grocery products a customer will reorder by first estimating the probability of each product being reordered using gradient boosting, then using a clever algorithm to pick the exact set ",
+        "llm_score": 0.08,
+        "llm_reasoning": "Both involve user-level e-commerce history, but the problem type is a fundamental mismatch \u2014 this template solves fixed-set F1 prediction via a combinatorial DP, whereas the target here is a continuous log-revenue regression; the F1-maximization DP and candidate-generation stages are entirely inapplicable and the do_not_use_when clause (non-F1 metric) is triggered directly."
+      },
+      {
+        "template": "handm_personalized_fashion_recommendations_1st",
+        "overlap_score": 10.075398108418106,
+        "family": "nlp_span_detection",
+        "paradigm": "signal_filter",
+        "summary": "This template captures the ordered steps used by H&M Personalized Fashion Recommendations - 1st Place (2022): prepare the data, build task-specific representations, train or apply the main model, and ",
+        "llm_score": 0.07,
+        "llm_reasoning": "Both involve user behavioral logs and feature engineering, but the paradigm is information-retrieval ranking with candidate generation, not zero-inflated revenue regression; trend_generation, collaborative_filtering, and ranking_model stages have no mapping to predicting a scalar spend target."
+      }
+    ],
+    "evaluation": {
+      "total_stages": 5,
+      "bound_active": 1,
+      "bound_approximate": 0,
+      "orchestration": 1,
+      "trivial_inline": 1,
+      "external": 2,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.5,
+      "covered_techniques": [
+        "User-level feature aggregation",
+        "LightGBM with RMSE loss",
+        "Target encoding for Traffic Source"
+      ],
+      "missing_techniques": [
+        "2-stage: Classifier + Regressor",
+        "Time-series validation split",
+        "Handling JSON flattening for nested data"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "2-stage model with temporal aggregation. 1st place used a classification model to predict 'probability of purchase' followed by a regression model to predict the amount. They aggregated session data i",
+    "rerank": {
+      "best_match": "predict_future_sales_benchmark",
+      "should_compose_novel": true,
+      "novel_reasoning": "The defining challenge of this problem \u2014 a zero-inflated target where 99% of labels are exactly zero \u2014 requires a two-stage architecture (binary purchase classifier followed by a conditional log-revenue regressor), which no candidate template encodes. predict_future_sales_benchmark is the closest structural match for its tabular GBDT pipeline and temporal feature stages, but it lacks zero-inflation decomposition, probability-of-purchase calibration, and the combining step that blends the two model heads. A novel template should graft a zero-inflation stage (purchase propensity model + conditional spend model) onto the tabular time-series scaffold, with a dedicated zero-mass handling strategy such as pseudo-Huber or Tweedie loss on the combined output."
+    }
+  },
+  {
+    "competition_id": "google-ai-open-images-object-detection-track",
+    "title": "Google AI Open Images - Object Detection",
+    "domain": "cv",
+    "problem_type": "detection",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "bengali_grapheme_1st",
+        "overlap_score": 22.402262739173626,
+        "family": "multitask_image_classification",
+        "paradigm": "neural_network",
+        "summary": "Classify handwritten Bengali characters by breaking them into three components (root shape, vowel mark, consonant mark), training a shared neural network with three separate output heads, focusing tra"
+      },
+      {
+        "template": "global_wheat_1st",
+        "overlap_score": 20.87876725654025,
+        "family": "object_detection_2d",
+        "paradigm": "neural_network",
+        "summary": "Detect wheat heads in field images by training two different detection models with aggressive image augmentation, using the models to generate labels on unlabeled test data, retraining on the combined"
+      },
+      {
+        "template": "melanoma_1st",
+        "overlap_score": 18.86144024787955,
+        "family": "medical_image_tabular",
+        "paradigm": "neural_network",
+        "summary": "Detect skin cancer from photographs by training image-recognition networks with realistic data distortions, combining image features with patient information, adding pseudo-labeled historical data, an"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 3,
+      "bound_approximate": 3,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 0,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.333,
+      "covered_techniques": [
+        "Soft-NMS (Non-Maximum Suppression)",
+        "Multi-scale training (Image pyramids)"
+      ],
+      "missing_techniques": [
+        "Cascade R-CNN with SENet154 backbone",
+        "Feature Pyramid Network (FPN)",
+        "Hierarchical label mapping",
+        "Synchronized Batch Normalization"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Large-scale Object Detection with Cascade R-CNN. 1st place used an ensemble of 'Cascade R-CNN' with 'SENet154' and 'ResNext101' backbones. They used 'Feature Pyramid Networks' (FPN) and 'Soft-NMS' to ",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "No candidate template fits. The problem requires a large-scale multi-class 2D object detection pipeline with three distinctive requirements unaddressed by any template: (1) a 500-class hierarchical label space demanding hierarchy-aware loss (e.g., soft labels that propagate probability mass to parent nodes) or evaluation-time label remapping; (2) extreme scale variation across real-world objects necessitating multi-scale feature pyramids (FPN/BiFPN) and scale-specific anchor strategies; (3) dataset size (1.7M images, 12M boxes) that makes pseudo-labeling and heavy augmentation low-ROI and instead rewards architectural choices like deformable attention, CBGS sampling for class-balanced batching, and test-time augmentation across scales. A novel template should anchor on a strong multi-scale detector backbone (e.g., DINO-DETR or Cascade R-CNN with a ViT/ConvNeXt backbone), hierarchy-aware classification loss, group normalization for large-batch training, and WBF ensemble across scale-specific models."
+    }
+  },
+  {
+    "competition_id": "inclusive-images-challenge",
+    "title": "Inclusive Images Challenge",
+    "domain": "cv",
+    "problem_type": "classification",
+    "assessment": "divergent",
+    "template_matches": [
+      {
+        "template": "flavours_physics_1st",
+        "overlap_score": 18.920277318520412,
+        "family": "constrained_ml",
+        "paradigm": "optimization",
+        "summary": "Train three separate classifiers with different strategies for avoiding bias toward a protected variable (particle mass): one uses only safe features, one penalizes mass-correlated predictions during "
+      },
+      {
+        "template": "bengali_grapheme_1st",
+        "overlap_score": 18.556268803020295,
+        "family": "multitask_image_classification",
+        "paradigm": "neural_network",
+        "summary": "Classify handwritten Bengali characters by breaking them into three components (root shape, vowel mark, consonant mark), training a shared neural network with three separate output heads, focusing tra"
+      },
+      {
+        "template": "hubmap_kidney_1st",
+        "overlap_score": 17.520600897907265,
+        "family": "gigapixel_segmentation",
+        "paradigm": "neural_network",
+        "summary": "Segment kidney structures (glomeruli) from enormous microscope images by cutting them into overlapping tiles, normalizing the staining colors, training a segmentation neural network with a specialized"
+      }
+    ],
+    "evaluation": {
+      "total_stages": 6,
+      "bound_active": 5,
+      "bound_approximate": 0,
+      "orchestration": 0,
+      "trivial_inline": 0,
+      "external": 1,
+      "gap": 0,
+      "grounding_rate": 1.0,
+      "technique_coverage": 0.167,
+      "covered_techniques": [
+        "Multi-label Softmax with threshold tuning"
+      ],
+      "missing_techniques": [
+        "ResNet-50 / Inception-v3 ensemble",
+        "Pseudo-labeling for domain adaptation",
+        "Heavy color jitter and grayscale augmentation",
+        "Geographic feature conditioning",
+        "Stochastic Weight Averaging (SWA)"
+      ]
+    },
+    "key_techniques_count": 6,
+    "solution_summary_preview": "Robust fine-tuning and domain adaptation. 1st place used an ensemble of ResNet-50 and Inception-v3 models. They utilized 'Pseudo-labeling' on the unlabeled global test set to align the model's feature",
+    "rerank": {
+      "best_match": null,
+      "should_compose_novel": true,
+      "novel_reasoning": "The problem requires a novel template combining three capabilities absent from all candidates: (1) backbone fine-tuning for multi-label image classification (overlapping with bengali_grapheme_1st only superficially), (2) geographic domain adaptation or adversarial invariance training to close the Western-to-global distribution gap (closest analogue is flavours_physics_1st's decorrelation, but that is tabular/GBM-specific), and (3) region-stratified validation and fairness-aware evaluation to detect and quantify per-region performance disparities. A purpose-built template should stage: geographically stratified split \u2192 heavy culturally-diverse augmentation \u2192 domain-adversarial or contrastive pre-training (e.g., geographic region as the adversarial target) \u2192 multi-label backbone fine-tuning \u2192 per-region calibration \u2192 fairness-audited ensembling."
+    }
+  }
+]

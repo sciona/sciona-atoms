@@ -23,7 +23,7 @@ from .witnesses import (
 @register_atom(witness_initializehmckernelstate)
 @icontract.require(lambda step_size: isinstance(step_size, (float, int, np.number)), "step_size must be numeric")
 @icontract.ensure(lambda result: all(r is not None for r in result), "InitializeHMCKernelState all outputs must not be None")
-def initializehmckernelstate(target: Callable[[np.ndarray], float], initial_positions: np.ndarray, step_size: float, n_leapfrog: int) -> tuple[np.ndarray, np.ndarray]:
+def initialize_hmc_kernel_state(target: Callable[[np.ndarray], float], initial_positions: np.ndarray, step_size: float, n_leapfrog: int) -> tuple[np.ndarray, np.ndarray]:
     """Construct immutable Hamiltonian Monte Carlo (HMC) kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.
 
 Args:
@@ -53,7 +53,7 @@ Returns:
 @register_atom(witness_initializesamplerrng)
 @icontract.require(lambda seed: isinstance(seed, int), "seed must be an int")
 @icontract.ensure(lambda result: result is not None, "InitializeSamplerRNG output must not be None")
-def initializesamplerrng(seed: int) -> np.ndarray:
+def initialize_sampler_rng(seed: int) -> np.ndarray:
     """Initialize explicit stochastic state for pure functional sampling. random number generator (RNG) state is threaded across all transitions and never mutated in place.
 
 Args:
@@ -69,7 +69,7 @@ Returns:
 @icontract.require(lambda prng_key_in: prng_key_in is not None, "prng_key_in cannot be None")
 @icontract.require(lambda logp_oracle: logp_oracle is not None, "logp_oracle cannot be None")
 @icontract.ensure(lambda result: all(r is not None for r in result), "HamiltonianTransitionKernel all outputs must not be None")
-def hamiltoniantransitionkernel(state_in: np.ndarray, kernel_spec: np.ndarray, prng_key_in: np.ndarray, logp_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray, dict[str, np.ndarray]]:
+def hamiltonian_transition_kernel(state_in: np.ndarray, kernel_spec: np.ndarray, prng_key_in: np.ndarray, logp_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray, dict[str, np.ndarray]]:
     """Perform one pure Hamiltonian Monte Carlo (HMC) transition: generate/consume momenta, run leapfrog integrator proposal, evaluate acceptance, and return a brand-new chain state plus updated random number generator (RNG) key.
 
 Args:
@@ -146,7 +146,7 @@ Returns:
 @icontract.require(lambda prng_key_state: prng_key_state is not None, "prng_key_state cannot be None")
 @icontract.require(lambda logp_oracle: callable(logp_oracle), "logp_oracle must be callable")
 @icontract.ensure(lambda result: all(r is not None for r in result), "CollectPosteriorChain all outputs must not be None")
-def collectposteriorchain(n_collect: int, n_discard: int, chain_state_0: np.ndarray, kernel_spec: np.ndarray, prng_key_state: np.ndarray, logp_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def collect_posterior_chain(n_collect: int, n_discard: int, chain_state_0: np.ndarray, kernel_spec: np.ndarray, prng_key_state: np.ndarray, logp_oracle: Callable[[np.ndarray], float]) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Collect posterior states by repeatedly applying the HMC transition kernel.
 
 Args:
@@ -178,7 +178,7 @@ Returns:
     collected = 0
 
     for step in range(total_iters):
-        current_state, prng_key, stats = hamiltoniantransitionkernel(
+        current_state, prng_key, stats = hamiltonian_transition_kernel(
             current_state,
             kernel_spec,
             prng_key,
@@ -216,7 +216,7 @@ def _initializehmckernelstate_ffi(target: Callable[[np.ndarray], float], initial
     """Wrapper that calls the Rust version of initialize hmc kernel state. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'initializehmckernelstate'
+    _func_name = 'initialize_hmc_kernel_state'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p
@@ -226,7 +226,7 @@ def _initializesamplerrng_ffi(seed: int) -> np.ndarray:
     """Wrapper that calls the Rust version of initialize sampler rng. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'initializesamplerrng'
+    _func_name = 'initialize_sampler_rng'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p]
     _func.restype = ctypes.c_void_p
@@ -236,7 +236,7 @@ def _hamiltoniantransitionkernel_ffi(state_in: np.ndarray, kernel_spec: np.ndarr
     """Wrapper that calls the Rust version of hamiltonian transition kernel. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'hamiltoniantransitionkernel'
+    _func_name = 'hamiltonian_transition_kernel'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p
@@ -246,7 +246,7 @@ def _collectposteriorchain_ffi(n_collect: int, n_discard: int, chain_state_0: np
     """Wrapper that calls the Rust version of collect posterior chain. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'collectposteriorchain'
+    _func_name = 'collect_posterior_chain'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p

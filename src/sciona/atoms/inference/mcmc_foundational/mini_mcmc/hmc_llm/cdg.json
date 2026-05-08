@@ -10,10 +10,10 @@
       "outputs": [],
       "status": "decomposed",
       "children": [
-        "initializehmckernelstate",
-        "initializesamplerrng",
-        "hamiltoniantransitionkernel",
-        "collectposteriorchain"
+        "initialize_hmc_kernel_state",
+        "initialize_sampler_rng",
+        "hamiltonian_transition_kernel",
+        "collect_posterior_chain"
       ],
       "depth": 0,
       "type_signature": "",
@@ -27,9 +27,9 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "initializehmckernelstate",
+      "node_id": "initialize_hmc_kernel_state",
       "parent_id": "HMC_root",
-      "name": "InitializeHMCKernelState",
+      "name": "initialize_hmc_kernel_state",
       "description": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
       "concept_type": "log_prob",
       "inputs": [
@@ -80,9 +80,9 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "initializesamplerrng",
+      "node_id": "initialize_sampler_rng",
       "parent_id": "HMC_root",
-      "name": "InitializeSamplerRNG",
+      "name": "initialize_sampler_rng",
       "description": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
       "concept_type": "sampler",
       "inputs": [
@@ -113,7 +113,7 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "hamiltoniantransitionkernel",
+      "node_id": "hamiltonian_transition_kernel",
       "parent_id": "HMC_root",
       "name": "HamiltonianTransitionKernel",
       "description": "Perform one pure HMC transition: generate/consume momenta, run leapfrog integrator proposal, evaluate acceptance, and return a brand-new chain state plus updated RNG key.",
@@ -181,7 +181,7 @@
     },
     {
       "node_id": "infer_chain_geometry",
-      "parent_id": "hamiltoniantransitionkernel",
+      "parent_id": "hamiltonian_transition_kernel",
       "name": "infer_chain_geometry",
       "description": "Read the position tensor shape to determine batch size and latent dimension for this transition.",
       "concept_type": "dimensionality_reduction",
@@ -219,7 +219,7 @@
     },
     {
       "node_id": "sample_transition_randomness",
-      "parent_id": "hamiltoniantransitionkernel",
+      "parent_id": "hamiltonian_transition_kernel",
       "name": "sample_transition_randomness",
       "description": "Consume RNG state to draw initial Gaussian momenta and per-chain uniform variates for Metropolis acceptance.",
       "concept_type": "sampler",
@@ -272,7 +272,7 @@
     },
     {
       "node_id": "evaluate_current_log_density_and_initial_half_grad",
-      "parent_id": "hamiltoniantransitionkernel",
+      "parent_id": "hamiltonian_transition_kernel",
       "name": "evaluate_current_log_density_and_initial_half_grad",
       "description": "Evaluate current log density and compute the initial half-step momentum increment from the position gradient.",
       "concept_type": "oracle_gradient",
@@ -320,7 +320,7 @@
     },
     {
       "node_id": "compute_current_hamiltonian",
-      "parent_id": "hamiltoniantransitionkernel",
+      "parent_id": "hamiltonian_transition_kernel",
       "name": "compute_current_hamiltonian",
       "description": "Compute current kinetic energy and Hamiltonian from sampled momenta and current log density.",
       "concept_type": "arithmetic",
@@ -358,7 +358,7 @@
     },
     {
       "node_id": "integrate_leapfrog_proposal",
-      "parent_id": "hamiltoniantransitionkernel",
+      "parent_id": "hamiltonian_transition_kernel",
       "name": "integrate_leapfrog_proposal",
       "description": "Run n_leapfrog symplectic updates to produce proposed positions/momenta and final proposed log density.",
       "concept_type": "sampler",
@@ -431,7 +431,7 @@
     },
     {
       "node_id": "compute_acceptance_log_ratio",
-      "parent_id": "hamiltoniantransitionkernel",
+      "parent_id": "hamiltonian_transition_kernel",
       "name": "compute_acceptance_log_ratio",
       "description": "Compute proposed Hamiltonian and per-chain Metropolis log acceptance ratio.",
       "concept_type": "arithmetic",
@@ -479,7 +479,7 @@
     },
     {
       "node_id": "derive_acceptance_mask",
-      "parent_id": "hamiltoniantransitionkernel",
+      "parent_id": "hamiltonian_transition_kernel",
       "name": "derive_acceptance_mask",
       "description": "Convert uniform draws and log acceptance ratio into a boolean accept/reject decision per chain.",
       "concept_type": "analysis",
@@ -517,7 +517,7 @@
     },
     {
       "node_id": "assemble_transition_result",
-      "parent_id": "hamiltoniantransitionkernel",
+      "parent_id": "hamiltonian_transition_kernel",
       "name": "assemble_transition_result",
       "description": "Construct next chain state by selecting proposed vs current positions per chain and package diagnostics.",
       "concept_type": "data_assembly",
@@ -594,7 +594,7 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "collectposteriorchain",
+      "node_id": "collect_posterior_chain",
       "parent_id": "HMC_root",
       "name": "CollectPosteriorChain",
       "description": "Drive warmup/discard and collection loops by repeatedly applying the transition kernel; optionally emit progress while preserving pure state threading.",
@@ -675,7 +675,7 @@
     },
     {
       "node_id": "initializecollectioncontext",
-      "parent_id": "collectposteriorchain",
+      "parent_id": "collect_posterior_chain",
       "name": "InitializeCollectionContext",
       "description": "Derive chain dimensions from the initial state, allocate the time-major sample buffer, and initialize trace/progress bookkeeping state.",
       "concept_type": "dimensionality_reduction",
@@ -728,7 +728,7 @@
     },
     {
       "node_id": "rundiscardphase",
-      "parent_id": "collectposteriorchain",
+      "parent_id": "collect_posterior_chain",
       "name": "RunDiscardPhase",
       "description": "Apply the transition kernel for burn-in/discard steps while threading chain state and RNG state.",
       "concept_type": "sampler",
@@ -786,7 +786,7 @@
     },
     {
       "node_id": "seeddiagnosticsfromburnedstate",
-      "parent_id": "collectposteriorchain",
+      "parent_id": "collect_posterior_chain",
       "name": "SeedDiagnosticsFromBurnedState",
       "description": "Register the post-burn-in state as the initial diagnostics sample and update trace state with any recoverable diagnostics warnings.",
       "concept_type": "sampler",
@@ -824,7 +824,7 @@
     },
     {
       "node_id": "collectposteriortransitions",
-      "parent_id": "collectposteriorchain",
+      "parent_id": "collect_posterior_chain",
       "name": "CollectPosteriorTransitions",
       "description": "Iterate n_collect transitions; at each step advance state with kernel, write positions into buffer, and update diagnostics/progress trace.",
       "concept_type": "data_assembly",
@@ -902,7 +902,7 @@
     },
     {
       "node_id": "reordersamplelayout",
-      "parent_id": "collectposteriorchain",
+      "parent_id": "collect_posterior_chain",
       "name": "ReorderSampleLayout",
       "description": "Convert collected samples from time-major [collect, chain, dim] layout to chain-major [chain, collect, dim] layout.",
       "concept_type": "data_assembly",
@@ -935,7 +935,7 @@
     },
     {
       "node_id": "finalizechaintrace",
-      "parent_id": "collectposteriorchain",
+      "parent_id": "collect_posterior_chain",
       "name": "FinalizeChainTrace",
       "description": "Compute final run diagnostics/statistics from accumulated trace state and samples, producing a pure chain_trace artifact.",
       "concept_type": "analysis",
@@ -979,8 +979,8 @@
   ],
   "edges": [
     {
-      "source_id": "initializehmckernelstate",
-      "target_id": "collectposteriorchain",
+      "source_id": "initialize_hmc_kernel_state",
+      "target_id": "collect_posterior_chain",
       "output_name": "kernel_spec",
       "input_name": "kernel_spec",
       "source_type": "StateModelSpec",
@@ -988,8 +988,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "initializehmckernelstate",
-      "target_id": "collectposteriorchain",
+      "source_id": "initialize_hmc_kernel_state",
+      "target_id": "collect_posterior_chain",
       "output_name": "chain_state_0",
       "input_name": "chain_state_0",
       "source_type": "HMCState",
@@ -997,8 +997,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "initializesamplerrng",
-      "target_id": "collectposteriorchain",
+      "source_id": "initialize_sampler_rng",
+      "target_id": "collect_posterior_chain",
       "output_name": "prng_key_state",
       "input_name": "prng_key_state",
       "source_type": "PRNGKey/RNG state",
@@ -1006,8 +1006,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "collectposteriorchain",
-      "target_id": "hamiltoniantransitionkernel",
+      "source_id": "collect_posterior_chain",
+      "target_id": "hamiltonian_transition_kernel",
       "output_name": "loop_state",
       "input_name": "state_in",
       "source_type": "HMCState",
@@ -1015,8 +1015,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "collectposteriorchain",
-      "target_id": "hamiltoniantransitionkernel",
+      "source_id": "collect_posterior_chain",
+      "target_id": "hamiltonian_transition_kernel",
       "output_name": "loop_prng_key",
       "input_name": "prng_key_in",
       "source_type": "PRNGKey/RNG state",
@@ -1024,8 +1024,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "collectposteriorchain",
-      "target_id": "hamiltoniantransitionkernel",
+      "source_id": "collect_posterior_chain",
+      "target_id": "hamiltonian_transition_kernel",
       "output_name": "kernel_spec",
       "input_name": "kernel_spec",
       "source_type": "StateModelSpec",

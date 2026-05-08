@@ -1,10 +1,10 @@
 from __future__ import annotations
-from .integrator.atoms import temperingfactorcomputation, hamiltonianphasepointtransition
-from .trajectory.atoms import buildnutstree, nutstransitionkernel
+from .integrator.atoms import tempering_factor_computation, hamiltonian_phase_point_transition
+from .trajectory.atoms import build_nuts_tree, nuts_transition_kernel
 
 __all__ = [
-    "temperingfactorcomputation",
-    "hamiltonianphasepointtransition",
-    "buildnutstree",
-    "nutstransitionkernel",
+    "tempering_factor_computation",
+    "hamiltonian_phase_point_transition",
+    "build_nuts_tree",
+    "nuts_transition_kernel",
 ]

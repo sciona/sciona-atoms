@@ -91,7 +91,7 @@ def _is_turning(theta_left: np.ndarray, theta_right: np.ndarray, momentum_left: 
 @register_atom(witness_buildnutstree)
 @icontract.require(lambda initial_energy: isinstance(initial_energy, (float, int, np.number)), "initial_energy must be numeric")
 @icontract.ensure(lambda result: result is not None, "BuildNutsTree output must not be None")
-def buildnutstree(rng: np.ndarray, hamiltonian: Callable[[np.ndarray], float], start_state: np.ndarray, direction: int, tree_depth: int, initial_energy: float) -> np.ndarray:
+def build_nuts_tree(rng: np.ndarray, hamiltonian: Callable[[np.ndarray], float], start_state: np.ndarray, direction: int, tree_depth: int, initial_energy: float) -> np.ndarray:
     """Build a compact NUTS trajectory subtree from repeated leapfrog leaves.
 
     Args:
@@ -135,7 +135,7 @@ def buildnutstree(rng: np.ndarray, hamiltonian: Callable[[np.ndarray], float], s
 @icontract.require(lambda initial_state: initial_state is not None, "initial_state cannot be None")
 @icontract.require(lambda trajectory_params: trajectory_params is not None, "trajectory_params cannot be None")
 @icontract.ensure(lambda result: all(r is not None for r in result), "NutsTransitionKernel all outputs must not be None")
-def nutstransitionkernel(rng: np.ndarray, hamiltonian: Callable[[np.ndarray], float], initial_state: np.ndarray, trajectory_params: np.ndarray) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+def nuts_transition_kernel(rng: np.ndarray, hamiltonian: Callable[[np.ndarray], float], initial_state: np.ndarray, trajectory_params: np.ndarray) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     """Run a compact identity-mass No-U-Turn Sampler transition.
 
     Args:
@@ -221,8 +221,8 @@ def nutstransitionkernel(rng: np.ndarray, hamiltonian: Callable[[np.ndarray], fl
 
 def _buildnutstree_ffi(rng, hamiltonian, start_state, direction, tree_depth, initial_energy):
     """Wrapper that calls the Julia version of build nuts tree. Passes arguments through and returns the result."""
-    return _get_jl().eval("buildnutstree(rng, hamiltonian, start_state, direction, tree_depth, initial_energy)")
+    return _get_jl().eval("build_nuts_tree(rng, hamiltonian, start_state, direction, tree_depth, initial_energy)")
 
 def _nutstransitionkernel_ffi(rng, hamiltonian, initial_state, trajectory_params):
     """Wrapper that calls the Julia version of nuts transition kernel. Passes arguments through and returns the result."""
-    return _get_jl().eval("nutstransitionkernel(rng, hamiltonian, initial_state, trajectory_params)")
+    return _get_jl().eval("nuts_transition_kernel(rng, hamiltonian, initial_state, trajectory_params)")

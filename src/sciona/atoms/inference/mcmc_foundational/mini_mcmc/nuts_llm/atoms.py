@@ -101,7 +101,7 @@ def _leapfrog_phase(state: np.ndarray, step_size: float, direction_val: int, log
 @icontract.require(lambda target_accept_p: isinstance(target_accept_p, (float, int, np.number)), "target_accept_p must be numeric")
 @icontract.require(lambda target_accept_p: 0.0 < float(target_accept_p) < 1.0, "target_accept_p must be in (0, 1)")
 @icontract.ensure(lambda result: all(r is not None for r in result), "InitializeNUTSState all outputs must not be None")
-def initializenutsstate(target: Callable[[np.ndarray], float], initial_positions: np.ndarray, target_accept_p: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
+def initialize_nuts_state(target: Callable[[np.ndarray], float], initial_positions: np.ndarray, target_accept_p: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
     """Build immutable No-U-Turn Sampler (NUTS) state from the target log-density, initial position, acceptance target, and explicit random number generator (RNG) key state.
 
 Args:
@@ -137,7 +137,7 @@ Returns:
 @icontract.require(lambda log_prob_oracle: callable(log_prob_oracle), "log_prob_oracle must be callable")
 @icontract.require(lambda max_tree_depth: max_tree_depth >= 0, "max_tree_depth must be non-negative")
 @icontract.ensure(lambda result: all(r is not None for r in result), "RunNUTSTransitions all outputs must not be None")
-def runnutstransitions(nuts_state_in: np.ndarray, rng_key_in: np.ndarray, n_collect: int, n_discard: int, log_prob_oracle: Callable[[np.ndarray], float], max_tree_depth: int = 6) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def run_nuts_transitions(nuts_state_in: np.ndarray, rng_key_in: np.ndarray, n_collect: int, n_discard: int, log_prob_oracle: Callable[[np.ndarray], float], max_tree_depth: int = 6) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Apply NUTS transitions with slice sampling, recursive tree expansion, and no-u-turn stopping.
 
 Args:
@@ -258,7 +258,7 @@ def _initializenutsstate_ffi(target: Callable[[np.ndarray], float], initial_posi
     """Wrapper that calls the Rust version of initialize nuts state. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'initializenutsstate'
+    _func_name = 'initialize_nuts_state'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p
@@ -268,7 +268,7 @@ def _runnutstransitions_ffi(nuts_state_in: np.ndarray, rng_key_in: np.ndarray, n
     """Wrapper that calls the Rust version of run nuts transitions. Passes arguments through and returns the result."""
     # Ensure the Rust library is compiled with #[no_mangle] and pub extern "C"
     _lib = ctypes.CDLL("./target/release/librust_robotics.so")
-    _func_name = 'runnutstransitions'
+    _func_name = 'run_nuts_transitions'
     _func = _lib[_func_name]
     _func.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
     _func.restype = ctypes.c_void_p

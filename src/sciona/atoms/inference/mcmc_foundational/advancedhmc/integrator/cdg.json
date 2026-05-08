@@ -10,8 +10,8 @@
       "outputs": [],
       "status": "decomposed",
       "children": [
-        "temperingfactorcomputation",
-        "hamiltonianphasepointtransition"
+        "tempering_factor_computation",
+        "hamiltonian_phase_point_transition"
       ],
       "depth": 0,
       "type_signature": "",
@@ -25,9 +25,9 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "temperingfactorcomputation",
+      "node_id": "tempering_factor_computation",
       "parent_id": "step_root",
-      "name": "TemperingFactorComputation",
+      "name": "tempering_factor_computation",
       "description": "Computes a deterministic tempering multiplier across sub-steps (with bounds checking) to scale the transition strength.",
       "concept_type": "mcmc_proposal",
       "inputs": [
@@ -73,7 +73,7 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "hamiltonianphasepointtransition",
+      "node_id": "hamiltonian_phase_point_transition",
       "parent_id": "step_root",
       "name": "HamiltonianPhasepointTransition",
       "description": "Executes one pure Hamiltonian transition kernel step by computing derivatives, applying step-size/tempering, and returning a new phase-point state.",
@@ -133,7 +133,7 @@
     },
     {
       "node_id": "normalizeintegrationcontrols",
-      "parent_id": "hamiltonianphasepointtransition",
+      "parent_id": "hamiltonian_phase_point_transition",
       "name": "NormalizeIntegrationControls",
       "description": "Convert integration controls into canonical form: absolute step count, signed step size based on direction, and trajectory collection mode.",
       "concept_type": "arithmetic",
@@ -191,7 +191,7 @@
     },
     {
       "node_id": "initializeloopstatefromphasepoint",
-      "parent_id": "hamiltonianphasepointtransition",
+      "parent_id": "hamiltonian_phase_point_transition",
       "name": "InitializeLoopStateFromPhasepoint",
       "description": "Extract phase-point coordinates and cached log-density terms, then initialize loop state and optional trajectory buffer.",
       "concept_type": "state_init",
@@ -239,7 +239,7 @@
     },
     {
       "node_id": "proposenextphasepointwithtemperedleapfrog",
-      "parent_id": "hamiltonianphasepointtransition",
+      "parent_id": "hamiltonian_phase_point_transition",
       "name": "ProposeNextPhasepointWithTemperedLeapfrog",
       "description": "Execute one leapfrog proposal: pre-temper momentum, half momentum update, full position update via dH/dr, second half momentum update via dH/dtheta, post-temper, then build a cached phase-point candidate.",
       "concept_type": "sampler",
@@ -292,7 +292,7 @@
     },
     {
       "node_id": "commitcandidateanddecidecontinuation",
-      "parent_id": "hamiltonianphasepointtransition",
+      "parent_id": "hamiltonian_phase_point_transition",
       "name": "CommitCandidateAndDecideContinuation",
       "description": "Optionally append candidate to trajectory, evaluate finiteness, truncate realized trajectory on first invalid sample, and compute next loop state plus continuation decision.",
       "concept_type": "analysis",
@@ -355,7 +355,7 @@
     },
     {
       "node_id": "assembletransitionresult",
-      "parent_id": "hamiltonianphasepointtransition",
+      "parent_id": "hamiltonian_phase_point_transition",
       "name": "AssembleTransitionResult",
       "description": "Choose final return payload from terminal state: full trajectory when requested, otherwise final phase-point; propagate validity flag.",
       "concept_type": "data_extraction",
@@ -526,8 +526,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "temperingfactorcomputation",
-      "target_id": "hamiltonianphasepointtransition",
+      "source_id": "tempering_factor_computation",
+      "target_id": "hamiltonian_phase_point_transition",
       "output_name": "tempering_scale",
       "input_name": "tempering_scale",
       "source_type": "Real scalar",

@@ -35,7 +35,7 @@ def _proposal_matrix(prop_scaling_mat: np.ndarray | None, dim: int) -> np.ndarra
 @icontract.require(lambda target_log_kernel: callable(target_log_kernel), "target_log_kernel must be callable")
 @icontract.require(lambda rng_key_in: isinstance(rng_key_in, np.ndarray), "rng_key_in must be a numpy array")
 @icontract.ensure(lambda result: isinstance(result[0], np.ndarray) and isinstance(result[1], np.ndarray))
-def metropolishastingstransitionkernel(
+def metropolis_hastings_transition_kernel(
     state_in: np.ndarray,
     temper_val: float,
     target_log_kernel: Callable[[np.ndarray], float],
@@ -80,7 +80,7 @@ def metropolishastingstransitionkernel(
 @icontract.require(lambda variances: isinstance(variances, np.ndarray), "variances must be a numpy array")
 @icontract.require(lambda temper_val: float(temper_val) > 0.0, "temper_val must be positive")
 @icontract.ensure(lambda result: np.isfinite(result), "target log-kernel must be finite")
-def targetlogkerneloracle(
+def target_log_kernel_oracle(
     state_candidate: np.ndarray,
     weights: np.ndarray,
     means: np.ndarray,

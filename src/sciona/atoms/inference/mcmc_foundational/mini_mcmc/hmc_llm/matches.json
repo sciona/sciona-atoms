@@ -1,7 +1,7 @@
 [
   {
     "pdg_node": {
-      "predicate_id": "initializehmckernelstate",
+      "predicate_id": "initialize_hmc_kernel_state",
       "statement": "(target: callable oracle, initial_positions: vector/tensor, step_size: float, n_leapfrog: int) -> tuple[StateModelSpec, HMCState]",
       "informal_desc": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
       "prover": "python",
@@ -10,7 +10,7 @@
     "verified_match": {
       "candidate": {
         "declaration": {
-          "name": "initializehmckernelstate",
+          "name": "initialize_hmc_kernel_state",
           "type_signature": "(target: callable oracle, initial_positions: vector/tensor, step_size: float, n_leapfrog: int) -> tuple[StateModelSpec, HMCState]",
           "docstring": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
           "conceptual_summary": "Immutable Hamiltonian Transition State Initializer. Builds a fixed transition specification and an initial latent-state record for a deterministic, gradient-informed dynamical sampler. The transform maps a differentiable scalar field oracle, an initial coordinate vector, and integration hyperparameters into a normalized state object with explicit coordinates, deferred momentum storage, and cache slots for scalar-field value and first derivative. It also materializes metric assumptions as immutable metadata so downstream updates use a consistent geometry.. Applications: Initializing trajectory-based inference for inverse-parameter estimation in systems biology ODE/PDE models, Bootstrapping constrained latent-state exploration in robot dynamics calibration with differentiable simulators, Setting up gradient-driven posterior traversal for geophysical tomography parameter fields, Preparing high-dimensional probabilistic state evolution in computational materials microstructure reconstruction",
@@ -30,7 +30,7 @@
     "all_candidates": [
       {
         "declaration": {
-          "name": "initializehmckernelstate",
+          "name": "initialize_hmc_kernel_state",
           "type_signature": "(target: callable oracle, initial_positions: vector/tensor, step_size: float, n_leapfrog: int) -> tuple[StateModelSpec, HMCState]",
           "docstring": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
           "conceptual_summary": "Immutable Hamiltonian Transition State Initializer. Builds a fixed transition specification and an initial latent-state record for a deterministic, gradient-informed dynamical sampler. The transform maps a differentiable scalar field oracle, an initial coordinate vector, and integration hyperparameters into a normalized state object with explicit coordinates, deferred momentum storage, and cache slots for scalar-field value and first derivative. It also materializes metric assumptions as immutable metadata so downstream updates use a consistent geometry.. Applications: Initializing trajectory-based inference for inverse-parameter estimation in systems biology ODE/PDE models, Bootstrapping constrained latent-state exploration in robot dynamics calibration with differentiable simulators, Setting up gradient-driven posterior traversal for geophysical tomography parameter fields, Preparing high-dimensional probabilistic state evolution in computational materials microstructure reconstruction",
@@ -46,7 +46,7 @@
       {
         "candidate": {
           "declaration": {
-            "name": "initializehmckernelstate",
+            "name": "initialize_hmc_kernel_state",
             "type_signature": "(target: callable oracle, initial_positions: vector/tensor, step_size: float, n_leapfrog: int) -> tuple[StateModelSpec, HMCState]",
             "docstring": "Construct immutable HMC kernel/state specification from target log-density, initial latent position, and integrator hyperparameters. Includes explicit latent state, cached log-probability/gradient slots, and mass-matrix assumptions.",
             "conceptual_summary": "Immutable Hamiltonian Transition State Initializer. Builds a fixed transition specification and an initial latent-state record for a deterministic, gradient-informed dynamical sampler. The transform maps a differentiable scalar field oracle, an initial coordinate vector, and integration hyperparameters into a normalized state object with explicit coordinates, deferred momentum storage, and cache slots for scalar-field value and first derivative. It also materializes metric assumptions as immutable metadata so downstream updates use a consistent geometry.. Applications: Initializing trajectory-based inference for inverse-parameter estimation in systems biology ODE/PDE models, Bootstrapping constrained latent-state exploration in robot dynamics calibration with differentiable simulators, Setting up gradient-driven posterior traversal for geophysical tomography parameter fields, Preparing high-dimensional probabilistic state evolution in computational materials microstructure reconstruction",
@@ -67,7 +67,7 @@
   },
   {
     "pdg_node": {
-      "predicate_id": "initializesamplerrng",
+      "predicate_id": "initialize_sampler_rng",
       "statement": "(seed: int) -> PRNGKey/RNG state",
       "informal_desc": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
       "prover": "python",
@@ -76,7 +76,7 @@
     "verified_match": {
       "candidate": {
         "declaration": {
-          "name": "initializesamplerrng",
+          "name": "initialize_sampler_rng",
           "type_signature": "(seed: int) -> PRNGKey/RNG state",
           "docstring": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
           "conceptual_summary": "Deterministic Stochastic-State Bootstrap. Maps a single integer entropy token into an immutable pseudo-random state object that can drive probabilistic transitions in a purely functional pipeline. The produced state is not mutated; instead, successor states are derived and explicitly threaded through subsequent computations. This creates reproducible stochastic behavior where identical seeds yield identical random-state trajectories.. Applications: Monte Carlo trajectory initialization in computational physics with reproducible experiment replay, Deterministic randomized augmentation pipelines in machine learning training workflows, Reproducible randomized search initialization in combinatorial optimization and metaheuristics, Procedural pattern/structure generation in graphics or digital fabrication where exact regeneration is required",
@@ -96,7 +96,7 @@
     "all_candidates": [
       {
         "declaration": {
-          "name": "initializesamplerrng",
+          "name": "initialize_sampler_rng",
           "type_signature": "(seed: int) -> PRNGKey/RNG state",
           "docstring": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
           "conceptual_summary": "Deterministic Stochastic-State Bootstrap. Maps a single integer entropy token into an immutable pseudo-random state object that can drive probabilistic transitions in a purely functional pipeline. The produced state is not mutated; instead, successor states are derived and explicitly threaded through subsequent computations. This creates reproducible stochastic behavior where identical seeds yield identical random-state trajectories.. Applications: Monte Carlo trajectory initialization in computational physics with reproducible experiment replay, Deterministic randomized augmentation pipelines in machine learning training workflows, Reproducible randomized search initialization in combinatorial optimization and metaheuristics, Procedural pattern/structure generation in graphics or digital fabrication where exact regeneration is required",
@@ -112,7 +112,7 @@
       {
         "candidate": {
           "declaration": {
-            "name": "initializesamplerrng",
+            "name": "initialize_sampler_rng",
             "type_signature": "(seed: int) -> PRNGKey/RNG state",
             "docstring": "Initialize explicit stochastic state for pure functional sampling. RNG state is threaded across all transitions and never mutated in place.",
             "conceptual_summary": "Deterministic Stochastic-State Bootstrap. Maps a single integer entropy token into an immutable pseudo-random state object that can drive probabilistic transitions in a purely functional pipeline. The produced state is not mutated; instead, successor states are derived and explicitly threaded through subsequent computations. This creates reproducible stochastic behavior where identical seeds yield identical random-state trajectories.. Applications: Monte Carlo trajectory initialization in computational physics with reproducible experiment replay, Deterministic randomized augmentation pipelines in machine learning training workflows, Reproducible randomized search initialization in combinatorial optimization and metaheuristics, Procedural pattern/structure generation in graphics or digital fabrication where exact regeneration is required",

@@ -136,7 +136,7 @@ def _hamiltonian_value_and_gradient(
 @icontract.require(lambda step: step is not None, "step cannot be None")
 @icontract.require(lambda n_steps: n_steps is not None, "n_steps cannot be None")
 @icontract.ensure(lambda result: result is not None, "TemperingFactorComputation output must not be None")
-def temperingfactorcomputation(lf: np.ndarray, r: np.ndarray, step: int | tuple[int, bool] | Mapping[str, object], n_steps: int) -> float:
+def tempering_factor_computation(lf: np.ndarray, r: np.ndarray, step: int | tuple[int, bool] | Mapping[str, object], n_steps: int) -> float:
     """Compute the AdvancedHMC-style momentum tempering multiplier for a half-step.
 
     Args:
@@ -159,14 +159,14 @@ def temperingfactorcomputation(lf: np.ndarray, r: np.ndarray, step: int | tuple[
 @icontract.require(lambda z: z is not None, "z cannot be None")
 @icontract.require(lambda tempering_scale: tempering_scale is not None, "tempering_scale cannot be None")
 @icontract.ensure(lambda result: all(r is not None for r in result), "HamiltonianPhasepointTransition all outputs must not be None")
-def hamiltonianphasepointtransition(lf: np.ndarray, h: np.ndarray | Callable[[np.ndarray], float], z: np.ndarray, tempering_scale: float) -> tuple[np.ndarray, bool]:
+def hamiltonian_phase_point_transition(lf: np.ndarray, h: np.ndarray | Callable[[np.ndarray], float], z: np.ndarray, tempering_scale: float) -> tuple[np.ndarray, bool]:
     """Execute one identity-mass leapfrog phase-point update with explicit tempering.
 
     Args:
         lf: Integrator metadata. Arrays use ``[step_size, alpha]``; mappings or objects may expose ``step_size``.
         h: Potential-energy or log-density oracle for positions, or a fixed gradient vector.
         z: Phase point as ``[theta, momentum]`` or ``[theta, momentum, value, gradient]``.
-        tempering_scale: Momentum multiplier from ``temperingfactorcomputation``.
+        tempering_scale: Momentum multiplier from ``tempering_factor_computation``.
 
     Returns:
         h_next: New phase-point vector with the same compact layout as ``z``.
@@ -203,8 +203,8 @@ def _jl_main():
 
 def _temperingfactorcomputation_ffi(lf: np.ndarray, r: np.ndarray, step: int, n_steps: int) -> float:
     """Wrapper that calls the Julia version of tempering factor computation. Passes arguments through and returns the result."""
-    return _jl_main().eval("temperingfactorcomputation(lf, r, step, n_steps)")
+    return _jl_main().eval("tempering_factor_computation(lf, r, step, n_steps)")
 
 def _hamiltonianphasepointtransition_ffi(lf: np.ndarray, h: np.ndarray, z: np.ndarray, tempering_scale: float) -> tuple[np.ndarray, bool]:
     """Wrapper that calls the Julia version of hamiltonian phasepoint transition. Passes arguments through and returns the result."""
-    return _jl_main().eval("hamiltonianphasepointtransition(lf, h, z, tempering_scale)")
+    return _jl_main().eval("hamiltonian_phase_point_transition(lf, h, z, tempering_scale)")

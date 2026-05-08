@@ -10,10 +10,10 @@
       "outputs": [],
       "status": "decomposed",
       "children": [
-        "initializehmcstate",
-        "leapfrogproposalkernel",
-        "metropolishmctransition",
-        "runsamplingloop"
+        "initialize_hmc_state",
+        "leapfrog_proposal_kernel",
+        "metropolis_hmc_transition",
+        "run_sampling_loop"
       ],
       "depth": 0,
       "type_signature": "",
@@ -27,9 +27,9 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "initializehmcstate",
+      "node_id": "initialize_hmc_state",
       "parent_id": "HMC_root",
-      "name": "InitializeHMCState",
+      "name": "initialize_hmc_state",
       "description": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
       "concept_type": "data_assembly",
       "inputs": [
@@ -85,7 +85,7 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "leapfrogproposalkernel",
+      "node_id": "leapfrog_proposal_kernel",
       "parent_id": "HMC_root",
       "name": "LeapfrogProposalKernel",
       "description": "Pure Hamiltonian proposal transition: consumes current position/momenta and returns proposed position/momenta plus refreshed log-probability gradient.",
@@ -135,7 +135,7 @@
     },
     {
       "node_id": "preparedifferentiablestateandfirsthalfkick",
-      "parent_id": "leapfrogproposalkernel",
+      "parent_id": "leapfrog_proposal_kernel",
       "name": "PrepareDifferentiableStateAndFirstHalfKick",
       "description": "For one leapfrog iteration, re-enable AD tracking on position and apply the first half-step momentum update using the carried gradient summands from the previous state.",
       "concept_type": "mcmc_proposal",
@@ -183,7 +183,7 @@
     },
     {
       "node_id": "driftpositionbyfullstep",
-      "parent_id": "leapfrogproposalkernel",
+      "parent_id": "leapfrog_proposal_kernel",
       "name": "DriftPositionByFullStep",
       "description": "Advance position by a full drift step using the half-kicked momentum and re-enable AD tracking on the new position.",
       "concept_type": "mcmc_proposal",
@@ -226,7 +226,7 @@
     },
     {
       "node_id": "recomputegradienthalfkickcontribution",
-      "parent_id": "leapfrogproposalkernel",
+      "parent_id": "leapfrog_proposal_kernel",
       "name": "RecomputeGradientHalfKickContribution",
       "description": "Evaluate target log-probability at the advanced position, backpropagate to obtain gradient, and scale it into the next half-step momentum contribution.",
       "concept_type": "oracle_gradient",
@@ -274,7 +274,7 @@
     },
     {
       "node_id": "completemomentumkickandrefreshcarry",
-      "parent_id": "leapfrogproposalkernel",
+      "parent_id": "leapfrog_proposal_kernel",
       "name": "CompleteMomentumKickAndRefreshCarry",
       "description": "Apply the second half-step momentum kick using the newly computed gradient summands and emit the next iteration carry state.",
       "concept_type": "mcmc_proposal",
@@ -327,7 +327,7 @@
     },
     {
       "node_id": "computeterminallogprobandemitproposal",
-      "parent_id": "leapfrogproposalkernel",
+      "parent_id": "leapfrog_proposal_kernel",
       "name": "ComputeTerminalLogProbAndEmitProposal",
       "description": "After repeating the leapfrog transition exactly n_leapfrog times, compute final log-probability at the terminal position and return detached proposal tensors.",
       "concept_type": "likelihood_evaluation",
@@ -369,7 +369,7 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "metropolishmctransition",
+      "node_id": "metropolis_hmc_transition",
       "parent_id": "HMC_root",
       "name": "MetropolisHMCTransition",
       "description": "Single pure HMC kernel step: samples fresh momenta from RNG state, invokes leapfrog proposal, performs accept/reject, and returns new immutable chain state.",
@@ -428,7 +428,7 @@
     },
     {
       "node_id": "infer_chain_geometry",
-      "parent_id": "metropolishmctransition",
+      "parent_id": "metropolis_hmc_transition",
       "name": "infer_chain_geometry",
       "description": "Extract chain count and latent dimension from the current position tensor shape.",
       "concept_type": "dimensionality_reduction",
@@ -471,7 +471,7 @@
     },
     {
       "node_id": "sample_initial_momenta",
-      "parent_id": "metropolishmctransition",
+      "parent_id": "metropolis_hmc_transition",
       "name": "sample_initial_momenta",
       "description": "Sample fresh Gaussian momenta for each chain and dimension.",
       "concept_type": "sampler",
@@ -514,7 +514,7 @@
     },
     {
       "node_id": "evaluate_current_logp_and_halfstep_gradient",
-      "parent_id": "metropolishmctransition",
+      "parent_id": "metropolis_hmc_transition",
       "name": "evaluate_current_logp_and_halfstep_gradient",
       "description": "Evaluate current unnormalized log-density and compute the half-step gradient summands used by leapfrog.",
       "concept_type": "oracle_gradient",
@@ -557,7 +557,7 @@
     },
     {
       "node_id": "compute_current_hamiltonian",
-      "parent_id": "metropolishmctransition",
+      "parent_id": "metropolis_hmc_transition",
       "name": "compute_current_hamiltonian",
       "description": "Compute kinetic energy from sampled momenta and form current Hamiltonian H = -logp + KE.",
       "concept_type": "arithmetic",
@@ -600,7 +600,7 @@
     },
     {
       "node_id": "propose_state_with_leapfrog",
-      "parent_id": "metropolishmctransition",
+      "parent_id": "metropolis_hmc_transition",
       "name": "propose_state_with_leapfrog",
       "description": "Run leapfrog integration from current positions and sampled momenta to obtain proposed state and proposed log-density.",
       "concept_type": "sampler",
@@ -658,7 +658,7 @@
     },
     {
       "node_id": "compute_proposed_hamiltonian",
-      "parent_id": "metropolishmctransition",
+      "parent_id": "metropolis_hmc_transition",
       "name": "compute_proposed_hamiltonian",
       "description": "Compute proposed kinetic energy and proposed Hamiltonian for Metropolis acceptance.",
       "concept_type": "arithmetic",
@@ -701,7 +701,7 @@
     },
     {
       "node_id": "sample_log_uniform_thresholds",
-      "parent_id": "metropolishmctransition",
+      "parent_id": "metropolis_hmc_transition",
       "name": "sample_log_uniform_thresholds",
       "description": "Draw one uniform variate per chain and convert to log-space acceptance thresholds.",
       "concept_type": "sampler",
@@ -739,7 +739,7 @@
     },
     {
       "node_id": "apply_metropolis_accept_reject",
-      "parent_id": "metropolishmctransition",
+      "parent_id": "metropolis_hmc_transition",
       "name": "apply_metropolis_accept_reject",
       "description": "Compute acceptance log-ratio, build mask, and select accepted proposed positions against current positions.",
       "concept_type": "data_assembly",
@@ -802,7 +802,7 @@
     },
     {
       "node_id": "assemble_transition_result",
-      "parent_id": "metropolishmctransition",
+      "parent_id": "metropolis_hmc_transition",
       "name": "assemble_transition_result",
       "description": "Return the immutable next chain state and transition diagnostics.",
       "concept_type": "analysis",
@@ -869,7 +869,7 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "runsamplingloop",
+      "node_id": "run_sampling_loop",
       "parent_id": "HMC_root",
       "name": "RunSamplingLoop",
       "description": "Drive warmup/discard and collection iterations by repeatedly applying the HMC transition kernel; produces trace and collected samples.",
@@ -939,7 +939,7 @@
     },
     {
       "node_id": "derivesamplingshape",
-      "parent_id": "runsamplingloop",
+      "parent_id": "run_sampling_loop",
       "name": "DeriveSamplingShape",
       "description": "Read chain count and latent dimension from the incoming HMC state to define tensor geometry for collection.",
       "concept_type": "sampler",
@@ -977,7 +977,7 @@
     },
     {
       "node_id": "allocatecollectionbuffer",
-      "parent_id": "runsamplingloop",
+      "parent_id": "run_sampling_loop",
       "name": "AllocateCollectionBuffer",
       "description": "Create an empty collection tensor to hold all post-burn-in states before final layout conversion.",
       "concept_type": "sampler",
@@ -1020,7 +1020,7 @@
     },
     {
       "node_id": "applyburnintransitions",
-      "parent_id": "runsamplingloop",
+      "parent_id": "run_sampling_loop",
       "name": "ApplyBurnInTransitions",
       "description": "Advance the HMC kernel for discard iterations and return the post-burn-in state.",
       "concept_type": "sampler",
@@ -1058,7 +1058,7 @@
     },
     {
       "node_id": "collectpostburnintrajectory",
-      "parent_id": "runsamplingloop",
+      "parent_id": "run_sampling_loop",
       "name": "CollectPostBurnInTrajectory",
       "description": "Run n_collect HMC transitions, write each state into the collection buffer, and accumulate per-step trace metrics.",
       "concept_type": "sampler",
@@ -1121,7 +1121,7 @@
     },
     {
       "node_id": "finalizeoutputs",
-      "parent_id": "runsamplingloop",
+      "parent_id": "run_sampling_loop",
       "name": "FinalizeOutputs",
       "description": "Convert collected tensor to chain-major layout and derive final run trace/statistics object.",
       "concept_type": "analysis",
@@ -1507,8 +1507,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "initializehmcstate",
-      "target_id": "runsamplingloop",
+      "source_id": "initialize_hmc_state",
+      "target_id": "run_sampling_loop",
       "output_name": "hmc_state_0",
       "input_name": "hmc_state_in",
       "source_type": "StateModelSpec",
@@ -1516,8 +1516,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "initializehmcstate",
-      "target_id": "metropolishmctransition",
+      "source_id": "initialize_hmc_state",
+      "target_id": "metropolis_hmc_transition",
       "output_name": "kernel_static",
       "input_name": "kernel_static",
       "source_type": "object",
@@ -1525,8 +1525,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "runsamplingloop",
-      "target_id": "metropolishmctransition",
+      "source_id": "run_sampling_loop",
+      "target_id": "metropolis_hmc_transition",
       "output_name": "hmc_state_in",
       "input_name": "chain_state_in",
       "source_type": "StateModelSpec",
@@ -1534,8 +1534,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "metropolishmctransition",
-      "target_id": "leapfrogproposalkernel",
+      "source_id": "metropolis_hmc_transition",
+      "target_id": "leapfrog_proposal_kernel",
       "output_name": "chain_state_in",
       "input_name": "proposal_state_in",
       "source_type": "StateModelSpec",

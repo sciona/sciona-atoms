@@ -1,7 +1,7 @@
 [
   {
     "pdg_node": {
-      "predicate_id": "initializenutsstate",
+      "predicate_id": "initialize_nuts_state",
       "statement": "(target: Callable oracle: position -> log_prob, initial_positions: Array[float], target_accept_p: float, seed: int) -> tuple[StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
       "informal_desc": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
       "prover": "python",
@@ -10,7 +10,7 @@
     "verified_match": {
       "candidate": {
         "declaration": {
-          "name": "initializenutsstate",
+          "name": "initialize_nuts_state",
           "type_signature": "(target: Callable oracle: position -> log_prob, initial_positions: Array[float], target_accept_p: float, seed: int) -> tuple[StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
           "docstring": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
           "conceptual_summary": "Deterministic Stochastic-State Constructor. Constructs an immutable initialization record for a gradient-informed stochastic transition process from a pure scalar-field oracle, an initial coordinate vector, a control scalar, and an integer seed. The seed is transformed into an explicit pseudorandom generator state so all randomness is externally threaded and reproducible. The output bundles primary coordinates with auxiliary kinetic/metric and trace containers needed for subsequent state transitions without hidden mutation.. Applications: Initializing reproducible latent-state exploration in high-dimensional inverse problems for medical imaging reconstruction, Bootstrapping stochastic trajectory search for molecular conformation landscapes in computational chemistry, Setting up probabilistic parameter-space traversal for aerodynamic model calibration in aerospace engineering, Creating explicit random-state simulation seeds and immutable transition records for uncertainty quantification in power-grid dynamics",
@@ -30,7 +30,7 @@
     "all_candidates": [
       {
         "declaration": {
-          "name": "initializenutsstate",
+          "name": "initialize_nuts_state",
           "type_signature": "(target: Callable oracle: position -> log_prob, initial_positions: Array[float], target_accept_p: float, seed: int) -> tuple[StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
           "docstring": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
           "conceptual_summary": "Deterministic Stochastic-State Constructor. Constructs an immutable initialization record for a gradient-informed stochastic transition process from a pure scalar-field oracle, an initial coordinate vector, a control scalar, and an integer seed. The seed is transformed into an explicit pseudorandom generator state so all randomness is externally threaded and reproducible. The output bundles primary coordinates with auxiliary kinetic/metric and trace containers needed for subsequent state transitions without hidden mutation.. Applications: Initializing reproducible latent-state exploration in high-dimensional inverse problems for medical imaging reconstruction, Bootstrapping stochastic trajectory search for molecular conformation landscapes in computational chemistry, Setting up probabilistic parameter-space traversal for aerodynamic model calibration in aerospace engineering, Creating explicit random-state simulation seeds and immutable transition records for uncertainty quantification in power-grid dynamics",
@@ -46,7 +46,7 @@
       {
         "candidate": {
           "declaration": {
-            "name": "initializenutsstate",
+            "name": "initialize_nuts_state",
             "type_signature": "(target: Callable oracle: position -> log_prob, initial_positions: Array[float], target_accept_p: float, seed: int) -> tuple[StateModelSpec{position, momentum, mass_matrix, trace}, PRNGKey]",
             "docstring": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
             "conceptual_summary": "Deterministic Stochastic-State Constructor. Constructs an immutable initialization record for a gradient-informed stochastic transition process from a pure scalar-field oracle, an initial coordinate vector, a control scalar, and an integer seed. The seed is transformed into an explicit pseudorandom generator state so all randomness is externally threaded and reproducible. The output bundles primary coordinates with auxiliary kinetic/metric and trace containers needed for subsequent state transitions without hidden mutation.. Applications: Initializing reproducible latent-state exploration in high-dimensional inverse problems for medical imaging reconstruction, Bootstrapping stochastic trajectory search for molecular conformation landscapes in computational chemistry, Setting up probabilistic parameter-space traversal for aerodynamic model calibration in aerospace engineering, Creating explicit random-state simulation seeds and immutable transition records for uncertainty quantification in power-grid dynamics",

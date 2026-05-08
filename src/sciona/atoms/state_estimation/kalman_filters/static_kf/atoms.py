@@ -21,7 +21,7 @@ from pathlib import Path
 @icontract.require(lambda observation_matrix: isinstance(observation_matrix, (float, int, np.number)), "observation_matrix must be numeric")
 @icontract.require(lambda measurement_noise: isinstance(measurement_noise, (float, int, np.number)), "measurement_noise must be numeric")
 @icontract.ensure(lambda result: result is not None, "InitializeLinearGaussianStateModel output must not be None")
-def initializelineargaussianstatemodel(initial_state: np.ndarray | float, initial_covariance: np.ndarray | float, transition_matrix: np.ndarray | float, process_noise: np.ndarray | float, observation_matrix: np.ndarray | float, measurement_noise: np.ndarray | float) -> dict[str, np.ndarray]:
+def initialize_linear_gaussian_state_model(initial_state: np.ndarray | float, initial_covariance: np.ndarray | float, transition_matrix: np.ndarray | float, process_noise: np.ndarray | float, observation_matrix: np.ndarray | float, measurement_noise: np.ndarray | float) -> dict[str, np.ndarray]:
     """Create the immutable Kalman state-space model with latent mean and covariance plus fixed system/noise matrices.
 
     Args:
@@ -47,7 +47,7 @@ def initializelineargaussianstatemodel(initial_state: np.ndarray | float, initia
 @register_atom(witness_predictlatentstate)
 @icontract.require(lambda state_model: state_model is not None, "state_model cannot be None")
 @icontract.ensure(lambda result: result is not None, "PredictLatentState output must not be None")
-def predictlatentstate(state_model: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
+def predict_latent_state(state_model: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
     """Apply the Kalman predict transition kernel to propagate latent mean/covariance forward in time.
 
     Args:
@@ -69,7 +69,7 @@ def predictlatentstate(state_model: dict[str, np.ndarray]) -> dict[str, np.ndarr
 @register_atom(witness_updatewithmeasurement)
 @icontract.require(lambda measurement: isinstance(measurement, (float, int, np.number)), "measurement must be numeric")
 @icontract.ensure(lambda result: result is not None, "UpdateWithMeasurement output must not be None")
-def updatewithmeasurement(predicted_state_model: dict[str, np.ndarray], measurement: np.ndarray | float) -> dict[str, np.ndarray]:
+def update_with_measurement(predicted_state_model: dict[str, np.ndarray], measurement: np.ndarray | float) -> dict[str, np.ndarray]:
     """Apply the Kalman update kernel to incorporate a measurement and produce posterior latent mean/covariance.
 
     Args:
@@ -97,7 +97,7 @@ def updatewithmeasurement(predicted_state_model: dict[str, np.ndarray], measurem
 @register_atom(witness_exposelatentmean)
 @icontract.require(lambda current_state_model: current_state_model is not None, "current_state_model cannot be None")
 @icontract.ensure(lambda result: result is not None, "ExposeLatentMean output must not be None")
-def exposelatentmean(current_state_model: dict[str, np.ndarray]) -> np.ndarray:
+def expose_latent_mean(current_state_model: dict[str, np.ndarray]) -> np.ndarray:
     """Read out the current latent state mean estimate from immutable filter state.
 
     Args:
@@ -112,7 +112,7 @@ def exposelatentmean(current_state_model: dict[str, np.ndarray]) -> np.ndarray:
 @register_atom(witness_exposecovariance)
 @icontract.require(lambda current_state_model: current_state_model is not None, "current_state_model cannot be None")
 @icontract.ensure(lambda result: result is not None, "ExposeCovariance output must not be None")
-def exposecovariance(current_state_model: dict[str, np.ndarray]) -> np.ndarray:
+def expose_covariance(current_state_model: dict[str, np.ndarray]) -> np.ndarray:
     """Read out the current latent covariance estimate from immutable filter state.
 
     Args:

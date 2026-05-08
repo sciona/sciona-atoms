@@ -10,8 +10,8 @@
       "outputs": [],
       "status": "decomposed",
       "children": [
-        "initializenutsstate",
-        "runnutstransitions"
+        "initialize_nuts_state",
+        "run_nuts_transitions"
       ],
       "depth": 0,
       "type_signature": "",
@@ -25,9 +25,9 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "initializenutsstate",
+      "node_id": "initialize_nuts_state",
       "parent_id": "NUTS_root",
-      "name": "InitializeNUTSState",
+      "name": "initialize_nuts_state",
       "description": "Build immutable NUTS state from the target log-density, initial position, acceptance target, and explicit RNG key state.",
       "concept_type": "sampler",
       "inputs": [
@@ -78,7 +78,7 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "runnutstransitions",
+      "node_id": "run_nuts_transitions",
       "parent_id": "NUTS_root",
       "name": "RunNUTSTransitions",
       "description": "Apply NUTS transition kernels for warmup/discard and collection while returning new immutable chain state, diagnostics trace, and split RNG key.",
@@ -160,7 +160,7 @@
     },
     {
       "node_id": "allocateperchainstatchannels",
-      "parent_id": "runnutstransitions",
+      "parent_id": "run_nuts_transitions",
       "name": "AllocatePerChainStatChannels",
       "description": "Create one sender/receiver channel pair per chain so each worker can stream progress snapshots independently.",
       "concept_type": "message_passing",
@@ -198,7 +198,7 @@
     },
     {
       "node_id": "spawnprogressmonitor",
-      "parent_id": "runnutstransitions",
+      "parent_id": "run_nuts_transitions",
       "name": "SpawnProgressMonitor",
       "description": "Start a monitor task that consumes chain stats, updates per-chain/global progress state, computes acceptance and rhat summaries, and exits when all chains finish.",
       "concept_type": "analysis",
@@ -241,7 +241,7 @@
     },
     {
       "node_id": "runchainsinscopedparallel",
-      "parent_id": "runnutstransitions",
+      "parent_id": "run_nuts_transitions",
       "name": "RunChainsInScopedParallel",
       "description": "Execute each chain in a scoped thread, forwarding progress through its sender, and collect one 2D sample tensor per chain.",
       "concept_type": "data_assembly",
@@ -289,7 +289,7 @@
     },
     {
       "node_id": "stackchainsamples",
-      "parent_id": "runnutstransitions",
+      "parent_id": "run_nuts_transitions",
       "name": "StackChainSamples",
       "description": "Aggregate per-chain 2D tensors into one 3D tensor along the chain axis.",
       "concept_type": "analysis",
@@ -322,7 +322,7 @@
     },
     {
       "node_id": "joinprogressmonitor",
-      "parent_id": "runnutstransitions",
+      "parent_id": "run_nuts_transitions",
       "name": "JoinProgressMonitor",
       "description": "Wait for the monitor task to finish and produce a join status used for optional error reporting.",
       "concept_type": "analysis",
@@ -355,7 +355,7 @@
     },
     {
       "node_id": "computerunstatsfromsamples",
-      "parent_id": "runnutstransitions",
+      "parent_id": "run_nuts_transitions",
       "name": "ComputeRunStatsFromSamples",
       "description": "Materialize sample data, form a 3D ndarray view, and derive run-level diagnostics/statistics.",
       "concept_type": "analysis",
@@ -388,7 +388,7 @@
     },
     {
       "node_id": "assemblerunprogressresult",
-      "parent_id": "runnutstransitions",
+      "parent_id": "run_nuts_transitions",
       "name": "AssembleRunProgressResult",
       "description": "Construct the final success result containing stacked samples and derived run statistics.",
       "concept_type": "data_assembly",
@@ -432,8 +432,8 @@
   ],
   "edges": [
     {
-      "source_id": "initializenutsstate",
-      "target_id": "runnutstransitions",
+      "source_id": "initialize_nuts_state",
+      "target_id": "run_nuts_transitions",
       "output_name": "nuts_state",
       "input_name": "nuts_state_in",
       "source_type": "StateModelSpec{position, momentum, mass_matrix, trace}",
@@ -441,8 +441,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "initializenutsstate",
-      "target_id": "runnutstransitions",
+      "source_id": "initialize_nuts_state",
+      "target_id": "run_nuts_transitions",
       "output_name": "rng_key",
       "input_name": "rng_key_in",
       "source_type": "PRNGKey",

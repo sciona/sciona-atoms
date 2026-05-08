@@ -10,8 +10,8 @@
       "outputs": [],
       "status": "decomposed",
       "children": [
-        "buildnutstree",
-        "nutstransitionkernel"
+        "build_nuts_tree",
+        "nuts_transition_kernel"
       ],
       "depth": 0,
       "type_signature": "",
@@ -25,7 +25,7 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "buildnutstree",
+      "node_id": "build_nuts_tree",
       "parent_id": "transition_root",
       "name": "BuildNutsTree",
       "description": "Recursively builds a binary tree of states for a Hamiltonian Monte Carlo trajectory. It explores the trajectory in both forward and backward directions, doubling the number of states at each step, and terminates when the trajectory starts to turn back on itself (the No-U-Turn criterion).",
@@ -90,7 +90,7 @@
     },
     {
       "node_id": "build_initial_trajectory_segment",
-      "parent_id": "buildnutstree",
+      "parent_id": "build_nuts_tree",
       "name": "build_initial_trajectory_segment",
       "description": "Recursively constructs the first half of the trajectory tree for the current depth `j`. This is the first of two recursive calls that implement the doubling mechanism.",
       "concept_type": "divide_and_conquer",
@@ -168,7 +168,7 @@
     },
     {
       "node_id": "build_expansion_trajectory_segment",
-      "parent_id": "buildnutstree",
+      "parent_id": "build_nuts_tree",
       "name": "build_expansion_trajectory_segment",
       "description": "If the initial segment did not terminate, this recursively constructs the second half of the trajectory, starting from the edge of the first, to double the total length.",
       "concept_type": "divide_and_conquer",
@@ -246,7 +246,7 @@
     },
     {
       "node_id": "orient_trajectory_segments",
-      "parent_id": "buildnutstree",
+      "parent_id": "build_nuts_tree",
       "name": "orient_trajectory_segments",
       "description": "Determines the order of the two trajectory segments (initial and expansion) based on the direction of traversal.",
       "concept_type": "clustering",
@@ -294,7 +294,7 @@
     },
     {
       "node_id": "merge_trajectory_segments",
-      "parent_id": "buildnutstree",
+      "parent_id": "build_nuts_tree",
       "name": "merge_trajectory_segments",
       "description": "Combines the left and right trajectory subtrees into a single, larger binary tree and merges their corresponding samplers.",
       "concept_type": "combinatorics",
@@ -352,7 +352,7 @@
     },
     {
       "node_id": "evaluate_termination_conditions",
-      "parent_id": "buildnutstree",
+      "parent_id": "build_nuts_tree",
       "name": "evaluate_termination_conditions",
       "description": "Checks the No-U-Turn condition across the combined tree and aggregates this with the termination statuses from the two sub-builds.",
       "concept_type": "probabilistic_oracle",
@@ -414,7 +414,7 @@
       "decomposition_rationale": ""
     },
     {
-      "node_id": "nutstransitionkernel",
+      "node_id": "nuts_transition_kernel",
       "parent_id": "transition_root",
       "name": "NutsTransitionKernel",
       "description": "Orchestrates a single No-U-Turn Sampler (NUTS) transition. It initializes a trajectory, builds a proposal tree using the BuildNutsTree atom until a termination condition is met, samples a new state from the resulting tree, and uses a Metropolis-Hastings correction to ensure detailed balance. This produces the next state in the Markov chain.",
@@ -473,7 +473,7 @@
     },
     {
       "node_id": "initialize_nuts_state",
-      "parent_id": "nutstransitionkernel",
+      "parent_id": "nuts_transition_kernel",
       "name": "initialize_nuts_state",
       "description": "Initializes the state for a NUTS transition, including the initial energy, the root of the trajectory tree, the trajectory sampler, and termination criteria.",
       "concept_type": "prior_init",
@@ -541,7 +541,7 @@
     },
     {
       "node_id": "iteratively_build_proposal_tree",
-      "parent_id": "nutstransitionkernel",
+      "parent_id": "nuts_transition_kernel",
       "name": "iteratively_build_proposal_tree",
       "description": "Executes the core NUTS logic by iteratively expanding a binary tree of states. It builds sub-trees in random directions and continues until a termination condition is met, updating a candidate state at each depth via a Metropolis-Hastings acceptance step.",
       "concept_type": "mcmc_kernel",
@@ -624,7 +624,7 @@
     },
     {
       "node_id": "compute_nuts_transition_stats",
-      "parent_id": "nutstransitionkernel",
+      "parent_id": "nuts_transition_kernel",
       "name": "compute_nuts_transition_stats",
       "description": "Computes the final energy of the chosen candidate state and aggregates all relevant statistics for the NUTS transition, such as acceptance rate, energy error, tree depth, and numerical errors.",
       "concept_type": "posterior_update",
@@ -687,7 +687,7 @@
     },
     {
       "node_id": "create_nuts_transition",
-      "parent_id": "nutstransitionkernel",
+      "parent_id": "nuts_transition_kernel",
       "name": "create_nuts_transition",
       "description": "Packages the final selected state and the computed statistics into a transition object, representing the result of one NUTS step.",
       "concept_type": "analysis",
@@ -951,8 +951,8 @@
       "requires_glue": false
     },
     {
-      "source_id": "buildnutstree",
-      "target_id": "nutstransitionkernel",
+      "source_id": "build_nuts_tree",
+      "target_id": "nuts_transition_kernel",
       "output_name": "proposal_tree",
       "input_name": "proposal_tree",
       "source_type": "BinaryTree",

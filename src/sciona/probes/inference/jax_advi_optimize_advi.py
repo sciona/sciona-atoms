@@ -16,8 +16,8 @@ class ProbeTarget:
 _MODULE = "sciona.atoms.inference.jax_advi.optimize_advi"
 
 JAX_ADVI_OPTIMIZE_ADVI_PROBE_TARGETS: tuple[ProbeTarget, ...] = (
-    ProbeTarget(f"{_MODULE}.meanfieldvariationalfit", _MODULE, "meanfieldvariationalfit"),
-    ProbeTarget(f"{_MODULE}.posteriordrawsampling", _MODULE, "posteriordrawsampling"),
+    ProbeTarget(f"{_MODULE}.mean_field_variational_fit", _MODULE, "mean_field_variational_fit"),
+    ProbeTarget(f"{_MODULE}.posterior_draw_sampling", _MODULE, "posterior_draw_sampling"),
 )
 
 

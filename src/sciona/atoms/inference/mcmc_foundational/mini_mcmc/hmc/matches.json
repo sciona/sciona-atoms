@@ -1,7 +1,7 @@
 [
   {
     "pdg_node": {
-      "predicate_id": "initializehmcstate",
+      "predicate_id": "initialize_hmc_state",
       "statement": "(target: callable log_prob oracle, initial_positions: array[float], step_size: float, n_leapfrog: int, seed: int) -> tuple[StateModelSpec, object]",
       "informal_desc": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
       "prover": "python",
@@ -10,7 +10,7 @@
     "verified_match": {
       "candidate": {
         "declaration": {
-          "name": "initializehmcstate",
+          "name": "initialize_hmc_state",
           "type_signature": "(target: callable log_prob oracle, initial_positions: array[float], step_size: float, n_leapfrog: int, seed: int) -> tuple[StateModelSpec, object]",
           "docstring": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
           "conceptual_summary": "Reproducible Gradient-Kernel State Bootstrap. Builds an immutable initial state for a gradient-informed iterative transition process by evaluating a differentiable scalar-field oracle at an initial tensor point and storing the point, scalar value, local derivative, random generator state, and trace container. In parallel, it factorizes constant transition hyperparameters into a static kernel object so per-iteration updates can reuse fixed settings without reconfiguration. If a seed is provided, stochastic behavior is made exactly replayable under identical inputs and numeric conditions.. Applications: Computational chemistry: initializing reproducible trajectory-based exploration of high-dimensional energy landscapes for molecular conformations., Geophysical inverse modeling: bootstrapping iterative state transitions for parameter-field reconstruction from indirect sensor measurements., Robotics system identification: initializing gradient-informed stochastic search over dynamic model parameters with replayable randomness., Medical image reconstruction: setting up reproducible iterative posterior exploration for latent volume parameters under differentiable forward models.",
@@ -30,7 +30,7 @@
     "all_candidates": [
       {
         "declaration": {
-          "name": "initializehmcstate",
+          "name": "initialize_hmc_state",
           "type_signature": "(target: callable log_prob oracle, initial_positions: array[float], step_size: float, n_leapfrog: int, seed: int) -> tuple[StateModelSpec, object]",
           "docstring": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
           "conceptual_summary": "Reproducible Gradient-Kernel State Bootstrap. Builds an immutable initial state for a gradient-informed iterative transition process by evaluating a differentiable scalar-field oracle at an initial tensor point and storing the point, scalar value, local derivative, random generator state, and trace container. In parallel, it factorizes constant transition hyperparameters into a static kernel object so per-iteration updates can reuse fixed settings without reconfiguration. If a seed is provided, stochastic behavior is made exactly replayable under identical inputs and numeric conditions.. Applications: Computational chemistry: initializing reproducible trajectory-based exploration of high-dimensional energy landscapes for molecular conformations., Geophysical inverse modeling: bootstrapping iterative state transitions for parameter-field reconstruction from indirect sensor measurements., Robotics system identification: initializing gradient-informed stochastic search over dynamic model parameters with replayable randomness., Medical image reconstruction: setting up reproducible iterative posterior exploration for latent volume parameters under differentiable forward models.",
@@ -46,7 +46,7 @@
       {
         "candidate": {
           "declaration": {
-            "name": "initializehmcstate",
+            "name": "initialize_hmc_state",
             "type_signature": "(target: callable log_prob oracle, initial_positions: array[float], step_size: float, n_leapfrog: int, seed: int) -> tuple[StateModelSpec, object]",
             "docstring": "Construct immutable HMC state and static kernel parameters, including explicit RNG state (PRNGKey/seed-derived state).",
             "conceptual_summary": "Reproducible Gradient-Kernel State Bootstrap. Builds an immutable initial state for a gradient-informed iterative transition process by evaluating a differentiable scalar-field oracle at an initial tensor point and storing the point, scalar value, local derivative, random generator state, and trace container. In parallel, it factorizes constant transition hyperparameters into a static kernel object so per-iteration updates can reuse fixed settings without reconfiguration. If a seed is provided, stochastic behavior is made exactly replayable under identical inputs and numeric conditions.. Applications: Computational chemistry: initializing reproducible trajectory-based exploration of high-dimensional energy landscapes for molecular conformations., Geophysical inverse modeling: bootstrapping iterative state transitions for parameter-field reconstruction from indirect sensor measurements., Robotics system identification: initializing gradient-informed stochastic search over dynamic model parameters with replayable randomness., Medical image reconstruction: setting up reproducible iterative posterior exploration for latent volume parameters under differentiable forward models.",
