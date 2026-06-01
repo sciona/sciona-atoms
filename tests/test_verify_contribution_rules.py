@@ -37,6 +37,23 @@ def witness_bad_atom(*args, **kwargs):
 """,
         encoding="utf-8",
     )
+    (atoms_dir / "cdg.json").write_text(
+        json.dumps(
+            {
+                "nodes": [
+                    {
+                        "node_id": "bad_atom",
+                        "name": "bad_atom",
+                        "status": "atomic",
+                        "inputs": [{"name": "x", "type_desc": "object"}],
+                        "outputs": [{"name": "result", "type_desc": "object"}],
+                    }
+                ],
+                "edges": [],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     (probes_dir / "bad_probe.py").write_text(
         """from __future__ import annotations
@@ -93,3 +110,4 @@ BAD_TARGETS = (
     assert any("missing a docstring" in message for message in messages)
     assert any("approved but has no tunable params" in message for message in messages)
     assert any("does not exist in" in message for message in messages)
+    assert any("missing required complexity field `time_complexity`" in message for message in messages)

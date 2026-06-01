@@ -14,6 +14,7 @@ from contributionlib import (
     VALID_SOURCE_CONFIDENCE,
     add_finding,
     atom_python_files,
+    cdg_node_requires_complexity,
     decorator_name,
     direct_any_annotation,
     function_names_in_module,
@@ -25,6 +26,7 @@ from contributionlib import (
     public_functions,
     summarize_findings,
     top_level_assignments,
+    validate_cdg_node_complexity,
     witness_python_files,
 )
 
@@ -51,6 +53,7 @@ def main() -> int:
     findings.extend(scan_probes(repo_root))
     findings.extend(scan_hyperparams(repo_root))
     findings.extend(scan_references(repo_root))
+    findings.extend(scan_cdgs(repo_root))
     findings.extend(scan_heuristics(repo_root))
 
     summary = summarize_findings(findings)
@@ -927,6 +930,66 @@ def scan_references(repo_root: Path):
                             repo_root=repo_root,
                             message=f"`{atom_key}` reference uses missing or invalid confidence metadata",
                         )
+    return findings
+
+
+def scan_cdgs(repo_root: Path):
+    findings = []
+    atoms_root = repo_root / "src" / "sciona" / "atoms"
+    if not atoms_root.exists():
+        return findings
+
+    for path in sorted(atoms_root.rglob("*cdg.json")):
+        try:
+            data = load_json(path)
+        except json.JSONDecodeError as exc:
+            add_finding(
+                findings,
+                category="cdg",
+                severity="error",
+                path=path,
+                repo_root=repo_root,
+                line=exc.lineno,
+                message=f"CDG sidecar is not valid JSON: {exc.msg}",
+            )
+            continue
+
+        if not isinstance(data, dict):
+            add_finding(
+                findings,
+                category="cdg",
+                severity="error",
+                path=path,
+                repo_root=repo_root,
+                message="CDG sidecar must be a JSON object",
+            )
+            continue
+
+        nodes = data.get("nodes", [])
+        if not isinstance(nodes, list):
+            add_finding(
+                findings,
+                category="cdg",
+                severity="error",
+                path=path,
+                repo_root=repo_root,
+                message="CDG sidecar must contain a `nodes` list",
+            )
+            continue
+
+        for index, node in enumerate(nodes):
+            if not isinstance(node, dict) or not cdg_node_requires_complexity(node):
+                continue
+            for message in validate_cdg_node_complexity(node, index):
+                add_finding(
+                    findings,
+                    category="cdg",
+                    severity="error",
+                    path=path,
+                    repo_root=repo_root,
+                    message=message,
+                )
+
     return findings
 
 

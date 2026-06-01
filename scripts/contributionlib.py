@@ -16,6 +16,13 @@ VALID_HYPERPARAM_KINDS = {"int", "float", "categorical", "bool"}
 VALID_SOURCE_CONFIDENCE = {"low", "medium", "high"}
 JARGON_WORD_RE = re.compile(r"[A-Za-z]{2,}")
 JARGON_ACRONYM_RE = re.compile(r"\b[A-Z][A-Z0-9]{1,}\b")
+BIG_O_RE = re.compile(r"^O\(.+\)$")
+CDG_COMPLEXITY_STRING_FIELDS = ("time_complexity", "space_complexity")
+CDG_COMPLEXITY_REQUIRED_FIELDS = (
+    *CDG_COMPLEXITY_STRING_FIELDS,
+    "complexity_reasoning",
+    "complexity_confidence",
+)
 
 
 @dataclass(frozen=True)
@@ -67,6 +74,43 @@ def parse_python(path: Path) -> ast.AST:
 
 def load_json(path: Path) -> object:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def cdg_node_label(node: dict[str, object], fallback: object) -> str:
+    label = node.get("name") or node.get("node_id") or fallback
+    return str(label)
+
+
+def cdg_node_requires_complexity(node: dict[str, object]) -> bool:
+    return node.get("status") in {"atomic", "opaque"} or node.get("is_opaque") is True
+
+
+def validate_cdg_node_complexity(node: dict[str, object], fallback: object) -> list[str]:
+    label = cdg_node_label(node, fallback)
+    errors: list[str] = []
+
+    for field in CDG_COMPLEXITY_REQUIRED_FIELDS:
+        if field not in node:
+            errors.append(f"CDG: {label} missing required complexity field `{field}`")
+
+    for field in CDG_COMPLEXITY_STRING_FIELDS:
+        value = node.get(field)
+        if field in node and (not isinstance(value, str) or not BIG_O_RE.match(value.strip())):
+            errors.append(f"CDG: {label} `{field}` must be a Big-O string like `O(n)`")
+
+    reasoning = node.get("complexity_reasoning")
+    if "complexity_reasoning" in node and (
+        not isinstance(reasoning, str) or not reasoning.strip()
+    ):
+        errors.append(f"CDG: {label} `complexity_reasoning` must be a non-empty string")
+
+    confidence = node.get("complexity_confidence")
+    if "complexity_confidence" in node and (
+        isinstance(confidence, bool) or not isinstance(confidence, int) or not 1 <= confidence <= 100
+    ):
+        errors.append(f"CDG: {label} `complexity_confidence` must be an integer from 1 to 100")
+
+    return errors
 
 
 def public_functions(module: ast.AST) -> list[ast.FunctionDef]:

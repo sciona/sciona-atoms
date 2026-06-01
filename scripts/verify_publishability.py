@@ -27,6 +27,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from contributionlib import cdg_node_requires_complexity, validate_cdg_node_complexity
+
 
 def _find_atoms_in_module(family_dir: Path) -> list[str]:
     """Return list of atom FQDNs by inspecting atoms.py for @register_atom."""
@@ -52,14 +54,15 @@ def _find_atoms_in_module(family_dir: Path) -> list[str]:
 
 
 def _check_cdg(family_dir: Path, atom_fqdns: list[str]) -> list[str]:
-    """Check CDG has concrete inputs/outputs for each atom."""
+    """Check CDG has concrete inputs/outputs and complexity metadata for each atom."""
     errors: list[str] = []
     cdg_path = family_dir / "cdg.json"
     if not cdg_path.exists():
         errors.append(f"MISSING: {cdg_path.relative_to(family_dir.parent)}")
         return errors
     cdg = json.loads(cdg_path.read_text(encoding="utf-8"))
-    nodes = {n["name"]: n for n in cdg.get("nodes", []) if "name" in n}
+    cdg_nodes = [n for n in cdg.get("nodes", []) if isinstance(n, dict)]
+    nodes = {n["name"]: n for n in cdg_nodes if "name" in n}
     for fqdn in atom_fqdns:
         func_name = fqdn.rsplit(".", 1)[-1]
         node = nodes.get(func_name)
@@ -73,6 +76,9 @@ def _check_cdg(family_dir: Path, atom_fqdns: list[str]) -> list[str]:
         for inp in node.get("inputs", []):
             if "name" not in inp or "type_desc" not in inp:
                 errors.append(f"CDG: {func_name} input missing name/type_desc")
+    for index, node in enumerate(cdg_nodes):
+        if cdg_node_requires_complexity(node):
+            errors.extend(validate_cdg_node_complexity(node, index))
     return errors
 
 
