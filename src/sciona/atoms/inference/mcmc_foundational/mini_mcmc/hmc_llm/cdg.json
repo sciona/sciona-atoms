@@ -77,7 +77,11 @@
       "parallelizable": false,
       "conceptual_summary": "Immutable Hamiltonian Transition State Initializer. Builds a fixed transition specification and an initial latent-state record for a deterministic, gradient-informed dynamical sampler. The transform maps a differentiable scalar field oracle, an initial coordinate vector, and integration hyperparameters into a normalized state object with explicit coordinates, deferred momentum storage, and cache slots for scalar-field value and first derivative. It also materializes metric assumptions as immutable metadata so downstream updates use a consistent geometry.. Applications: Initializing trajectory-based inference for inverse-parameter estimation in systems biology ODE/PDE models, Bootstrapping constrained latent-state exploration in robot dynamics calibration with differentiable simulators, Setting up gradient-driven posterior traversal for geophysical tomography parameter fields, Preparing high-dimensional probabilistic state evolution in computational materials microstructure reconstruction",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Initializing the HMC state requires evaluating the log-prob and its d-dimensional finite-difference gradient in O(d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "initialize_sampler_rng",
@@ -110,7 +114,11 @@
       "parallelizable": false,
       "conceptual_summary": "Deterministic Stochastic-State Bootstrap. Maps a single integer entropy token into an immutable pseudo-random state object that can drive probabilistic transitions in a purely functional pipeline. The produced state is not mutated; instead, successor states are derived and explicitly threaded through subsequent computations. This creates reproducible stochastic behavior where identical seeds yield identical random-state trajectories.. Applications: Monte Carlo trajectory initialization in computational physics with reproducible experiment replay, Deterministic randomized augmentation pipelines in machine learning training workflows, Reproducible randomized search initialization in combinatorial optimization and metaheuristics, Procedural pattern/structure generation in graphics or digital fabrication where exact regeneration is required",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Initializing the stochastic PRNG key requires a constant-time seed conversion.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "hamiltonian_transition_kernel",
@@ -215,7 +223,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Determining the state geometry or context fields takes constant O(1) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "sample_transition_randomness",
@@ -268,7 +280,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Drawing auxiliary Gaussian random variables of dimension d takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "evaluate_current_log_density_and_initial_half_grad",
@@ -316,7 +332,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Evaluating the target log-density and its d-dimensional finite-difference gradient takes O(d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "compute_current_hamiltonian",
@@ -354,7 +374,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Computing the kinetic energy and Metropolis probability for a d-dimensional state takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "integrate_leapfrog_proposal",
@@ -427,7 +451,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(L * d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Running L leapfrog steps in a d-dimensional space requires L gradient evaluations costing O(L * d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "compute_acceptance_log_ratio",
@@ -475,7 +503,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Computing the kinetic energy and Metropolis probability for a d-dimensional state takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "derive_acceptance_mask",
@@ -513,7 +545,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Computing the kinetic energy and Metropolis probability for a d-dimensional state takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "assemble_transition_result",
@@ -591,7 +627,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(D * d)",
+      "space_complexity": "O(D * d)",
+      "complexity_reasoning": "Reordering and finalising sample storage arrays of shape (D, d) takes O(D * d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "collect_posterior_chain",
@@ -724,7 +764,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Determining the state geometry or context fields takes constant O(1) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "rundiscardphase",
@@ -782,7 +826,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(B * L * d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Running B burn-in/discard transitions takes O(B * L * d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "seeddiagnosticsfromburnedstate",
@@ -820,7 +868,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(B * L * d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Running B burn-in/discard transitions takes O(B * L * d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "collectposteriortransitions",
@@ -898,7 +950,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(D * L * d * T)",
+      "space_complexity": "O(D * d)",
+      "complexity_reasoning": "Collecting D MCMC draws with L-step trajectories in d dimensions takes O(D * L * d * T) time and O(D * d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "reordersamplelayout",
@@ -931,7 +987,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(D * d)",
+      "space_complexity": "O(D * d)",
+      "complexity_reasoning": "Reordering and finalising sample storage arrays of shape (D, d) takes O(D * d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "finalizechaintrace",
@@ -974,7 +1034,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(D * d)",
+      "space_complexity": "O(D * d)",
+      "complexity_reasoning": "Reordering and finalising sample storage arrays of shape (D, d) takes O(D * d) time.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [

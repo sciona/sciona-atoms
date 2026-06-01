@@ -61,7 +61,11 @@
       "parallelizable": false,
       "conceptual_summary": "Direct callable atom in the consolidated module.",
       "critic_notes": "Signature derived from the Python wrapper definition.",
-      "decomposition_rationale": "Leaf atom."
+      "decomposition_rationale": "Leaf atom.",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Evaluating the diagonal Gaussian log-density for a d-dimensional sample performs linear vector operations in O(d) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "optimizationlooporchestration",
@@ -114,7 +118,11 @@
       "parallelizable": false,
       "conceptual_summary": "Direct callable atom in the consolidated module.",
       "critic_notes": "Signature derived from the Python wrapper definition.",
-      "decomposition_rationale": "Leaf atom."
+      "decomposition_rationale": "Leaf atom.",
+      "time_complexity": "O(M * T_step)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "The optimizer runs a loop for M iterations, where each step performs parameter updates of dimension d costing O(T_step) time and O(d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "gradient_oracle_evaluation",
@@ -177,7 +185,11 @@
       "parallelizable": false,
       "conceptual_summary": "Direct callable atom in the consolidated module.",
       "critic_notes": "Signature derived from the Python wrapper definition.",
-      "decomposition_rationale": "Leaf atom."
+      "decomposition_rationale": "Leaf atom.",
+      "time_complexity": "O(d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Estimating the gradient using two-sided finite differences in a d-dimensional parameter space requires 2*d objective evaluations, taking O(d * T) time and O(d) space.",
+      "complexity_confidence": 100
     }
   ],
   "edges": []

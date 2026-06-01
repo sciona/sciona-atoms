@@ -9,7 +9,9 @@
       "inputs": [],
       "outputs": [],
       "status": "decomposed",
-      "children": ["dispatch_mcmc_algorithm"],
+      "children": [
+        "dispatch_mcmc_algorithm"
+      ],
       "depth": 0,
       "type_signature": "module"
     },
@@ -20,19 +22,46 @@
       "description": "Run one repaired local MCMC kernel repeatedly from an explicit log-density oracle.",
       "concept_type": "sampler_dispatch",
       "inputs": [
-        {"name": "algorithm", "type_desc": "Literal['rwmh', 'hmc', 'de']", "required": true},
-        {"name": "target_log_kernel", "type_desc": "Callable[[np.ndarray], float]", "required": true},
-        {"name": "initial_state", "type_desc": "np.ndarray", "required": true},
-        {"name": "n_draws", "type_desc": "int", "required": true},
-        {"name": "rng_key", "type_desc": "np.ndarray | None", "required": false}
+        {
+          "name": "algorithm",
+          "type_desc": "Literal['rwmh', 'hmc', 'de']",
+          "required": true
+        },
+        {
+          "name": "target_log_kernel",
+          "type_desc": "Callable[[np.ndarray], float]",
+          "required": true
+        },
+        {
+          "name": "initial_state",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "n_draws",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "rng_key",
+          "type_desc": "np.ndarray | None",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "np.ndarray"}
+        {
+          "name": "result",
+          "type_desc": "np.ndarray"
+        }
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(algorithm, target_log_kernel, initial_state, n_draws, rng_key=None) -> np.ndarray"
+      "type_signature": "(algorithm, target_log_kernel, initial_state, n_draws, rng_key=None) -> np.ndarray",
+      "time_complexity": "O(D * C)",
+      "space_complexity": "O(D * S)",
+      "complexity_reasoning": "Dispatching the MCMC sampler runs a loop of D draws using the selected transition kernel, taking O(D * C) time and O(D * S) space where C is the step cost and S is the state size.",
+      "complexity_confidence": 100
     }
   ],
   "edges": []

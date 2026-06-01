@@ -70,7 +70,11 @@
       "parallelizable": false,
       "conceptual_summary": "IndexedTransitionGainSchedule. Maps a global intensity parameter and a discrete sub-step index to a deterministic scalar gain used to modulate update magnitude within a multi-step process. The computation enforces index validity against the total step count, yielding a well-defined scaling factor for every admissible sub-step. This is a pure schedule evaluation: no persistent state is mutated, and output is fully determined by the provided inputs.. Applications: Adaptive learning-rate scaling across inner iterations of numerical optimization in scientific computing, Stepwise trust-region or damping control in nonlinear equation solvers for computational physics, Scheduled actuation gain modulation across micro-steps in robotic trajectory execution, Progressive regularization-strength scheduling over sub-epochs in neural network training",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Performs element-wise operations on coordinates of dimension d.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "hamiltonian_phase_point_transition",
@@ -187,7 +191,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Normalizing standard integration control hyperparameters takes O(1) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "initializeloopstatefromphasepoint",
@@ -235,7 +243,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Initializing the integrator loop state from a d-dimensional phasepoint takes O(d) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "proposenextphasepointwithtemperedleapfrog",
@@ -288,7 +300,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(L * d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Proposing the next phasepoint via L tempered leapfrog steps in d dimensions takes O(L * d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "commitcandidateanddecidecontinuation",
@@ -351,7 +367,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Deciding whether to continue the integration loop takes constant O(1) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "assembletransitionresult",
@@ -404,7 +424,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(D * d)",
+      "space_complexity": "O(D * d)",
+      "complexity_reasoning": "Reordering and finalising sample storage arrays of shape (D, d) takes O(D * d) time.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [

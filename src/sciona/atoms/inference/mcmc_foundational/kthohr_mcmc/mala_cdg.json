@@ -9,7 +9,9 @@
       "inputs": [],
       "outputs": [],
       "status": "decomposed",
-      "children": ["mala_proposal_adjustment"],
+      "children": [
+        "mala_proposal_adjustment"
+      ],
       "depth": 0,
       "type_signature": "module"
     },
@@ -20,19 +22,46 @@
       "description": "Compute the unbounded MALA proposal log-ratio correction.",
       "concept_type": "log_probability_adjustment",
       "inputs": [
-        {"name": "prop_vals", "type_desc": "np.ndarray", "required": true},
-        {"name": "prev_vals", "type_desc": "np.ndarray", "required": true},
-        {"name": "step_size", "type_desc": "float", "required": true},
-        {"name": "precond_mat", "type_desc": "np.ndarray", "required": true},
-        {"name": "mala_mean_fn", "type_desc": "Callable[[np.ndarray, float], np.ndarray]", "required": true}
+        {
+          "name": "prop_vals",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "prev_vals",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "step_size",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "precond_mat",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "mala_mean_fn",
+          "type_desc": "Callable[[np.ndarray, float], np.ndarray]",
+          "required": true
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "float"}
+        {
+          "name": "result",
+          "type_desc": "float"
+        }
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(prop_vals, prev_vals, step_size, precond_mat, mala_mean_fn) -> float"
+      "type_signature": "(prop_vals, prev_vals, step_size, precond_mat, mala_mean_fn) -> float",
+      "time_complexity": "O(d^3 + T_mean)",
+      "space_complexity": "O(d^2)",
+      "complexity_reasoning": "Computing the MALA proposal adjustment requires solving a linear system and computing the log-determinant of the d x d covariance matrix, taking O(d^3) time and O(d^2) space.",
+      "complexity_confidence": 100
     }
   ],
   "edges": []

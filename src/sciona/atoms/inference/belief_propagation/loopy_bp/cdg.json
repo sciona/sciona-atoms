@@ -55,7 +55,11 @@
       "parallelizable": false,
       "conceptual_summary": "immutable_bidirectional_edge_state_initializer. Constructs an initial immutable state container for iterative message exchange on a bipartite dependency graph. For every directed edge in both directions, it allocates/initializes aligned buffer tables with shapes derived from endpoint neighborhood structure and local compatibility tensors. It returns this fully materialized state together with an iteration index set to zero, enabling deterministic first-step updates.. Applications: Initializing flux-exchange buffers on reaction-network bipartite graphs before iterative mass-balance reconciliation in systems chemistry, Bootstrapping node-edge signal tables for iterative parity-consistency decoding in digital communication error-correction graphs, Preallocating bidirectional influence tensors for iterative constraint relaxation in multi-body robotic kinematic assemblies, Setting up directional update caches for iterative resource-flow equilibration in power-grid topology optimization",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(N + E)",
+      "space_complexity": "O(N + E)",
+      "complexity_reasoning": "Initializing message passing variables and factor buffers on the graph of N nodes and E edges requires linear time and space in graph size.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "run_loopy_message_passing_and_belief_query",
@@ -149,7 +153,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Validating the target iteration request does a constant number of scalar comparisons in O(1) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "compute_variable_to_factor_messages",
@@ -187,7 +195,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(E * deg_max * d)",
+      "space_complexity": "O(E * d)",
+      "complexity_reasoning": "Computing variable-to-factor messages requires multiplying incoming messages for each edge, taking O(E * deg_max * d) time and O(E * d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "compute_factor_to_variable_messages",
@@ -225,7 +237,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(E * deg_max * d)",
+      "space_complexity": "O(E * d)",
+      "complexity_reasoning": "Computing factor-to-variable messages requires multiplying factor potentials and incoming messages, taking O(E * deg_max * d) time and O(E * d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "commit_messages_and_advance_iteration",
@@ -263,7 +279,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(E * d)",
+      "space_complexity": "O(E * d)",
+      "complexity_reasoning": "Committing the message tables copies all edge-wise messages of size E * d in linear time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "collect_incoming_factor_messages_for_query_variable",
@@ -301,7 +321,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(deg(v) * d)",
+      "space_complexity": "O(deg(v) * d)",
+      "complexity_reasoning": "Collecting incoming factor-to-variable messages for the query variable takes O(deg(v) * d) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "compose_joint_query_distribution",
@@ -334,7 +358,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(deg(v) * d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Multiplying incoming messages to form the joint distribution of a queried variable of domain size d takes O(deg(v) * d) time and O(d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "normalize_joint_distribution_to_belief",
@@ -367,7 +395,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Normalizing the joint query distribution of domain size d takes O(d) time and space.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [

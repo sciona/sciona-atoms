@@ -22,11 +22,22 @@
       "type_signature": "(predictions: NDArray[np.float64]) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "predictions", "type_desc": "NDArray[np.float64]", "required": true}
+        {
+          "name": "predictions",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "time_complexity": "O(N)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "Symmetrizing the predictions performs linear element-wise arithmetic over an array of size N in O(N) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "two_stage_independence_direction",
@@ -37,13 +48,32 @@
       "type_signature": "(independence_scores: NDArray[np.float64], direction_scores: NDArray[np.float64], symmetrize: bool = True) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "independence_scores", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "direction_scores", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "symmetrize", "type_desc": "bool", "required": false}
+        {
+          "name": "independence_scores",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "direction_scores",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "symmetrize",
+          "type_desc": "bool",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "time_complexity": "O(N)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "Combining independence and direction scores uses linear element-wise copying, symmetrization, and multiplication in O(N) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "left_right_decomposed_prediction",
@@ -54,13 +84,32 @@
       "type_signature": "(left_scores: NDArray[np.float64], right_scores: NDArray[np.float64], symmetrize: bool = True) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "left_scores", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "right_scores", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "symmetrize", "type_desc": "bool", "required": false}
+        {
+          "name": "left_scores",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "right_scores",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "symmetrize",
+          "type_desc": "bool",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "time_complexity": "O(N)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "Differencing and symmetrizing the left and right scores performs linear element-wise operations on arrays of size N.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "weighted_ensemble_combination",
@@ -71,12 +120,27 @@
       "type_signature": "(prediction_arrays: list[NDArray[np.float64]], weights: NDArray[np.float64] | None = None) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "prediction_arrays", "type_desc": "list[NDArray[np.float64]]", "required": true},
-        {"name": "weights", "type_desc": "NDArray[np.float64] | None", "required": false}
+        {
+          "name": "prediction_arrays",
+          "type_desc": "list[NDArray[np.float64]]",
+          "required": true
+        },
+        {
+          "name": "weights",
+          "type_desc": "NDArray[np.float64] | None",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "time_complexity": "O(P * N)",
+      "space_complexity": "O(P * N)",
+      "complexity_reasoning": "Stacking and computing a weighted combination of P prediction arrays of size N takes linear O(P * N) time and space.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [],

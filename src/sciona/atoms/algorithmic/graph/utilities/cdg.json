@@ -28,13 +28,32 @@
       "type_signature": "(features: NDArray[np.float64], k: int, metric: str = \"euclidean\") -> tuple[NDArray[np.int64], NDArray[np.float64]]",
       "depth": 1,
       "inputs": [
-        {"name": "features", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "k", "type_desc": "int", "required": true},
-        {"name": "metric", "type_desc": "str", "required": false}
+        {
+          "name": "features",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "k",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "metric",
+          "type_desc": "str",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[NDArray[np.int64], NDArray[np.float64]]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.int64], NDArray[np.float64]]"
+        }
+      ],
+      "time_complexity": "O(N * (log N + k))",
+      "space_complexity": "O(N * k)",
+      "complexity_reasoning": "Building a cKDTree of N features takes O(N log N) time, and querying the k-nearest neighbors for all points requires O(N * (log N + k)) time and O(N * k) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "radius_graph",
@@ -45,13 +64,32 @@
       "type_signature": "(coordinates: NDArray[np.float64], radius: float, p: float = 2.0) -> tuple[NDArray[np.int64], NDArray[np.float64]]",
       "depth": 1,
       "inputs": [
-        {"name": "coordinates", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "radius", "type_desc": "float", "required": true},
-        {"name": "p", "type_desc": "float", "required": false}
+        {
+          "name": "coordinates",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "radius",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "p",
+          "type_desc": "float",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[NDArray[np.int64], NDArray[np.float64]]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.int64], NDArray[np.float64]]"
+        }
+      ],
+      "time_complexity": "O(N * log N + E)",
+      "space_complexity": "O(N + E)",
+      "complexity_reasoning": "Querying ball points on a KD-tree takes O(N log N) time to construct and find neighbors, plus O(E) to compute and store the E returned edges.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "molecular_distance_graph",
@@ -62,13 +100,32 @@
       "type_signature": "(coordinates: NDArray[np.float64], elements: NDArray[np.str_], cutoff: float) -> tuple[NDArray[np.int64], NDArray[np.float64], NDArray[np.float64]]",
       "depth": 1,
       "inputs": [
-        {"name": "coordinates", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "elements", "type_desc": "NDArray[np.str_]", "required": true},
-        {"name": "cutoff", "type_desc": "float", "required": true}
+        {
+          "name": "coordinates",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "elements",
+          "type_desc": "NDArray[np.str_]",
+          "required": true
+        },
+        {
+          "name": "cutoff",
+          "type_desc": "float",
+          "required": true
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[NDArray[np.int64], NDArray[np.float64], NDArray[np.float64]]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.int64], NDArray[np.float64], NDArray[np.float64]]"
+        }
+      ],
+      "time_complexity": "O(N^2)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Computing the pairwise distance matrix for N atoms using cdist requires O(N^2) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "adjacency_to_edge_list",
@@ -79,11 +136,22 @@
       "type_signature": "(adj_matrix: NDArray[np.float64]) -> NDArray[np.int64]",
       "depth": 1,
       "inputs": [
-        {"name": "adj_matrix", "type_desc": "NDArray[np.float64]", "required": true}
+        {
+          "name": "adj_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.int64]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "time_complexity": "O(N^2)",
+      "space_complexity": "O(E)",
+      "complexity_reasoning": "Finding nonzero entries in a dense N x N adjacency matrix requires traversing the entire matrix in O(N^2) time, producing an edge list of size E.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "edge_list_to_adjacency",
@@ -94,12 +162,27 @@
       "type_signature": "(edge_list: NDArray[np.int64], num_nodes: int) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "edge_list", "type_desc": "NDArray[np.int64]", "required": true},
-        {"name": "num_nodes", "type_desc": "int", "required": true}
+        {
+          "name": "edge_list",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "num_nodes",
+          "type_desc": "int",
+          "required": true
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "time_complexity": "O(N^2 + E)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Initializing and filling a dense N x N adjacency matrix from E edges requires O(N^2 + E) time and O(N^2) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "graph_laplacian",
@@ -110,12 +193,27 @@
       "type_signature": "(adjacency: NDArray[np.float64], normalized: bool = True) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "adjacency", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "normalized", "type_desc": "bool", "required": false}
+        {
+          "name": "adjacency",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "normalized",
+          "type_desc": "bool",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "time_complexity": "O(N^2)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Computing the dense graph Laplacian matrix of size N x N performs element-wise operations and matrix scaling in O(N^2) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "node_degrees",
@@ -126,13 +224,32 @@
       "type_signature": "(edge_index: NDArray[np.int64], num_nodes: int, mode: str = \"out\") -> NDArray[np.int64]",
       "depth": 1,
       "inputs": [
-        {"name": "edge_index", "type_desc": "NDArray[np.int64]", "required": true},
-        {"name": "num_nodes", "type_desc": "int", "required": true},
-        {"name": "mode", "type_desc": "str", "required": false}
+        {
+          "name": "edge_index",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "num_nodes",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "mode",
+          "type_desc": "str",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.int64]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "time_complexity": "O(N + E)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "Summing edge indices using bincount for E edges over N nodes takes O(N + E) time and O(N) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "pagerank",
@@ -143,14 +260,37 @@
       "type_signature": "(adjacency: NDArray[np.float64], damping: float = 0.85, max_iter: int = 100, tol: float = 1e-6) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "adjacency", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "damping", "type_desc": "float", "required": false},
-        {"name": "max_iter", "type_desc": "int", "required": false},
-        {"name": "tol", "type_desc": "float", "required": false}
+        {
+          "name": "adjacency",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "damping",
+          "type_desc": "float",
+          "required": false
+        },
+        {
+          "name": "max_iter",
+          "type_desc": "int",
+          "required": false
+        },
+        {
+          "name": "tol",
+          "type_desc": "float",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "time_complexity": "O(M * N^2)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Performing M power iterations of dense matrix-vector multiplication for a graph with N nodes requires O(M * N^2) time and O(N^2) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "connected_components",
@@ -161,12 +301,27 @@
       "type_signature": "(adj_matrix: NDArray[np.float64], directed: bool = False) -> tuple[int, NDArray[np.int64]]",
       "depth": 1,
       "inputs": [
-        {"name": "adj_matrix", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "directed", "type_desc": "bool", "required": false}
+        {
+          "name": "adj_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "directed",
+          "type_desc": "bool",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[int, NDArray[np.int64]]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "tuple[int, NDArray[np.int64]]"
+        }
+      ],
+      "time_complexity": "O(N^2)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Converting the dense N x N matrix to CSR format and finding components via DFS/BFS takes O(N^2) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "skeleton_to_graph",
@@ -177,12 +332,22 @@
       "type_signature": "(skeleton: NDArray[np.int64]) -> tuple[NDArray[np.int64], NDArray[np.float64], NDArray[np.int64]]",
       "depth": 1,
       "inputs": [
-        {"name": "skeleton", "type_desc": "NDArray[np.int64]", "required": true}
+        {
+          "name": "skeleton",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[NDArray[np.int64], NDArray[np.float64], NDArray[np.int64]]"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.int64], NDArray[np.float64], NDArray[np.int64]]"
+        }
+      ],
+      "time_complexity": "O(H * W)",
+      "space_complexity": "O(H * W)",
+      "complexity_reasoning": "Extracting the skeleton graph topology walks active pixels in a single pass, taking linear time and space relative to the H x W image area.",
+      "complexity_confidence": 100
     }
   ]
 }
-

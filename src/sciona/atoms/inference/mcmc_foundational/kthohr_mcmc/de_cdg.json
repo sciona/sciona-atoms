@@ -9,7 +9,9 @@
       "inputs": [],
       "outputs": [],
       "status": "decomposed",
-      "children": ["build_de_transition_kernel"],
+      "children": [
+        "build_de_transition_kernel"
+      ],
       "depth": 0,
       "type_signature": "module"
     },
@@ -20,16 +22,31 @@
       "description": "Build a population-based differential-evolution Metropolis transition kernel.",
       "concept_type": "mcmc_kernel_builder",
       "inputs": [
-        {"name": "target_log_kernel", "type_desc": "Callable[[np.ndarray], float]", "required": true},
-        {"name": "gamma_scale", "type_desc": "float", "required": false}
+        {
+          "name": "target_log_kernel",
+          "type_desc": "Callable[[np.ndarray], float]",
+          "required": true
+        },
+        {
+          "name": "gamma_scale",
+          "type_desc": "float",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]"}
+        {
+          "name": "result",
+          "type_desc": "Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]"
+        }
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(target_log_kernel, gamma_scale=2.38) -> transition kernel"
+      "type_signature": "(target_log_kernel, gamma_scale=2.38) -> transition kernel",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Constructing the differential-evolution transition kernel closure takes constant O(1) time, while executing one step for M chains of dimension d takes O(M * (d + T)) time.",
+      "complexity_confidence": 100
     }
   ],
   "edges": []

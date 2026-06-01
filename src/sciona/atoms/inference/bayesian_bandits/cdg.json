@@ -63,7 +63,11 @@
           "ordering": "sequential",
           "when": "Stage describes multi-armed bandit or Bayesian exploration"
         }
-      ]
+      ],
+      "time_complexity": "O(K)",
+      "space_complexity": "O(K)",
+      "complexity_reasoning": "Creating and initializing two vectors of size K for alpha and beta beliefs requires linear time and space in terms of the number of arms.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "beta_bernoulli_update",
@@ -109,7 +113,11 @@
           "ordering": "sequential",
           "when": "Stage describes multi-armed bandit or Bayesian exploration"
         }
-      ]
+      ],
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "The single-arm Beta-Bernoulli belief update performs constant-time scalar additions with O(1) auxiliary space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "thompson_sample_beta",
@@ -141,7 +149,11 @@
           "name": "result",
           "type_desc": "NDArray[np.float64]"
         }
-      ]
+      ],
+      "time_complexity": "O(K)",
+      "space_complexity": "O(K)",
+      "complexity_reasoning": "Drawing one Thompson sample for each of the K arms performs K independent Beta distribution draws in O(K) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "ucb_scores",
@@ -178,7 +190,11 @@
           "name": "result",
           "type_desc": "NDArray[np.float64]"
         }
-      ]
+      ],
+      "time_complexity": "O(K)",
+      "space_complexity": "O(K)",
+      "complexity_reasoning": "Computing the UCB1 scores for K arms requires element-wise vector operations of size K in O(K) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "bayesian_ucb",
@@ -224,7 +240,11 @@
           "ordering": "sequential",
           "when": "Stage describes multi-armed bandit or Bayesian exploration"
         }
-      ]
+      ],
+      "time_complexity": "O(K)",
+      "space_complexity": "O(K)",
+      "complexity_reasoning": "Evaluating the Beta quantile function for each of the K arms takes O(K) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "probability_of_improvement",
@@ -261,7 +281,11 @@
           "name": "result",
           "type_desc": "NDArray[np.float64]"
         }
-      ]
+      ],
+      "time_complexity": "O(K)",
+      "space_complexity": "O(K)",
+      "complexity_reasoning": "Evaluating the Gaussian probability of improvement for K candidate points requires element-wise normal CDF evaluations in O(K) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "expected_improvement",
@@ -298,7 +322,11 @@
           "name": "result",
           "type_desc": "NDArray[np.float64]"
         }
-      ]
+      ],
+      "time_complexity": "O(K)",
+      "space_complexity": "O(K)",
+      "complexity_reasoning": "Computing the Gaussian expected improvement for K candidate points requires element-wise normal CDF and PDF evaluations in O(K) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "select_best_arm",
@@ -338,7 +366,11 @@
           "ordering": "sequential",
           "when": "Stage describes multi-armed bandit or Bayesian exploration"
         }
-      ]
+      ],
+      "time_complexity": "O(K)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Selecting the best arm requires a linear scan (argmax) over the K acquisition scores in O(K) time and O(1) auxiliary space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "epsilon_greedy_select",
@@ -370,7 +402,11 @@
           "name": "result",
           "type_desc": "int"
         }
-      ]
+      ],
+      "time_complexity": "O(K)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Epsilon-greedy selection requires finding the argmax or selecting a random index over K arms, taking O(K) time and O(1) auxiliary space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "update_arm_statistics",
@@ -407,7 +443,11 @@
           "name": "result",
           "type_desc": "tuple[NDArray[np.float64], NDArray[np.int64]]"
         }
-      ]
+      ],
+      "time_complexity": "O(K)",
+      "space_complexity": "O(K)",
+      "complexity_reasoning": "Updating arm statistics copies arrays of size K and updates the selected arm's running mean and count in O(K) time and space.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [

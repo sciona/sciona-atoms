@@ -82,7 +82,11 @@
       "parallelizable": false,
       "conceptual_summary": "Reproducible Gradient-Kernel State Bootstrap. Builds an immutable initial state for a gradient-informed iterative transition process by evaluating a differentiable scalar-field oracle at an initial tensor point and storing the point, scalar value, local derivative, random generator state, and trace container. In parallel, it factorizes constant transition hyperparameters into a static kernel object so per-iteration updates can reuse fixed settings without reconfiguration. If a seed is provided, stochastic behavior is made exactly replayable under identical inputs and numeric conditions.. Applications: Computational chemistry: initializing reproducible trajectory-based exploration of high-dimensional energy landscapes for molecular conformations., Geophysical inverse modeling: bootstrapping iterative state transitions for parameter-field reconstruction from indirect sensor measurements., Robotics system identification: initializing gradient-informed stochastic search over dynamic model parameters with replayable randomness., Medical image reconstruction: setting up reproducible iterative posterior exploration for latent volume parameters under differentiable forward models.",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Initializing the HMC state requires evaluating the log-prob and its d-dimensional finite-difference gradient in O(d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "leapfrog_proposal_kernel",
@@ -179,7 +183,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Preparing initial states and performing the first momentum half-kick in d dimensions takes O(d) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "driftpositionbyfullstep",
@@ -222,7 +230,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Drifting the d-dimensional position vector by a full integration step takes O(d) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "recomputegradienthalfkickcontribution",
@@ -270,7 +282,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Evaluating the log-density gradient via finite differences at the updated position takes O(d * T) time and O(d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "completemomentumkickandrefreshcarry",
@@ -323,7 +339,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Completing the final momentum half-kick and refreshing internal carry arrays in d dimensions takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "computeterminallogprobandemitproposal",
@@ -366,7 +386,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Evaluating the joint Hamiltonian energy at the proposed state takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "metropolis_hmc_transition",
@@ -467,7 +491,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Determining the state geometry or context fields takes constant O(1) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "sample_initial_momenta",
@@ -510,7 +538,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Drawing d independent Gaussian momentum values takes O(d) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "evaluate_current_logp_and_halfstep_gradient",
@@ -553,7 +585,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Evaluating the initial log-density and its d-dimensional finite-difference gradient takes O(d * T) time and O(d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "compute_current_hamiltonian",
@@ -596,7 +632,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Computing the kinetic energy and Metropolis probability for a d-dimensional state takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "propose_state_with_leapfrog",
@@ -654,7 +694,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(L * d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Proposing a new state using L leapfrog integration steps in d dimensions takes O(L * d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "compute_proposed_hamiltonian",
@@ -697,7 +741,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Evaluating the proposed state's joint Hamiltonian energy takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "sample_log_uniform_thresholds",
@@ -735,7 +783,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Drawing a log-uniform threshold for Metropolis acceptance testing takes O(1) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "apply_metropolis_accept_reject",
@@ -798,7 +850,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Applying the accept-reject correction to coordinate arrays of size d takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "assemble_transition_result",
@@ -866,7 +922,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(D * d)",
+      "space_complexity": "O(D * d)",
+      "complexity_reasoning": "Reordering and finalising sample storage arrays of shape (D, d) takes O(D * d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "run_sampling_loop",
@@ -973,7 +1033,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Extracting shape dimensions from state variables is a constant O(1) time operation.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "allocatecollectionbuffer",
@@ -1016,7 +1080,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(C * D * d)",
+      "space_complexity": "O(C * D * d)",
+      "complexity_reasoning": "Allocating the collection buffer of size C * D * d takes linear time and space in terms of chains, draws, and state dimension.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "applyburnintransitions",
@@ -1054,7 +1122,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(C * B * L * d * T)",
+      "space_complexity": "O(C * d)",
+      "complexity_reasoning": "Running C chains for B burn-in steps with L leapfrog updates in d dimensions takes O(C * B * L * d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "collectpostburnintrajectory",
@@ -1117,7 +1189,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(C * D * L * d * T)",
+      "space_complexity": "O(C * D * d)",
+      "complexity_reasoning": "Running and collecting C chains for D post-burn-in steps with L leapfrog updates in d dimensions takes O(C * D * L * d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "finalizeoutputs",
@@ -1160,7 +1236,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(C * D * d)",
+      "space_complexity": "O(C * D * d)",
+      "complexity_reasoning": "Finalizing the collected MCMC samples into the output arrays takes O(C * D * d) time and space.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [

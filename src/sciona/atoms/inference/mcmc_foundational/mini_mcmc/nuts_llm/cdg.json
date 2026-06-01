@@ -75,7 +75,11 @@
       "parallelizable": false,
       "conceptual_summary": "Deterministic Stochastic-State Constructor. Constructs an immutable initialization record for a gradient-informed stochastic transition process from a pure scalar-field oracle, an initial coordinate vector, a control scalar, and an integer seed. The seed is transformed into an explicit pseudorandom generator state so all randomness is externally threaded and reproducible. The output bundles primary coordinates with auxiliary kinetic/metric and trace containers needed for subsequent state transitions without hidden mutation.. Applications: Initializing reproducible latent-state exploration in high-dimensional inverse problems for medical imaging reconstruction, Bootstrapping stochastic trajectory search for molecular conformation landscapes in computational chemistry, Setting up probabilistic parameter-space traversal for aerodynamic model calibration in aerospace engineering, Creating explicit random-state simulation seeds and immutable transition records for uncertainty quantification in power-grid dynamics",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Initializing the NUTS state requires evaluating the log-prob and its d-dimensional finite-difference gradient in O(d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "run_nuts_transitions",
@@ -194,7 +198,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(C)",
+      "space_complexity": "O(C)",
+      "complexity_reasoning": "Allocating communications or status channels for each of the C chains takes O(C) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "spawnprogressmonitor",
@@ -237,7 +245,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Spawning a background progress monitoring thread requires constant O(1) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "runchainsinscopedparallel",
@@ -285,7 +297,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(C * D * 2^j * d * T)",
+      "space_complexity": "O(C * D * d)",
+      "complexity_reasoning": "Running C sampling chains in parallel for D draws with max tree depth j in d dimensions takes O(C * D * 2^j * d * T) total CPU time and O(C * D * d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "stackchainsamples",
@@ -318,7 +334,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(C * D * d)",
+      "space_complexity": "O(C * D * d)",
+      "complexity_reasoning": "Stacking C sample arrays of shape (D, d) into a single combined array takes linear O(C * D * d) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "joinprogressmonitor",
@@ -351,7 +371,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Joining the background progress monitor thread takes O(1) auxiliary time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "computerunstatsfromsamples",
@@ -384,7 +408,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(C * D * d)",
+      "space_complexity": "O(C * d)",
+      "complexity_reasoning": "Computing summary statistics over C chains of D draws in d dimensions takes O(C * D * d) time and O(C * d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "assemblerunprogressresult",
@@ -427,7 +455,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Assembling the final results and statistics into a dictionary takes O(d) time and space.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [

@@ -121,6 +121,11 @@ Rules:
   `float`, `list[float] | None`
 - Required params: `"required": true`. Params with defaults: `"required": false`
 - Every node gets one output named `result` with the correct return type
+- **Include Big-O complexity metadata**: Each atomic and opaque node object representing an atom must contain:
+  * `"time_complexity"`: (string, e.g., `"O(n)"`, `"O(1)"`)
+  * `"space_complexity"`: (string, e.g., `"O(n)"`, `"O(1)"`)
+  * `"complexity_reasoning"`: (string, a brief 1-sentence explanation)
+  * `"complexity_confidence"`: (integer, from 1 to 100)
 - Use `detect_cycles` to verify acyclicity
 
 ### Phase 6: Verify
@@ -202,6 +207,7 @@ That script is only used by the Supabase backfill pipeline.
 - [ ] Witnesses use valid abstract types, are pure, mirror the atom surface
 - [ ] CDG has concrete `inputs`/`outputs` on every atomic node
 - [ ] CDG node `name` fields are snake_case function names (not human-readable)
+- [ ] CDG node objects include `time_complexity`, `space_complexity`, `complexity_reasoning`, and `complexity_confidence` metrics
 - [ ] `__init__.py` files exist at every new directory level
 - [ ] Docstrings describe real semantics, not boilerplate
 - [ ] No `Any` in public interface without explicit justification

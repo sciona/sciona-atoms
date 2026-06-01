@@ -55,19 +55,23 @@
       "parallelizable": false,
       "conceptual_summary": "Sufficient_Statistics_Aggregator. Reduces an array of binary observations into a compact pair of counts (successes, failures). The operation is pure, deterministic, and lossless with respect to the information needed by the downstream parameter fold. is_conjugate: true.",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Aggregating the binary observations requires a single pass over the input array of size n to compute counts of successes and failures.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "closed_form_parameter_fold",
       "parent_id": "posterior_canon_root",
       "name": "closed_form_parameter_fold",
-      "description": "Applies the analytical closed-form parameter folding via sufficient statistics. Updates hyperparameters: α_post = α_prior + cnt1, β_post = β_prior + cnt0. Returns new immutable parameter tuple.",
+      "description": "Applies the analytical closed-form parameter folding via sufficient statistics. Updates hyperparameters: \u03b1_post = \u03b1_prior + cnt1, \u03b2_post = \u03b2_prior + cnt0. Returns new immutable parameter tuple.",
       "concept_type": "conjugate_update",
       "inputs": [
         {
           "name": "prior",
           "type_desc": "tuple",
-          "constraints": "Two-element hyperparameter vector (α, β) with positive real components."
+          "constraints": "Two-element hyperparameter vector (\u03b1, \u03b2) with positive real components."
         },
         {
           "name": "sufficient_stats",
@@ -93,7 +97,11 @@
       "parallelizable": false,
       "conceptual_summary": "Closed_Form_Parameter_Fold. Fuses prior pseudo-counts with observed sufficient statistics using exact algebraic addition. The operation is pure: it returns a new hyperparameter tuple without mutating inputs. No sampling or numerical optimisation is required. is_conjugate: true.",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "The hyperparameter update performs simple arithmetic addition on the two elements of the prior and the sufficient statistics in constant time.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [
@@ -113,4 +121,3 @@
     "is_conjugate": true
   }
 }
-

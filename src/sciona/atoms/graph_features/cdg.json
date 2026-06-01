@@ -24,14 +24,40 @@
       "type_signature": "(categories: NDArray[np.int64], num_classes: int, encoding_dim: int = 16, max_position: int = 1000) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "categories", "type_desc": "NDArray[np.int64]", "required": true, "constraints": "1D array of integer category labels"},
-        {"name": "num_classes", "type_desc": "int", "required": true, "constraints": ">= 1"},
-        {"name": "encoding_dim", "type_desc": "int", "required": false},
-        {"name": "max_position", "type_desc": "int", "required": false}
+        {
+          "name": "categories",
+          "type_desc": "NDArray[np.int64]",
+          "required": true,
+          "constraints": "1D array of integer category labels"
+        },
+        {
+          "name": "num_classes",
+          "type_desc": "int",
+          "required": true,
+          "constraints": ">= 1"
+        },
+        {
+          "name": "encoding_dim",
+          "type_desc": "int",
+          "required": false
+        },
+        {
+          "name": "max_position",
+          "type_desc": "int",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]", "constraints": "shape (N, num_classes + encoding_dim)"}
-      ]
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]",
+          "constraints": "shape (N, num_classes + encoding_dim)"
+        }
+      ],
+      "time_complexity": "O(n * (num_classes + encoding_dim))",
+      "space_complexity": "O(n * (num_classes + encoding_dim))",
+      "complexity_reasoning": "Creating one-hot and sinusoidal positional encodings requires allocating and filling arrays of size n by num_classes and n by encoding_dim, respectively.",
+      "complexity_confidence": 100
     }
   ]
 }

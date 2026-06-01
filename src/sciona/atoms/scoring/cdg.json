@@ -23,15 +23,41 @@
       "type_signature": "(rating_a: float, rating_b: float, score_a: float, k: float = 32.0) -> tuple[float, float]",
       "depth": 1,
       "inputs": [
-        {"name": "rating_a", "type_desc": "float", "required": true},
-        {"name": "rating_b", "type_desc": "float", "required": true},
-        {"name": "score_a", "type_desc": "float", "required": true},
-        {"name": "k", "type_desc": "float", "required": false}
+        {
+          "name": "rating_a",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "rating_b",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "score_a",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "k",
+          "type_desc": "float",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[float, float]"}
+        {
+          "name": "result",
+          "type_desc": "tuple[float, float]"
+        }
       ],
-      "aliases": ["elo_ratings", "elo_update"]
+      "aliases": [
+        "elo_ratings",
+        "elo_update"
+      ],
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "The Elo rating update performs a constant number of scalar arithmetic operations to compute updated ratings.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "nab_anomaly_score",
@@ -42,16 +68,46 @@
       "type_signature": "(detections: NDArray, anomaly_windows: NDArray, A_tp: float = 1.0, A_fp: float = -0.11, A_fn: float = -1.0) -> float",
       "depth": 1,
       "inputs": [
-        {"name": "detections", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "anomaly_windows", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "A_tp", "type_desc": "float", "required": false},
-        {"name": "A_fp", "type_desc": "float", "required": false},
-        {"name": "A_fn", "type_desc": "float", "required": false}
+        {
+          "name": "detections",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "anomaly_windows",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "A_tp",
+          "type_desc": "float",
+          "required": false
+        },
+        {
+          "name": "A_fp",
+          "type_desc": "float",
+          "required": false
+        },
+        {
+          "name": "A_fn",
+          "type_desc": "float",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "float"}
+        {
+          "name": "result",
+          "type_desc": "float"
+        }
       ],
-      "aliases": ["windowed_evaluation", "nab_score"]
+      "aliases": [
+        "windowed_evaluation",
+        "nab_score"
+      ],
+      "time_complexity": "O(D * W)",
+      "space_complexity": "O(W)",
+      "complexity_reasoning": "Comparing D detections against W anomaly windows sequentially takes O(D * W) time and O(W) auxiliary space for tracking detections.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "expected_f1_threshold",
@@ -62,13 +118,31 @@
       "type_signature": "(probabilities: NDArray, n_true: int) -> tuple[NDArray, float]",
       "depth": 1,
       "inputs": [
-        {"name": "probabilities", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "n_true", "type_desc": "int", "required": true}
+        {
+          "name": "probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_true",
+          "type_desc": "int",
+          "required": true
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[NDArray[np.float64], float]"}
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.float64], float]"
+        }
       ],
-      "aliases": ["f1_maximization_dp", "faron_f1"]
+      "aliases": [
+        "f1_maximization_dp",
+        "faron_f1"
+      ],
+      "time_complexity": "O(P log P)",
+      "space_complexity": "O(P)",
+      "complexity_reasoning": "Maximizing expected F1 requires sorting the P probabilities in O(P log P) time and performing a linear scan.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "hierarchical_topdown_reconcile",
@@ -79,14 +153,36 @@
       "type_signature": "(bottom_forecasts: NDArray, proportions: NDArray, top_forecast: float) -> NDArray",
       "depth": 1,
       "inputs": [
-        {"name": "bottom_forecasts", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "proportions", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "top_forecast", "type_desc": "float", "required": true}
+        {
+          "name": "bottom_forecasts",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "proportions",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "top_forecast",
+          "type_desc": "float",
+          "required": true
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
       ],
-      "aliases": ["hierarchical_scaling", "topdown_reconciliation"]
+      "aliases": [
+        "hierarchical_scaling",
+        "topdown_reconciliation"
+      ],
+      "time_complexity": "O(B)",
+      "space_complexity": "O(B)",
+      "complexity_reasoning": "Proportional top-down reconciliation scales the proportions vector of size B by the top-level forecast scalar in linear time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "probability_weighted_adjustment",
@@ -97,14 +193,36 @@
       "type_signature": "(predictions: NDArray[np.float64], probabilities: NDArray[np.float64], shift: float = 0.0) -> NDArray[np.float64]",
       "depth": 1,
       "inputs": [
-        {"name": "predictions", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "probabilities", "type_desc": "NDArray[np.float64]", "required": true},
-        {"name": "shift", "type_desc": "float", "required": false}
+        {
+          "name": "predictions",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "shift",
+          "type_desc": "float",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "NDArray[np.float64]"}
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
       ],
-      "aliases": ["probabilistic_adjustment", "probability_shift"]
+      "aliases": [
+        "probabilistic_adjustment",
+        "probability_shift"
+      ],
+      "time_complexity": "O(N)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "Applying the probability-weighted adjustment performs linear element-wise arithmetic across prediction and probability arrays of size N.",
+      "complexity_confidence": 100
     }
   ]
 }

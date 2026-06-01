@@ -49,7 +49,11 @@
           "name": "result",
           "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix"
         }
-      ]
+      ],
+      "time_complexity": "O(N + E)",
+      "space_complexity": "O(N + E)",
+      "complexity_reasoning": "SciPy's sparse graph Laplacian scales linearly with the number of nodes N and edges E, taking O(N + E) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "single_source_shortest_path",
@@ -101,7 +105,11 @@
           "name": "result",
           "type_desc": "tuple[NDArray[np.float64], ...] | NDArray[np.float64]"
         }
-      ]
+      ],
+      "time_complexity": "O(S * (E + N log N))",
+      "space_complexity": "O(S * N)",
+      "complexity_reasoning": "Computing shortest paths from S sources using Dijkstra's algorithm on a graph of size N and E edges takes O(S * (E + N log N)) time and O(S * N) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "all_pairs_shortest_path",
@@ -148,7 +156,11 @@
           "name": "result",
           "type_desc": "tuple[NDArray[np.float64], ...] | NDArray[np.float64]"
         }
-      ]
+      ],
+      "time_complexity": "O(N * (E + N log N))",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "All-pairs shortest paths using Dijkstra's algorithm for each of the N source nodes takes O(N * (E + N log N)) time and O(N^2) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "minimum_spanning_tree",
@@ -175,7 +187,11 @@
           "name": "result",
           "type_desc": "scipy.sparse.csr_matrix"
         }
-      ]
+      ],
+      "time_complexity": "O(E log N)",
+      "space_complexity": "O(N + E)",
+      "complexity_reasoning": "Finding the minimum spanning tree of a graph with N nodes and E edges using Prim's or Kruskal's algorithm takes O(E log N) time and O(N + E) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "graph_fourier_transform",
@@ -207,7 +223,11 @@
           "name": "result",
           "type_desc": "tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]"
         }
-      ]
+      ],
+      "time_complexity": "O(N^3)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Computing the eigendecomposition of the N x N graph Laplacian takes O(N^3) time and O(N^2) space for full bases, or O(k * (E + N)) for k sparse eigenspace steps.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "inverse_graph_fourier_transform",
@@ -234,7 +254,11 @@
           "name": "result",
           "type_desc": "NDArray[np.float64]"
         }
-      ]
+      ],
+      "time_complexity": "O(k * N)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "Reconstructing the graph signal is a matrix-vector product of an N x k eigenbasis and a k-dimensional coefficient vector, taking O(k * N) time and O(N) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "heat_kernel_diffusion",
@@ -271,7 +295,11 @@
           "name": "result",
           "type_desc": "NDArray[np.float64]"
         }
-      ]
+      ],
+      "time_complexity": "O(N^3)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Smoothing via spectral heat diffusion requires computing the Laplacian eigenbasis, taking O(N^3) time and O(N^2) space in the full case.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "norm",
@@ -298,7 +326,11 @@
           "name": "result",
           "type_desc": "scipy.stats.rv_continuous_frozen"
         }
-      ]
+      ],
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Freezing a normal distribution creates a lightweight configuration object in constant O(1) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "idct",
@@ -325,7 +357,11 @@
           "type_desc": "NDArray",
           "required": true
         }
-      ]
+      ],
+      "time_complexity": "O(N log N)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "The Inverse Discrete Cosine Transform along an axis of length N is computed using the Fast Fourier Transform in O(N log N) time and O(N) space.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [],

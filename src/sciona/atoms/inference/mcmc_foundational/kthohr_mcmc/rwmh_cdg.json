@@ -9,7 +9,9 @@
       "inputs": [],
       "outputs": [],
       "status": "decomposed",
-      "children": ["constructrandomwalkmetropoliskernel"],
+      "children": [
+        "constructrandomwalkmetropoliskernel"
+      ],
       "depth": 0,
       "type_signature": "module"
     },
@@ -20,16 +22,31 @@
       "description": "Build a minimal random-walk Metropolis transition kernel from a callable log-density oracle.",
       "concept_type": "mcmc_kernel_builder",
       "inputs": [
-        {"name": "target_log_kernel", "type_desc": "Callable[[np.ndarray], float]", "required": true},
-        {"name": "proposal_scale", "type_desc": "float", "required": false}
+        {
+          "name": "target_log_kernel",
+          "type_desc": "Callable[[np.ndarray], float]",
+          "required": true
+        },
+        {
+          "name": "proposal_scale",
+          "type_desc": "float",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]"}
+        {
+          "name": "result",
+          "type_desc": "Callable[[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]"
+        }
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(target_log_kernel, proposal_scale=1.0) -> transition kernel"
+      "type_signature": "(target_log_kernel, proposal_scale=1.0) -> transition kernel",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Constructing the Random-Walk Metropolis kernel closure takes constant O(1) time, while executing one step for a state of dimension d takes O(d + T) time.",
+      "complexity_confidence": 100
     }
   ],
   "edges": []

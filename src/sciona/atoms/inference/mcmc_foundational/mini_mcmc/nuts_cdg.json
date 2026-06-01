@@ -89,7 +89,11 @@
       "parallelizable": false,
       "conceptual_summary": "Direct callable atom in the consolidated module.",
       "critic_notes": "Signature derived from the Python wrapper definition.",
-      "decomposition_rationale": "Leaf atom."
+      "decomposition_rationale": "Leaf atom.",
+      "time_complexity": "O(2^j * d * T)",
+      "space_complexity": "O(j * d)",
+      "complexity_reasoning": "Building a NUTS trajectory tree of depth j requires 2^j leapfrog integrator steps, each costing O(d) gradient evaluations of the target density oracle, with a recursion stack of depth j.",
+      "complexity_confidence": 100
     }
   ],
   "edges": []

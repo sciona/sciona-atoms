@@ -164,7 +164,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Building the initial tree segment of size d takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "build_expansion_trajectory_segment",
@@ -242,7 +246,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(2^j * d * T)",
+      "space_complexity": "O(j * d)",
+      "complexity_reasoning": "Building the trajectory expansion segment of tree depth j takes O(2^j * d * T) time and O(j * d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "orient_trajectory_segments",
@@ -290,7 +298,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Determining traversal direction takes O(1) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "merge_trajectory_segments",
@@ -348,7 +360,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Merging two trajectory tree segments of size d takes O(d) time and space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "evaluate_termination_conditions",
@@ -411,7 +427,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Testing U-turn termination conditions on d-dimensional coordinates takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "nuts_transition_kernel",
@@ -489,7 +509,7 @@
           "constraints": "Defines the system's energy."
         },
         {
-          "name": "τ",
+          "name": "\u03c4",
           "type_desc": "Trajectory",
           "constraints": "Contains integrator and termination criterion."
         },
@@ -529,7 +549,7 @@
       "status": "atomic",
       "children": [],
       "depth": 2,
-      "type_signature": "(z0: PhasePoint, h: Hamiltonian, τ: Trajectory, rng: AbstractRNG) -> tuple[Real, BinaryTree, AbstractTrajectorySampler, Termination, PhasePoint]",
+      "type_signature": "(z0: PhasePoint, h: Hamiltonian, \u03c4: Trajectory, rng: AbstractRNG) -> tuple[Real, BinaryTree, AbstractTrajectorySampler, Termination, PhasePoint]",
       "matched_primitive": null,
       "is_optional": false,
       "is_opaque": false,
@@ -537,7 +557,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d * T)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Initializing the NUTS state requires evaluating the log-prob and its d-dimensional finite-difference gradient in O(d * T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "iteratively_build_proposal_tree",
@@ -557,7 +581,7 @@
           "constraints": "x is not None"
         },
         {
-          "name": "τ",
+          "name": "\u03c4",
           "type_desc": "Trajectory",
           "constraints": "x is not None"
         },
@@ -612,7 +636,7 @@
       "status": "atomic",
       "children": [],
       "depth": 2,
-      "type_signature": "(rng: AbstractRNG, h: Hamiltonian, τ: Trajectory, H0: Real, initial_tree: BinaryTree, initial_sampler: AbstractTrajectorySampler, initial_termination: Termination, initial_zcand: PhasePoint) -> tuple[BinaryTree, PhasePoint, Termination, Int]",
+      "type_signature": "(rng: AbstractRNG, h: Hamiltonian, \u03c4: Trajectory, H0: Real, initial_tree: BinaryTree, initial_sampler: AbstractTrajectorySampler, initial_termination: Termination, initial_zcand: PhasePoint) -> tuple[BinaryTree, PhasePoint, Termination, Int]",
       "matched_primitive": null,
       "is_optional": false,
       "is_opaque": false,
@@ -620,7 +644,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(2^j * d * T)",
+      "space_complexity": "O(j * d)",
+      "complexity_reasoning": "Iteratively building the proposal tree of depth j takes O(2^j * d * T) time and O(j * d) space.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "compute_nuts_transition_stats",
@@ -683,7 +711,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Computing trajectory diagnostics in d dimensions takes O(d) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "create_nuts_transition",
@@ -721,7 +753,11 @@
       "parallelizable": false,
       "conceptual_summary": "",
       "critic_notes": "",
-      "decomposition_rationale": ""
+      "decomposition_rationale": "",
+      "time_complexity": "O(d)",
+      "space_complexity": "O(d)",
+      "complexity_reasoning": "Assembling the next transition record in d dimensions takes O(d) time and space.",
+      "complexity_confidence": 100
     }
   ],
   "edges": [

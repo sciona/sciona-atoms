@@ -23,19 +23,46 @@
       "description": "Run one source-shaped AEES local Metropolis transition with explicit state and RNG key.",
       "concept_type": "mcmc_transition",
       "inputs": [
-        {"name": "state_in", "type_desc": "np.ndarray", "required": true},
-        {"name": "temper_val", "type_desc": "float", "required": true},
-        {"name": "target_log_kernel", "type_desc": "Callable[[np.ndarray], float]", "required": true},
-        {"name": "rng_key_in", "type_desc": "np.ndarray", "required": true},
-        {"name": "prop_scaling_mat", "type_desc": "np.ndarray | None", "required": false}
+        {
+          "name": "state_in",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "temper_val",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "target_log_kernel",
+          "type_desc": "Callable[[np.ndarray], float]",
+          "required": true
+        },
+        {
+          "name": "rng_key_in",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "prop_scaling_mat",
+          "type_desc": "np.ndarray | None",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "tuple[np.ndarray, np.ndarray]"}
+        {
+          "name": "result",
+          "type_desc": "tuple[np.ndarray, np.ndarray]"
+        }
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(state_in, temper_val, target_log_kernel, rng_key_in, prop_scaling_mat=None) -> tuple[np.ndarray, np.ndarray]"
+      "type_signature": "(state_in, temper_val, target_log_kernel, rng_key_in, prop_scaling_mat=None) -> tuple[np.ndarray, np.ndarray]",
+      "time_complexity": "O(d^2 + T)",
+      "space_complexity": "O(d^2)",
+      "complexity_reasoning": "Proposing a new candidate state requires a matrix-vector product of size d x d and two target evaluations, taking O(d^2 + T) time.",
+      "complexity_confidence": 100
     },
     {
       "node_id": "target_log_kernel_oracle",
@@ -44,19 +71,46 @@
       "description": "Evaluate the source example Gaussian-mixture target log kernel.",
       "concept_type": "probabilistic_oracle",
       "inputs": [
-        {"name": "state_candidate", "type_desc": "np.ndarray", "required": true},
-        {"name": "weights", "type_desc": "np.ndarray", "required": true},
-        {"name": "means", "type_desc": "np.ndarray", "required": true},
-        {"name": "variances", "type_desc": "np.ndarray", "required": true},
-        {"name": "temper_val", "type_desc": "float", "required": false}
+        {
+          "name": "state_candidate",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "weights",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "means",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "variances",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "temper_val",
+          "type_desc": "float",
+          "required": false
+        }
       ],
       "outputs": [
-        {"name": "result", "type_desc": "float"}
+        {
+          "name": "result",
+          "type_desc": "float"
+        }
       ],
       "status": "atomic",
       "children": [],
       "depth": 1,
-      "type_signature": "(state_candidate, weights, means, variances, temper_val=1.0) -> float"
+      "type_signature": "(state_candidate, weights, means, variances, temper_val=1.0) -> float",
+      "time_complexity": "O(C * d)",
+      "space_complexity": "O(C)",
+      "complexity_reasoning": "Evaluating the Gaussian-mixture target density computes squared distances of size d for each of the C components in O(C * d) time.",
+      "complexity_confidence": 100
     }
   ],
   "edges": []
