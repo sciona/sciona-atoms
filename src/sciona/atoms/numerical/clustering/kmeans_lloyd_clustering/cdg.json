@@ -1,0 +1,169 @@
+{
+  "cdg_id": "kmeans_lloyd_clustering",
+  "name": "kmeans_lloyd_clustering",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose K-Means into initialization (K-Means++), iteration assignment, centroid mean updating, and iteration control loop atoms. This allows architects to plug in custom distance formulas or warm starts.",
+  "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
+  "atomic_nodes": [
+    {
+      "name": "initialize_kmeans_plus_plus",
+      "semantic_role": "Use distance-weighted probability distribution to spread out initial centroids.",
+      "source_targets": [
+        "sklearn.cluster.kmeans_plusplus"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_clusters",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "initial_centroids",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_clusters <= X.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "initial_centroids.shape == (n_clusters, X.shape[1])"
+      ],
+      "witness_shape_semantics": "Picks k coordinates to start clustering iterations.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "assign_clusters",
+      "semantic_role": "Assign each data point to its closest centroid.",
+      "source_targets": [
+        "sklearn.cluster.KMeans"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "centroids",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "labels",
+          "type_desc": "NDArray[np.int32]"
+        },
+        {
+          "name": "inertia",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "X.shape[1] == centroids.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "labels.shape[0] == X.shape[0]"
+      ],
+      "witness_shape_semantics": "Maps coordinate arrays to integer classification IDs.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "update_centroids",
+      "semantic_role": "Recalculate cluster centroids as the coordinate mean of assigned members.",
+      "source_targets": [
+        "sklearn.cluster.KMeans"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "labels",
+          "type_desc": "NDArray[np.int32]",
+          "required": true
+        },
+        {
+          "name": "n_clusters",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "centroids",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_clusters > 0"
+      ],
+      "postcondition_candidates": [
+        "centroids.shape == (n_clusters, X.shape[1])"
+      ],
+      "witness_shape_semantics": "Reduces spatial dimension matrix down to k cluster centroids.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "initialize_kmeans_plus_plus",
+      "target": "assign_clusters",
+      "output_name": "initial_centroids",
+      "input_name": "centroids"
+    },
+    {
+      "source": "assign_clusters",
+      "target": "update_centroids",
+      "output_name": "labels",
+      "input_name": "labels"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "n_clusters",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      },
+      {
+        "name": "centroids",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "inertia",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

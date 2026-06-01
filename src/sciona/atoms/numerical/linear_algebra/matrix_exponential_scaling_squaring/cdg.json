@@ -1,0 +1,58 @@
+{
+  "cdg_id": "matrix_exponential_scaling_squaring",
+  "name": "matrix_exponential_scaling_squaring",
+  "priority": "medium",
+  "decomposition_rationale": "Separates Pad\u00e9 parameter selection (based on matrix norms) from the actual polynomial evaluation and squaring phases, which enables custom bounds validations.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "atomic_nodes": [
+    {
+      "name": "compute_matrix_exponential",
+      "semantic_role": "Evaluate matrix exponential using scaling and squaring with Pad\u00e9 approximation.",
+      "source_targets": [
+        "scipy.linalg.expm"
+      ],
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64 | np.complex128]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "expm_A",
+          "type_desc": "NDArray[np.float64 | np.complex128]"
+        }
+      ],
+      "precondition_candidates": [
+        "A.ndim == 2",
+        "A.shape[0] == A.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "expm_A.shape == A.shape"
+      ],
+      "witness_shape_semantics": "Produces exponential matrix mapping same dimensions.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64 | np.complex128]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "expm_A",
+        "type_desc": "NDArray[np.float64 | np.complex128]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

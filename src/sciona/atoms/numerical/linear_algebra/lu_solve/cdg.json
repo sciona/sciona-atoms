@@ -1,0 +1,121 @@
+{
+  "nodes": [
+    {
+      "node_id": "lu_solve_root",
+      "name": "Dense Pivoted LU Linear Solver",
+      "description": "Dense pivoted LU decomposition and back-solving linear system family.",
+      "status": "decomposed",
+      "children": [
+        "lu_factorize_matrix",
+        "lu_solve_system",
+        "estimate_lu_condition_number"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "lu_factorize_matrix",
+      "name": "lu_factorize_matrix",
+      "description": "Compute the LU factorization of a general square matrix A.",
+      "concept_type": "algebraic",
+      "status": "atomic",
+      "type_signature": "(A: NDArray[np.float64] | NDArray[np.complex128]) -> tuple[NDArray[np.float64] | NDArray[np.complex128], NDArray[np.int32]]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64] | NDArray[np.complex128]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.float64] | NDArray[np.complex128], NDArray[np.int32]]"
+        }
+      ],
+      "time_complexity": "O(N^3)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "LU factorization of an N x N matrix requires O(N^3) floating point operations and O(N^2) space to store the factored matrix in place.",
+      "complexity_confidence": 100
+    },
+    {
+      "node_id": "lu_solve_system",
+      "name": "lu_solve_system",
+      "description": "Solve a square linear system A x = b using precomputed LU factorization.",
+      "concept_type": "algebraic",
+      "status": "atomic",
+      "type_signature": "(lu_and_piv: tuple[NDArray[np.float64] | NDArray[np.complex128], NDArray[np.int32]], b: NDArray[np.float64] | NDArray[np.complex128]) -> NDArray[np.float64] | NDArray[np.complex128]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "lu_and_piv",
+          "type_desc": "tuple[NDArray[np.float64] | NDArray[np.complex128], NDArray[np.int32]]",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type_desc": "NDArray[np.float64] | NDArray[np.complex128]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64] | NDArray[np.complex128]"
+        }
+      ],
+      "time_complexity": "O(N^2)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "Back-solving with precomputed LU factors against a single RHS vector takes O(N^2) operations via forward/backward substitutions and O(N) auxiliary space.",
+      "complexity_confidence": 100
+    },
+    {
+      "node_id": "estimate_lu_condition_number",
+      "name": "estimate_lu_condition_number",
+      "description": "Estimate the reciprocal condition number of A based on LU factors.",
+      "concept_type": "algebraic",
+      "status": "atomic",
+      "type_signature": "(lu_and_piv: tuple[NDArray[np.float64] | NDArray[np.complex128], NDArray[np.int32]], norm_A: float) -> float",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "lu_and_piv",
+          "type_desc": "tuple[NDArray[np.float64] | NDArray[np.complex128], NDArray[np.int32]]",
+          "required": true
+        },
+        {
+          "name": "norm_A",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "float"
+        }
+      ],
+      "time_complexity": "O(N^2)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "LAPACK condition number estimation runs in O(N^2) operations given precomputed LU factors using a few backward/forward substitutions.",
+      "complexity_confidence": 100
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "lu_factorize_matrix",
+      "target_id": "lu_solve_system",
+      "edge_type": "data_dependency"
+    },
+    {
+      "source_id": "lu_factorize_matrix",
+      "target_id": "estimate_lu_condition_number",
+      "edge_type": "data_dependency"
+    }
+  ],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/scipy/scipy",
+    "source_license": "BSD-3-Clause"
+  }
+}

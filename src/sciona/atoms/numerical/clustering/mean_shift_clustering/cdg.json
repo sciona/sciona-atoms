@@ -1,0 +1,123 @@
+{
+  "cdg_id": "mean_shift_clustering",
+  "name": "mean_shift_clustering",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into mean-shift iteration (mode-seeking) and mode grouping/pruning. Decoupling allows architects to apply the mode-seeking iteration to individual points dynamically.",
+  "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
+  "atomic_nodes": [
+    {
+      "name": "shift_step",
+      "semantic_role": "Perform a single vectorized shift of coordinates towards local density peaks.",
+      "source_targets": [
+        "sklearn.cluster.MeanShift"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "current_positions",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "bandwidth",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "new_positions",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "bandwidth > 0.0"
+      ],
+      "postcondition_candidates": [
+        "new_positions.shape == current_positions.shape"
+      ],
+      "witness_shape_semantics": "Shifts point clouds closer to high density regions.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "extract_modes",
+      "semantic_role": "Consolidate shifted points into discrete mode centroids and labels.",
+      "source_targets": [
+        "sklearn.cluster.MeanShift"
+      ],
+      "inputs": [
+        {
+          "name": "converged_positions",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "bandwidth",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "centroids",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "labels",
+          "type_desc": "NDArray[np.int32]"
+        }
+      ],
+      "precondition_candidates": [
+        "bandwidth > 0.0"
+      ],
+      "postcondition_candidates": [
+        "labels.shape[0] == converged_positions.shape[0]"
+      ],
+      "witness_shape_semantics": "Groups spatial locations into cluster identity integers.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "shift_step",
+      "target": "extract_modes",
+      "output_name": "new_positions",
+      "input_name": "converged_positions"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "bandwidth",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "centroids",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

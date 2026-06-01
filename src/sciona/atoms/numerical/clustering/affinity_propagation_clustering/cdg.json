@@ -1,0 +1,135 @@
+{
+  "cdg_id": "affinity_propagation_clustering",
+  "name": "affinity_propagation_clustering",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into similarity computation, message update looping, and exemplar extraction. Separating the iteration loop allows diagnostic monitoring of message convergence.",
+  "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
+  "atomic_nodes": [
+    {
+      "name": "AP_message_update",
+      "semantic_role": "Run message-passing iterations to update responsibility and availability matrices with damping.",
+      "source_targets": [
+        "sklearn.cluster.AffinityPropagation"
+      ],
+      "inputs": [
+        {
+          "name": "S",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "R",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "damping",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "R_new",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "A_new",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "damping >= 0.5",
+        "damping < 1.0"
+      ],
+      "postcondition_candidates": [
+        "R_new.shape == S.shape"
+      ],
+      "witness_shape_semantics": "Updates network message tables.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "extract_exemplars",
+      "semantic_role": "Identify exemplars from converged message matrices and assign labels.",
+      "source_targets": [
+        "sklearn.cluster.AffinityPropagation"
+      ],
+      "inputs": [
+        {
+          "name": "R",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "exemplars",
+          "type_desc": "NDArray[np.int64]"
+        },
+        {
+          "name": "labels",
+          "type_desc": "NDArray[np.int32]"
+        }
+      ],
+      "precondition_candidates": [
+        "R.shape == A.shape"
+      ],
+      "postcondition_candidates": [
+        "labels.shape[0] == R.shape[0]"
+      ],
+      "witness_shape_semantics": "Compresses message matrices down to active groupings.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "AP_message_update",
+      "target": "extract_exemplars",
+      "output_name": "R_new",
+      "input_name": "R"
+    },
+    {
+      "source": "AP_message_update",
+      "target": "extract_exemplars",
+      "output_name": "A_new",
+      "input_name": "A"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "S",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "damping",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

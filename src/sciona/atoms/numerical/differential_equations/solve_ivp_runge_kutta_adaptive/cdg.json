@@ -1,0 +1,273 @@
+{
+  "cdg_id": "solve_ivp_runge_kutta_adaptive",
+  "name": "solve_ivp_runge_kutta_adaptive",
+  "priority": "medium",
+  "decomposition_rationale": "Isolate the Butcher tableau representation, single-step stage evaluation, local error calculation, and step controller loop. This enables easy substitution of Runge-Kutta variants (e.g. RK45, RK23, Cash-Karp) without rewritten solver controllers.",
+  "family_directory_hint": "src/sciona/atoms/numerical/differential_equations/",
+  "atomic_nodes": [
+    {
+      "name": "get_butcher_tableau",
+      "semantic_role": "Retrieve matrices A, coefficients B, B_star, and C defining an embedded Runge-Kutta scheme.",
+      "source_targets": [
+        "scipy.integrate.RK45"
+      ],
+      "inputs": [
+        {
+          "name": "method",
+          "type_desc": "str",
+          "required": true,
+          "constraints": "Must be 'RK45' or 'RK23'"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "B",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "B_star",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "C",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Returns static matrices of scheme weights.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_rk_single_step",
+      "semantic_role": "Evaluate explicit Runge-Kutta stages and compute step candidate and error vector.",
+      "source_targets": [
+        "scipy.integrate.RK45._step_impl"
+      ],
+      "inputs": [
+        {
+          "name": "fun",
+          "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+          "required": true
+        },
+        {
+          "name": "t",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "h",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "B",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "B_star",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "C",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y_new",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "error_vector",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "k_stages",
+          "type_desc": "NDArray[np.float64]",
+          "description": "Evaluated stage derivatives"
+        }
+      ],
+      "precondition_candidates": [
+        "h > 0"
+      ],
+      "postcondition_candidates": [
+        "y_new.shape == y.shape",
+        "error_vector.shape == y.shape"
+      ],
+      "witness_shape_semantics": "Returns candidate values and error of same shape as state.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "evaluate_step_acceptability",
+      "semantic_role": "Compare error norm against tolerances to decide step acceptance and compute next step scaling factor.",
+      "source_targets": [
+        "scipy.integrate.RK45._step_impl"
+      ],
+      "inputs": [
+        {
+          "name": "y",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "y_new",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "error_vector",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "atol",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "rtol",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "accepted",
+          "type_desc": "bool"
+        },
+        {
+          "name": "error_norm",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "atol > 0",
+        "rtol > 0"
+      ],
+      "postcondition_candidates": [
+        "error_norm >= 0"
+      ],
+      "witness_shape_semantics": "Calculates normalized step error metric.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "get_butcher_tableau",
+      "target": "compute_rk_single_step",
+      "output_name": "A",
+      "input_name": "A"
+    },
+    {
+      "source": "get_butcher_tableau",
+      "target": "compute_rk_single_step",
+      "output_name": "B",
+      "input_name": "B"
+    },
+    {
+      "source": "get_butcher_tableau",
+      "target": "compute_rk_single_step",
+      "output_name": "B_star",
+      "input_name": "B_star"
+    },
+    {
+      "source": "get_butcher_tableau",
+      "target": "compute_rk_single_step",
+      "output_name": "C",
+      "input_name": "C"
+    },
+    {
+      "source": "compute_rk_single_step",
+      "target": "evaluate_step_acceptability",
+      "output_name": "y_new",
+      "input_name": "y_new"
+    },
+    {
+      "source": "compute_rk_single_step",
+      "target": "evaluate_step_acceptability",
+      "output_name": "error_vector",
+      "input_name": "error_vector"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "fun",
+        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "t",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "y",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "h",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "method",
+        "type_desc": "str",
+        "required": true
+      },
+      {
+        "name": "atol",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "rtol",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "y_new",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "accepted",
+        "type_desc": "bool"
+      },
+      {
+        "name": "error_norm",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

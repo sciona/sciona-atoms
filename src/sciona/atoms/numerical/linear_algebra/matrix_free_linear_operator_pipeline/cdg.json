@@ -1,0 +1,111 @@
+{
+  "cdg_id": "matrix_free_linear_operator_pipeline",
+  "name": "matrix_free_linear_operator_pipeline",
+  "priority": "medium",
+  "decomposition_rationale": "Establishes a rigorous matrix-free abstraction layer. Providing a dedicated builder node with an adjoint check guarantees the mathematical validity of the operator before feeding it to Krylov solvers.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "atomic_nodes": [
+    {
+      "name": "build_linear_operator",
+      "semantic_role": "Construct a custom LinearOperator wrapper around functions.",
+      "source_targets": [
+        "scipy.sparse.linalg.LinearOperator"
+      ],
+      "inputs": [
+        {
+          "name": "shape",
+          "type_desc": "tuple[int, int]",
+          "required": true
+        },
+        {
+          "name": "matvec",
+          "type_desc": "Callable[[NDArray[np.float64]], NDArray[np.float64]]",
+          "required": true
+        },
+        {
+          "name": "rmatvec",
+          "type_desc": "Callable[[NDArray[np.float64]], NDArray[np.float64]]",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "operator",
+          "type_desc": "scipy.sparse.linalg.LinearOperator"
+        }
+      ],
+      "precondition_candidates": [
+        "len(shape) == 2"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Creates abstract operator wrapping custom action routines.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "verify_adjoint_relation",
+      "semantic_role": "Perform stochastic test of the adjoint relation.",
+      "source_targets": [],
+      "inputs": [
+        {
+          "name": "operator",
+          "type_desc": "scipy.sparse.linalg.LinearOperator",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "is_valid",
+          "type_desc": "bool"
+        },
+        {
+          "name": "discrepancy",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Validates <Au, v> == <u, A^H v> via random sampling.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "build_linear_operator",
+      "target": "verify_adjoint_relation",
+      "output_name": "operator",
+      "input_name": "operator"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "shape",
+        "type_desc": "tuple[int, int]",
+        "required": true
+      },
+      {
+        "name": "matvec",
+        "type_desc": "Callable[[NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "rmatvec",
+        "type_desc": "Callable[[NDArray[np.float64]], NDArray[np.float64]]",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "operator",
+        "type_desc": "scipy.sparse.linalg.LinearOperator"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

@@ -1,0 +1,124 @@
+{
+  "cdg_id": "mini_batch_kmeans_clustering",
+  "name": "mini_batch_kmeans_clustering",
+  "priority": "medium",
+  "decomposition_rationale": "Separately model the dataset batch partition step and the centroid convex-combination update step. This provides a direct implementation blueprint for online/streaming algorithms.",
+  "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
+  "atomic_nodes": [
+    {
+      "name": "sample_batch",
+      "semantic_role": "Draw a random row slice of specified batch size from the dataset.",
+      "source_targets": [
+        "sklearn.cluster.MiniBatchKMeans"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "batch_size",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "batch",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "batch_size <= X.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "batch.shape[0] == batch_size"
+      ],
+      "witness_shape_semantics": "Extracts an active batch matrix.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "update_batch_centroids",
+      "semantic_role": "Update centroid coordinate averages incrementally based on batch assignments.",
+      "source_targets": [
+        "sklearn.cluster.MiniBatchKMeans"
+      ],
+      "inputs": [
+        {
+          "name": "batch",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "centroids",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "counts",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "updated_centroids",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "updated_counts",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "precondition_candidates": [
+        "batch.shape[1] == centroids.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "updated_centroids.shape == centroids.shape"
+      ],
+      "witness_shape_semantics": "Performs convex-combination weight modifications on centroids.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "sample_batch",
+      "target": "update_batch_centroids",
+      "output_name": "batch",
+      "input_name": "batch"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "n_clusters",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "batch_size",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "centroids",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": true
+}

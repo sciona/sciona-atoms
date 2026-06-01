@@ -1,0 +1,159 @@
+{
+  "cdg_id": "adaptive_gauss_kronrod_quadrature",
+  "name": "adaptive_gauss_kronrod_quadrature",
+  "priority": "medium",
+  "decomposition_rationale": "Isolate the base 7/15 point Gauss-Kronrod evaluation from the global adaptive interval subdivision loop. This enables modular reuse of the Gauss-Kronrod rule for single-interval panels or alternative adaptive heuristics.",
+  "family_directory_hint": "src/sciona/atoms/numerical/integration/",
+  "atomic_nodes": [
+    {
+      "name": "evaluate_gauss_kronrod_15",
+      "semantic_role": "Evaluate Gauss 7-point and Kronrod 15-point rules on a single interval to estimate the integral and its localized error.",
+      "source_targets": [
+        "scipy.integrate.quad"
+      ],
+      "inputs": [
+        {
+          "name": "func",
+          "type_desc": "Callable[[float], float]",
+          "required": true
+        },
+        {
+          "name": "a",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "integral_estimate",
+          "type_desc": "float"
+        },
+        {
+          "name": "error_estimate",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "a < b"
+      ],
+      "postcondition_candidates": [
+        "error_estimate >= 0"
+      ],
+      "witness_shape_semantics": "Returns scalar estimations.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "adaptive_subdivision_loop",
+      "semantic_role": "Execute the adaptive interval subdivision loop using a priority queue ranked by error estimate.",
+      "source_targets": [
+        "scipy.integrate.quad"
+      ],
+      "inputs": [
+        {
+          "name": "func",
+          "type_desc": "Callable[[float], float]",
+          "required": true
+        },
+        {
+          "name": "a",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "epsabs",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "epsrel",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "limit",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "float"
+        },
+        {
+          "name": "total_error",
+          "type_desc": "float"
+        },
+        {
+          "name": "intervals_evaluated",
+          "type_desc": "list[tuple[float, float, float]]"
+        }
+      ],
+      "precondition_candidates": [
+        "limit > 0"
+      ],
+      "postcondition_candidates": [
+        "total_error >= 0"
+      ],
+      "witness_shape_semantics": "Summates panel integrals and aggregates errors.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "func",
+        "type_desc": "Callable[[float], float]",
+        "required": true
+      },
+      {
+        "name": "a",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "epsabs",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "epsrel",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "result",
+        "type_desc": "float"
+      },
+      {
+        "name": "total_error",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

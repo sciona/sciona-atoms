@@ -1,0 +1,143 @@
+{
+  "cdg_id": "voronoi_diagram_construction",
+  "name": "voronoi_diagram_construction",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into Voronoi diagram generation and cell geometry parsing (clipping open regions to a finite bounding box), which is a common requirement in physical modeling.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "compute_voronoi_raw",
+      "semantic_role": "Compute raw Voronoi vertices, cells, and ridge graphs from generator coordinates.",
+      "source_targets": [
+        "scipy.spatial.Voronoi"
+      ],
+      "inputs": [
+        {
+          "name": "points",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vertices",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "regions",
+          "type_desc": "list[list[int]]"
+        },
+        {
+          "name": "point_region",
+          "type_desc": "NDArray[np.int32]"
+        },
+        {
+          "name": "ridge_vertices",
+          "type_desc": "list[list[int]]"
+        }
+      ],
+      "precondition_candidates": [
+        "points.ndim == 2",
+        "points.shape[0] >= points.shape[1] + 1"
+      ],
+      "postcondition_candidates": [
+        "vertices.ndim == 2"
+      ],
+      "witness_shape_semantics": "Maps N seed points to a Voronoi graph structure.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "clip_voronoi_boundaries",
+      "semantic_role": "Clip open infinite Voronoi regions using a spatial bounding box.",
+      "source_targets": [
+        "scipy.spatial.Voronoi"
+      ],
+      "inputs": [
+        {
+          "name": "vertices",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "regions",
+          "type_desc": "list[list[int]]",
+          "required": true
+        },
+        {
+          "name": "points",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "point_region",
+          "type_desc": "NDArray[np.int32]",
+          "required": true
+        },
+        {
+          "name": "bbox",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "clipped_regions",
+          "type_desc": "list[list[float]]"
+        }
+      ],
+      "precondition_candidates": [
+        "bbox.shape == (2, points.shape[1])"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Clips open coordinate paths into closed spatial polygons.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "compute_voronoi_raw",
+      "target": "clip_voronoi_boundaries",
+      "output_name": "vertices",
+      "input_name": "vertices"
+    },
+    {
+      "source": "compute_voronoi_raw",
+      "target": "clip_voronoi_boundaries",
+      "output_name": "regions",
+      "input_name": "regions"
+    },
+    {
+      "source": "compute_voronoi_raw",
+      "target": "clip_voronoi_boundaries",
+      "output_name": "point_region",
+      "input_name": "point_region"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "bbox",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "clipped_regions",
+        "type_desc": "list[list[float]]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

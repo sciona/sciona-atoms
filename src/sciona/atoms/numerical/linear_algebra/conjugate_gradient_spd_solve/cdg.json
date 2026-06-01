@@ -1,0 +1,95 @@
+{
+  "cdg_id": "conjugate_gradient_spd_solve",
+  "name": "conjugate_gradient_spd_solve",
+  "priority": "medium",
+  "decomposition_rationale": "Decouples Krylov solver parameter initialization and callback hooks from the inner execution matrix loops, enabling easy telemetry/monitoring.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "atomic_nodes": [
+    {
+      "name": "iterate_conjugate_gradient",
+      "semantic_role": "Run Conjugate Gradient iterations on A x = b.",
+      "source_targets": [
+        "scipy.sparse.linalg.cg"
+      ],
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "scipy.sparse.linalg.LinearOperator",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "M",
+          "type_desc": "scipy.sparse.linalg.LinearOperator",
+          "required": false
+        },
+        {
+          "name": "tol",
+          "type_desc": "float",
+          "required": false
+        },
+        {
+          "name": "maxiter",
+          "type_desc": "int",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "info",
+          "type_desc": "int"
+        }
+      ],
+      "precondition_candidates": [
+        "b.ndim == 1"
+      ],
+      "postcondition_candidates": [
+        "x.shape == b.shape"
+      ],
+      "witness_shape_semantics": "Computes solution iteratively using A matrix-vector multiplies.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "scipy.sparse.linalg.LinearOperator",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "tol",
+        "type_desc": "float",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "info",
+        "type_desc": "int"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

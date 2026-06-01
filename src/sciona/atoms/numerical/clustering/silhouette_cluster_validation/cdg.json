@@ -1,0 +1,110 @@
+{
+  "cdg_id": "silhouette_cluster_validation",
+  "name": "silhouette_cluster_validation",
+  "priority": "medium",
+  "decomposition_rationale": "Separating sample-level coefficient calculations from the final scalar mean aggregator allows the architect to generate detailed silhouette plot diagnostics.",
+  "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
+  "atomic_nodes": [
+    {
+      "name": "compute_silhouette_samples",
+      "semantic_role": "Calculate Rousseeuw silhouette coefficients for every individual point.",
+      "source_targets": [
+        "sklearn.metrics.silhouette_samples"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "labels",
+          "type_desc": "NDArray[np.int32]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sample_scores",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "X.ndim == 2",
+        "labels.ndim == 1",
+        "len(np.unique(labels)) >= 2"
+      ],
+      "postcondition_candidates": [
+        "sample_scores.shape[0] == X.shape[0]",
+        "np.all(sample_scores >= -1.0)",
+        "np.all(sample_scores <= 1.0)"
+      ],
+      "witness_shape_semantics": "Converts N coordinates and class labels to an N-length quality score array.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "aggregate_mean_score",
+      "semantic_role": "Compute the average silhouette score across all samples.",
+      "source_targets": [
+        "sklearn.metrics.silhouette_score"
+      ],
+      "inputs": [
+        {
+          "name": "sample_scores",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mean_score",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "sample_scores.ndim == 1"
+      ],
+      "postcondition_candidates": [
+        "mean_score >= -1.0",
+        "mean_score <= 1.0"
+      ],
+      "witness_shape_semantics": "Reduces an array of scores to a single scalar quality metric.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "compute_silhouette_samples",
+      "target": "aggregate_mean_score",
+      "output_name": "sample_scores",
+      "input_name": "sample_scores"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "mean_score",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

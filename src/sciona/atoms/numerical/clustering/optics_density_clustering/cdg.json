@@ -1,0 +1,139 @@
+{
+  "cdg_id": "optics_density_clustering",
+  "name": "optics_density_clustering",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into reachability-ordering solving (the expensive spatial tree traversal) and cluster extraction (the fast linear scan of the reachability plot). This allows the user to test different density cuts instantaneously.",
+  "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
+  "atomic_nodes": [
+    {
+      "name": "solve_optics_ordering",
+      "semantic_role": "Traverse spatial points to establish hierarchical reachability and order listings.",
+      "source_targets": [
+        "sklearn.cluster.OPTICS"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "min_samples",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "max_eps",
+          "type_desc": "float",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ordering",
+          "type_desc": "NDArray[np.int64]"
+        },
+        {
+          "name": "reachability",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "core_distances",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "min_samples >= 2"
+      ],
+      "postcondition_candidates": [
+        "ordering.shape[0] == X.shape[0]"
+      ],
+      "witness_shape_semantics": "Rearranges spatial data records into density reachability structures.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "extract_optics_dbscan",
+      "semantic_role": "Perform threshold cuts on the reachability order to retrieve static DBSCAN-like labels.",
+      "source_targets": [
+        "sklearn.cluster.cluster_optics_dbscan"
+      ],
+      "inputs": [
+        {
+          "name": "ordering",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "reachability",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "eps",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "labels",
+          "type_desc": "NDArray[np.int32]"
+        }
+      ],
+      "precondition_candidates": [
+        "eps > 0.0"
+      ],
+      "postcondition_candidates": [
+        "labels.shape[0] == ordering.shape[0]"
+      ],
+      "witness_shape_semantics": "Packs coordinate listings into cluster ID matrices.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "solve_optics_ordering",
+      "target": "extract_optics_dbscan",
+      "output_name": "ordering",
+      "input_name": "ordering"
+    },
+    {
+      "source": "solve_optics_ordering",
+      "target": "extract_optics_dbscan",
+      "output_name": "reachability",
+      "input_name": "reachability"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "min_samples",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "eps",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

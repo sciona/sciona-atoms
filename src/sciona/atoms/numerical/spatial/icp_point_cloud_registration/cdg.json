@@ -1,0 +1,133 @@
+{
+  "cdg_id": "icp_point_cloud_registration",
+  "name": "icp_point_cloud_registration",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into rigid correspondence matching and optimal SVD rigid alignment calculations to permit customizable outlier rejection or coordinate adjustments in larger registration pipelines.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "find_correspondences",
+      "semantic_role": "Use spatial indices to associate each point in the source cloud to its nearest neighbor in the target cloud.",
+      "source_targets": [
+        "scipy.spatial.cKDTree"
+      ],
+      "inputs": [
+        {
+          "name": "source",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "target",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "matched_target",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "source.ndim == 2",
+        "target.ndim == 2",
+        "source.shape[1] == target.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "matched_target.shape == source.shape"
+      ],
+      "witness_shape_semantics": "Aligns coordinate shape structures to match correspondences.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "estimate_rigid_transform",
+      "semantic_role": "Use centered SVD solvers to compute the optimal rotation and translation aligning matched coordinates.",
+      "source_targets": [
+        "scipy.spatial.procrustes"
+      ],
+      "inputs": [
+        {
+          "name": "source",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "matched_target",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "R",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "t",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "mse",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "source.shape == matched_target.shape"
+      ],
+      "postcondition_candidates": [
+        "R.shape == (source.shape[1], source.shape[1])",
+        "t.shape[0] == source.shape[1]"
+      ],
+      "witness_shape_semantics": "Produces D x D rotation and D-length translation vectors.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "find_correspondences",
+      "target": "estimate_rigid_transform",
+      "output_name": "matched_target",
+      "input_name": "matched_target"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "source",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "target",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "R",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "t",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "mse",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

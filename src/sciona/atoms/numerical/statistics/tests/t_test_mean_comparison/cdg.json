@@ -1,0 +1,248 @@
+{
+  "cdg_id": "t_test_mean_comparison",
+  "name": "t_test_mean_comparison",
+  "priority": "medium",
+  "decomposition_rationale": "Decouples variance testing from the calculation of Welch or Student statistics. Allows standard diagnostic pipeline branching based on variance homogeneity.",
+  "family_directory_hint": "src/sciona/atoms/numerical/statistics/tests/",
+  "atomic_nodes": [
+    {
+      "name": "test_variance_homogeneity",
+      "semantic_role": "Perform Levene's test to evaluate equality of variances between two groups.",
+      "source_targets": [
+        "scipy.stats.levene"
+      ],
+      "inputs": [
+        {
+          "name": "x1",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "x2",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "levene_p",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "len(x1) >= 3",
+        "len(x2) >= 3"
+      ],
+      "postcondition_candidates": [
+        "0.0 <= result <= 1.0"
+      ],
+      "witness_shape_semantics": "Reduces two 1D vectors to a scalar probability.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_t_moments",
+      "semantic_role": "Calculate sample means, standard deviations, and sizes.",
+      "source_targets": [
+        "numpy.mean",
+        "numpy.var"
+      ],
+      "inputs": [
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mean",
+          "type_desc": "float"
+        },
+        {
+          "name": "variance",
+          "type_desc": "float"
+        },
+        {
+          "name": "n",
+          "type_desc": "int"
+        }
+      ],
+      "precondition_candidates": [
+        "x.ndim == 1"
+      ],
+      "postcondition_candidates": [
+        "variance >= 0.0",
+        "n > 0"
+      ],
+      "witness_shape_semantics": "Reduces 1D vector to three scalar metrics.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_welch_t_statistic",
+      "semantic_role": "Calculate Welch t-statistic and Welch-Satterthwaite degrees of freedom.",
+      "source_targets": [
+        "scipy.stats.ttest_ind"
+      ],
+      "inputs": [
+        {
+          "name": "mean1",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "variance1",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "n1",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "mean2",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "variance2",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "n2",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "t_stat",
+          "type_desc": "float"
+        },
+        {
+          "name": "df",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "variance1 > 0.0",
+        "variance2 > 0.0",
+        "n1 > 1",
+        "n2 > 1"
+      ],
+      "postcondition_candidates": [
+        "df > 1.0"
+      ],
+      "witness_shape_semantics": "Produces t-statistic and fractional degrees of freedom.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "evaluate_t_significance",
+      "semantic_role": "Evaluate p-value and confidence interval using student-t cumulative distribution function.",
+      "source_targets": [
+        "scipy.stats.t.cdf"
+      ],
+      "inputs": [
+        {
+          "name": "t_stat",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "df",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "alternative",
+          "type_desc": "str",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "p_value",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "df > 0.0"
+      ],
+      "postcondition_candidates": [
+        "0.0 <= p_value <= 1.0"
+      ],
+      "witness_shape_semantics": "Produces probability value from t-distribution statistics.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "compute_t_moments",
+      "target": "compute_welch_t_statistic",
+      "output_name": "mean",
+      "input_name": "mean1"
+    },
+    {
+      "source": "compute_t_moments",
+      "target": "compute_welch_t_statistic",
+      "output_name": "variance",
+      "input_name": "variance1"
+    },
+    {
+      "source": "compute_t_moments",
+      "target": "compute_welch_t_statistic",
+      "output_name": "n",
+      "input_name": "n1"
+    },
+    {
+      "source": "compute_welch_t_statistic",
+      "target": "evaluate_t_significance",
+      "output_name": "t_stat",
+      "input_name": "t_stat"
+    },
+    {
+      "source": "compute_welch_t_statistic",
+      "target": "evaluate_t_significance",
+      "output_name": "df",
+      "input_name": "df"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "x1",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "x2",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "p_value",
+        "type_desc": "float"
+      },
+      {
+        "name": "t_stat",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

@@ -1,0 +1,121 @@
+{
+  "cdg_id": "spatial_distance_matrix_computation",
+  "name": "spatial_distance_matrix_computation",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into covariance matrix regularization/inversion (the statistical prep step) and pairwise distance computation (the fast matrix loop). This allows modular injection of custom Mahalanobis scaling.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "invert_covariance",
+      "semantic_role": "Verify and invert a covariance matrix with ridge regularization.",
+      "source_targets": [
+        "scipy.linalg.inv"
+      ],
+      "inputs": [
+        {
+          "name": "cov",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "ridge",
+          "type_desc": "float",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "inv_cov",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "cov.ndim == 2",
+        "cov.shape[0] == cov.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "inv_cov.shape == cov.shape"
+      ],
+      "witness_shape_semantics": "Saves a D x D inverted matrix representation.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_mahalanobis_cdist",
+      "semantic_role": "Compute pairwise Mahalanobis distances using the inverse covariance matrix.",
+      "source_targets": [
+        "scipy.spatial.distance.cdist"
+      ],
+      "inputs": [
+        {
+          "name": "XA",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "XB",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "inv_cov",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "dm",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "XA.shape[1] == inv_cov.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "dm.shape == (XA.shape[0], XB.shape[0])"
+      ],
+      "witness_shape_semantics": "Produces the M x N real-valued Mahalanobis distance matrix.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "invert_covariance",
+      "target": "compute_mahalanobis_cdist",
+      "output_name": "inv_cov",
+      "input_name": "inv_cov"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "XA",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "XB",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "cov",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "dm",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

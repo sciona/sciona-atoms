@@ -1,0 +1,166 @@
+{
+  "cdg_id": "ode_event_detection",
+  "name": "ode_event_detection",
+  "priority": "medium",
+  "decomposition_rationale": "Separate sign-change detection from localized zero-crossing refinement. This allows the integration engine to quickly scan steps without performing expensive iterative root refinement unless an active crossing is confirmed.",
+  "family_directory_hint": "src/sciona/atoms/numerical/differential_equations/",
+  "atomic_nodes": [
+    {
+      "name": "evaluate_and_check_event_crossings",
+      "semantic_role": "Evaluate event function at step endpoints and identify which indices exhibit valid zero crossings.",
+      "source_targets": [
+        "scipy.integrate._ivp.common.find_active_events"
+      ],
+      "inputs": [
+        {
+          "name": "event_func",
+          "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+          "required": true
+        },
+        {
+          "name": "t_prev",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "y_prev",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "t_curr",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "y_curr",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "direction",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "active_mask",
+          "type_desc": "NDArray[np.bool_]",
+          "description": "Boolean mask of triggered event indices"
+        },
+        {
+          "name": "g_prev",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "g_curr",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "direction.ndim == 1"
+      ],
+      "postcondition_candidates": [
+        "len(active_mask) == len(direction)"
+      ],
+      "witness_shape_semantics": "Returns boolean triggers for each event function.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "formulate_event_brackets",
+      "semantic_role": "Generate bounding intervals for triggered events.",
+      "source_targets": [
+        "scipy.integrate._ivp.common.find_active_events"
+      ],
+      "inputs": [
+        {
+          "name": "t_prev",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "t_curr",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "active_mask",
+          "type_desc": "NDArray[np.bool_]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "brackets",
+          "type_desc": "list[tuple[float, float]]"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [
+        "len(brackets) == np.sum(active_mask)"
+      ],
+      "witness_shape_semantics": "Returns interval brackets for root-finding.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "evaluate_and_check_event_crossings",
+      "target": "formulate_event_brackets",
+      "output_name": "active_mask",
+      "input_name": "active_mask"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "event_func",
+        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "t_prev",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "y_prev",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "t_curr",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "y_curr",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "direction",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "active_mask",
+        "type_desc": "NDArray[np.bool_]"
+      },
+      {
+        "name": "brackets",
+        "type_desc": "list[tuple[float, float]]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

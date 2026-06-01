@@ -1,0 +1,120 @@
+{
+  "cdg_id": "tsne_neighbor_embedding",
+  "name": "tsne_neighbor_embedding",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into high-dimensional conditional probability matching (perplexity root solver) and gradient-descent layout optimization. Decoupling this allows swapping the fast Barnes-Hut algorithm or exact SVD projections.",
+  "family_directory_hint": "src/sciona/atoms/numerical/manifold/",
+  "atomic_nodes": [
+    {
+      "name": "solve_perplexity_probabilities",
+      "semantic_role": "Use binary search to solve for Gaussian variances matching perplexity targets and yield symmetric joint probabilities.",
+      "source_targets": [
+        "sklearn.manifold.TSNE"
+      ],
+      "inputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "perplexity",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "probabilities",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "perplexity > 0.0"
+      ],
+      "postcondition_candidates": [
+        "np.allclose(probabilities.sum(), 1.0)"
+      ],
+      "witness_shape_semantics": "Converts distances to probability weights.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "optimize_layout_kl",
+      "semantic_role": "Run gradient descent optimization to position points minimizing KL divergence under a student-t distribution.",
+      "source_targets": [
+        "sklearn.manifold.TSNE"
+      ],
+      "inputs": [
+        {
+          "name": "probabilities",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "initial_layout",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_iter",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "embedding",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_iter > 0"
+      ],
+      "postcondition_candidates": [
+        "embedding.shape[1] == initial_layout.shape[1]"
+      ],
+      "witness_shape_semantics": "Iteratively maps coordinates into low-dimensional visual spaces.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "solve_perplexity_probabilities",
+      "target": "optimize_layout_kl",
+      "output_name": "probabilities",
+      "input_name": "probabilities"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "distances",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "perplexity",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "initial_layout",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "embedding",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

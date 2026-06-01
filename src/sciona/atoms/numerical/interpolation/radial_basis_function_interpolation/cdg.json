@@ -1,0 +1,259 @@
+{
+  "cdg_id": "radial_basis_function_interpolation",
+  "name": "radial_basis_function_interpolation",
+  "priority": "medium",
+  "decomposition_rationale": "Decouple pairwise distance calculation, kernel matrix assembly, augmented system solve, and evaluation. This enables caching weights and performing fast out-of-core evaluation on massive grids.",
+  "family_directory_hint": "src/sciona/atoms/numerical/interpolation/",
+  "atomic_nodes": [
+    {
+      "name": "compute_pairwise_distances",
+      "semantic_role": "Compute Euclidean pairwise distance matrix between two sets of coordinates.",
+      "source_targets": [
+        "scipy.spatial.distance.cdist"
+      ],
+      "inputs": [
+        {
+          "name": "XA",
+          "type_desc": "NDArray[np.float64]",
+          "required": true,
+          "constraints": "Shape N x D"
+        },
+        {
+          "name": "XB",
+          "type_desc": "NDArray[np.float64]",
+          "required": true,
+          "constraints": "Shape M x D"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "XA.shape[1] == XB.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "distances.shape == (XA.shape[0], XB.shape[0])"
+      ],
+      "witness_shape_semantics": "Returns distance matrix of dimensions N x M.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "assemble_rbf_system",
+      "semantic_role": "Apply RBF kernel function to distances and augment with polynomial terms to form symmetric linear system.",
+      "source_targets": [
+        "scipy.interpolate.RBFInterpolator"
+      ],
+      "inputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "kernel_name",
+          "type_desc": "str",
+          "required": true
+        },
+        {
+          "name": "epsilon",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "x_train",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "degree",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64]",
+          "description": "Symmetric augmented matrix"
+        },
+        {
+          "name": "rhs",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Returns augmented matrix system.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "solve_rbf_weights",
+      "semantic_role": "Solve the symmetric linear system for RBF weights using Cholesky or SVD.",
+      "source_targets": [
+        "scipy.linalg.solve"
+      ],
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "rhs",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "weights",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "A.shape[0] == A.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "len(weights) == len(rhs)"
+      ],
+      "witness_shape_semantics": "Returns weight coefficients array.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "evaluate_rbf_predictions",
+      "semantic_role": "Evaluate the RBF model on target coordinates using computed weights.",
+      "source_targets": [
+        "scipy.interpolate.RBFInterpolator"
+      ],
+      "inputs": [
+        {
+          "name": "weights",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "distances_eval",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "x_eval",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "x_train",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "kernel_name",
+          "type_desc": "str",
+          "required": true
+        },
+        {
+          "name": "epsilon",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "degree",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Returns predictions at evaluated points.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "compute_pairwise_distances",
+      "target": "assemble_rbf_system",
+      "output_name": "distances",
+      "input_name": "distances"
+    },
+    {
+      "source": "assemble_rbf_system",
+      "target": "solve_rbf_weights",
+      "output_name": "A",
+      "input_name": "A"
+    },
+    {
+      "source": "assemble_rbf_system",
+      "target": "solve_rbf_weights",
+      "output_name": "rhs",
+      "input_name": "rhs"
+    },
+    {
+      "source": "solve_rbf_weights",
+      "target": "evaluate_rbf_predictions",
+      "output_name": "weights",
+      "input_name": "weights"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "x_train",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "y_train",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "kernel_name",
+        "type_desc": "str",
+        "required": true
+      },
+      {
+        "name": "epsilon",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "degree",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "x_eval",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "result",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

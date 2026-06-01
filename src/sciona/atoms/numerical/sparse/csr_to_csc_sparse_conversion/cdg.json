@@ -1,0 +1,127 @@
+{
+  "cdg_id": "csr_to_csc_sparse_conversion",
+  "name": "csr_to_csc_sparse_conversion",
+  "priority": "medium",
+  "decomposition_rationale": "Separates the decompression of indptr into coordinates, sorting columns, and packaging as a CSC structure.",
+  "family_directory_hint": "src/sciona/atoms/numerical/sparse/",
+  "atomic_nodes": [
+    {
+      "name": "decompress_csr_pointers",
+      "semantic_role": "Convert row offset pointers back into raw row indices of length nnz.",
+      "source_targets": [
+        "scipy.sparse._sparsetools.expandptr"
+      ],
+      "inputs": [
+        {
+          "name": "indptr",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "nnz",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "row_coordinates",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "precondition_candidates": [
+        "indptr.ndim == 1",
+        "indptr[-1] == nnz"
+      ],
+      "postcondition_candidates": [
+        "row_coordinates.shape[0] == nnz"
+      ],
+      "witness_shape_semantics": "Pointers dimension of length m+1 generates coordinate array of length nnz.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "transpose_indices_sort",
+      "semantic_role": "Generate the sorted transpose indices map by column coordinates primarily.",
+      "source_targets": [
+        "numpy.lexsort"
+      ],
+      "inputs": [
+        {
+          "name": "row_coords",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "col_indices",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "transposed_perm",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "precondition_candidates": [
+        "row_coords.shape[0] == col_indices.shape[0]"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Permutation length matches nnz.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "decompress_csr_pointers",
+      "target": "transpose_indices_sort",
+      "output_name": "row_coordinates",
+      "input_name": "row_coords"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "indptr",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "shape",
+        "type_desc": "tuple[int, int]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "colptr",
+        "type_desc": "NDArray[np.int64]"
+      },
+      {
+        "name": "row_indices",
+        "type_desc": "NDArray[np.int64]"
+      },
+      {
+        "name": "csc_data",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

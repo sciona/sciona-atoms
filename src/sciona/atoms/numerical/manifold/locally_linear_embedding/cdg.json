@@ -1,0 +1,126 @@
+{
+  "cdg_id": "locally_linear_embedding",
+  "name": "locally_linear_embedding",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into weight solver (reconstruction regression) and eigenvalue layout optimizer. Separating these steps permits regularizing ill-conditioned linear systems directly.",
+  "family_directory_hint": "src/sciona/atoms/numerical/manifold/",
+  "atomic_nodes": [
+    {
+      "name": "solve_lle_weights",
+      "semantic_role": "Solve constrained quadratic regressions to find local coordinate reconstruction weights.",
+      "source_targets": [
+        "sklearn.manifold.LocallyLinearEmbedding"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "reg",
+          "type_desc": "float",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "weights",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "X.ndim == 2",
+        "indices.ndim == 2"
+      ],
+      "postcondition_candidates": [
+        "np.allclose(weights.sum(axis=1), 1.0)"
+      ],
+      "witness_shape_semantics": "Computes reconstruction weights matrix of shape (N, k).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "solve_lle_embedding",
+      "semantic_role": "Solve the sparse eigenvalue problem to extract weight preserving target embedding coordinates.",
+      "source_targets": [
+        "sklearn.manifold.LocallyLinearEmbedding"
+      ],
+      "inputs": [
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "weights",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_components",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "embedding",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_components > 0"
+      ],
+      "postcondition_candidates": [
+        "embedding.shape == (indices.shape[0], n_components)"
+      ],
+      "witness_shape_semantics": "Packs reconstruction weights into dense target visual representations.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "solve_lle_weights",
+      "target": "solve_lle_embedding",
+      "output_name": "weights",
+      "input_name": "weights"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "n_components",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "embedding",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

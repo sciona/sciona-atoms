@@ -1,0 +1,125 @@
+{
+  "cdg_id": "convex_hull_qhull_workflow",
+  "name": "convex_hull_qhull_workflow",
+  "priority": "medium",
+  "decomposition_rationale": "Split the core Quickhull execution from validation checks that guarantee that every point is indeed inside the half-planes defined by the hull facets.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "compute_convex_hull",
+      "semantic_role": "Compute the convex hull boundary, facets, and enclosed spatial statistics.",
+      "source_targets": [
+        "scipy.spatial.ConvexHull"
+      ],
+      "inputs": [
+        {
+          "name": "points",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vertices",
+          "type_desc": "NDArray[np.int32]"
+        },
+        {
+          "name": "simplices",
+          "type_desc": "NDArray[np.int32]"
+        },
+        {
+          "name": "equations",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "volume",
+          "type_desc": "float"
+        },
+        {
+          "name": "area",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "points.ndim == 2",
+        "points.shape[0] >= points.shape[1] + 1"
+      ],
+      "postcondition_candidates": [
+        "volume > 0.0",
+        "area > 0.0"
+      ],
+      "witness_shape_semantics": "Extracts boundary point indices and linear halfspace inequality coefficients.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "verify_point_containment",
+      "semantic_role": "Verify that all input points satisfy the facet boundary halfspace inequalities.",
+      "source_targets": [
+        "scipy.spatial.ConvexHull"
+      ],
+      "inputs": [
+        {
+          "name": "points",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "equations",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "contains_all",
+          "type_desc": "bool"
+        }
+      ],
+      "precondition_candidates": [
+        "points.ndim == 2",
+        "equations.ndim == 2"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Performs matrix-vector coordinate inequality checking.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "compute_convex_hull",
+      "target": "verify_point_containment",
+      "output_name": "equations",
+      "input_name": "equations"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "vertices",
+        "type_desc": "NDArray[np.int32]"
+      },
+      {
+        "name": "simplices",
+        "type_desc": "NDArray[np.int32]"
+      },
+      {
+        "name": "volume",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

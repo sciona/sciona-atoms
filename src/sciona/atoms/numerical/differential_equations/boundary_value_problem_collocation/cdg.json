@@ -1,0 +1,257 @@
+{
+  "cdg_id": "boundary_value_problem_collocation",
+  "name": "boundary_value_problem_collocation",
+  "priority": "medium",
+  "decomposition_rationale": "Decouple BVP collocation equation assembly, sparse block-tridiagonal system solver, residual calculations, and adaptive mesh refinement loop. The sparse system solver and mesh refinement routines are extremely valuable independently.",
+  "family_directory_hint": "src/sciona/atoms/numerical/differential_equations/",
+  "atomic_nodes": [
+    {
+      "name": "assemble_collocation_system",
+      "semantic_role": "Construct the global non-linear algebraic system and sparse Jacobian for collocation and boundary conditions.",
+      "source_targets": [
+        "scipy.integrate.solve_bvp"
+      ],
+      "inputs": [
+        {
+          "name": "fun",
+          "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+          "required": true
+        },
+        {
+          "name": "bc",
+          "type_desc": "Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]",
+          "required": true
+        },
+        {
+          "name": "x_mesh",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "y_guess",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "residuals",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "jacobian",
+          "type_desc": "scipy.sparse.coo_matrix"
+        }
+      ],
+      "precondition_candidates": [
+        "len(x_mesh) >= 2"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Returns system equations and sparse structural Jacobian.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "solve_bvp_newton_step",
+      "semantic_role": "Perform sparse Newton-Raphson updates to solve collocation equations.",
+      "source_targets": [
+        "scipy.sparse.linalg.spsolve"
+      ],
+      "inputs": [
+        {
+          "name": "y_guess",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "residuals",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "jacobian",
+          "type_desc": "scipy.sparse.coo_matrix",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y_new",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "step_norm",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Returns Newton-corrected state guesses.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "evaluate_collocation_residuals",
+      "semantic_role": "Compute localized differential equation residual on each mesh interval.",
+      "source_targets": [
+        "scipy.integrate.solve_bvp"
+      ],
+      "inputs": [
+        {
+          "name": "fun",
+          "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+          "required": true
+        },
+        {
+          "name": "x_mesh",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "y_sol",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "interval_residuals",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [
+        "len(interval_residuals) == len(x_mesh) - 1"
+      ],
+      "witness_shape_semantics": "Returns residual norms per panel.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "refine_bvp_mesh_nodes",
+      "semantic_role": "Insert new nodes in intervals where local residuals exceed the target tolerances.",
+      "source_targets": [
+        "scipy.integrate.solve_bvp"
+      ],
+      "inputs": [
+        {
+          "name": "x_mesh",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "y_sol",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "interval_residuals",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "tol",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "new_x_mesh",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "new_y_guess",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "refinement_needed",
+          "type_desc": "bool"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Updates spatial coordinates and interpolates old states.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "assemble_collocation_system",
+      "target": "solve_bvp_newton_step",
+      "output_name": "residuals",
+      "input_name": "residuals"
+    },
+    {
+      "source": "assemble_collocation_system",
+      "target": "solve_bvp_newton_step",
+      "output_name": "jacobian",
+      "input_name": "jacobian"
+    },
+    {
+      "source": "solve_bvp_newton_step",
+      "target": "evaluate_collocation_residuals",
+      "output_name": "y_new",
+      "input_name": "y_sol"
+    },
+    {
+      "source": "evaluate_collocation_residuals",
+      "target": "refine_bvp_mesh_nodes",
+      "output_name": "interval_residuals",
+      "input_name": "interval_residuals"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "fun",
+        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "bc",
+        "type_desc": "Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "x_mesh",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "y_guess",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "tol",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x_mesh_final",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "y_final",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "success",
+        "type_desc": "bool"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

@@ -1,0 +1,121 @@
+{
+  "cdg_id": "dynamic_programming_knapsack",
+  "name": "dynamic_programming_knapsack",
+  "priority": "medium",
+  "decomposition_rationale": "Separates grid computation from the binary item-selection backtrack walker.",
+  "family_directory_hint": "src/sciona/atoms/numerical/optimization/",
+  "atomic_nodes": [
+    {
+      "name": "fill_knapsack_table",
+      "semantic_role": "Fill DP matrix based on item weights and capacities.",
+      "source_targets": [
+        "needs_human_decision"
+      ],
+      "inputs": [
+        {
+          "name": "values",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "weights",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "capacity",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "dp_table",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "values.shape[0] == weights.shape[0]",
+        "capacity >= 0"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Creates score grid of size (N+1) x (Capacity+1).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "backtrack_knapsack_items",
+      "semantic_role": "Walk back to resolve which specific indices are chosen.",
+      "source_targets": [
+        "needs_human_decision"
+      ],
+      "inputs": [
+        {
+          "name": "weights",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "dp_table",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "selections",
+          "type_desc": "NDArray[np.bool_]"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [
+        "selections.shape[0] == weights.shape[0]"
+      ],
+      "witness_shape_semantics": "Provides binary mask of length N.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "fill_knapsack_table",
+      "target": "backtrack_knapsack_items",
+      "output_name": "dp_table",
+      "input_name": "dp_table"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "values",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "weights",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "capacity",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "max_value",
+        "type_desc": "float"
+      },
+      {
+        "name": "selections",
+        "type_desc": "NDArray[np.bool_]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

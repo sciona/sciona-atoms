@@ -1,0 +1,121 @@
+{
+  "cdg_id": "hierarchical_agglomerative_clustering",
+  "name": "hierarchical_agglomerative_clustering",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into linkage calculation (building the tree) and tree cutting (extracting active labels). Building the linkage matrix is O(N^3) or O(N^2 log N), while cutting is O(N) \u2014 saving high computations when checking different cluster sizes.",
+  "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
+  "atomic_nodes": [
+    {
+      "name": "compute_linkage",
+      "semantic_role": "Calculate bottom-up merges to construct a hierarchical clustering dendrogram.",
+      "source_targets": [
+        "scipy.cluster.hierarchy.linkage"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "method",
+          "type_desc": "str",
+          "required": true
+        },
+        {
+          "name": "metric",
+          "type_desc": "str",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "linkage_matrix",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "X.ndim == 2",
+        "X.shape[0] >= 2"
+      ],
+      "postcondition_candidates": [
+        "linkage_matrix.shape == (X.shape[0] - 1, 4)"
+      ],
+      "witness_shape_semantics": "Compresses spatial data records into an ordering tree representation.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "cut_tree",
+      "semantic_role": "Cut the hierarchical tree at a specified depth to extract static labels.",
+      "source_targets": [
+        "scipy.cluster.hierarchy.fcluster"
+      ],
+      "inputs": [
+        {
+          "name": "linkage_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_clusters",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "labels",
+          "type_desc": "NDArray[np.int32]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_clusters > 0"
+      ],
+      "postcondition_candidates": [
+        "labels.shape[0] == linkage_matrix.shape[0] + 1"
+      ],
+      "witness_shape_semantics": "Extracts an active cluster membership vector of length N.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "compute_linkage",
+      "target": "cut_tree",
+      "output_name": "linkage_matrix",
+      "input_name": "linkage_matrix"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "method",
+        "type_desc": "str",
+        "required": true
+      },
+      {
+        "name": "n_clusters",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

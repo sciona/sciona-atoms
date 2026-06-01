@@ -1,0 +1,244 @@
+{
+  "cdg_id": "coo_to_csr_sparse_conversion",
+  "name": "coo_to_csr_sparse_conversion",
+  "priority": "medium",
+  "decomposition_rationale": "Separates coordinate boundaries validation, sorting lexicographically, consolidation of duplicate coordinates, and row index pointer generation.",
+  "family_directory_hint": "src/sciona/atoms/numerical/sparse/",
+  "atomic_nodes": [
+    {
+      "name": "validate_coo_dimensions",
+      "semantic_role": "Verify row and column coordinate ranges against matrix shape bounds.",
+      "source_targets": [
+        "scipy.sparse._coo.coo_matrix._check_bounds"
+      ],
+      "inputs": [
+        {
+          "name": "row",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "col",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "shape",
+          "type_desc": "tuple[int, int]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "is_valid",
+          "type_desc": "bool"
+        }
+      ],
+      "precondition_candidates": [
+        "row.ndim == 1",
+        "col.ndim == 1",
+        "row.shape[0] == col.shape[0]"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Identity validation node; no shape transformation.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "lexsort_coo_arrays",
+      "semantic_role": "Obtain sorting permutation indices sorting primarily by row then by column.",
+      "source_targets": [
+        "numpy.lexsort"
+      ],
+      "inputs": [
+        {
+          "name": "row",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "col",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "permutation",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "precondition_candidates": [
+        "row.shape[0] == col.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "permutation.shape[0] == row.shape[0]"
+      ],
+      "witness_shape_semantics": "Permutation length matches inputs.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "apply_sorting_and_consolidate",
+      "semantic_role": "Sort data arrays and aggregate values falling on duplicate indices.",
+      "source_targets": [
+        "scipy.sparse._coo.coo_matrix.sum_duplicates"
+      ],
+      "inputs": [
+        {
+          "name": "row",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "col",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "permutation",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "sorted_row",
+          "type_desc": "NDArray[np.int64]"
+        },
+        {
+          "name": "sorted_col",
+          "type_desc": "NDArray[np.int64]"
+        },
+        {
+          "name": "consolidated_data",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "row.shape[0] == permutation.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "sorted_row.shape[0] <= row.shape[0]"
+      ],
+      "witness_shape_semantics": "Output length nnz_prime <= nnz.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "build_csr_pointers",
+      "semantic_role": "Compress row indices into indptr arrays.",
+      "source_targets": [
+        "scipy.sparse._coo.coo_matrix._to_csr"
+      ],
+      "inputs": [
+        {
+          "name": "sorted_row",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "sorted_col",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "num_rows",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "indptr",
+          "type_desc": "NDArray[np.int64]"
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "precondition_candidates": [
+        "num_rows > 0"
+      ],
+      "postcondition_candidates": [
+        "indptr.shape[0] == num_rows + 1"
+      ],
+      "witness_shape_semantics": "Pointers dimension equal to m + 1.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "lexsort_coo_arrays",
+      "target": "apply_sorting_and_consolidate",
+      "output_name": "permutation",
+      "input_name": "permutation"
+    },
+    {
+      "source": "apply_sorting_and_consolidate",
+      "target": "build_csr_pointers",
+      "output_name": "sorted_row",
+      "input_name": "sorted_row"
+    },
+    {
+      "source": "apply_sorting_and_consolidate",
+      "target": "build_csr_pointers",
+      "output_name": "sorted_col",
+      "input_name": "sorted_col"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "row",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "col",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "shape",
+        "type_desc": "tuple[int, int]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "indptr",
+        "type_desc": "NDArray[np.int64]"
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]"
+      },
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

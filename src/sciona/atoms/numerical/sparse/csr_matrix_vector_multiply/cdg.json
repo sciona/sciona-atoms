@@ -1,0 +1,129 @@
+{
+  "cdg_id": "csr_matrix_vector_multiply",
+  "name": "csr_matrix_vector_multiply",
+  "priority": "medium",
+  "decomposition_rationale": "Decouples matrix-vector shape validation from the core hardware-optimized SpMV multiplication kernel.",
+  "family_directory_hint": "src/sciona/atoms/numerical/sparse/",
+  "atomic_nodes": [
+    {
+      "name": "validate_spmv_shapes",
+      "semantic_role": "Ensure matrix column count matches the input multiplier vector size.",
+      "source_targets": [
+        "scipy.sparse.base.spmatrix._check_vector_shape"
+      ],
+      "inputs": [
+        {
+          "name": "indptr",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "is_valid",
+          "type_desc": "bool"
+        }
+      ],
+      "precondition_candidates": [
+        "indptr.ndim == 1",
+        "x.ndim == 1"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Ensures structural compatibility.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_spmv_kernel",
+      "semantic_role": "Perform sparse matrix-vector dot product operations.",
+      "source_targets": [
+        "scipy.sparse._sparsetools.csr_matvec"
+      ],
+      "inputs": [
+        {
+          "name": "indptr",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "indices.shape[0] == data.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "y.shape[0] == indptr.shape[0] - 1"
+      ],
+      "witness_shape_semantics": "Constructs a dense vector of size m.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "validate_spmv_shapes",
+      "target": "compute_spmv_kernel",
+      "output_name": "is_valid",
+      "input_name": "x"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "indptr",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "y",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

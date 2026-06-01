@@ -1,0 +1,168 @@
+{
+  "cdg_id": "procrustes_alignment",
+  "name": "procrustes_alignment",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into centering/normalization, SVD rotation calculation, and transformation projection, enabling partial application (e.g. applying a learned Procrustes rotation to novel vectors).",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "center_and_normalize",
+      "semantic_role": "Center a point cloud to its mean and scale its root-mean-square distance to 1.0.",
+      "source_targets": [
+        "scipy.spatial.procrustes"
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "centered",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "centroid",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "rms_scale",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "data.ndim == 2"
+      ],
+      "postcondition_candidates": [
+        "np.allclose(centered.mean(axis=0), 0.0)"
+      ],
+      "witness_shape_semantics": "Standardizes shape scale and centers translation offsets.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_optimal_rotation",
+      "semantic_role": "Use SVD to compute the optimal orthogonal rotation aligning two standardized point sets.",
+      "source_targets": [
+        "scipy.spatial.procrustes"
+      ],
+      "inputs": [
+        {
+          "name": "standardized_ref",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "standardized_src",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "rotation",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "standardized_ref.shape == standardized_src.shape"
+      ],
+      "postcondition_candidates": [
+        "rotation.shape == (standardized_ref.shape[1], standardized_ref.shape[1])"
+      ],
+      "witness_shape_semantics": "Computes a D x D orthogonal rotation matrix.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "apply_transform_and_measure",
+      "semantic_role": "Rotate the source dataset, scale it, and compute the residual squared error disparity.",
+      "source_targets": [
+        "scipy.spatial.procrustes"
+      ],
+      "inputs": [
+        {
+          "name": "standardized_ref",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "standardized_src",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "rotation",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "aligned",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "disparity",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "rotation.ndim == 2"
+      ],
+      "postcondition_candidates": [
+        "disparity >= 0.0"
+      ],
+      "witness_shape_semantics": "Applies transformation matrices and computes scalar error.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "center_and_normalize",
+      "target": "compute_optimal_rotation",
+      "output_name": "centered",
+      "input_name": "standardized_src"
+    },
+    {
+      "source": "center_and_normalize",
+      "target": "apply_transform_and_measure",
+      "output_name": "centered",
+      "input_name": "standardized_src"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "data1",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "data2",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "aligned_data2",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "disparity",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

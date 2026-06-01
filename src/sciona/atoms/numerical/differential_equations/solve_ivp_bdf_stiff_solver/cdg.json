@@ -1,0 +1,193 @@
+{
+  "cdg_id": "solve_ivp_bdf_stiff_solver",
+  "name": "solve_ivp_bdf_stiff_solver",
+  "priority": "medium",
+  "decomposition_rationale": "Decouple BDF predictor, Jacobian calculation, Newton corrector solver, and error/order adjustment. Newton solve is highly separable and can be used in other implicit systems.",
+  "family_directory_hint": "src/sciona/atoms/numerical/differential_equations/",
+  "atomic_nodes": [
+    {
+      "name": "bdf_predictor",
+      "semantic_role": "Extrapolate previous states to calculate predictor values for BDF implicit equations.",
+      "source_targets": [
+        "scipy.integrate.BDF._predict"
+      ],
+      "inputs": [
+        {
+          "name": "history",
+          "type_desc": "NDArray[np.float64]",
+          "required": true,
+          "description": "Nordsieck or historical steps matrix"
+        },
+        {
+          "name": "order",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y_predict",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "order >= 1",
+        "order <= 5"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Generates initial guess for corrector.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "bdf_newton_corrector",
+      "semantic_role": "Execute Newton iterations to solve the BDF implicit algebraic system.",
+      "source_targets": [
+        "scipy.integrate.BDF._solve_and_update"
+      ],
+      "inputs": [
+        {
+          "name": "fun",
+          "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+          "required": true
+        },
+        {
+          "name": "t_new",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "y_predict",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "h",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "beta",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "jacobian",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "rhs_constant",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "atol",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "rtol",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "y_corrected",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "converged",
+          "type_desc": "bool"
+        },
+        {
+          "name": "iterations",
+          "type_desc": "int"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Newton updates state solution to satisfy local implicit BDF relation.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "bdf_predictor",
+      "target": "bdf_newton_corrector",
+      "output_name": "y_predict",
+      "input_name": "y_predict"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "fun",
+        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "t_new",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "history",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "order",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "h",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "beta",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "jacobian",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "rhs_constant",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "atol",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "rtol",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "y_corrected",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "converged",
+        "type_desc": "bool"
+      }
+    ]
+  },
+  "state_model_needed": true
+}

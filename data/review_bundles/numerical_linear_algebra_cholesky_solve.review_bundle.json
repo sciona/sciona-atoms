@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "bundle_id": "sciona.atoms.review_bundle.numerical.linear_algebra.cholesky_solve.v1",
+  "provider_repo": "sciona-atoms",
+  "family_batch": "numerical_linear_algebra_cholesky_solve",
+  "review_status": "reviewed",
+  "review_semantic_verdict": "pass",
+  "review_developer_semantic_verdict": "pass",
+  "trust_readiness": "catalog_ready",
+  "authoritative_sources": [
+    {
+      "kind": "local_wrapper",
+      "path": "src/sciona/atoms/numerical/linear_algebra/cholesky_solve/atoms.py"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "src/sciona/atoms/numerical/linear_algebra/cholesky_solve/references.json"
+    },
+    {
+      "kind": "local_metadata",
+      "path": "src/sciona/atoms/numerical/linear_algebra/cholesky_solve/cdg.json"
+    }
+  ],
+  "limitations": [
+    "Cholesky decomposition requires that the input matrix A is strictly symmetric (or Hermitian) and positive definite. Passing a non-SPD matrix will raise a LinAlgError.",
+    "No pivoting is performed, which makes Cholesky highly efficient, but unstable if the matrix is not positive-definite."
+  ],
+  "blocking_findings": [],
+  "required_actions": [],
+  "review_record_path": "data/review_bundles/numerical_linear_algebra_cholesky_solve.review_bundle.json",
+  "rows": [
+    {
+      "atom_key": "sciona.atoms.numerical.linear_algebra.cholesky_solve.cholesky_factorize",
+      "atom_name": "sciona.atoms.numerical.linear_algebra.cholesky_solve.cholesky_factorize",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numerical/linear_algebra/cholesky_solve/atoms.py",
+        "src/sciona/atoms/numerical/linear_algebra/cholesky_solve/references.json",
+        "src/sciona/atoms/numerical/linear_algebra/cholesky_solve/cdg.json"
+      ],
+      "review_record_path": "data/review_bundles/numerical_linear_algebra_cholesky_solve.review_bundle.json",
+      "overall_verdict": "pass",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "risk_tier": "low",
+      "risk_score": 10,
+      "risk_dimensions": {"provenance": "low", "semantic_drift": "low", "runtime_coverage": "high"},
+      "risk_reasons": [],
+      "acceptability_score": 95,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 1,
+      "parity_case_count": 5,
+      "review_limitations": ["Requires square symmetric/Hermitian positive-definite 2D input matrices."],
+      "review_required_actions": [],
+      "trust_blockers": [],
+      "has_references": true,
+      "references_status": "pass",
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": []
+    },
+    {
+      "atom_key": "sciona.atoms.numerical.linear_algebra.cholesky_solve.cholesky_solve",
+      "atom_name": "sciona.atoms.numerical.linear_algebra.cholesky_solve.cholesky_solve",
+      "review_status": "reviewed",
+      "review_semantic_verdict": "pass",
+      "review_developer_semantic_verdict": "pass",
+      "trust_readiness": "catalog_ready",
+      "source_paths": [
+        "src/sciona/atoms/numerical/linear_algebra/cholesky_solve/atoms.py",
+        "src/sciona/atoms/numerical/linear_algebra/cholesky_solve/references.json",
+        "src/sciona/atoms/numerical/linear_algebra/cholesky_solve/cdg.json"
+      ],
+      "review_record_path": "data/review_bundles/numerical_linear_algebra_cholesky_solve.review_bundle.json",
+      "overall_verdict": "pass",
+      "structural_status": "pass",
+      "semantic_status": "pass",
+      "runtime_status": "pass",
+      "developer_semantics_status": "pass",
+      "risk_tier": "low",
+      "risk_score": 10,
+      "risk_dimensions": {"provenance": "low", "semantic_drift": "low", "runtime_coverage": "high"},
+      "risk_reasons": [],
+      "acceptability_score": 95,
+      "acceptability_band": "review_ready",
+      "parity_coverage_level": "positive_path",
+      "parity_test_status": "pass",
+      "parity_fixture_count": 1,
+      "parity_case_count": 5,
+      "review_limitations": ["Dependent on compatible dimensions between factored matrix and right-hand side."],
+      "review_required_actions": [],
+      "trust_blockers": [],
+      "has_references": true,
+      "references_status": "pass",
+      "limitations": [],
+      "blocking_findings": [],
+      "required_actions": []
+    }
+  ]
+}

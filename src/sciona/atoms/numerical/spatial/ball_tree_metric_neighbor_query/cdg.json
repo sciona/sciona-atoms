@@ -1,0 +1,131 @@
+{
+  "cdg_id": "ball_tree_metric_neighbor_query",
+  "name": "ball_tree_metric_neighbor_query",
+  "priority": "medium",
+  "decomposition_rationale": "Separating construction and query is crucial for reusability. BallTree supports custom distance metrics, making it mathematically decoupled from standard coordinate projections.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "build_ball_tree",
+      "semantic_role": "Construct a spatial BallTree metric index.",
+      "source_targets": [
+        "sklearn.neighbors.BallTree"
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "metric",
+          "type_desc": "str",
+          "required": false,
+          "constraints": "Must be a valid distance metric"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tree",
+          "type_desc": "sklearn.neighbors.BallTree"
+        }
+      ],
+      "precondition_candidates": [
+        "data.ndim == 2",
+        "data.shape[0] > 0"
+      ],
+      "postcondition_candidates": [
+        "tree is not None"
+      ],
+      "witness_shape_semantics": "Builds a hyperspherical spatial partition tree.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "query_ball_tree",
+      "semantic_role": "Query a pre-built BallTree index for k-nearest neighbors.",
+      "source_targets": [
+        "sklearn.neighbors.BallTree.query"
+      ],
+      "inputs": [
+        {
+          "name": "tree",
+          "type_desc": "sklearn.neighbors.BallTree",
+          "required": true
+        },
+        {
+          "name": "query_points",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "k",
+          "type_desc": "int",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "precondition_candidates": [
+        "k >= 1",
+        "query_points.shape[-1] == tree.data.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "distances.shape == indices.shape"
+      ],
+      "witness_shape_semantics": "Transforms query points of shape (M, D) with neighbors k into distance and index matrices of shape (M, k).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "build_ball_tree",
+      "target": "query_ball_tree",
+      "output_name": "tree",
+      "input_name": "tree"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "query_points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "k",
+        "type_desc": "int",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "distances",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

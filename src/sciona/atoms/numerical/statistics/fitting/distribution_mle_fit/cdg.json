@@ -1,0 +1,181 @@
+{
+  "cdg_id": "distribution_mle_fit",
+  "name": "distribution_mle_fit",
+  "priority": "medium",
+  "decomposition_rationale": "Separates initialization, core numerical likelihood optimization, and post-fit diagnostics to allow reuse of custom optimizers or different distribution backends.",
+  "family_directory_hint": "src/sciona/atoms/numerical/statistics/fitting/",
+  "atomic_nodes": [
+    {
+      "name": "initialize_distribution_parameters",
+      "semantic_role": "Calculate starting values for MLE optimization using method-of-moments or heuristics.",
+      "source_targets": [
+        "scipy.stats.rv_continuous._fitstart"
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "dist_name",
+          "type_desc": "str",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "init_params",
+          "type_desc": "tuple[float, ...]"
+        }
+      ],
+      "precondition_candidates": [
+        "data.ndim == 1",
+        "len(data) >= 5"
+      ],
+      "postcondition_candidates": [
+        "len(result) >= 2"
+      ],
+      "witness_shape_semantics": "Transforms 1D array to a flat parameter tuple.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "optimize_log_likelihood",
+      "semantic_role": "Formulate negative log-likelihood and optimize parameters using numerical solvers.",
+      "source_targets": [
+        "scipy.optimize.minimize",
+        "scipy.stats.rv_continuous.fit"
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "dist_name",
+          "type_desc": "str",
+          "required": true
+        },
+        {
+          "name": "init_params",
+          "type_desc": "tuple[float, ...]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fitted_params",
+          "type_desc": "tuple[float, ...]"
+        },
+        {
+          "name": "neg_log_like",
+          "type_desc": "float"
+        },
+        {
+          "name": "converged",
+          "type_desc": "bool"
+        }
+      ],
+      "precondition_candidates": [
+        "len(init_params) >= 2"
+      ],
+      "postcondition_candidates": [
+        "fitted_params[len(fitted_params)-1] > 0.0"
+      ],
+      "witness_shape_semantics": "Produces parameter tuple and scalar metrics.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_mle_fit_diagnostics",
+      "semantic_role": "Calculate information criteria (AIC, BIC) and evaluate standard errors.",
+      "source_targets": [
+        "scipy.stats"
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "fitted_params",
+          "type_desc": "tuple[float, ...]",
+          "required": true
+        },
+        {
+          "name": "neg_log_like",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "diagnostics",
+          "type_desc": "dict[str, float]"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [
+        "'aic' in result",
+        "'bic' in result"
+      ],
+      "witness_shape_semantics": "Produces dictionary of diagnostics from scalar values.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "initialize_distribution_parameters",
+      "target": "optimize_log_likelihood",
+      "output_name": "init_params",
+      "input_name": "init_params"
+    },
+    {
+      "source": "optimize_log_likelihood",
+      "target": "compute_mle_fit_diagnostics",
+      "output_name": "fitted_params",
+      "input_name": "fitted_params"
+    },
+    {
+      "source": "optimize_log_likelihood",
+      "target": "compute_mle_fit_diagnostics",
+      "output_name": "neg_log_like",
+      "input_name": "neg_log_like"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "dist_name",
+        "type_desc": "str",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "fitted_params",
+        "type_desc": "tuple[float, ...]"
+      },
+      {
+        "name": "diagnostics",
+        "type_desc": "dict[str, float]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

@@ -1,0 +1,67 @@
+{
+  "cdg_id": "bipartite_matching_hungarian_assignment",
+  "name": "bipartite_matching_hungarian_assignment",
+  "priority": "medium",
+  "decomposition_rationale": "Encapsulates Kuhn-Munkres execution using highly optimized SciPy C++ wrappers, with a dense shape verification wrapper.",
+  "family_directory_hint": "src/sciona/atoms/numerical/optimization/",
+  "atomic_nodes": [
+    {
+      "name": "run_hungarian_assignment",
+      "semantic_role": "Perform linear sum assignment optimization.",
+      "source_targets": [
+        "scipy.optimize.linear_sum_assignment"
+      ],
+      "inputs": [
+        {
+          "name": "cost_matrix",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "row_ind",
+          "type_desc": "NDArray[np.int64]"
+        },
+        {
+          "name": "col_ind",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "precondition_candidates": [
+        "cost_matrix.ndim == 2",
+        "np.all(np.isfinite(cost_matrix))"
+      ],
+      "postcondition_candidates": [
+        "row_ind.shape[0] == min(cost_matrix.shape)",
+        "col_ind.shape[0] == row_ind.shape[0]"
+      ],
+      "witness_shape_semantics": "Returns assignment indices pair.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "cost_matrix",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "row_ind",
+        "type_desc": "NDArray[np.int64]"
+      },
+      {
+        "name": "col_ind",
+        "type_desc": "NDArray[np.int64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

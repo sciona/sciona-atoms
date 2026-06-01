@@ -1,0 +1,154 @@
+{
+  "cdg_id": "svd_rank_revealing_least_squares",
+  "name": "svd_rank_revealing_least_squares",
+  "priority": "medium",
+  "decomposition_rationale": "Exposes rank-revealing thresholding as a separate node to let users tune low-rank cutoffs without recomputing expensive SVD factorizations.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "atomic_nodes": [
+    {
+      "name": "svd_decompose",
+      "semantic_role": "Compute complete SVD of A.",
+      "source_targets": [
+        "scipy.linalg.svd"
+      ],
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64 | np.complex128]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "U",
+          "type_desc": "NDArray[np.float64 | np.complex128]"
+        },
+        {
+          "name": "s",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "Vh",
+          "type_desc": "NDArray[np.float64 | np.complex128]"
+        }
+      ],
+      "precondition_candidates": [
+        "A.ndim == 2"
+      ],
+      "postcondition_candidates": [
+        "s.ndim == 1"
+      ],
+      "witness_shape_semantics": "Produces unitary U, diagonal s, and conjugate transpose V^H.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "svd_threshold_solve",
+      "semantic_role": "Apply singular value thresholding and solve for x.",
+      "source_targets": [
+        "scipy.linalg.lstsq"
+      ],
+      "inputs": [
+        {
+          "name": "U",
+          "type_desc": "NDArray[np.float64 | np.complex128]",
+          "required": true
+        },
+        {
+          "name": "s",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "Vh",
+          "type_desc": "NDArray[np.float64 | np.complex128]",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type_desc": "NDArray[np.float64 | np.complex128]",
+          "required": true
+        },
+        {
+          "name": "cond",
+          "type_desc": "float",
+          "required": false,
+          "constraints": "Threshold below which singular values are zeroed"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64 | np.complex128]"
+        },
+        {
+          "name": "effective_rank",
+          "type_desc": "int"
+        }
+      ],
+      "precondition_candidates": [
+        "b.shape[0] == U.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "x.shape[0] == Vh.shape[1]"
+      ],
+      "witness_shape_semantics": "Solves least-squares problem via pseudo-inverse.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "svd_decompose",
+      "target": "svd_threshold_solve",
+      "output_name": "U",
+      "input_name": "U"
+    },
+    {
+      "source": "svd_decompose",
+      "target": "svd_threshold_solve",
+      "output_name": "s",
+      "input_name": "s"
+    },
+    {
+      "source": "svd_decompose",
+      "target": "svd_threshold_solve",
+      "output_name": "Vh",
+      "input_name": "Vh"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64 | np.complex128]",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "NDArray[np.float64 | np.complex128]",
+        "required": true
+      },
+      {
+        "name": "cond",
+        "type_desc": "float",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64 | np.complex128]"
+      },
+      {
+        "name": "effective_rank",
+        "type_desc": "int"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

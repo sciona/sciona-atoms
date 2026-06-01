@@ -1,0 +1,121 @@
+{
+  "cdg_id": "gaussian_kde_density_estimation",
+  "name": "gaussian_kde_density_estimation",
+  "priority": "medium",
+  "decomposition_rationale": "Separates bandwidth calculation, covariance conditioning, and kernel evaluation. Bandwidth calculations can be evaluated without executing the expensive $O(n \\cdot m)$ kernel sum.",
+  "family_directory_hint": "src/sciona/atoms/numerical/statistics/kde/",
+  "atomic_nodes": [
+    {
+      "name": "select_kde_bandwidth",
+      "semantic_role": "Determine bandwidth factor according to Scott or Silverman rules, verifying dataset dimensions.",
+      "source_targets": [
+        "scipy.stats.gaussian_kde.scotts_factor",
+        "scipy.stats.gaussian_kde.silverman_factor"
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true,
+          "constraints": "2D array (dims, samples)"
+        },
+        {
+          "name": "bw_method",
+          "type_desc": "str",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "factor",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "data.ndim == 2",
+        "data.shape[1] > data.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "result > 0.0"
+      ],
+      "witness_shape_semantics": "Transforms 2D data matrix to a positive scalar multiplier.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "evaluate_kde_density",
+      "semantic_role": "Perform multi-dimensional kernel evaluation using Cholesky factorized covariance and the bandwidth.",
+      "source_targets": [
+        "scipy.stats.gaussian_kde._evaluate"
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "eval_points",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "factor",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "density",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "data.shape[0] == eval_points.shape[0]",
+        "factor > 0.0"
+      ],
+      "postcondition_candidates": [
+        "density.ndim == 1",
+        "density.shape[0] == eval_points.shape[1]",
+        "np.all(density >= 0.0)"
+      ],
+      "witness_shape_semantics": "Returns 1D array of size equal to the number of evaluation points.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "select_kde_bandwidth",
+      "target": "evaluate_kde_density",
+      "output_name": "factor",
+      "input_name": "factor"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "eval_points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "density",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

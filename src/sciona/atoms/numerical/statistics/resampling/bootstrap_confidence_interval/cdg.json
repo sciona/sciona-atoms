@@ -1,0 +1,184 @@
+{
+  "cdg_id": "bootstrap_confidence_interval",
+  "name": "bootstrap_confidence_interval",
+  "priority": "medium",
+  "decomposition_rationale": "Resampling data, computing stats, and calculating interval limits are completely distinct stages. Factoring allows testing the resampler output independently of the statistics or limits.",
+  "family_directory_hint": "src/sciona/atoms/numerical/statistics/resampling/",
+  "atomic_nodes": [
+    {
+      "name": "generate_bootstrap_resamples",
+      "semantic_role": "Draw B resamples of size n with replacement from raw data.",
+      "source_targets": [
+        "numpy.random.Generator.choice"
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_resamples",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "seed",
+          "type_desc": "int | None",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "resamples",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "data.ndim == 1",
+        "n_resamples > 0"
+      ],
+      "postcondition_candidates": [
+        "resamples.shape == (n_resamples, len(data))"
+      ],
+      "witness_shape_semantics": "Produces a 2D matrix of shape (n_resamples, n).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_bootstrap_statistics",
+      "semantic_role": "Map the scalar/vector statistic function over resampled matrices.",
+      "source_targets": [
+        "numpy.apply_along_axis"
+      ],
+      "inputs": [
+        {
+          "name": "resamples",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "statistic_fn",
+          "type_desc": "Callable[[NDArray[np.float64]], float]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "bootstrap_distribution",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "resamples.ndim == 2"
+      ],
+      "postcondition_candidates": [
+        "len(result) == resamples.shape[0]"
+      ],
+      "witness_shape_semantics": "Reduces 2D matrix of shape (B, n) to a 1D array of shape (B,).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "calculate_bootstrap_intervals",
+      "semantic_role": "Estimate percentile, basic, or BCa boundaries on the resampled distribution.",
+      "source_targets": [
+        "scipy.stats.bootstrap"
+      ],
+      "inputs": [
+        {
+          "name": "bootstrap_distribution",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "observed_statistic",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "confidence_level",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "method",
+          "type_desc": "str",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ci_bounds",
+          "type_desc": "tuple[float, float]"
+        }
+      ],
+      "precondition_candidates": [
+        "0.0 < confidence_level < 1.0",
+        "bootstrap_distribution.ndim == 1"
+      ],
+      "postcondition_candidates": [
+        "result[0] <= result[1]"
+      ],
+      "witness_shape_semantics": "Converts 1D array to a scalar tuple of boundaries.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "generate_bootstrap_resamples",
+      "target": "compute_bootstrap_statistics",
+      "output_name": "resamples",
+      "input_name": "resamples"
+    },
+    {
+      "source": "compute_bootstrap_statistics",
+      "target": "calculate_bootstrap_intervals",
+      "output_name": "bootstrap_distribution",
+      "input_name": "bootstrap_distribution"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "statistic_fn",
+        "type_desc": "Callable[[NDArray[np.float64]], float]",
+        "required": true
+      },
+      {
+        "name": "n_resamples",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "observed_statistic",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "confidence_level",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "ci_bounds",
+        "type_desc": "tuple[float, float]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

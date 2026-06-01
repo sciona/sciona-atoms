@@ -1,0 +1,66 @@
+{
+  "cdg_id": "kronecker_product_linear_operator",
+  "name": "kronecker_product_linear_operator",
+  "priority": "medium",
+  "decomposition_rationale": "Exposes the matrix-free reshaping step. By wrapping Kronecker products in a LinearOperator, we can solve tensor-product PDEs using GMRES/CG without storing massive matrices.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "atomic_nodes": [
+    {
+      "name": "build_kronecker_operator",
+      "semantic_role": "Assemble a matrix-free Kronecker product LinearOperator.",
+      "source_targets": [
+        "scipy.sparse.linalg.LinearOperator"
+      ],
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "scipy.sparse.linalg.LinearOperator",
+          "required": true
+        },
+        {
+          "name": "B",
+          "type_desc": "scipy.sparse.linalg.LinearOperator",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "kron_op",
+          "type_desc": "scipy.sparse.linalg.LinearOperator"
+        }
+      ],
+      "precondition_candidates": [
+        "A.ndim == 2",
+        "B.ndim == 2"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Computes virtual shape (A.shape[0]*B.shape[0], A.shape[1]*B.shape[1]).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "scipy.sparse.linalg.LinearOperator",
+        "required": true
+      },
+      {
+        "name": "B",
+        "type_desc": "scipy.sparse.linalg.LinearOperator",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "kron_op",
+        "type_desc": "scipy.sparse.linalg.LinearOperator"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

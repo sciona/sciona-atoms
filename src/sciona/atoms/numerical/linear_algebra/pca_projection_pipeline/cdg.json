@@ -1,0 +1,161 @@
+{
+  "cdg_id": "pca_projection_pipeline",
+  "name": "pca_projection_pipeline",
+  "priority": "medium",
+  "decomposition_rationale": "Separate mean centering, SVD factorization, and spatial coordinate projection. This allows the SVD model to be trained once and used to project subsequent stream points.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "atomic_nodes": [
+    {
+      "name": "center_features",
+      "semantic_role": "Center columns of a matrix to have zero mean.",
+      "source_targets": [
+        "sklearn.decomposition.PCA"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "centered",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "means",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "X.ndim == 2"
+      ],
+      "postcondition_candidates": [
+        "np.allclose(centered.mean(axis=0), 0.0)"
+      ],
+      "witness_shape_semantics": "Performs coordinate translation.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "factorize_svd",
+      "semantic_role": "Execute SVD on centered matrix to extract principal component axes and singular values.",
+      "source_targets": [
+        "scipy.linalg.svd"
+      ],
+      "inputs": [
+        {
+          "name": "centered",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_components",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "components",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "singular_values",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_components <= min(centered.shape)"
+      ],
+      "postcondition_candidates": [
+        "components.shape == (n_components, centered.shape[1])"
+      ],
+      "witness_shape_semantics": "Extracts orthogonal projection matrices.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "project_coordinates",
+      "semantic_role": "Project centered points onto principal axes.",
+      "source_targets": [
+        "sklearn.decomposition.PCA.transform"
+      ],
+      "inputs": [
+        {
+          "name": "centered",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "components",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "projected",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "centered.shape[1] == components.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "projected.shape == (centered.shape[0], components.shape[0])"
+      ],
+      "witness_shape_semantics": "Shrinks high-dimensional array columns down to target components size.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "center_features",
+      "target": "factorize_svd",
+      "output_name": "centered",
+      "input_name": "centered"
+    },
+    {
+      "source": "center_features",
+      "target": "project_coordinates",
+      "output_name": "centered",
+      "input_name": "centered"
+    },
+    {
+      "source": "factorize_svd",
+      "target": "project_coordinates",
+      "output_name": "components",
+      "input_name": "components"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "n_components",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "projected",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

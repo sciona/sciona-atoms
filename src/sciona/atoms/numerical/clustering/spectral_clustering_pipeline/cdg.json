@@ -1,0 +1,113 @@
+{
+  "cdg_id": "spectral_clustering_pipeline",
+  "name": "spectral_clustering_pipeline",
+  "priority": "medium",
+  "decomposition_rationale": "Spectral clustering contains clean, decoupled linear algebra steps (Laplacian, Eigendecomposition, K-Means). Separating these steps permits the architect to inspect intermediate graph eigenvalues for diagnostics (eigengap heuristic).",
+  "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
+  "atomic_nodes": [
+    {
+      "name": "build_graph_laplacian",
+      "semantic_role": "Construct a normalized symmetric Graph Laplacian from an affinity similarity matrix.",
+      "source_targets": [
+        "scipy.sparse.csgraph.laplacian"
+      ],
+      "inputs": [
+        {
+          "name": "affinity",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "laplacian",
+          "type_desc": "scipy.sparse.csr_matrix"
+        }
+      ],
+      "precondition_candidates": [
+        "affinity.shape[0] == affinity.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "laplacian.shape == affinity.shape"
+      ],
+      "witness_shape_semantics": "Transforms affinity matrix to normalized graph boundary representations.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "solve_laplacian_eigenvectors",
+      "semantic_role": "Solve the generalized eigenvalue problem for the Graph Laplacian to retrieve low-dimensional representations.",
+      "source_targets": [
+        "scipy.sparse.linalg.eigsh"
+      ],
+      "inputs": [
+        {
+          "name": "laplacian",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "required": true
+        },
+        {
+          "name": "n_components",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "eigenvalues",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "eigenvectors",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_components < laplacian.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "eigenvectors.shape == (laplacian.shape[0], n_components)"
+      ],
+      "witness_shape_semantics": "Projects vertices into low-dimensional spectral space.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "build_graph_laplacian",
+      "target": "solve_laplacian_eigenvectors",
+      "output_name": "laplacian",
+      "input_name": "laplacian"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "affinity",
+        "type_desc": "scipy.sparse.csr_matrix",
+        "required": true
+      },
+      {
+        "name": "n_clusters",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "eigenvalues",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "eigenvectors",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

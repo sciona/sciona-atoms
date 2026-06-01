@@ -1,0 +1,110 @@
+{
+  "cdg_id": "local_outlier_factor_detection",
+  "name": "local_outlier_factor_detection",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into local density computation (lrd) and neighborhood ratio scoring. Decoupling this allows reusing standard KNN distance search and supports custom outlier threshold policies.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "compute_local_reachability_density",
+      "semantic_role": "Calculate the reachability distances and local densities of points relative to neighbors.",
+      "source_targets": [
+        "sklearn.neighbors.LocalOutlierFactor"
+      ],
+      "inputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "lrd",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "distances.shape == indices.shape"
+      ],
+      "postcondition_candidates": [
+        "lrd.shape[0] == distances.shape[0]"
+      ],
+      "witness_shape_semantics": "Converts neighbor distances into local scalar density scores.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "score_outlier_factors",
+      "semantic_role": "Assemble LOF scores by computing the average local density ratio of neighbors.",
+      "source_targets": [
+        "sklearn.neighbors.LocalOutlierFactor"
+      ],
+      "inputs": [
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "lrd",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "lof_scores",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "indices.shape[0] == lrd.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "lof_scores.shape[0] == lrd.shape[0]"
+      ],
+      "witness_shape_semantics": "Maps density tables to final structural outlier scores.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "compute_local_reachability_density",
+      "target": "score_outlier_factors",
+      "output_name": "lrd",
+      "input_name": "lrd"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "distances",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "lof_scores",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

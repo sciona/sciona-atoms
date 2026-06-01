@@ -1,0 +1,237 @@
+{
+  "cdg_id": "cubic_spline_interpolation",
+  "name": "cubic_spline_interpolation",
+  "priority": "medium",
+  "decomposition_rationale": "Splitting coefficients formulation (tridiagonal assembly and Thomas solve) from evaluation allows reusing the spline representation for multiple evaluations or integrations.",
+  "family_directory_hint": "src/sciona/atoms/numerical/interpolation/",
+  "atomic_nodes": [
+    {
+      "name": "assemble_cubic_spline_tridiagonal",
+      "semantic_role": "Build the tridiagonal system of linear equations for the spline derivatives based on boundary conditions.",
+      "source_targets": [
+        "scipy.interpolate.CubicSpline"
+      ],
+      "inputs": [
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "bc_type",
+          "type_desc": "str",
+          "required": true,
+          "constraints": "Must be 'natural', 'clamped', or 'not-a-knot'"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ab",
+          "type_desc": "NDArray[np.float64]",
+          "description": "Banded/tridiagonal representation of system matrix"
+        },
+        {
+          "name": "rhs",
+          "type_desc": "NDArray[np.float64]",
+          "description": "Right-hand side of equation"
+        }
+      ],
+      "precondition_candidates": [
+        "len(x) >= 3",
+        "np.all(np.diff(x) > 0)"
+      ],
+      "postcondition_candidates": [
+        "ab.shape[0] == 3",
+        "ab.shape[1] == len(x)",
+        "len(rhs) == len(x)"
+      ],
+      "witness_shape_semantics": "Outputs a banded matrix representation for Thomas algorithm.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "solve_tridiagonal_thomas",
+      "semantic_role": "Solve the tridiagonal system using Thomas algorithm.",
+      "source_targets": [
+        "scipy.linalg.solve_banded"
+      ],
+      "inputs": [
+        {
+          "name": "ab",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "rhs",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "derivatives",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "ab.ndim == 2",
+        "ab.shape[0] == 3"
+      ],
+      "postcondition_candidates": [
+        "len(derivatives) == len(rhs)"
+      ],
+      "witness_shape_semantics": "Returns derivative values at knots.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_cubic_spline_coefficients",
+      "semantic_role": "Convert knot values and derivatives into piecewise cubic polynomial coefficients.",
+      "source_targets": [
+        "scipy.interpolate.CubicSpline"
+      ],
+      "inputs": [
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "y",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "derivatives",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "c",
+          "type_desc": "NDArray[np.float64]",
+          "description": "4 x (N-1) coefficient matrix"
+        }
+      ],
+      "precondition_candidates": [
+        "len(derivatives) == len(x)"
+      ],
+      "postcondition_candidates": [
+        "c.shape == (4, len(x)-1)"
+      ],
+      "witness_shape_semantics": "Coefficient array representation of piecewise cubic polynomial segments.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "evaluate_piecewise_polynomial",
+      "semantic_role": "Evaluate local polynomial representation at requested points.",
+      "source_targets": [
+        "scipy.interpolate.PPoly"
+      ],
+      "inputs": [
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "c",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "x_eval",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "c.shape[1] == len(x) - 1"
+      ],
+      "postcondition_candidates": [
+        "len(result) == len(x_eval)"
+      ],
+      "witness_shape_semantics": "Output shape matches evaluation coordinates.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "assemble_cubic_spline_tridiagonal",
+      "target": "solve_tridiagonal_thomas",
+      "output_name": "ab",
+      "input_name": "ab"
+    },
+    {
+      "source": "assemble_cubic_spline_tridiagonal",
+      "target": "solve_tridiagonal_thomas",
+      "output_name": "rhs",
+      "input_name": "rhs"
+    },
+    {
+      "source": "solve_tridiagonal_thomas",
+      "target": "compute_cubic_spline_coefficients",
+      "output_name": "derivatives",
+      "input_name": "derivatives"
+    },
+    {
+      "source": "compute_cubic_spline_coefficients",
+      "target": "evaluate_piecewise_polynomial",
+      "output_name": "c",
+      "input_name": "c"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "y",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "bc_type",
+        "type_desc": "str",
+        "required": true
+      },
+      {
+        "name": "x_eval",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "result",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

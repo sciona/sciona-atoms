@@ -1,0 +1,141 @@
+{
+  "cdg_id": "radius_neighbor_graph_construction",
+  "name": "radius_neighbor_graph_construction",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into range search and sparse formatting due to variable-sized outputs per node, requiring careful memory allocation and diagnostics for disconnected nodes.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "query_radius_neighbors",
+      "semantic_role": "Perform range-search queries to identify all neighbors within a given metric distance.",
+      "source_targets": [
+        "sklearn.neighbors.NearestNeighbors.radius_neighbors"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "radius",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "metric",
+          "type_desc": "str",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.object_]"
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.object_]"
+        }
+      ],
+      "precondition_candidates": [
+        "X.ndim == 2",
+        "radius > 0.0"
+      ],
+      "postcondition_candidates": [
+        "len(indices) == X.shape[0]"
+      ],
+      "witness_shape_semantics": "Returns jagged arrays representing variable-length local neighborhood boundaries.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "assemble_radius_graph",
+      "semantic_role": "Format the jagged neighborhood arrays into a standardized sparse CSR matrix.",
+      "source_targets": [
+        "sklearn.neighbors.radius_neighbors_graph"
+      ],
+      "inputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.object_]",
+          "required": true
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.object_]",
+          "required": true
+        },
+        {
+          "name": "radius",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "mode",
+          "type_desc": "str",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "graph",
+          "type_desc": "scipy.sparse.csr_matrix"
+        }
+      ],
+      "precondition_candidates": [
+        "len(distances) == len(indices)"
+      ],
+      "postcondition_candidates": [
+        "graph.shape[0] == len(distances)"
+      ],
+      "witness_shape_semantics": "Packs variable length neighbor paths into an N x N CSR matrix.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "query_radius_neighbors",
+      "target": "assemble_radius_graph",
+      "output_name": "distances",
+      "input_name": "distances"
+    },
+    {
+      "source": "query_radius_neighbors",
+      "target": "assemble_radius_graph",
+      "output_name": "indices",
+      "input_name": "indices"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "mode",
+        "type_desc": "str",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "graph",
+        "type_desc": "scipy.sparse.csr_matrix"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

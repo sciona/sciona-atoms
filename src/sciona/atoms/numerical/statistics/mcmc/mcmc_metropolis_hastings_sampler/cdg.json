@@ -1,0 +1,205 @@
+{
+  "cdg_id": "mcmc_metropolis_hastings_sampler",
+  "name": "mcmc_metropolis_hastings_sampler",
+  "priority": "medium",
+  "decomposition_rationale": "Separates the iterative Markov transition loop from the diagnostic calculation. Chain generation is highly computational, while Gelman-Rubin diagnostics operate on finished multi-chain arrays and are reusable across different samplers.",
+  "family_directory_hint": "src/sciona/atoms/numerical/statistics/mcmc/",
+  "atomic_nodes": [
+    {
+      "name": "initialize_mcmc_chain",
+      "semantic_role": "Verify parameter bounds, log-posterior validity at start coordinates, and setup random generators.",
+      "source_targets": [
+        "numpy.random.default_rng"
+      ],
+      "inputs": [
+        {
+          "name": "initial_state",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "log_posterior_fn",
+          "type_desc": "Callable[[NDArray[np.float64]], float]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "validated_start",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "start_log_prob",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "initial_state.ndim == 1"
+      ],
+      "postcondition_candidates": [
+        "np.isfinite(start_log_prob)"
+      ],
+      "witness_shape_semantics": "Verifies the initial point and computes initial scalar log probability.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "execute_metropolis_hastings_loop",
+      "semantic_role": "Run the core state proposal, acceptance ratio calculation, and transition loop.",
+      "source_targets": [
+        "numpy.random.Generator.normal",
+        "numpy.random.Generator.uniform"
+      ],
+      "inputs": [
+        {
+          "name": "validated_start",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "log_posterior_fn",
+          "type_desc": "Callable[[NDArray[np.float64]], float]",
+          "required": true
+        },
+        {
+          "name": "proposal_std",
+          "type_desc": "float",
+          "required": true
+        },
+        {
+          "name": "n_draws",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "seed",
+          "type_desc": "int | None",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "raw_chain",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "acceptance_rate",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "n_draws > 0",
+        "proposal_std > 0.0"
+      ],
+      "postcondition_candidates": [
+        "raw_chain.shape == (n_draws, len(validated_start))"
+      ],
+      "witness_shape_semantics": "Generates a 2D trajectory matrix of shape (n_draws, p).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "compute_mcmc_chain_diagnostics",
+      "semantic_role": "Calculate Gelman-Rubin R-hat, effective sample size (ESS), and discard burn-in.",
+      "source_targets": [
+        "statsmodels.stats"
+      ],
+      "inputs": [
+        {
+          "name": "raw_chain",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "burn_in_ratio",
+          "type_desc": "float",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "posterior_samples",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "r_hat",
+          "type_desc": "float"
+        },
+        {
+          "name": "ess",
+          "type_desc": "float"
+        }
+      ],
+      "precondition_candidates": [
+        "0.0 <= burn_in_ratio < 1.0",
+        "raw_chain.ndim == 2"
+      ],
+      "postcondition_candidates": [
+        "posterior_samples.shape[0] < raw_chain.shape[0]",
+        "r_hat >= 1.0"
+      ],
+      "witness_shape_semantics": "Trims rows of the matrix and outputs scalar metrics.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "initialize_mcmc_chain",
+      "target": "execute_metropolis_hastings_loop",
+      "output_name": "validated_start",
+      "input_name": "validated_start"
+    },
+    {
+      "source": "execute_metropolis_hastings_loop",
+      "target": "compute_mcmc_chain_diagnostics",
+      "output_name": "raw_chain",
+      "input_name": "raw_chain"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "initial_state",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "log_posterior_fn",
+        "type_desc": "Callable[[NDArray[np.float64]], float]",
+        "required": true
+      },
+      {
+        "name": "proposal_std",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "n_draws",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "posterior_samples",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "r_hat",
+        "type_desc": "float"
+      },
+      {
+        "name": "acceptance_rate",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

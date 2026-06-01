@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    {
+      "node_id": "cholesky_solve_root",
+      "name": "Symmetric Positive Definite Cholesky Solver",
+      "description": "Symmetric/Hermitian positive-definite matrix Cholesky factorization and back-solving linear system family.",
+      "status": "decomposed",
+      "children": [
+        "cholesky_factorize",
+        "cholesky_solve"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "cholesky_factorize",
+      "name": "cholesky_factorize",
+      "description": "Compute the Cholesky factorization of a symmetric/Hermitian positive-definite matrix A.",
+      "concept_type": "algebraic",
+      "status": "atomic",
+      "type_signature": "(A: NDArray[np.float64] | NDArray[np.complex128], lower: bool = False) -> tuple[NDArray[np.float64] | NDArray[np.complex128], bool]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64] | NDArray[np.complex128]",
+          "required": true
+        },
+        {
+          "name": "lower",
+          "type_desc": "bool",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "tuple[NDArray[np.float64] | NDArray[np.complex128], bool]"
+        }
+      ],
+      "time_complexity": "O(N^3)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Cholesky decomposition of an N x N matrix requires N^3 / 3 floating point operations and O(N^2) space to store the factored matrix in place.",
+      "complexity_confidence": 100
+    },
+    {
+      "node_id": "cholesky_solve",
+      "name": "cholesky_solve",
+      "description": "Solve the symmetric positive-definite system A x = b using precomputed Cholesky factor.",
+      "concept_type": "algebraic",
+      "status": "atomic",
+      "type_signature": "(c_factor: tuple[NDArray[np.float64] | NDArray[np.complex128], bool], b: NDArray[np.float64] | NDArray[np.complex128]) -> NDArray[np.float64] | NDArray[np.complex128]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "c_factor",
+          "type_desc": "tuple[NDArray[np.float64] | NDArray[np.complex128], bool]",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type_desc": "NDArray[np.float64] | NDArray[np.complex128]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "NDArray[np.float64] | NDArray[np.complex128]"
+        }
+      ],
+      "time_complexity": "O(N^2)",
+      "space_complexity": "O(N)",
+      "complexity_reasoning": "Back-solving with precomputed Cholesky factors against a single RHS vector takes O(N^2) operations via forward/backward substitutions and O(N) auxiliary space.",
+      "complexity_confidence": 100
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "cholesky_factorize",
+      "target_id": "cholesky_solve",
+      "edge_type": "data_dependency"
+    }
+  ],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/scipy/scipy",
+    "source_license": "BSD-3-Clause"
+  }
+}

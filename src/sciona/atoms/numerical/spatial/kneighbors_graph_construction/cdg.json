@@ -1,0 +1,138 @@
+{
+  "cdg_id": "kneighbors_graph_construction",
+  "name": "kneighbors_graph_construction",
+  "priority": "medium",
+  "decomposition_rationale": "Decouple distance computation from sparse graph generation and symmetrization, which are logical mathematical transforms of spatial relations.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "compute_knn_relations",
+      "semantic_role": "Query nearest neighbors for all points to build relational maps.",
+      "source_targets": [
+        "sklearn.neighbors.NearestNeighbors"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_neighbors",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "metric",
+          "type_desc": "str",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "precondition_candidates": [
+        "X.ndim == 2",
+        "n_neighbors > 0",
+        "n_neighbors < X.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "distances.shape[0] == X.shape[0]"
+      ],
+      "witness_shape_semantics": "Produces distances and indices mapping each point to its neighbors.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "format_sparse_adjacency",
+      "semantic_role": "Construct a Compressed Sparse Row (CSR) adjacency matrix from KNN indices.",
+      "source_targets": [
+        "sklearn.neighbors.kneighbors_graph"
+      ],
+      "inputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "mode",
+          "type_desc": "str",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "graph",
+          "type_desc": "scipy.sparse.csr_matrix"
+        }
+      ],
+      "precondition_candidates": [
+        "distances.shape == indices.shape"
+      ],
+      "postcondition_candidates": [
+        "graph.shape[0] == distances.shape[0]",
+        "graph.shape[1] == distances.shape[0]"
+      ],
+      "witness_shape_semantics": "Packs index and distance pairs into a formal sparse matrix.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "compute_knn_relations",
+      "target": "format_sparse_adjacency",
+      "output_name": "distances",
+      "input_name": "distances"
+    },
+    {
+      "source": "compute_knn_relations",
+      "target": "format_sparse_adjacency",
+      "output_name": "indices",
+      "input_name": "indices"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "n_neighbors",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "mode",
+        "type_desc": "str",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "graph",
+        "type_desc": "scipy.sparse.csr_matrix"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

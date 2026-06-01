@@ -1,0 +1,113 @@
+{
+  "cdg_id": "delaunay_triangulation_qhull",
+  "name": "delaunay_triangulation_qhull",
+  "priority": "medium",
+  "decomposition_rationale": "Wrap Qhull Delaunay computation as a core atom, then supply secondary atoms to validate empty-circumsphere invariants and compute barycentric transforms.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "atomic_nodes": [
+    {
+      "name": "compute_delaunay",
+      "semantic_role": "Execute Qhull to partition spatial points into Delaunay simplices.",
+      "source_targets": [
+        "scipy.spatial.Delaunay"
+      ],
+      "inputs": [
+        {
+          "name": "points",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "simplices",
+          "type_desc": "NDArray[np.int32]"
+        },
+        {
+          "name": "neighbors",
+          "type_desc": "NDArray[np.int32]"
+        },
+        {
+          "name": "coplanar",
+          "type_desc": "NDArray[np.int32]"
+        }
+      ],
+      "precondition_candidates": [
+        "points.ndim == 2",
+        "points.shape[0] >= points.shape[1] + 1"
+      ],
+      "postcondition_candidates": [
+        "simplices.ndim == 2",
+        "simplices.shape[1] == points.shape[1] + 1"
+      ],
+      "witness_shape_semantics": "Maps N coordinate vectors into a matrix of simplicial indices of shape (S, D+1).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "validate_empty_circumspheres",
+      "semantic_role": "Verify Delaunay empty-circumsphere invariants to guarantee triangulation validity.",
+      "source_targets": [
+        "scipy.spatial.Delaunay"
+      ],
+      "inputs": [
+        {
+          "name": "points",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "simplices",
+          "type_desc": "NDArray[np.int32]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "is_valid",
+          "type_desc": "bool"
+        }
+      ],
+      "precondition_candidates": [
+        "points.ndim == 2",
+        "simplices.ndim == 2"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Computes a boolean validation metric without shape alteration.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "compute_delaunay",
+      "target": "validate_empty_circumspheres",
+      "output_name": "simplices",
+      "input_name": "simplices"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "simplices",
+        "type_desc": "NDArray[np.int32]"
+      },
+      {
+        "name": "neighbors",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

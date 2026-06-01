@@ -1,0 +1,106 @@
+{
+  "cdg_id": "isomap_manifold_embedding",
+  "name": "isomap_manifold_embedding",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into neighborhood graph construction, shortest path geodesic solving, and multidimensional scaling (MDS). Separating these steps permits reusing optimized Dijkstra/Floyd-Warshall solvers and tracking connectivity.",
+  "family_directory_hint": "src/sciona/atoms/numerical/manifold/",
+  "atomic_nodes": [
+    {
+      "name": "solve_shortest_paths",
+      "semantic_role": "Execute Dijkstra/Floyd-Warshall to resolve complete geodesic distances on a sparse graph.",
+      "source_targets": [
+        "scipy.sparse.csgraph.shortest_path"
+      ],
+      "inputs": [
+        {
+          "name": "knn_graph",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "geodesics",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "knn_graph.shape[0] == knn_graph.shape[1]"
+      ],
+      "postcondition_candidates": [
+        "geodesics.ndim == 2",
+        "np.all(np.isfinite(geodesics))"
+      ],
+      "witness_shape_semantics": "Maps sparse connections to dense geodesic distance matrices.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "classical_mds",
+      "semantic_role": "Perform classical Multi-dimensional Scaling (MDS) on geodesic distances.",
+      "source_targets": [
+        "sklearn.manifold.MDS"
+      ],
+      "inputs": [
+        {
+          "name": "geodesics",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_components",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "embedding",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_components > 0"
+      ],
+      "postcondition_candidates": [
+        "embedding.shape == (geodesics.shape[0], n_components)"
+      ],
+      "witness_shape_semantics": "Extracts low-dimensional coordinates.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "solve_shortest_paths",
+      "target": "classical_mds",
+      "output_name": "geodesics",
+      "input_name": "geodesics"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "knn_graph",
+        "type_desc": "scipy.sparse.csr_matrix",
+        "required": true
+      },
+      {
+        "name": "n_components",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "embedding",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}

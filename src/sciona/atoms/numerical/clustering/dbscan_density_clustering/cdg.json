@@ -1,0 +1,115 @@
+{
+  "cdg_id": "dbscan_density_clustering",
+  "name": "dbscan_density_clustering",
+  "priority": "medium",
+  "decomposition_rationale": "Decompose into neighborhood search (reusing radius graph primitives), core point isolation, and graph connectivity propagation (labeling). This separates numerical geometry from discrete graph logic.",
+  "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
+  "atomic_nodes": [
+    {
+      "name": "find_core_points",
+      "semantic_role": "Verify local neighbor density to classify points as core.",
+      "source_targets": [
+        "sklearn.cluster.DBSCAN"
+      ],
+      "inputs": [
+        {
+          "name": "neighborhood_counts",
+          "type_desc": "NDArray[np.int64]",
+          "required": true
+        },
+        {
+          "name": "min_samples",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "core_mask",
+          "type_desc": "NDArray[np.bool_]"
+        }
+      ],
+      "precondition_candidates": [
+        "min_samples >= 1"
+      ],
+      "postcondition_candidates": [
+        "core_mask.shape == neighborhood_counts.shape"
+      ],
+      "witness_shape_semantics": "Extracts boolean mask of core nodes.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "propagate_labels",
+      "semantic_role": "Perform graph search connectivity traversal to group core components and attach border points.",
+      "source_targets": [
+        "sklearn.cluster.DBSCAN"
+      ],
+      "inputs": [
+        {
+          "name": "neighbors",
+          "type_desc": "scipy.sparse.csr_matrix",
+          "required": true
+        },
+        {
+          "name": "core_mask",
+          "type_desc": "NDArray[np.bool_]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "labels",
+          "type_desc": "NDArray[np.int32]"
+        }
+      ],
+      "precondition_candidates": [
+        "neighbors.shape[0] == core_mask.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "labels.shape[0] == core_mask.shape[0]"
+      ],
+      "witness_shape_semantics": "Packs connectivity paths into integer grouping classes, mapping isolated items to -1.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ],
+  "edges": [
+    {
+      "source": "find_core_points",
+      "target": "propagate_labels",
+      "output_name": "core_mask",
+      "input_name": "core_mask"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "eps",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "min_samples",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false
+}
