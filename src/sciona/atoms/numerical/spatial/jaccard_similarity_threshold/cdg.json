@@ -1,0 +1,42 @@
+{
+  "cdg_id": "spatial_jaccard_similarity",
+  "name": "spatial_jaccard_similarity",
+  "priority": "medium",
+  "decomposition_rationale": "Provides specialized threshold-based Jaccard similarity comparison and duplicate filtering over multiple sets.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/jaccard_similarity_threshold/",
+  "edges": [],
+  "cdg_io": {
+    "inputs": [],
+    "outputs": []
+  },
+  "state_model_needed": false,
+  "nodes": [
+    {
+      "name": "jaccard_similarity_threshold",
+      "status": "atomic",
+      "semantic_role": "Compute pairwise Jaccard similarities and filter pairs below a threshold.",
+      "inputs": [
+        {
+          "name": "sets",
+          "type_desc": "list[set[int] | set[str]]",
+          "required": true
+        },
+        {
+          "name": "threshold",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "list[tuple[int, int, float]]"
+        }
+      ],
+      "time_complexity": "O(N^2 * M)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Pairwise Jaccard comparisons scale quadratically with the number of sets N and linearly with average set size M.",
+      "complexity_confidence": 95
+    }
+  ]
+}

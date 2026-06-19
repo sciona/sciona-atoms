@@ -148,3 +148,72 @@ def test_approximate_neighbor_search_hnsw_behavior() -> None:
     assert indices.shape == (3, 4)
     assert dists.dtype == np.float64
     assert indices.dtype == np.int64
+
+
+def test_cdf_regression_head_behavior() -> None:
+    from sciona.atoms.numerical.statistics.regression import cdf_regression_head
+
+    x = np.array([[0.0, 0.0], [1.0, np.log(2.0)]])
+    y = np.array([0.0, 1.0])
+    
+    # Test normal CDF
+    probs_normal = cdf_regression_head(x, y, distribution="normal")
+    assert probs_normal.shape == (2,)
+    # normal: mean 0, scale 1 -> at 0.0 is 0.5
+    # normal: mean 1, scale 2 -> at 1.0 is 0.5
+    np.testing.assert_allclose(probs_normal, [0.5, 0.5], atol=1e-6)
+
+    # Test logistic CDF
+    probs_logistic = cdf_regression_head(x, y, distribution="logistic")
+    assert probs_logistic.shape == (2,)
+    np.testing.assert_allclose(probs_logistic, [0.5, 0.5], atol=1e-6)
+
+    # Contract violation
+    with pytest.raises(ViolationError):
+        cdf_regression_head(x, y, distribution="invalid_dist")
+
+
+def test_mlp_regression_head_behavior() -> None:
+    from sciona.atoms.numerical.statistics.regression import mlp_regression_head
+
+    x = np.array([[1.0, 2.0], [3.0, 4.0]])
+    w1 = np.array([[1.0, 0.0], [0.0, 1.0]])
+    b1 = np.array([-0.5, -0.5])
+    w2 = np.array([[2.0], [2.0]])
+    b2 = np.array([1.0])
+
+    # forward:
+    # layer 1: x @ w1 + b1 = [[0.5, 1.5], [2.5, 3.5]]
+    # relu: no change (all positive)
+    # layer 2: [[0.5, 1.5], [2.5, 3.5]] @ [[2], [2]] + 1 = [[5.0], [13.0]]
+    result = mlp_regression_head(x, [w1, w2], [b1, b2], activation="relu")
+    assert result.shape == (2, 1)
+    np.testing.assert_allclose(result, [[5.0], [13.0]])
+
+    # Contract violation (dimension mismatch)
+    w_bad = np.array([[1.0, 0.0, 0.0]])
+    with pytest.raises(ViolationError):
+        mlp_regression_head(x, [w_bad], [b1], activation="relu")
+
+
+def test_jaccard_similarity_threshold_behavior() -> None:
+    from sciona.atoms.numerical.spatial.jaccard_similarity_threshold import jaccard_similarity_threshold
+
+    sets = [
+        {1, 2, 3},
+        {2, 3, 4},
+        {5, 6}
+      ]
+    # J(0, 1) = |{2,3}| / |{1,2,3,4}| = 2/4 = 0.5
+    # J(0, 2) = 0.0
+    # J(1, 2) = 0.0
+    results = jaccard_similarity_threshold(sets, threshold=0.4)
+    assert results == [(0, 1, 0.5)]
+
+    results_low = jaccard_similarity_threshold(sets, threshold=0.0)
+    assert len(results_low) == 3
+
+    # Contract violation
+    with pytest.raises(ViolationError):
+        jaccard_similarity_threshold(sets, threshold=1.5)
+
