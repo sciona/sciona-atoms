@@ -1,0 +1,88 @@
+{
+  "nodes": [
+    {
+      "node_id": "divide_and_conquer_sorting_root",
+      "name": "Divide and Conquer Sorting",
+      "description": "Atoms for splitting and merging lists in merge sort",
+      "status": "decomposed",
+      "children": [
+        "split_list_halves",
+        "merge_sorted_halves"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "split_list_halves",
+      "name": "split_list_halves",
+      "description": "Split a list into left and right halves",
+      "concept_type": "sorting",
+      "status": "atomic",
+      "type_signature": "(items: list[int]) -> tuple[list[int], list[int]]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "items",
+          "type_desc": "list[int]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "left",
+          "type_desc": "list[int]"
+        },
+        {
+          "name": "right",
+          "type_desc": "list[int]"
+        }
+      ],
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Slicing the list into two halves takes time and space proportional to the number of elements.",
+      "complexity_confidence": 100
+    },
+    {
+      "node_id": "merge_sorted_halves",
+      "name": "merge_sorted_halves",
+      "description": "Merge two sorted halves into one sorted list",
+      "concept_type": "sorting",
+      "status": "atomic",
+      "type_signature": "(left: list[int], right: list[int]) -> list[int]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "left",
+          "type_desc": "list[int]",
+          "required": true
+        },
+        {
+          "name": "right",
+          "type_desc": "list[int]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "merged",
+          "type_desc": "list[int]"
+        }
+      ],
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Merging two sorted sublists of combined size n takes linear time and space.",
+      "complexity_confidence": 100
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "split_list_halves",
+      "target_id": "merge_sorted_halves",
+      "edge_type": "data_dependency"
+    }
+  ],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/sciona/sciona-atoms",
+    "source_license": "Apache-2.0"
+  }
+}

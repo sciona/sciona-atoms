@@ -4,7 +4,42 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into similarity computation, message update looping, and exemplar extraction. Separating the iteration loop allows diagnostic monitoring of message convergence.",
   "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "AP_message_update",
+      "target": "extract_exemplars",
+      "output_name": "R_new",
+      "input_name": "R"
+    },
+    {
+      "source": "AP_message_update",
+      "target": "extract_exemplars",
+      "output_name": "A_new",
+      "input_name": "A"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "S",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "damping",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "AP_message_update",
       "semantic_role": "Run message-passing iterations to update responsibility and availability matrices with damping.",
@@ -96,40 +131,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "AP_message_update",
-      "target": "extract_exemplars",
-      "output_name": "R_new",
-      "input_name": "R"
-    },
-    {
-      "source": "AP_message_update",
-      "target": "extract_exemplars",
-      "output_name": "A_new",
-      "input_name": "A"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "S",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "damping",
-        "type_desc": "float",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "labels",
-        "type_desc": "NDArray[np.int32]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

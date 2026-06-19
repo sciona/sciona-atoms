@@ -64,7 +64,8 @@ def butter(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Design an Nth-order digital or analog Butterworth filter.
 
-    Returns filter coefficients in transfer function (b, a) form.
+    Returns filter coefficients in transfer function (b, a) form. Can design
+    stable bandpass filter or other digital filter coefficients.
 
     Args:
         N: The order of the filter. Must be a positive integer.
@@ -106,7 +107,8 @@ def cheby1(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Design an Nth-order digital Chebyshev Type I filter.
 
-    Returns filter coefficients with rp decibels of passband ripple.
+    Returns filter coefficients with rp decibels of passband ripple. Can design
+    stable bandpass filter or other digital filter coefficients.
 
     Args:
         N: The order of the filter. Must be a positive integer.
@@ -147,7 +149,8 @@ def cheby2(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Design an Nth-order digital Chebyshev Type II filter.
 
-    Returns filter coefficients with rs decibels of stopband attenuation.
+    Returns filter coefficients with rs decibels of stopband attenuation. Can design
+    stable bandpass filter or other digital filter coefficients.
 
     Args:
         N: The order of the filter. Must be a positive integer.
@@ -186,7 +189,7 @@ def firwin(
     """Design a Finite Impulse Response (FIR) filter using the window method.
 
     Compute the coefficients of a finite impulse response filter using
-    the window method.
+    the window method. Can design stable bandpass filter or other digital filter coefficients.
 
     Args:
         numtaps: Length of the filter (number of coefficients). Must
@@ -226,7 +229,7 @@ def sosfilt(
     """Filter data along one dimension using cascaded second-order sections.
 
     Apply a digital filter in Second-Order Sections (SOS) format to the
-    input signal.
+    input signal. Useful for applying a stable bandpass filter or other digital filters.
 
     Args:
         sos: Array of second-order filter coefficients with shape
@@ -261,7 +264,8 @@ def lfilter(
     """Filter data along one-dimension with an Infinite Impulse Response (IIR) or Finite Impulse Response (FIR) filter.
 
     Filter a data sequence x using a digital filter described by the
-    numerator and denominator coefficient vectors b and a.
+    numerator and denominator coefficient vectors b and a. Can be used to apply a stable
+    bandpass filter or other digital filters.
 
     Args:
         b: Numerator coefficient vector of the filter (1D).

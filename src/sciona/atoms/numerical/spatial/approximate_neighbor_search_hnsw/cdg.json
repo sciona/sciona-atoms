@@ -1,0 +1,138 @@
+{
+  "cdg_id": "approximate_neighbor_search_hnsw",
+  "name": "approximate_neighbor_search_hnsw",
+  "priority": "medium",
+  "decomposition_rationale": "HNSW is usually implemented in high-performance C++ extensions (e.g. hnswlib). While highly valuable, its exact Python binding interfaces vary, so we suggest a human-decision step for native dependencies while defining a clear structural blueprint.",
+  "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
+  "edges": [
+    {
+      "source": "build_hnsw_index",
+      "target": "query_hnsw_index",
+      "output_name": "index",
+      "input_name": "index"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "query_points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "k",
+        "type_desc": "int",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "distances",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
+    {
+      "name": "build_hnsw_index",
+      "semantic_role": "Build a multi-layer hierarchical navigable small world graph index.",
+      "source_targets": [
+        "hnswlib.Index"
+      ],
+      "inputs": [
+        {
+          "name": "data",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "M",
+          "type_desc": "int",
+          "required": false
+        },
+        {
+          "name": "ef_construction",
+          "type_desc": "int",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "index",
+          "type_desc": "Any"
+        }
+      ],
+      "precondition_candidates": [
+        "data.ndim == 2"
+      ],
+      "postcondition_candidates": [
+        "index is not None"
+      ],
+      "witness_shape_semantics": "Generates a multi-layered skip-graph representation of points.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "query_hnsw_index",
+      "semantic_role": "Query the built HNSW graph for fast approximate nearest neighbors.",
+      "source_targets": [
+        "hnswlib.Index.knn_query"
+      ],
+      "inputs": [
+        {
+          "name": "index",
+          "type_desc": "Any",
+          "required": true
+        },
+        {
+          "name": "query_points",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "k",
+          "type_desc": "int",
+          "required": false
+        },
+        {
+          "name": "ef_search",
+          "type_desc": "int",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distances",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "indices",
+          "type_desc": "NDArray[np.int64]"
+        }
+      ],
+      "precondition_candidates": [
+        "k >= 1"
+      ],
+      "postcondition_candidates": [
+        "distances.shape == indices.shape"
+      ],
+      "witness_shape_semantics": "Returns approximate neighbor distances and indices matrices.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ]
+}

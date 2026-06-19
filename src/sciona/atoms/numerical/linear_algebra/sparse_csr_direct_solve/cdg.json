@@ -4,7 +4,36 @@
   "priority": "medium",
   "decomposition_rationale": "Separates sparse factorization from back-solving to allow reuse. Reusing sparse factorizations is critical in transient physical simulations (e.g. solving PDEs over time).",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "sparse_factorize_matrix",
+      "target": "sparse_solve_rhs",
+      "output_name": "solve_fn",
+      "input_name": "solve_fn"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "scipy.sparse.spmatrix",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "sparse_factorize_matrix",
       "semantic_role": "Perform sparse LU factorization via SuperLU.",
@@ -68,34 +97,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "sparse_factorize_matrix",
-      "target": "sparse_solve_rhs",
-      "output_name": "solve_fn",
-      "input_name": "solve_fn"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "scipy.sparse.spmatrix",
-        "required": true
-      },
-      {
-        "name": "b",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "x",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

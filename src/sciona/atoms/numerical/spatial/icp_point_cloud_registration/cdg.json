@@ -4,7 +4,44 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into rigid correspondence matching and optimal SVD rigid alignment calculations to permit customizable outlier rejection or coordinate adjustments in larger registration pipelines.",
   "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "find_correspondences",
+      "target": "estimate_rigid_transform",
+      "output_name": "matched_target",
+      "input_name": "matched_target"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "source",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "target",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "R",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "t",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "mse",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "find_correspondences",
       "semantic_role": "Use spatial indices to associate each point in the source cloud to its nearest neighbor in the target cloud.",
@@ -92,42 +129,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "find_correspondences",
-      "target": "estimate_rigid_transform",
-      "output_name": "matched_target",
-      "input_name": "matched_target"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "source",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "target",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "R",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "t",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "mse",
-        "type_desc": "float"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

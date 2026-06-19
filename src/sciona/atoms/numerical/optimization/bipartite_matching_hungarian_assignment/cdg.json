@@ -4,7 +4,28 @@
   "priority": "medium",
   "decomposition_rationale": "Encapsulates Kuhn-Munkres execution using highly optimized SciPy C++ wrappers, with a dense shape verification wrapper.",
   "family_directory_hint": "src/sciona/atoms/numerical/optimization/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "cost_matrix",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "row_ind",
+        "type_desc": "NDArray[np.int64]"
+      },
+      {
+        "name": "col_ind",
+        "type_desc": "NDArray[np.int64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "run_hungarian_assignment",
       "semantic_role": "Perform linear sum assignment optimization.",
@@ -42,26 +63,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "cost_matrix",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "row_ind",
-        "type_desc": "NDArray[np.int64]"
-      },
-      {
-        "name": "col_ind",
-        "type_desc": "NDArray[np.int64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

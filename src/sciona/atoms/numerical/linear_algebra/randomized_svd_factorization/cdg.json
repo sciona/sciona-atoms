@@ -1,0 +1,152 @@
+{
+  "cdg_id": "randomized_svd_factorization",
+  "name": "randomized_svd_factorization",
+  "priority": "medium",
+  "decomposition_rationale": "Separates the random subspace projection stage (QR basis extraction) from the dense singular value decomposition stage, allowing customizable projection templates.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "edges": [
+    {
+      "source": "extract_random_subspace_basis",
+      "target": "factorize_subspace_projection",
+      "output_name": "Q",
+      "input_name": "Q"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "k",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "p",
+        "type_desc": "int",
+        "required": false
+      },
+      {
+        "name": "n_iter",
+        "type_desc": "int",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "U",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "s",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "Vh",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
+    {
+      "name": "extract_random_subspace_basis",
+      "semantic_role": "Form random projection basis Q for A.",
+      "source_targets": [
+        "sklearn.utils.extmath.randomized_svd"
+      ],
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "k",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "p",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "n_iter",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Q",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "k > 0",
+        "p >= 0"
+      ],
+      "postcondition_candidates": [
+        "Q.shape[0] == A.shape[0]"
+      ],
+      "witness_shape_semantics": "Produces an orthonormal basis matrix Q of shape (m, k + p).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "factorize_subspace_projection",
+      "semantic_role": "Project A onto Q and perform core dense SVD.",
+      "source_targets": [
+        "scipy.linalg.svd"
+      ],
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "Q",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "k",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "U_k",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "s_k",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "Vh_k",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "Q.shape[0] == A.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "s_k.shape[0] == k"
+      ],
+      "witness_shape_semantics": "Projects down and returns truncated singular components.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ]
+}

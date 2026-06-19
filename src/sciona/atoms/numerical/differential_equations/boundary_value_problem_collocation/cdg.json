@@ -4,7 +4,77 @@
   "priority": "medium",
   "decomposition_rationale": "Decouple BVP collocation equation assembly, sparse block-tridiagonal system solver, residual calculations, and adaptive mesh refinement loop. The sparse system solver and mesh refinement routines are extremely valuable independently.",
   "family_directory_hint": "src/sciona/atoms/numerical/differential_equations/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "assemble_collocation_system",
+      "target": "solve_bvp_newton_step",
+      "output_name": "residuals",
+      "input_name": "residuals"
+    },
+    {
+      "source": "assemble_collocation_system",
+      "target": "solve_bvp_newton_step",
+      "output_name": "jacobian",
+      "input_name": "jacobian"
+    },
+    {
+      "source": "solve_bvp_newton_step",
+      "target": "evaluate_collocation_residuals",
+      "output_name": "y_new",
+      "input_name": "y_sol"
+    },
+    {
+      "source": "evaluate_collocation_residuals",
+      "target": "refine_bvp_mesh_nodes",
+      "output_name": "interval_residuals",
+      "input_name": "interval_residuals"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "fun",
+        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "bc",
+        "type_desc": "Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "x_mesh",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "y_guess",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "tol",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x_mesh_final",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "y_final",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "success",
+        "type_desc": "bool"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "assemble_collocation_system",
       "semantic_role": "Construct the global non-linear algebraic system and sparse Jacobian for collocation and boundary conditions.",
@@ -183,75 +253,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "assemble_collocation_system",
-      "target": "solve_bvp_newton_step",
-      "output_name": "residuals",
-      "input_name": "residuals"
-    },
-    {
-      "source": "assemble_collocation_system",
-      "target": "solve_bvp_newton_step",
-      "output_name": "jacobian",
-      "input_name": "jacobian"
-    },
-    {
-      "source": "solve_bvp_newton_step",
-      "target": "evaluate_collocation_residuals",
-      "output_name": "y_new",
-      "input_name": "y_sol"
-    },
-    {
-      "source": "evaluate_collocation_residuals",
-      "target": "refine_bvp_mesh_nodes",
-      "output_name": "interval_residuals",
-      "input_name": "interval_residuals"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "fun",
-        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
-        "required": true
-      },
-      {
-        "name": "bc",
-        "type_desc": "Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]",
-        "required": true
-      },
-      {
-        "name": "x_mesh",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "y_guess",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "tol",
-        "type_desc": "float",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "x_mesh_final",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "y_final",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "success",
-        "type_desc": "bool"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

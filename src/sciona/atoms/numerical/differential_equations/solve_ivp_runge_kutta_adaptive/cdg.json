@@ -4,7 +4,99 @@
   "priority": "medium",
   "decomposition_rationale": "Isolate the Butcher tableau representation, single-step stage evaluation, local error calculation, and step controller loop. This enables easy substitution of Runge-Kutta variants (e.g. RK45, RK23, Cash-Karp) without rewritten solver controllers.",
   "family_directory_hint": "src/sciona/atoms/numerical/differential_equations/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "get_butcher_tableau",
+      "target": "compute_rk_single_step",
+      "output_name": "A",
+      "input_name": "A"
+    },
+    {
+      "source": "get_butcher_tableau",
+      "target": "compute_rk_single_step",
+      "output_name": "B",
+      "input_name": "B"
+    },
+    {
+      "source": "get_butcher_tableau",
+      "target": "compute_rk_single_step",
+      "output_name": "B_star",
+      "input_name": "B_star"
+    },
+    {
+      "source": "get_butcher_tableau",
+      "target": "compute_rk_single_step",
+      "output_name": "C",
+      "input_name": "C"
+    },
+    {
+      "source": "compute_rk_single_step",
+      "target": "evaluate_step_acceptability",
+      "output_name": "y_new",
+      "input_name": "y_new"
+    },
+    {
+      "source": "compute_rk_single_step",
+      "target": "evaluate_step_acceptability",
+      "output_name": "error_vector",
+      "input_name": "error_vector"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "fun",
+        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "t",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "y",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "h",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "method",
+        "type_desc": "str",
+        "required": true
+      },
+      {
+        "name": "atol",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "rtol",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "y_new",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "accepted",
+        "type_desc": "bool"
+      },
+      {
+        "name": "error_norm",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "get_butcher_tableau",
       "semantic_role": "Retrieve matrices A, coefficients B, B_star, and C defining an embedded Runge-Kutta scheme.",
@@ -177,97 +269,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "get_butcher_tableau",
-      "target": "compute_rk_single_step",
-      "output_name": "A",
-      "input_name": "A"
-    },
-    {
-      "source": "get_butcher_tableau",
-      "target": "compute_rk_single_step",
-      "output_name": "B",
-      "input_name": "B"
-    },
-    {
-      "source": "get_butcher_tableau",
-      "target": "compute_rk_single_step",
-      "output_name": "B_star",
-      "input_name": "B_star"
-    },
-    {
-      "source": "get_butcher_tableau",
-      "target": "compute_rk_single_step",
-      "output_name": "C",
-      "input_name": "C"
-    },
-    {
-      "source": "compute_rk_single_step",
-      "target": "evaluate_step_acceptability",
-      "output_name": "y_new",
-      "input_name": "y_new"
-    },
-    {
-      "source": "compute_rk_single_step",
-      "target": "evaluate_step_acceptability",
-      "output_name": "error_vector",
-      "input_name": "error_vector"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "fun",
-        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
-        "required": true
-      },
-      {
-        "name": "t",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "y",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "h",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "method",
-        "type_desc": "str",
-        "required": true
-      },
-      {
-        "name": "atol",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "rtol",
-        "type_desc": "float",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "y_new",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "accepted",
-        "type_desc": "bool"
-      },
-      {
-        "name": "error_norm",
-        "type_desc": "float"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

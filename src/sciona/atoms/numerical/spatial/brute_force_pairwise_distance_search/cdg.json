@@ -4,7 +4,34 @@
   "priority": "medium",
   "decomposition_rationale": "Simple direct mathematical calculation. We wrap this into a single atomic node because it leverages highly optimized underlying C/Fortran implementations without internal logical branch points.",
   "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "XA",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "XB",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "metric",
+        "type_desc": "str",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "dm",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_pairwise_cdist",
       "semantic_role": "Compute pairwise distance between two sets of vectors in a vectorized manner.",
@@ -49,32 +76,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "XA",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "XB",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "metric",
-        "type_desc": "str",
-        "required": false
-      }
-    ],
-    "outputs": [
-      {
-        "name": "dm",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

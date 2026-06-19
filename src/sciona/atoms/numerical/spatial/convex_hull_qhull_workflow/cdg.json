@@ -4,7 +4,39 @@
   "priority": "medium",
   "decomposition_rationale": "Split the core Quickhull execution from validation checks that guarantee that every point is indeed inside the half-planes defined by the hull facets.",
   "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "compute_convex_hull",
+      "target": "verify_point_containment",
+      "output_name": "equations",
+      "input_name": "equations"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "vertices",
+        "type_desc": "NDArray[np.int32]"
+      },
+      {
+        "name": "simplices",
+        "type_desc": "NDArray[np.int32]"
+      },
+      {
+        "name": "volume",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_convex_hull",
       "semantic_role": "Compute the convex hull boundary, facets, and enclosed spatial statistics.",
@@ -89,37 +121,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "compute_convex_hull",
-      "target": "verify_point_containment",
-      "output_name": "equations",
-      "input_name": "equations"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "points",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "vertices",
-        "type_desc": "NDArray[np.int32]"
-      },
-      {
-        "name": "simplices",
-        "type_desc": "NDArray[np.int32]"
-      },
-      {
-        "name": "volume",
-        "type_desc": "float"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

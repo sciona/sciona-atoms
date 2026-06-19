@@ -4,7 +4,41 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into covariance matrix regularization/inversion (the statistical prep step) and pairwise distance computation (the fast matrix loop). This allows modular injection of custom Mahalanobis scaling.",
   "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "invert_covariance",
+      "target": "compute_mahalanobis_cdist",
+      "output_name": "inv_cov",
+      "input_name": "inv_cov"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "XA",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "XB",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "cov",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "dm",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "invert_covariance",
       "semantic_role": "Verify and invert a covariance matrix with ridge regularization.",
@@ -83,39 +117,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "invert_covariance",
-      "target": "compute_mahalanobis_cdist",
-      "output_name": "inv_cov",
-      "input_name": "inv_cov"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "XA",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "XB",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "cov",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "dm",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

@@ -4,7 +4,40 @@
   "priority": "medium",
   "decomposition_rationale": "Spectral clustering contains clean, decoupled linear algebra steps (Laplacian, Eigendecomposition, K-Means). Separating these steps permits the architect to inspect intermediate graph eigenvalues for diagnostics (eigengap heuristic).",
   "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "build_graph_laplacian",
+      "target": "solve_laplacian_eigenvectors",
+      "output_name": "laplacian",
+      "input_name": "laplacian"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "affinity",
+        "type_desc": "scipy.sparse.csr_matrix",
+        "required": true
+      },
+      {
+        "name": "n_clusters",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "eigenvalues",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "eigenvectors",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "build_graph_laplacian",
       "semantic_role": "Construct a normalized symmetric Graph Laplacian from an affinity similarity matrix.",
@@ -76,38 +109,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "build_graph_laplacian",
-      "target": "solve_laplacian_eigenvectors",
-      "output_name": "laplacian",
-      "input_name": "laplacian"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "affinity",
-        "type_desc": "scipy.sparse.csr_matrix",
-        "required": true
-      },
-      {
-        "name": "n_clusters",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "eigenvalues",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "eigenvectors",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

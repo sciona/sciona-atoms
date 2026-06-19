@@ -4,7 +4,40 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into mean-shift iteration (mode-seeking) and mode grouping/pruning. Decoupling allows architects to apply the mode-seeking iteration to individual points dynamically.",
   "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "shift_step",
+      "target": "extract_modes",
+      "output_name": "new_positions",
+      "input_name": "converged_positions"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "bandwidth",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "centroids",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "shift_step",
       "semantic_role": "Perform a single vectorized shift of coordinates towards local density peaks.",
@@ -86,38 +119,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "shift_step",
-      "target": "extract_modes",
-      "output_name": "new_positions",
-      "input_name": "converged_positions"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "bandwidth",
-        "type_desc": "float",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "centroids",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "labels",
-        "type_desc": "NDArray[np.int32]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

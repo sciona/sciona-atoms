@@ -1,4 +1,4 @@
-"""Algorithmic search wrappers for the namespace pilot."""
+"""Legacy search functions preserved for compatibility."""
 
 from __future__ import annotations
 

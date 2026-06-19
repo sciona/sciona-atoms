@@ -4,7 +4,40 @@
   "priority": "medium",
   "decomposition_rationale": "Decouples Cholesky factorization of the B-matrix metric from the standard symmetric eigendecomposition, which is critical for modal reuse in dynamics solvers.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "check_and_factorize_metric",
+      "target": "solve_generalized_symmetric",
+      "output_name": "c_factor",
+      "input_name": "c_factor"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "B",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "eigenvalues",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "eigenvectors",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "check_and_factorize_metric",
       "semantic_role": "Verify and compute Cholesky factorization of positive definite matrix B.",
@@ -75,38 +108,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "check_and_factorize_metric",
-      "target": "solve_generalized_symmetric",
-      "output_name": "c_factor",
-      "input_name": "c_factor"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "B",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "eigenvalues",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "eigenvectors",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

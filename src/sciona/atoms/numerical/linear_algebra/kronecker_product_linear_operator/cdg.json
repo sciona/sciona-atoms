@@ -4,7 +4,29 @@
   "priority": "medium",
   "decomposition_rationale": "Exposes the matrix-free reshaping step. By wrapping Kronecker products in a LinearOperator, we can solve tensor-product PDEs using GMRES/CG without storing massive matrices.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "scipy.sparse.linalg.LinearOperator",
+        "required": true
+      },
+      {
+        "name": "B",
+        "type_desc": "scipy.sparse.linalg.LinearOperator",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "kron_op",
+        "type_desc": "scipy.sparse.linalg.LinearOperator"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "build_kronecker_operator",
       "semantic_role": "Assemble a matrix-free Kronecker product LinearOperator.",
@@ -40,27 +62,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "scipy.sparse.linalg.LinearOperator",
-        "required": true
-      },
-      {
-        "name": "B",
-        "type_desc": "scipy.sparse.linalg.LinearOperator",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "kron_op",
-        "type_desc": "scipy.sparse.linalg.LinearOperator"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

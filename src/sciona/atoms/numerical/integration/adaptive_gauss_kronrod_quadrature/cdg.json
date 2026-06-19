@@ -4,7 +4,48 @@
   "priority": "medium",
   "decomposition_rationale": "Isolate the base 7/15 point Gauss-Kronrod evaluation from the global adaptive interval subdivision loop. This enables modular reuse of the Gauss-Kronrod rule for single-interval panels or alternative adaptive heuristics.",
   "family_directory_hint": "src/sciona/atoms/numerical/integration/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "func",
+        "type_desc": "Callable[[float], float]",
+        "required": true
+      },
+      {
+        "name": "a",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "epsabs",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "epsrel",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "result",
+        "type_desc": "float"
+      },
+      {
+        "name": "total_error",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "evaluate_gauss_kronrod_15",
       "semantic_role": "Evaluate Gauss 7-point and Kronrod 15-point rules on a single interval to estimate the integral and its localized error.",
@@ -114,46 +155,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "func",
-        "type_desc": "Callable[[float], float]",
-        "required": true
-      },
-      {
-        "name": "a",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "b",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "epsabs",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "epsrel",
-        "type_desc": "float",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "result",
-        "type_desc": "float"
-      },
-      {
-        "name": "total_error",
-        "type_desc": "float"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

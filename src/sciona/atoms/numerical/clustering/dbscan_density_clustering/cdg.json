@@ -4,7 +4,41 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into neighborhood search (reusing radius graph primitives), core point isolation, and graph connectivity propagation (labeling). This separates numerical geometry from discrete graph logic.",
   "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "find_core_points",
+      "target": "propagate_labels",
+      "output_name": "core_mask",
+      "input_name": "core_mask"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "eps",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "min_samples",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "find_core_points",
       "semantic_role": "Verify local neighbor density to classify points as core.",
@@ -77,39 +111,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "find_core_points",
-      "target": "propagate_labels",
-      "output_name": "core_mask",
-      "input_name": "core_mask"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "eps",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "min_samples",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "labels",
-        "type_desc": "NDArray[np.int32]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

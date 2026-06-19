@@ -4,7 +4,50 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose K-Means into initialization (K-Means++), iteration assignment, centroid mean updating, and iteration control loop atoms. This allows architects to plug in custom distance formulas or warm starts.",
   "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "initialize_kmeans_plus_plus",
+      "target": "assign_clusters",
+      "output_name": "initial_centroids",
+      "input_name": "centroids"
+    },
+    {
+      "source": "assign_clusters",
+      "target": "update_centroids",
+      "output_name": "labels",
+      "input_name": "labels"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "n_clusters",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      },
+      {
+        "name": "centroids",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "inertia",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "initialize_kmeans_plus_plus",
       "semantic_role": "Use distance-weighted probability distribution to spread out initial centroids.",
@@ -122,48 +165,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "initialize_kmeans_plus_plus",
-      "target": "assign_clusters",
-      "output_name": "initial_centroids",
-      "input_name": "centroids"
-    },
-    {
-      "source": "assign_clusters",
-      "target": "update_centroids",
-      "output_name": "labels",
-      "input_name": "labels"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "n_clusters",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "labels",
-        "type_desc": "NDArray[np.int32]"
-      },
-      {
-        "name": "centroids",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "inertia",
-        "type_desc": "float"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

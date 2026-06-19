@@ -4,7 +4,74 @@
   "priority": "medium",
   "decomposition_rationale": "Decouple pairwise distance calculation, kernel matrix assembly, augmented system solve, and evaluation. This enables caching weights and performing fast out-of-core evaluation on massive grids.",
   "family_directory_hint": "src/sciona/atoms/numerical/interpolation/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "compute_pairwise_distances",
+      "target": "assemble_rbf_system",
+      "output_name": "distances",
+      "input_name": "distances"
+    },
+    {
+      "source": "assemble_rbf_system",
+      "target": "solve_rbf_weights",
+      "output_name": "A",
+      "input_name": "A"
+    },
+    {
+      "source": "assemble_rbf_system",
+      "target": "solve_rbf_weights",
+      "output_name": "rhs",
+      "input_name": "rhs"
+    },
+    {
+      "source": "solve_rbf_weights",
+      "target": "evaluate_rbf_predictions",
+      "output_name": "weights",
+      "input_name": "weights"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "x_train",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "y_train",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "kernel_name",
+        "type_desc": "str",
+        "required": true
+      },
+      {
+        "name": "epsilon",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "degree",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "x_eval",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "result",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_pairwise_distances",
       "semantic_role": "Compute Euclidean pairwise distance matrix between two sets of coordinates.",
@@ -188,72 +255,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "compute_pairwise_distances",
-      "target": "assemble_rbf_system",
-      "output_name": "distances",
-      "input_name": "distances"
-    },
-    {
-      "source": "assemble_rbf_system",
-      "target": "solve_rbf_weights",
-      "output_name": "A",
-      "input_name": "A"
-    },
-    {
-      "source": "assemble_rbf_system",
-      "target": "solve_rbf_weights",
-      "output_name": "rhs",
-      "input_name": "rhs"
-    },
-    {
-      "source": "solve_rbf_weights",
-      "target": "evaluate_rbf_predictions",
-      "output_name": "weights",
-      "input_name": "weights"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "x_train",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "y_train",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "kernel_name",
-        "type_desc": "str",
-        "required": true
-      },
-      {
-        "name": "epsilon",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "degree",
-        "type_desc": "int",
-        "required": true
-      },
-      {
-        "name": "x_eval",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "result",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

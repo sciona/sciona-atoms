@@ -4,7 +4,45 @@
   "priority": "medium",
   "decomposition_rationale": "Separating construction and query is crucial for reusability. BallTree supports custom distance metrics, making it mathematically decoupled from standard coordinate projections.",
   "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "build_ball_tree",
+      "target": "query_ball_tree",
+      "output_name": "tree",
+      "input_name": "tree"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "query_points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "k",
+        "type_desc": "int",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "distances",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "build_ball_tree",
       "semantic_role": "Construct a spatial BallTree metric index.",
@@ -89,43 +127,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "build_ball_tree",
-      "target": "query_ball_tree",
-      "output_name": "tree",
-      "input_name": "tree"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "data",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "query_points",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "k",
-        "type_desc": "int",
-        "required": false
-      }
-    ],
-    "outputs": [
-      {
-        "name": "distances",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "indices",
-        "type_desc": "NDArray[np.int64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

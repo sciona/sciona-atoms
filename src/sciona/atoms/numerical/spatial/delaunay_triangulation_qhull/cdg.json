@@ -4,7 +4,35 @@
   "priority": "medium",
   "decomposition_rationale": "Wrap Qhull Delaunay computation as a core atom, then supply secondary atoms to validate empty-circumsphere invariants and compute barycentric transforms.",
   "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "compute_delaunay",
+      "target": "validate_empty_circumspheres",
+      "output_name": "simplices",
+      "input_name": "simplices"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "simplices",
+        "type_desc": "NDArray[np.int32]"
+      },
+      {
+        "name": "neighbors",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_delaunay",
       "semantic_role": "Execute Qhull to partition spatial points into Delaunay simplices.",
@@ -81,33 +109,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "compute_delaunay",
-      "target": "validate_empty_circumspheres",
-      "output_name": "simplices",
-      "input_name": "simplices"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "points",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "simplices",
-        "type_desc": "NDArray[np.int32]"
-      },
-      {
-        "name": "neighbors",
-        "type_desc": "NDArray[np.int32]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

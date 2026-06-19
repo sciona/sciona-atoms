@@ -4,7 +4,45 @@
   "priority": "medium",
   "decomposition_rationale": "Separates grid computation from the binary item-selection backtrack walker.",
   "family_directory_hint": "src/sciona/atoms/numerical/optimization/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "fill_knapsack_table",
+      "target": "backtrack_knapsack_items",
+      "output_name": "dp_table",
+      "input_name": "dp_table"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "values",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "weights",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "capacity",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "max_value",
+        "type_desc": "float"
+      },
+      {
+        "name": "selections",
+        "type_desc": "NDArray[np.bool_]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "fill_knapsack_table",
       "semantic_role": "Fill DP matrix based on item weights and capacities.",
@@ -79,43 +117,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "fill_knapsack_table",
-      "target": "backtrack_knapsack_items",
-      "output_name": "dp_table",
-      "input_name": "dp_table"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "values",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "weights",
-        "type_desc": "NDArray[np.int64]",
-        "required": true
-      },
-      {
-        "name": "capacity",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "max_value",
-        "type_desc": "float"
-      },
-      {
-        "name": "selections",
-        "type_desc": "NDArray[np.bool_]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

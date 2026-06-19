@@ -4,7 +4,59 @@
   "priority": "medium",
   "decomposition_rationale": "Decouple grid sorting validation, binary search interval localization, and linear blend evaluation to enable reuse of search stages in iterative loop pipelines.",
   "family_directory_hint": "src/sciona/atoms/numerical/interpolation/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "validate_and_sort_interpolation_grid",
+      "target": "search_interval_indices",
+      "output_name": "sorted_x",
+      "input_name": "grid"
+    },
+    {
+      "source": "validate_and_sort_interpolation_grid",
+      "target": "compute_linear_blend",
+      "output_name": "sorted_x",
+      "input_name": "grid"
+    },
+    {
+      "source": "validate_and_sort_interpolation_grid",
+      "target": "compute_linear_blend",
+      "output_name": "sorted_y",
+      "input_name": "values"
+    },
+    {
+      "source": "search_interval_indices",
+      "target": "compute_linear_blend",
+      "output_name": "indices",
+      "input_name": "indices"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "x_grid",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "y_values",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "x_eval",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "y_eval",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "validate_and_sort_interpolation_grid",
       "semantic_role": "Verify and sort input grid coordinates to ensure strict monotonicity.",
@@ -131,57 +183,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "validate_and_sort_interpolation_grid",
-      "target": "search_interval_indices",
-      "output_name": "sorted_x",
-      "input_name": "grid"
-    },
-    {
-      "source": "validate_and_sort_interpolation_grid",
-      "target": "compute_linear_blend",
-      "output_name": "sorted_x",
-      "input_name": "grid"
-    },
-    {
-      "source": "validate_and_sort_interpolation_grid",
-      "target": "compute_linear_blend",
-      "output_name": "sorted_y",
-      "input_name": "values"
-    },
-    {
-      "source": "search_interval_indices",
-      "target": "compute_linear_blend",
-      "output_name": "indices",
-      "input_name": "indices"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "x_grid",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "y_values",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "x_eval",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "y_eval",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

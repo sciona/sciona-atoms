@@ -4,7 +4,41 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into weight solver (reconstruction regression) and eigenvalue layout optimizer. Separating these steps permits regularizing ill-conditioned linear systems directly.",
   "family_directory_hint": "src/sciona/atoms/numerical/manifold/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "solve_lle_weights",
+      "target": "solve_lle_embedding",
+      "output_name": "weights",
+      "input_name": "weights"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "n_components",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "embedding",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "solve_lle_weights",
       "semantic_role": "Solve constrained quadratic regressions to find local coordinate reconstruction weights.",
@@ -88,39 +122,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "solve_lle_weights",
-      "target": "solve_lle_embedding",
-      "output_name": "weights",
-      "input_name": "weights"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "indices",
-        "type_desc": "NDArray[np.int64]",
-        "required": true
-      },
-      {
-        "name": "n_components",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "embedding",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

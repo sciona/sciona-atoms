@@ -1,0 +1,98 @@
+{
+  "nodes": [
+    {
+      "node_id": "search_root",
+      "name": "Binary Search Bounds",
+      "description": "Atoms for computing midpoints and narrowing bounds in binary search",
+      "status": "decomposed",
+      "children": [
+        "binary_search_midpoint",
+        "binary_search_compare"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "binary_search_midpoint",
+      "name": "binary_search_midpoint",
+      "description": "Compute midpoint index for binary search bounds",
+      "concept_type": "searching",
+      "status": "atomic",
+      "type_signature": "(low: int, high: int) -> int",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "low",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "high",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mid",
+          "type_desc": "int"
+        }
+      ],
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Computing the arithmetic mean of two integers takes constant time and space.",
+      "complexity_confidence": 100
+    },
+    {
+      "node_id": "binary_search_compare",
+      "name": "binary_search_compare",
+      "description": "Compare target value against midpoint element and narrow bounds",
+      "concept_type": "searching",
+      "status": "atomic",
+      "type_signature": "(sorted_array: list[int], target: int, mid: int) -> tuple[int, int]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "sorted_array",
+          "type_desc": "list[int]",
+          "required": true
+        },
+        {
+          "name": "target",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "mid",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "low",
+          "type_desc": "int"
+        },
+        {
+          "name": "high",
+          "type_desc": "int"
+        }
+      ],
+      "time_complexity": "O(1)",
+      "space_complexity": "O(1)",
+      "complexity_reasoning": "Comparing elements at midpoint index and adjusting bounds takes constant time and space.",
+      "complexity_confidence": 100
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "binary_search_midpoint",
+      "target_id": "binary_search_compare",
+      "edge_type": "data_dependency"
+    }
+  ],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/sciona/sciona-atoms",
+    "source_license": "Apache-2.0"
+  }
+}

@@ -4,7 +4,39 @@
   "priority": "medium",
   "decomposition_rationale": "Split model estimation, residual verification, and final refitting. This permits generalizing RANSAC to any geometric target model (lines, circles, homography matrices) by substituting the fitting atom.",
   "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "y",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "min_samples",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "residual_threshold",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "inlier_mask",
+        "type_desc": "NDArray[np.bool_]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "ransac_draw_sample",
       "semantic_role": "Draw a random minimal sample of points, ensuring non-degeneracy.",
@@ -78,37 +110,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "y",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "min_samples",
-        "type_desc": "int",
-        "required": true
-      },
-      {
-        "name": "residual_threshold",
-        "type_desc": "float",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "inlier_mask",
-        "type_desc": "NDArray[np.bool_]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

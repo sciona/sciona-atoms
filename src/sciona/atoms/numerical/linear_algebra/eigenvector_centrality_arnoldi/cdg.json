@@ -1,0 +1,104 @@
+{
+  "cdg_id": "eigenvector_centrality_arnoldi",
+  "name": "eigenvector_centrality_arnoldi",
+  "priority": "medium",
+  "decomposition_rationale": "Orchestrates dominant eigenvalue extraction with sign correction filters to enforce Perron-Frobenius physical constraints.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "edges": [
+    {
+      "source": "solve_dominant_eigenvector",
+      "target": "perron_frobenius_correct",
+      "output_name": "eigenvector",
+      "input_name": "eigenvector"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "adj_matrix",
+        "type_desc": "scipy.sparse.csr_array",
+        "required": true
+      },
+      {
+        "name": "max_iter",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "centralities",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
+    {
+      "name": "solve_dominant_eigenvector",
+      "semantic_role": "Call ARPACK to extract the largest eigenvalue/vector.",
+      "source_targets": [
+        "scipy.sparse.linalg.eigs"
+      ],
+      "inputs": [
+        {
+          "name": "adj_matrix",
+          "type_desc": "scipy.sparse.csr_array",
+          "required": true
+        },
+        {
+          "name": "max_iter",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "eigenvalue",
+          "type_desc": "complex"
+        },
+        {
+          "name": "eigenvector",
+          "type_desc": "NDArray[np.complex128]"
+        }
+      ],
+      "precondition_candidates": [
+        "max_iter > 0"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Dominant vector is of size |V|.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "perron_frobenius_correct",
+      "semantic_role": "Cast complex values, verify positiveness, and normalize vector.",
+      "source_targets": [
+        "numpy.real",
+        "numpy.linalg.norm"
+      ],
+      "inputs": [
+        {
+          "name": "eigenvector",
+          "type_desc": "NDArray[np.complex128]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "scores",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Converts complex array to physical scores of same size.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ]
+}

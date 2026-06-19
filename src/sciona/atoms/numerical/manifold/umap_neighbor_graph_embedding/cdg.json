@@ -1,0 +1,126 @@
+{
+  "cdg_id": "umap_neighbor_graph_embedding",
+  "name": "umap_neighbor_graph_embedding",
+  "priority": "medium",
+  "decomposition_rationale": "UMAP is typically installed via the external 'umap-learn' package. We provide a full conceptual blueprint but recommend human review before committing external dependencies to standard Sciona packages.",
+  "family_directory_hint": "src/sciona/atoms/numerical/manifold/",
+  "edges": [
+    {
+      "source": "build_fuzzy_simplicial_set",
+      "target": "optimize_umap_layout",
+      "output_name": "fuzzy_graph",
+      "input_name": "fuzzy_graph"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "n_neighbors",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "min_dist",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "embedding",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
+    {
+      "name": "build_fuzzy_simplicial_set",
+      "semantic_role": "Construct high-dimensional symmetric fuzzy neighborhood matrices matching metric geometry.",
+      "source_targets": [
+        "umap.umap_.fuzzy_simplicial_set"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_neighbors",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "metric",
+          "type_desc": "str",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fuzzy_graph",
+          "type_desc": "scipy.sparse.coo_matrix"
+        }
+      ],
+      "precondition_candidates": [
+        "X.ndim == 2",
+        "n_neighbors > 1"
+      ],
+      "postcondition_candidates": [
+        "fuzzy_graph.shape == (X.shape[0], X.shape[0])"
+      ],
+      "witness_shape_semantics": "Packs metric geometries into sparse fuzzy graphs.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "optimize_umap_layout",
+      "semantic_role": "Optimize coordinates via stochastic gradient descent minimizing fuzzy set cross-entropy.",
+      "source_targets": [
+        "umap.umap_.simplicial_set_embedding"
+      ],
+      "inputs": [
+        {
+          "name": "fuzzy_graph",
+          "type_desc": "scipy.sparse.coo_matrix",
+          "required": true
+        },
+        {
+          "name": "n_epochs",
+          "type_desc": "int",
+          "required": true
+        },
+        {
+          "name": "min_dist",
+          "type_desc": "float",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "embedding",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "min_dist >= 0.0"
+      ],
+      "postcondition_candidates": [
+        "embedding.shape[0] == fuzzy_graph.shape[0]"
+      ],
+      "witness_shape_semantics": "Converts a topological sparse graph to continuous target coordinates.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ]
+}

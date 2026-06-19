@@ -1,4 +1,4 @@
-"""Divide-and-conquer sorting reference wrappers for the namespace pilot."""
+"""Legacy sorting functions preserved for backwards compatibility."""
 
 from __future__ import annotations
 

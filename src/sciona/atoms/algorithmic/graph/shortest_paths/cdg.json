@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    {
+      "node_id": "graph_shortest_paths_root",
+      "name": "Graph Shortest Paths",
+      "description": "Atoms for initializing distances and relaxing edges in single-source shortest path routines",
+      "status": "decomposed",
+      "children": [
+        "initialize_distances",
+        "relax_edges"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "initialize_distances",
+      "name": "initialize_distances",
+      "description": "Initialize distance map for a weighted graph shortest path routine",
+      "concept_type": "graph_optimization",
+      "status": "atomic",
+      "type_signature": "(graph: Graph, source: Node) -> dict[node, float]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "graph",
+          "type_desc": "Graph",
+          "required": true
+        },
+        {
+          "name": "source",
+          "type_desc": "Node",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "distances",
+          "type_desc": "dict[node, float]"
+        }
+      ],
+      "time_complexity": "O(V)",
+      "space_complexity": "O(V)",
+      "complexity_reasoning": "Initializing the distances dictionary for all V vertices in the graph takes linear time and space.",
+      "complexity_confidence": 100
+    },
+    {
+      "node_id": "relax_edges",
+      "name": "relax_edges",
+      "description": "Relax weighted edges to improve tentative shortest path distances",
+      "concept_type": "graph_optimization",
+      "status": "atomic",
+      "type_signature": "(graph: Graph, distances: dict[node, float]) -> dict[node, float]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "graph",
+          "type_desc": "Graph",
+          "required": true
+        },
+        {
+          "name": "distances",
+          "type_desc": "dict[node, float]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "updated",
+          "type_desc": "dict[node, float]"
+        }
+      ],
+      "time_complexity": "O(E)",
+      "space_complexity": "O(V)",
+      "complexity_reasoning": "Relaxing all E edges in the graph once takes O(E) time and updates a dictionary of size V.",
+      "complexity_confidence": 100
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "initialize_distances",
+      "target_id": "relax_edges",
+      "edge_type": "data_dependency"
+    }
+  ],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/sciona/sciona-atoms",
+    "source_license": "Apache-2.0"
+  }
+}

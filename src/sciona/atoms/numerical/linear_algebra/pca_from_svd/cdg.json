@@ -1,0 +1,155 @@
+{
+  "cdg_id": "pca_from_svd",
+  "name": "pca_from_svd",
+  "priority": "medium",
+  "decomposition_rationale": "Splits mean-centering preprocessing, SVD factorization, variance ratio calculation, and projection so that centering and projecting can be applied as distinct Pipeline steps.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "edges": [
+    {
+      "source": "center_data",
+      "target": "pca_svd_decompose",
+      "output_name": "X_centered",
+      "input_name": "X_centered"
+    },
+    {
+      "source": "pca_svd_decompose",
+      "target": "calculate_pca_variance",
+      "output_name": "singular_values",
+      "input_name": "singular_values"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "n_components",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "components",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "explained_variance",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
+    {
+      "name": "center_data",
+      "semantic_role": "Compute mean and center the input matrix.",
+      "source_targets": [
+        "numpy.mean"
+      ],
+      "inputs": [
+        {
+          "name": "X",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "X_centered",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "mean",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "X.ndim == 2"
+      ],
+      "postcondition_candidates": [
+        "X_centered.shape == X.shape"
+      ],
+      "witness_shape_semantics": "Subtracts 1D mean row vector from each row of X.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "pca_svd_decompose",
+      "semantic_role": "Perform SVD decomposition on centered data and compute loadings.",
+      "source_targets": [
+        "scipy.linalg.svd"
+      ],
+      "inputs": [
+        {
+          "name": "X_centered",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_components",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "components",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "singular_values",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_components <= min(X_centered.shape)"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Computes top components.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "calculate_pca_variance",
+      "semantic_role": "Calculate explained variance metrics.",
+      "source_targets": [
+        "sklearn.decomposition.PCA"
+      ],
+      "inputs": [
+        {
+          "name": "singular_values",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "n_samples",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "explained_variance",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "n_samples > 1"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Transforms singular values to variances.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ]
+}

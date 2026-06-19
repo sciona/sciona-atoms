@@ -4,7 +4,64 @@
   "priority": "medium",
   "decomposition_rationale": "Decouples variance testing from the calculation of Welch or Student statistics. Allows standard diagnostic pipeline branching based on variance homogeneity.",
   "family_directory_hint": "src/sciona/atoms/numerical/statistics/tests/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "compute_t_moments",
+      "target": "compute_welch_t_statistic",
+      "output_name": "mean",
+      "input_name": "mean1"
+    },
+    {
+      "source": "compute_t_moments",
+      "target": "compute_welch_t_statistic",
+      "output_name": "variance",
+      "input_name": "variance1"
+    },
+    {
+      "source": "compute_t_moments",
+      "target": "compute_welch_t_statistic",
+      "output_name": "n",
+      "input_name": "n1"
+    },
+    {
+      "source": "compute_welch_t_statistic",
+      "target": "evaluate_t_significance",
+      "output_name": "t_stat",
+      "input_name": "t_stat"
+    },
+    {
+      "source": "compute_welch_t_statistic",
+      "target": "evaluate_t_significance",
+      "output_name": "df",
+      "input_name": "df"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "x1",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "x2",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "p_value",
+        "type_desc": "float"
+      },
+      {
+        "name": "t_stat",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "test_variance_homogeneity",
       "semantic_role": "Perform Levene's test to evaluate equality of variances between two groups.",
@@ -187,62 +244,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "compute_t_moments",
-      "target": "compute_welch_t_statistic",
-      "output_name": "mean",
-      "input_name": "mean1"
-    },
-    {
-      "source": "compute_t_moments",
-      "target": "compute_welch_t_statistic",
-      "output_name": "variance",
-      "input_name": "variance1"
-    },
-    {
-      "source": "compute_t_moments",
-      "target": "compute_welch_t_statistic",
-      "output_name": "n",
-      "input_name": "n1"
-    },
-    {
-      "source": "compute_welch_t_statistic",
-      "target": "evaluate_t_significance",
-      "output_name": "t_stat",
-      "input_name": "t_stat"
-    },
-    {
-      "source": "compute_welch_t_statistic",
-      "target": "evaluate_t_significance",
-      "output_name": "df",
-      "input_name": "df"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "x1",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "x2",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "p_value",
-        "type_desc": "float"
-      },
-      {
-        "name": "t_stat",
-        "type_desc": "float"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

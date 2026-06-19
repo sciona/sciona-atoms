@@ -4,7 +4,28 @@
   "priority": "medium",
   "decomposition_rationale": "Separates SVD-based rotation extraction from the positive stretching matrix assembly, allowing clean graphics pipeline optimizations.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64 | np.complex128]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "U",
+        "type_desc": "NDArray[np.float64 | np.complex128]"
+      },
+      {
+        "name": "P",
+        "type_desc": "NDArray[np.float64 | np.complex128]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_polar_decomposition",
       "semantic_role": "Decompose matrix into unitary rotation and symmetric stretch factors.",
@@ -42,26 +63,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "NDArray[np.float64 | np.complex128]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "U",
-        "type_desc": "NDArray[np.float64 | np.complex128]"
-      },
-      {
-        "name": "P",
-        "type_desc": "NDArray[np.float64 | np.complex128]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

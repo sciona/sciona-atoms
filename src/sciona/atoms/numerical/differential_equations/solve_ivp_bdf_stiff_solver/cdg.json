@@ -4,7 +4,80 @@
   "priority": "medium",
   "decomposition_rationale": "Decouple BDF predictor, Jacobian calculation, Newton corrector solver, and error/order adjustment. Newton solve is highly separable and can be used in other implicit systems.",
   "family_directory_hint": "src/sciona/atoms/numerical/differential_equations/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "bdf_predictor",
+      "target": "bdf_newton_corrector",
+      "output_name": "y_predict",
+      "input_name": "y_predict"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "fun",
+        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
+        "required": true
+      },
+      {
+        "name": "t_new",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "history",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "order",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "h",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "beta",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "jacobian",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "rhs_constant",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "atol",
+        "type_desc": "float",
+        "required": true
+      },
+      {
+        "name": "rtol",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "y_corrected",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "converged",
+        "type_desc": "bool"
+      }
+    ]
+  },
+  "state_model_needed": true,
+  "nodes": [
     {
       "name": "bdf_predictor",
       "semantic_role": "Extrapolate previous states to calculate predictor values for BDF implicit equations.",
@@ -116,78 +189,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "bdf_predictor",
-      "target": "bdf_newton_corrector",
-      "output_name": "y_predict",
-      "input_name": "y_predict"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "fun",
-        "type_desc": "Callable[[float, NDArray[np.float64]], NDArray[np.float64]]",
-        "required": true
-      },
-      {
-        "name": "t_new",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "history",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "order",
-        "type_desc": "int",
-        "required": true
-      },
-      {
-        "name": "h",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "beta",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "jacobian",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "rhs_constant",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "atol",
-        "type_desc": "float",
-        "required": true
-      },
-      {
-        "name": "rtol",
-        "type_desc": "float",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "y_corrected",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "converged",
-        "type_desc": "bool"
-      }
-    ]
-  },
-  "state_model_needed": true
+  ]
 }

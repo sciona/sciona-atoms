@@ -4,7 +4,46 @@
   "priority": "medium",
   "decomposition_rationale": "Decouples matrix-vector shape validation from the core hardware-optimized SpMV multiplication kernel.",
   "family_directory_hint": "src/sciona/atoms/numerical/sparse/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "validate_spmv_shapes",
+      "target": "compute_spmv_kernel",
+      "output_name": "is_valid",
+      "input_name": "x"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "indptr",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "indices",
+        "type_desc": "NDArray[np.int64]",
+        "required": true
+      },
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "y",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "validate_spmv_shapes",
       "semantic_role": "Ensure matrix column count matches the input multiplier vector size.",
@@ -86,44 +125,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "validate_spmv_shapes",
-      "target": "compute_spmv_kernel",
-      "output_name": "is_valid",
-      "input_name": "x"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "indptr",
-        "type_desc": "NDArray[np.int64]",
-        "required": true
-      },
-      {
-        "name": "indices",
-        "type_desc": "NDArray[np.int64]",
-        "required": true
-      },
-      {
-        "name": "data",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "x",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "y",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

@@ -4,7 +4,37 @@
   "priority": "medium",
   "decomposition_rationale": "Decouples Krylov parameter setting (such as choosing ARPACK vs LOBPCG solver engines) from the vector post-processing phases, allowing structured fallback pipelines.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix",
+        "required": true
+      },
+      {
+        "name": "k",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "U_k",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "s_k",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "Vh_k",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_truncated_svds",
       "semantic_role": "Solve for top k singular components of a large sparse/dense matrix.",
@@ -57,35 +87,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "NDArray[np.float64] | scipy.sparse.spmatrix",
-        "required": true
-      },
-      {
-        "name": "k",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "U_k",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "s_k",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "Vh_k",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

@@ -4,7 +4,36 @@
   "priority": "medium",
   "decomposition_rationale": "Exposes preconditioning operator generation. Factoring ILU preconditioning into a separate node allows users to swap in Jacobi, ILU, or Algebraic Multigrid (AMG) options seamlessly.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "compute_ilut_factors",
+      "target": "create_preconditioner_operator",
+      "output_name": "ilu_obj",
+      "input_name": "ilu_obj"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "scipy.sparse.spmatrix",
+        "required": true
+      },
+      {
+        "name": "drop_tol",
+        "type_desc": "float",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "M",
+        "type_desc": "scipy.sparse.linalg.LinearOperator"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_ilut_factors",
       "semantic_role": "Compute incomplete LU factors with threshold-based dropping.",
@@ -66,34 +95,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "compute_ilut_factors",
-      "target": "create_preconditioner_operator",
-      "output_name": "ilu_obj",
-      "input_name": "ilu_obj"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "scipy.sparse.spmatrix",
-        "required": true
-      },
-      {
-        "name": "drop_tol",
-        "type_desc": "float",
-        "required": false
-      }
-    ],
-    "outputs": [
-      {
-        "name": "M",
-        "type_desc": "scipy.sparse.linalg.LinearOperator"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

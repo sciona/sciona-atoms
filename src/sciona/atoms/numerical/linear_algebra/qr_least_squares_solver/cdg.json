@@ -4,7 +4,52 @@
   "priority": "medium",
   "decomposition_rationale": "Separates QR decomposition from least-squares solve to enable reuse of orthogonal basis matrices Q in projection operations.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "qr_factorize",
+      "target": "qr_solve_least_squares",
+      "output_name": "q",
+      "input_name": "q"
+    },
+    {
+      "source": "qr_factorize",
+      "target": "qr_solve_least_squares",
+      "output_name": "r",
+      "input_name": "r"
+    },
+    {
+      "source": "qr_factorize",
+      "target": "qr_solve_least_squares",
+      "output_name": "p",
+      "input_name": "p"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64 | np.complex128]",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "NDArray[np.float64 | np.complex128]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64 | np.complex128]"
+      },
+      {
+        "name": "residuals",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "qr_factorize",
       "semantic_role": "Compute QR decomposition with column pivoting.",
@@ -103,50 +148,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "qr_factorize",
-      "target": "qr_solve_least_squares",
-      "output_name": "q",
-      "input_name": "q"
-    },
-    {
-      "source": "qr_factorize",
-      "target": "qr_solve_least_squares",
-      "output_name": "r",
-      "input_name": "r"
-    },
-    {
-      "source": "qr_factorize",
-      "target": "qr_solve_least_squares",
-      "output_name": "p",
-      "input_name": "p"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "NDArray[np.float64 | np.complex128]",
-        "required": true
-      },
-      {
-        "name": "b",
-        "type_desc": "NDArray[np.float64 | np.complex128]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "x",
-        "type_desc": "NDArray[np.float64 | np.complex128]"
-      },
-      {
-        "name": "residuals",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

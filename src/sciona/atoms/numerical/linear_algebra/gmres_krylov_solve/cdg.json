@@ -4,7 +4,38 @@
   "priority": "medium",
   "decomposition_rationale": "Separates Arnoldi subspace expansion, Givens rotations, and the restart mechanism to support custom stopping criteria or matrix-free monitoring.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "scipy.sparse.linalg.LinearOperator",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "restart",
+        "type_desc": "int",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "info",
+        "type_desc": "int"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "iterate_gmres",
       "semantic_role": "Run restarted GMRES iterations on sparse linear system.",
@@ -60,36 +91,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "scipy.sparse.linalg.LinearOperator",
-        "required": true
-      },
-      {
-        "name": "b",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "restart",
-        "type_desc": "int",
-        "required": false
-      }
-    ],
-    "outputs": [
-      {
-        "name": "x",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "info",
-        "type_desc": "int"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

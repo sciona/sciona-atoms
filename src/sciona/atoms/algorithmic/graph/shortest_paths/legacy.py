@@ -1,4 +1,4 @@
-"""Graph shortest-path wrappers for the namespace pilot."""
+"""Legacy shortest path algorithms preserved for compatibility."""
 
 from __future__ import annotations
 

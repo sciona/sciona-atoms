@@ -1,0 +1,133 @@
+{
+  "cdg_id": "normal_equations_ridge_solve",
+  "name": "normal_equations_ridge_solve",
+  "priority": "medium",
+  "decomposition_rationale": "Separates Gram matrix assembly and eigenvalue shifts from solving, which allows highly efficient regularization sweeps (evaluating multiple lambda penalties without recomputing the Gram matrix).",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "edges": [
+    {
+      "source": "compute_gram_matrix",
+      "target": "apply_tikhonov_shift_and_solve",
+      "output_name": "Gram",
+      "input_name": "Gram"
+    },
+    {
+      "source": "compute_gram_matrix",
+      "target": "apply_tikhonov_shift_and_solve",
+      "output_name": "Ab",
+      "input_name": "Ab"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "alpha",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
+    {
+      "name": "compute_gram_matrix",
+      "semantic_role": "Assemble Gram matrix and projected RHS.",
+      "source_targets": [
+        "numpy.dot"
+      ],
+      "inputs": [
+        {
+          "name": "A",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "b",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Gram",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "Ab",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "A.ndim == 2",
+        "A.shape[0] == b.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "Gram.shape[0] == Gram.shape[1]"
+      ],
+      "witness_shape_semantics": "Produces square matrix of size (n, n) and vector of size (n,).",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "apply_tikhonov_shift_and_solve",
+      "semantic_role": "Apply diagonal regularization shift and solve via Cholesky.",
+      "source_targets": [
+        "scipy.linalg.cho_factor",
+        "scipy.linalg.cho_solve"
+      ],
+      "inputs": [
+        {
+          "name": "Gram",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "Ab",
+          "type_desc": "NDArray[np.float64]",
+          "required": true
+        },
+        {
+          "name": "alpha",
+          "type_desc": "float",
+          "required": true,
+          "constraints": "alpha >= 0"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "x",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "alpha >= 0.0"
+      ],
+      "postcondition_candidates": [
+        "x.shape == Ab.shape"
+      ],
+      "witness_shape_semantics": "Matches the parameter dimension n.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ]
+}

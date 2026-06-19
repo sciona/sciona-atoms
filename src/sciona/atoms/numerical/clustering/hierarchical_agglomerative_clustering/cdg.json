@@ -4,7 +4,41 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into linkage calculation (building the tree) and tree cutting (extracting active labels). Building the linkage matrix is O(N^3) or O(N^2 log N), while cutting is O(N) \u2014 saving high computations when checking different cluster sizes.",
   "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "compute_linkage",
+      "target": "cut_tree",
+      "output_name": "linkage_matrix",
+      "input_name": "linkage_matrix"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "method",
+        "type_desc": "str",
+        "required": true
+      },
+      {
+        "name": "n_clusters",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_linkage",
       "semantic_role": "Calculate bottom-up merges to construct a hierarchical clustering dendrogram.",
@@ -83,39 +117,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "compute_linkage",
-      "target": "cut_tree",
-      "output_name": "linkage_matrix",
-      "input_name": "linkage_matrix"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "method",
-        "type_desc": "str",
-        "required": true
-      },
-      {
-        "name": "n_clusters",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "labels",
-        "type_desc": "NDArray[np.int32]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

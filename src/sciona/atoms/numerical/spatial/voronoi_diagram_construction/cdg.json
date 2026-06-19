@@ -4,7 +4,48 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into Voronoi diagram generation and cell geometry parsing (clipping open regions to a finite bounding box), which is a common requirement in physical modeling.",
   "family_directory_hint": "src/sciona/atoms/numerical/spatial/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "compute_voronoi_raw",
+      "target": "clip_voronoi_boundaries",
+      "output_name": "vertices",
+      "input_name": "vertices"
+    },
+    {
+      "source": "compute_voronoi_raw",
+      "target": "clip_voronoi_boundaries",
+      "output_name": "regions",
+      "input_name": "regions"
+    },
+    {
+      "source": "compute_voronoi_raw",
+      "target": "clip_voronoi_boundaries",
+      "output_name": "point_region",
+      "input_name": "point_region"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "points",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "bbox",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "clipped_regions",
+        "type_desc": "list[list[float]]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_voronoi_raw",
       "semantic_role": "Compute raw Voronoi vertices, cells, and ridge graphs from generator coordinates.",
@@ -98,46 +139,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "compute_voronoi_raw",
-      "target": "clip_voronoi_boundaries",
-      "output_name": "vertices",
-      "input_name": "vertices"
-    },
-    {
-      "source": "compute_voronoi_raw",
-      "target": "clip_voronoi_boundaries",
-      "output_name": "regions",
-      "input_name": "regions"
-    },
-    {
-      "source": "compute_voronoi_raw",
-      "target": "clip_voronoi_boundaries",
-      "output_name": "point_region",
-      "input_name": "point_region"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "points",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "bbox",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "clipped_regions",
-        "type_desc": "list[list[float]]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

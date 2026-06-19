@@ -1,0 +1,106 @@
+{
+  "nodes": [
+    {
+      "node_id": "divide_and_conquer_matrix_root",
+      "name": "Divide and Conquer Matrix Operations",
+      "description": "Atoms for splitting and combining matrix quadrants in Strassen's algorithm",
+      "status": "decomposed",
+      "children": [
+        "split_matrix_quadrants",
+        "combine_matrix_quadrants"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "split_matrix_quadrants",
+      "name": "split_matrix_quadrants",
+      "description": "Split a matrix into four submatrices for recursive multiplication",
+      "concept_type": "divide_and_conquer",
+      "status": "atomic",
+      "type_signature": "(matrix: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "matrix",
+          "type_desc": "np.ndarray",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "q11",
+          "type_desc": "np.ndarray"
+        },
+        {
+          "name": "q12",
+          "type_desc": "np.ndarray"
+        },
+        {
+          "name": "q21",
+          "type_desc": "np.ndarray"
+        },
+        {
+          "name": "q22",
+          "type_desc": "np.ndarray"
+        }
+      ],
+      "time_complexity": "O(N^2)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Slicing or copying the submatrices for a square matrix of size N x N takes quadratic time and space.",
+      "complexity_confidence": 100
+    },
+    {
+      "node_id": "combine_matrix_quadrants",
+      "name": "combine_matrix_quadrants",
+      "description": "Assemble partial products into the final result matrix",
+      "concept_type": "divide_and_conquer",
+      "status": "atomic",
+      "type_signature": "(q11: np.ndarray, q12: np.ndarray, q21: np.ndarray, q22: np.ndarray) -> np.ndarray",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "q11",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "q12",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "q21",
+          "type_desc": "np.ndarray",
+          "required": true
+        },
+        {
+          "name": "q22",
+          "type_desc": "np.ndarray",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type_desc": "np.ndarray"
+        }
+      ],
+      "time_complexity": "O(N^2)",
+      "space_complexity": "O(N^2)",
+      "complexity_reasoning": "Assembling the quadrants back into a full N x N matrix using stacking operations takes quadratic time and space.",
+      "complexity_confidence": 100
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "split_matrix_quadrants",
+      "target_id": "combine_matrix_quadrants",
+      "edge_type": "data_dependency"
+    }
+  ],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/sciona/sciona-atoms",
+    "source_license": "Apache-2.0"
+  }
+}

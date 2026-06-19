@@ -4,7 +4,46 @@
   "priority": "medium",
   "decomposition_rationale": "Separates input validation, robust location estimation, robust scale estimation, and summary aggregation to permit isolated unit testing and independent reuse of scale metrics.",
   "family_directory_hint": "src/sciona/atoms/numerical/statistics/robust_summaries/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "validate_and_sort_descriptive_inputs",
+      "target": "compute_robust_location",
+      "output_name": "sorted_data",
+      "input_name": "sorted_data"
+    },
+    {
+      "source": "validate_and_sort_descriptive_inputs",
+      "target": "compute_robust_scale",
+      "output_name": "sorted_data",
+      "input_name": "sorted_data"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "trim_ratio",
+        "type_desc": "float",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "location_metrics",
+        "type_desc": "dict[str, float]"
+      },
+      {
+        "name": "scale_metrics",
+        "type_desc": "dict[str, float]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "validate_and_sort_descriptive_inputs",
       "semantic_role": "Verify array dimensions, finiteness, and sort data in ascending order.",
@@ -112,44 +151,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "validate_and_sort_descriptive_inputs",
-      "target": "compute_robust_location",
-      "output_name": "sorted_data",
-      "input_name": "sorted_data"
-    },
-    {
-      "source": "validate_and_sort_descriptive_inputs",
-      "target": "compute_robust_scale",
-      "output_name": "sorted_data",
-      "input_name": "sorted_data"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "data",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "trim_ratio",
-        "type_desc": "float",
-        "required": false
-      }
-    ],
-    "outputs": [
-      {
-        "name": "location_metrics",
-        "type_desc": "dict[str, float]"
-      },
-      {
-        "name": "scale_metrics",
-        "type_desc": "dict[str, float]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

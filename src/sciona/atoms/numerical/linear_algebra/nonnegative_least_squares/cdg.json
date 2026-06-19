@@ -4,7 +4,33 @@
   "priority": "medium",
   "decomposition_rationale": "Exposes the active-set tracking logic, which can be useful for debugging regression models where boundary-clamped weights dominate.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "rnorm",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "solve_nnls",
       "semantic_role": "Compute nonnegative least squares via Lawson-Hanson active-set solver.",
@@ -46,31 +72,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "b",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "x",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "rnorm",
-        "type_desc": "float"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

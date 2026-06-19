@@ -4,7 +4,36 @@
   "priority": "medium",
   "decomposition_rationale": "Separating sample-level coefficient calculations from the final scalar mean aggregator allows the architect to generate detailed silhouette plot diagnostics.",
   "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "compute_silhouette_samples",
+      "target": "aggregate_mean_score",
+      "output_name": "sample_scores",
+      "input_name": "sample_scores"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "mean_score",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_silhouette_samples",
       "semantic_role": "Calculate Rousseeuw silhouette coefficients for every individual point.",
@@ -77,34 +106,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "compute_silhouette_samples",
-      "target": "aggregate_mean_score",
-      "output_name": "sample_scores",
-      "input_name": "sample_scores"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "labels",
-        "type_desc": "NDArray[np.int32]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "mean_score",
-        "type_desc": "float"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

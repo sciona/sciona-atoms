@@ -4,7 +4,56 @@
   "priority": "medium",
   "decomposition_rationale": "Separates the calculation of the observed statistic, label pooling/shuffling, and empirical $p$-value estimation. Allows utilizing different test statistics on the same shuffled indices.",
   "family_directory_hint": "src/sciona/atoms/numerical/statistics/resampling/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "compute_observed_statistic",
+      "target": "calculate_permutation_p_value",
+      "output_name": "observed_stat",
+      "input_name": "observed_stat"
+    },
+    {
+      "source": "generate_permutation_null",
+      "target": "calculate_permutation_p_value",
+      "output_name": "null_distribution",
+      "input_name": "null_distribution"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "y",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "metric",
+        "type_desc": "str",
+        "required": true
+      },
+      {
+        "name": "n_permutations",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "p_value",
+        "type_desc": "float"
+      },
+      {
+        "name": "observed_stat",
+        "type_desc": "float"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_observed_statistic",
       "semantic_role": "Evaluate the raw metric (difference in mean, median, etc.) on the unshuffled samples.",
@@ -138,54 +187,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "compute_observed_statistic",
-      "target": "calculate_permutation_p_value",
-      "output_name": "observed_stat",
-      "input_name": "observed_stat"
-    },
-    {
-      "source": "generate_permutation_null",
-      "target": "calculate_permutation_p_value",
-      "output_name": "null_distribution",
-      "input_name": "null_distribution"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "x",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "y",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "metric",
-        "type_desc": "str",
-        "required": true
-      },
-      {
-        "name": "n_permutations",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "p_value",
-        "type_desc": "float"
-      },
-      {
-        "name": "observed_stat",
-        "type_desc": "float"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

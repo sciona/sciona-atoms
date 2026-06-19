@@ -4,7 +4,47 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into reachability-ordering solving (the expensive spatial tree traversal) and cluster extraction (the fast linear scan of the reachability plot). This allows the user to test different density cuts instantaneously.",
   "family_directory_hint": "src/sciona/atoms/numerical/clustering/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "solve_optics_ordering",
+      "target": "extract_optics_dbscan",
+      "output_name": "ordering",
+      "input_name": "ordering"
+    },
+    {
+      "source": "solve_optics_ordering",
+      "target": "extract_optics_dbscan",
+      "output_name": "reachability",
+      "input_name": "reachability"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "min_samples",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "eps",
+        "type_desc": "float",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "labels",
+        "type_desc": "NDArray[np.int32]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "solve_optics_ordering",
       "semantic_role": "Traverse spatial points to establish hierarchical reachability and order listings.",
@@ -95,45 +135,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "solve_optics_ordering",
-      "target": "extract_optics_dbscan",
-      "output_name": "ordering",
-      "input_name": "ordering"
-    },
-    {
-      "source": "solve_optics_ordering",
-      "target": "extract_optics_dbscan",
-      "output_name": "reachability",
-      "input_name": "reachability"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "min_samples",
-        "type_desc": "int",
-        "required": true
-      },
-      {
-        "name": "eps",
-        "type_desc": "float",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "labels",
-        "type_desc": "NDArray[np.int32]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

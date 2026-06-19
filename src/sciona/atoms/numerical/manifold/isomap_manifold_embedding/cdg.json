@@ -4,7 +4,36 @@
   "priority": "medium",
   "decomposition_rationale": "Decompose into neighborhood graph construction, shortest path geodesic solving, and multidimensional scaling (MDS). Separating these steps permits reusing optimized Dijkstra/Floyd-Warshall solvers and tracking connectivity.",
   "family_directory_hint": "src/sciona/atoms/numerical/manifold/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "solve_shortest_paths",
+      "target": "classical_mds",
+      "output_name": "geodesics",
+      "input_name": "geodesics"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "knn_graph",
+        "type_desc": "scipy.sparse.csr_matrix",
+        "required": true
+      },
+      {
+        "name": "n_components",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "embedding",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "solve_shortest_paths",
       "semantic_role": "Execute Dijkstra/Floyd-Warshall to resolve complete geodesic distances on a sparse graph.",
@@ -73,34 +102,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "solve_shortest_paths",
-      "target": "classical_mds",
-      "output_name": "geodesics",
-      "input_name": "geodesics"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "knn_graph",
-        "type_desc": "scipy.sparse.csr_matrix",
-        "required": true
-      },
-      {
-        "name": "n_components",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "embedding",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

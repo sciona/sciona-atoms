@@ -4,7 +4,46 @@
   "priority": "medium",
   "decomposition_rationale": "Separates high-precision residual evaluation from correction updates to guarantee correct handling of casting operations across CPU architectures.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "calculate_high_prec_residual",
+      "target": "apply_refinement_step",
+      "output_name": "r",
+      "input_name": "r"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "lu_and_piv",
+        "type_desc": "tuple[NDArray[np.float64], NDArray[np.int32]]",
+        "required": true
+      },
+      {
+        "name": "x_old",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x_new",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "calculate_high_prec_residual",
       "semantic_role": "Compute residual vector in double/quad precision.",
@@ -85,44 +124,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "calculate_high_prec_residual",
-      "target": "apply_refinement_step",
-      "output_name": "r",
-      "input_name": "r"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "b",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "lu_and_piv",
-        "type_desc": "tuple[NDArray[np.float64], NDArray[np.int32]]",
-        "required": true
-      },
-      {
-        "name": "x_old",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "x_new",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

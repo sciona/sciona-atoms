@@ -4,7 +4,28 @@
   "priority": "medium",
   "decomposition_rationale": "Separates eigenvalue computation from full eigenvector accumulation. In many structural/spectral applications, only the eigenvalues or a subset of eigenvalues are required, which saves significant O(n^3) computational steps.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64 | np.complex128]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "eigenvalues",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "eigenvectors",
+        "type_desc": "NDArray[np.float64 | np.complex128]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "compute_symmetric_eigenvalues",
       "semantic_role": "Compute real eigenvalues and optional eigenvectors of a symmetric matrix.",
@@ -48,26 +69,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "NDArray[np.float64 | np.complex128]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "eigenvalues",
-        "type_desc": "NDArray[np.float64]"
-      },
-      {
-        "name": "eigenvectors",
-        "type_desc": "NDArray[np.float64 | np.complex128]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

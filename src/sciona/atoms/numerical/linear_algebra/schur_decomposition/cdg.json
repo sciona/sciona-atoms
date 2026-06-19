@@ -4,7 +4,28 @@
   "priority": "medium",
   "decomposition_rationale": "Allows stable transformation of matrices into upper triangular forms where eigenvalues reside on the diagonal, forming the core utility for solving Sylvester matrix equations.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "A",
+        "type_desc": "NDArray[np.float64 | np.complex128]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "T",
+        "type_desc": "NDArray[np.float64 | np.complex128]"
+      },
+      {
+        "name": "Q",
+        "type_desc": "NDArray[np.float64 | np.complex128]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "schur_decompose_matrix",
       "semantic_role": "Compute Schur form of square matrix A.",
@@ -48,26 +69,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "A",
-        "type_desc": "NDArray[np.float64 | np.complex128]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "T",
-        "type_desc": "NDArray[np.float64 | np.complex128]"
-      },
-      {
-        "name": "Q",
-        "type_desc": "NDArray[np.float64 | np.complex128]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

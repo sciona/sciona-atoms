@@ -4,7 +4,48 @@
   "priority": "medium",
   "decomposition_rationale": "Separate mean centering, SVD factorization, and spatial coordinate projection. This allows the SVD model to be trained once and used to project subsequent stream points.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "center_features",
+      "target": "factorize_svd",
+      "output_name": "centered",
+      "input_name": "centered"
+    },
+    {
+      "source": "center_features",
+      "target": "project_coordinates",
+      "output_name": "centered",
+      "input_name": "centered"
+    },
+    {
+      "source": "factorize_svd",
+      "target": "project_coordinates",
+      "output_name": "components",
+      "input_name": "components"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "n_components",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "projected",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "center_features",
       "semantic_role": "Center columns of a matrix to have zero mean.",
@@ -116,46 +157,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "center_features",
-      "target": "factorize_svd",
-      "output_name": "centered",
-      "input_name": "centered"
-    },
-    {
-      "source": "center_features",
-      "target": "project_coordinates",
-      "output_name": "centered",
-      "input_name": "centered"
-    },
-    {
-      "source": "factorize_svd",
-      "target": "project_coordinates",
-      "output_name": "components",
-      "input_name": "components"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "n_components",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "projected",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

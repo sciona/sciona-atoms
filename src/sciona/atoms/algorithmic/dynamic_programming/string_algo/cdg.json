@@ -1,0 +1,94 @@
+{
+  "nodes": [
+    {
+      "node_id": "dynamic_programming_string_algo_root",
+      "name": "Dynamic Programming String Algorithms",
+      "description": "Atoms for minimum edit distance calculation using dynamic programming",
+      "status": "decomposed",
+      "children": [
+        "init_edit_distance_table",
+        "fill_edit_distance_table"
+      ],
+      "depth": 0
+    },
+    {
+      "node_id": "init_edit_distance_table",
+      "name": "init_edit_distance_table",
+      "description": "Initialize the edit distance DP table with base cases",
+      "concept_type": "dynamic_programming",
+      "status": "atomic",
+      "type_signature": "(source: str, target: str) -> list[list[int]]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "source",
+          "type_desc": "str",
+          "required": true
+        },
+        {
+          "name": "target",
+          "type_desc": "str",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "table",
+          "type_desc": "list[list[int]]"
+        }
+      ],
+      "time_complexity": "O(M * N)",
+      "space_complexity": "O(M * N)",
+      "complexity_reasoning": "Allocating and initializing a 2D array of size (M+1) x (N+1) takes time and space proportional to the product of string lengths.",
+      "complexity_confidence": 100
+    },
+    {
+      "node_id": "fill_edit_distance_table",
+      "name": "fill_edit_distance_table",
+      "description": "Fill the edit distance table using recurrence relation",
+      "concept_type": "dynamic_programming",
+      "status": "atomic",
+      "type_signature": "(table: list[list[int]], source: str, target: str) -> list[list[int]]",
+      "depth": 1,
+      "inputs": [
+        {
+          "name": "table",
+          "type_desc": "list[list[int]]",
+          "required": true
+        },
+        {
+          "name": "source",
+          "type_desc": "str",
+          "required": true
+        },
+        {
+          "name": "target",
+          "type_desc": "str",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "filled",
+          "type_desc": "list[list[int]]"
+        }
+      ],
+      "time_complexity": "O(M * N)",
+      "space_complexity": "O(M * N)",
+      "complexity_reasoning": "Iterating over every cell of the (M+1) x (N+1) DP table and evaluating the recurrence relation takes O(M * N) time and space.",
+      "complexity_confidence": 100
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "init_edit_distance_table",
+      "target_id": "fill_edit_distance_table",
+      "edge_type": "data_dependency"
+    }
+  ],
+  "metadata": {
+    "source": "agent_ingestion",
+    "source_repo": "https://github.com/sciona/sciona-atoms",
+    "source_license": "Apache-2.0"
+  }
+}

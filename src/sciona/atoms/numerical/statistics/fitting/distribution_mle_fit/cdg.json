@@ -4,7 +4,52 @@
   "priority": "medium",
   "decomposition_rationale": "Separates initialization, core numerical likelihood optimization, and post-fit diagnostics to allow reuse of custom optimizers or different distribution backends.",
   "family_directory_hint": "src/sciona/atoms/numerical/statistics/fitting/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "initialize_distribution_parameters",
+      "target": "optimize_log_likelihood",
+      "output_name": "init_params",
+      "input_name": "init_params"
+    },
+    {
+      "source": "optimize_log_likelihood",
+      "target": "compute_mle_fit_diagnostics",
+      "output_name": "fitted_params",
+      "input_name": "fitted_params"
+    },
+    {
+      "source": "optimize_log_likelihood",
+      "target": "compute_mle_fit_diagnostics",
+      "output_name": "neg_log_like",
+      "input_name": "neg_log_like"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "data",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "dist_name",
+        "type_desc": "str",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "fitted_params",
+        "type_desc": "tuple[float, ...]"
+      },
+      {
+        "name": "diagnostics",
+        "type_desc": "dict[str, float]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "initialize_distribution_parameters",
       "semantic_role": "Calculate starting values for MLE optimization using method-of-moments or heuristics.",
@@ -132,50 +177,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "initialize_distribution_parameters",
-      "target": "optimize_log_likelihood",
-      "output_name": "init_params",
-      "input_name": "init_params"
-    },
-    {
-      "source": "optimize_log_likelihood",
-      "target": "compute_mle_fit_diagnostics",
-      "output_name": "fitted_params",
-      "input_name": "fitted_params"
-    },
-    {
-      "source": "optimize_log_likelihood",
-      "target": "compute_mle_fit_diagnostics",
-      "output_name": "neg_log_like",
-      "input_name": "neg_log_like"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "data",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "dist_name",
-        "type_desc": "str",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "fitted_params",
-        "type_desc": "tuple[float, ...]"
-      },
-      {
-        "name": "diagnostics",
-        "type_desc": "dict[str, float]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

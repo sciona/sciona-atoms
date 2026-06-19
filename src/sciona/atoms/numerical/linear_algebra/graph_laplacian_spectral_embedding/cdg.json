@@ -1,0 +1,122 @@
+{
+  "cdg_id": "graph_laplacian_spectral_embedding",
+  "name": "graph_laplacian_spectral_embedding",
+  "priority": "medium",
+  "decomposition_rationale": "Decouples Laplacian matrix formulation (symmetric/unnormalized) from the sparse Lanczos solver module.",
+  "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
+  "edges": [
+    {
+      "source": "compute_laplacian_matrix",
+      "target": "solve_smallest_eigen",
+      "output_name": "laplacian",
+      "input_name": "laplacian"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "adj_matrix",
+        "type_desc": "scipy.sparse.csr_array",
+        "required": true
+      },
+      {
+        "name": "n_components",
+        "type_desc": "int",
+        "required": true
+      },
+      {
+        "name": "normalized",
+        "type_desc": "bool",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "embedding",
+        "type_desc": "NDArray[np.float64]"
+      },
+      {
+        "name": "eigenvalues",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
+    {
+      "name": "compute_laplacian_matrix",
+      "semantic_role": "Build graph Laplacian L = D - A.",
+      "source_targets": [
+        "scipy.sparse.csgraph.laplacian"
+      ],
+      "inputs": [
+        {
+          "name": "adj_matrix",
+          "type_desc": "scipy.sparse.csr_array",
+          "required": true
+        },
+        {
+          "name": "normalized",
+          "type_desc": "bool",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "laplacian",
+          "type_desc": "scipy.sparse.csr_array"
+        }
+      ],
+      "precondition_candidates": [
+        "adj_matrix.shape[0] == adj_matrix.shape[1]"
+      ],
+      "postcondition_candidates": [],
+      "witness_shape_semantics": "Retains dimensions.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    },
+    {
+      "name": "solve_smallest_eigen",
+      "semantic_role": "Extract d+1 smallest eigenvalues/eigenvectors using sparse solvers.",
+      "source_targets": [
+        "scipy.sparse.linalg.eigsh"
+      ],
+      "inputs": [
+        {
+          "name": "laplacian",
+          "type_desc": "scipy.sparse.csr_array",
+          "required": true
+        },
+        {
+          "name": "k",
+          "type_desc": "int",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "eigenvalues",
+          "type_desc": "NDArray[np.float64]"
+        },
+        {
+          "name": "eigenvectors",
+          "type_desc": "NDArray[np.float64]"
+        }
+      ],
+      "precondition_candidates": [
+        "k < laplacian.shape[0]"
+      ],
+      "postcondition_candidates": [
+        "eigenvalues.shape[0] == k",
+        "eigenvectors.shape == (laplacian.shape[0], k)"
+      ],
+      "witness_shape_semantics": "Projects vertices count down to k dimensionality.",
+      "time_complexity": "O(n)",
+      "space_complexity": "O(n)",
+      "complexity_reasoning": "Linear scan complexity.",
+      "complexity_confidence": 90
+    }
+  ]
+}

@@ -4,7 +4,36 @@
   "priority": "medium",
   "decomposition_rationale": "Separating tree forest building and path-length querying allows building the isolation model offline and deploying lightweight path evaluation nodes in production streaming.",
   "family_directory_hint": "src/sciona/atoms/numerical/ensemble/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "build_isolation_trees",
+      "target": "compute_path_lengths",
+      "output_name": "forest",
+      "input_name": "forest"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "X",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "n_estimators",
+        "type_desc": "int",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "path_lengths",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "build_isolation_trees",
       "semantic_role": "Construct an ensemble of random isolation partition trees.",
@@ -83,34 +112,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "build_isolation_trees",
-      "target": "compute_path_lengths",
-      "output_name": "forest",
-      "input_name": "forest"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "X",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "n_estimators",
-        "type_desc": "int",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "path_lengths",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

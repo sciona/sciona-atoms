@@ -4,7 +4,64 @@
   "priority": "medium",
   "decomposition_rationale": "Splitting coefficients formulation (tridiagonal assembly and Thomas solve) from evaluation allows reusing the spline representation for multiple evaluations or integrations.",
   "family_directory_hint": "src/sciona/atoms/numerical/interpolation/",
-  "atomic_nodes": [
+  "edges": [
+    {
+      "source": "assemble_cubic_spline_tridiagonal",
+      "target": "solve_tridiagonal_thomas",
+      "output_name": "ab",
+      "input_name": "ab"
+    },
+    {
+      "source": "assemble_cubic_spline_tridiagonal",
+      "target": "solve_tridiagonal_thomas",
+      "output_name": "rhs",
+      "input_name": "rhs"
+    },
+    {
+      "source": "solve_tridiagonal_thomas",
+      "target": "compute_cubic_spline_coefficients",
+      "output_name": "derivatives",
+      "input_name": "derivatives"
+    },
+    {
+      "source": "compute_cubic_spline_coefficients",
+      "target": "evaluate_piecewise_polynomial",
+      "output_name": "c",
+      "input_name": "c"
+    }
+  ],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "y",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "bc_type",
+        "type_desc": "str",
+        "required": true
+      },
+      {
+        "name": "x_eval",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "result",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "assemble_cubic_spline_tridiagonal",
       "semantic_role": "Build the tridiagonal system of linear equations for the spline derivatives based on boundary conditions.",
@@ -176,62 +233,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [
-    {
-      "source": "assemble_cubic_spline_tridiagonal",
-      "target": "solve_tridiagonal_thomas",
-      "output_name": "ab",
-      "input_name": "ab"
-    },
-    {
-      "source": "assemble_cubic_spline_tridiagonal",
-      "target": "solve_tridiagonal_thomas",
-      "output_name": "rhs",
-      "input_name": "rhs"
-    },
-    {
-      "source": "solve_tridiagonal_thomas",
-      "target": "compute_cubic_spline_coefficients",
-      "output_name": "derivatives",
-      "input_name": "derivatives"
-    },
-    {
-      "source": "compute_cubic_spline_coefficients",
-      "target": "evaluate_piecewise_polynomial",
-      "output_name": "c",
-      "input_name": "c"
-    }
-  ],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "x",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "y",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "bc_type",
-        "type_desc": "str",
-        "required": true
-      },
-      {
-        "name": "x_eval",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "result",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }

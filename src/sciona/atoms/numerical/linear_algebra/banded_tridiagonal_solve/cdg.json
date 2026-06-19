@@ -4,7 +4,34 @@
   "priority": "medium",
   "decomposition_rationale": "Leverages LAPACK banded solvers to bypass sparse matrix memory overhead for highly structured local differential operators.",
   "family_directory_hint": "src/sciona/atoms/numerical/linear_algebra/",
-  "atomic_nodes": [
+  "edges": [],
+  "cdg_io": {
+    "inputs": [
+      {
+        "name": "l_and_u",
+        "type_desc": "tuple[int, int]",
+        "required": true
+      },
+      {
+        "name": "ab",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      },
+      {
+        "name": "b",
+        "type_desc": "NDArray[np.float64]",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "x",
+        "type_desc": "NDArray[np.float64]"
+      }
+    ]
+  },
+  "state_model_needed": false,
+  "nodes": [
     {
       "name": "solve_banded_system",
       "semantic_role": "Directly solve a banded linear system using LAPACK banded LU factorization.",
@@ -47,32 +74,5 @@
       "complexity_reasoning": "Linear scan complexity.",
       "complexity_confidence": 90
     }
-  ],
-  "edges": [],
-  "cdg_io": {
-    "inputs": [
-      {
-        "name": "l_and_u",
-        "type_desc": "tuple[int, int]",
-        "required": true
-      },
-      {
-        "name": "ab",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      },
-      {
-        "name": "b",
-        "type_desc": "NDArray[np.float64]",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "x",
-        "type_desc": "NDArray[np.float64]"
-      }
-    ]
-  },
-  "state_model_needed": false
+  ]
 }
