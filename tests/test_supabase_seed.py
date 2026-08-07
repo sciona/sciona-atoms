@@ -110,6 +110,140 @@ def test_derive_seed_inventory_scans_provider_roots_and_builds_fqdns(tmp_path: P
     }
 
 
+def test_derive_seed_inventory_includes_symbolic_atoms(tmp_path: Path) -> None:
+    module = load_seed_module()
+    repo = tmp_path / "sciona-atoms-physics"
+    _write(
+        repo / "src" / "sciona" / "atoms" / "physics" / "motion" / "atoms.py",
+        """
+        from sciona.ghost.decorators import symbolic_atom
+
+        def witness_velocity(distance, time):
+            return distance / time
+
+        @symbolic_atom(
+            witness=witness_velocity,
+            expr=None,
+            dim_map={},
+        )
+        def velocity(distance, time):
+            return distance / time
+        """,
+    )
+
+    inventory = module.derive_seed_inventory(base_dir=tmp_path)
+
+    assert [row.fqdn for row in inventory.atom_rows] == [
+        "sciona.atoms.physics.motion.velocity"
+    ]
+    assert inventory.atom_rows[0].import_module == "sciona.atoms.physics.motion.atoms"
+    assert inventory.atom_rows[0].source_symbol == "velocity"
+
+
+def test_derive_seed_inventory_reads_provider_distribution_metadata(tmp_path: Path) -> None:
+    module = load_seed_module()
+    repo = tmp_path / "sciona-atoms-signal"
+    _write(
+        repo / "pyproject.toml",
+        """
+        [project]
+        name = "sciona-atoms-signal"
+        version = "2.4.1"
+
+        [tool.sciona.provider]
+        wheel-url = "https://packages.example/sciona_atoms_signal-2.4.1-py3-none-any.whl"
+        wheel-sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        """,
+    )
+    _write(
+        repo / "src" / "sciona" / "atoms" / "signal" / "ops.py",
+        """
+        from sciona.ghost.registry import register_atom
+
+        def witness_scale(x):
+            return x
+
+        @register_atom(witness_scale)
+        def scale(x):
+            return x
+        """,
+    )
+
+    inventory = module.derive_seed_inventory(base_dir=tmp_path)
+    row = inventory.repository_rows[0]
+
+    assert row.distribution_name == "sciona-atoms-signal"
+    assert row.distribution_version == "2.4.1"
+    assert row.install_requirement == "sciona-atoms-signal==2.4.1"
+    assert row.wheel_sha256 == "a" * 64
+
+
+def test_seed_core_supabase_rejects_duplicate_provider_fqdns(tmp_path: Path) -> None:
+    module = load_seed_module()
+    for repo_name in ("sciona-atoms", "sciona-atoms-signal"):
+        _write(
+            tmp_path / repo_name / "src" / "sciona" / "atoms" / "shared" / "ops.py",
+            """
+            from sciona.ghost.registry import register_atom
+
+            def witness_scale(x):
+                return x
+
+            @register_atom(witness_scale)
+            def scale(x):
+                return x
+            """,
+        )
+
+    inventory = module.derive_seed_inventory(base_dir=tmp_path)
+
+    assert inventory.duplicate_fqdns == ("sciona.atoms.shared.ops.scale",)
+    try:
+        module.seed_core_supabase(object(), inventory=inventory)
+    except ValueError as exc:
+        assert "duplicate FQDN ownership" in str(exc)
+    else:
+        raise AssertionError("applied publication accepted duplicate FQDN ownership")
+
+
+def test_provider_can_explicitly_exclude_namespace_ownership(tmp_path: Path) -> None:
+    module = load_seed_module()
+    base = tmp_path / "sciona-atoms"
+    ml = tmp_path / "sciona-atoms-ml"
+    for repo in (base, ml):
+        _write(
+            repo / "src" / "sciona" / "atoms" / "numerical" / "ops.py",
+            """
+            from sciona.ghost.registry import register_atom
+
+            def witness_average(x):
+                return x
+
+            @register_atom(witness_average)
+            def average(x):
+                return x
+            """,
+        )
+    _write(
+        ml / "pyproject.toml",
+        """
+        [project]
+        name = "sciona-atoms-ml"
+        version = "1.0.0"
+
+        [tool.sciona.provider]
+        excluded-import-prefixes = ["sciona.atoms.numerical"]
+        """,
+    )
+
+    inventory = module.derive_seed_inventory(base_dir=tmp_path)
+
+    assert inventory.duplicate_fqdns == ()
+    assert [row.fqdn for row in inventory.atom_rows] == [
+        "sciona.atoms.numerical.ops.average"
+    ]
+
+
 def test_atoms_py_stem_is_omitted_from_module_namespace(tmp_path: Path) -> None:
     module = load_seed_module()
     workspace = tmp_path
@@ -183,9 +317,34 @@ def test_build_atom_rows_uses_owner_and_repo_mapping(tmp_path: Path) -> None:
             "source_repo_id": "repo-uuid",
             "source_package": "sciona.atoms",
             "source_module_path": "demo.ops",
+            "import_module": "sciona.atoms.demo.ops",
             "source_symbol": "scale",
         }
     ]
+
+
+def test_atom_module_keeps_atoms_segment_in_python_import_target(tmp_path: Path) -> None:
+    module = load_seed_module()
+    repo = tmp_path / "sciona-atoms-ml"
+    _write(
+        repo / "src" / "sciona" / "atoms" / "ml" / "diagnostics" / "atoms.py",
+        """
+        from sciona.ghost.registry import register_atom
+
+        def witness_score(x):
+            return x
+
+        @register_atom(witness_score)
+        def score(x):
+            return x
+        """,
+    )
+
+    inventory = module.derive_seed_inventory(base_dir=tmp_path)
+
+    assert inventory.atom_rows[0].fqdn == "sciona.atoms.ml.diagnostics.score"
+    assert inventory.atom_rows[0].source_module_path == "ml.diagnostics"
+    assert inventory.atom_rows[0].import_module == "sciona.atoms.ml.diagnostics.atoms"
 
 
 def test_render_owner_seed_sql_is_deterministic() -> None:

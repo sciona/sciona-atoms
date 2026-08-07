@@ -29,6 +29,11 @@ import subprocess
 from typing import Any, Iterable, Sequence
 from uuid import NAMESPACE_URL, uuid5
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility
+    import tomli as tomllib
+
 from sciona.atoms.provider_inventory import (
     ProviderRepo,
     artifact_roots_for_repo,
@@ -63,6 +68,7 @@ class ParsedAtomSpec:
     namespace_root: str
     namespace_path: str
     source_module_path: str
+    import_module: str
     source_symbol: str
     description: str
     domain_tags: tuple[str, ...]
@@ -86,6 +92,11 @@ class RepositorySeedRow:
     clone_priority: int = 100
     active: bool = True
     vcs_provider: str = "github"
+    distribution_name: str = ""
+    distribution_version: str = ""
+    install_requirement: str = ""
+    wheel_url: str = ""
+    wheel_sha256: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -97,6 +108,11 @@ class RepositorySeedRow:
             "clone_priority": self.clone_priority,
             "active": self.active,
             "vcs_provider": self.vcs_provider,
+            "distribution_name": self.distribution_name,
+            "distribution_version": self.distribution_version,
+            "install_requirement": self.install_requirement,
+            "wheel_url": self.wheel_url,
+            "wheel_sha256": self.wheel_sha256,
         }
 
 
@@ -108,6 +124,7 @@ class AtomSeedRow:
     repo_name: str
     source_package: str
     source_module_path: str
+    import_module: str
     source_symbol: str
     description: str
     domain_tags: tuple[str, ...]
@@ -137,6 +154,7 @@ class AtomSeedRow:
             "source_repo_id": source_repo_id,
             "source_package": self.source_package,
             "source_module_path": self.source_module_path,
+            "import_module": self.import_module,
             "source_symbol": self.source_symbol,
         }
 
@@ -361,6 +379,58 @@ def _vcs_provider(repo_url: str) -> str:
     return "other"
 
 
+def _provider_distribution_metadata(repo_root: Path) -> dict[str, str]:
+    """Read install metadata without importing the provider distribution."""
+    pyproject_path = repo_root / "pyproject.toml"
+    if not pyproject_path.is_file():
+        return {
+            "distribution_name": repo_root.name,
+            "distribution_version": "",
+            "install_requirement": "",
+            "wheel_url": "",
+            "wheel_sha256": "",
+        }
+
+    with pyproject_path.open("rb") as handle:
+        payload = tomllib.load(handle)
+    project = payload.get("project") or {}
+    provider = ((payload.get("tool") or {}).get("sciona") or {}).get("provider") or {}
+    distribution_name = str(project.get("name") or repo_root.name).strip()
+    distribution_version = str(project.get("version") or "").strip()
+    install_requirement = str(provider.get("install-requirement") or "").strip()
+    if not install_requirement and distribution_name and distribution_version:
+        install_requirement = f"{distribution_name}=={distribution_version}"
+    wheel_url = str(provider.get("wheel-url") or "").strip()
+    wheel_sha256 = str(provider.get("wheel-sha256") or "").strip().lower()
+    if wheel_sha256 and (
+        len(wheel_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in wheel_sha256)
+    ):
+        raise ValueError(f"Invalid wheel-sha256 in {pyproject_path}")
+    return {
+        "distribution_name": distribution_name,
+        "distribution_version": distribution_version,
+        "install_requirement": install_requirement,
+        "wheel_url": wheel_url,
+        "wheel_sha256": wheel_sha256,
+    }
+
+
+def _provider_excluded_import_prefixes(repo_root: Path) -> tuple[str, ...]:
+    pyproject_path = repo_root / "pyproject.toml"
+    if not pyproject_path.is_file():
+        return ()
+    with pyproject_path.open("rb") as handle:
+        payload = tomllib.load(handle)
+    provider = ((payload.get("tool") or {}).get("sciona") or {}).get("provider") or {}
+    prefixes = provider.get("excluded-import-prefixes") or []
+    if not isinstance(prefixes, list):
+        raise ValueError(
+            f"tool.sciona.provider.excluded-import-prefixes must be a list in {pyproject_path}"
+        )
+    return _dedupe_preserve_order(str(prefix).strip().rstrip(".") for prefix in prefixes)
+
+
 def _iter_python_files(root: Path) -> Iterable[Path]:
     for path in sorted(root.rglob("*.py")):
         if "__pycache__" in path.parts:
@@ -377,15 +447,19 @@ def _callable_name(node: ast.AST) -> str:
 
 
 def _register_atom_spec(decorator: ast.AST) -> tuple[str, str] | None:
-    if isinstance(decorator, ast.Name) and decorator.id == "register_atom":
+    decorator_name = _callable_name(decorator)
+    if decorator_name in {"register_atom", "symbolic_atom"}:
         return "", ""
     if not isinstance(decorator, ast.Call):
         return None
-    if not isinstance(decorator.func, ast.Name) or decorator.func.id != "register_atom":
+    if _callable_name(decorator.func) not in {"register_atom", "symbolic_atom"}:
         return None
     witness_name = _callable_name(decorator.args[0]) if decorator.args else ""
     atom_name = ""
     for keyword in decorator.keywords:
+        if keyword.arg == "witness" and not witness_name:
+            witness_name = _callable_name(keyword.value)
+            continue
         if keyword.arg != "name":
             continue
         try:
@@ -402,6 +476,14 @@ def _module_name_for_file(py_file: Path, artifact_root: Path) -> str:
     prefix = namespace_prefix_for_artifact_root(artifact_root)
     rel_parts = list(py_file.relative_to(artifact_root).with_suffix("").parts)
     if rel_parts and rel_parts[-1] in _PY_FILE_STEM_OMIT:
+        rel_parts = rel_parts[:-1]
+    return ".".join((*prefix, *rel_parts))
+
+
+def _import_module_for_file(py_file: Path, artifact_root: Path) -> str:
+    prefix = namespace_prefix_for_artifact_root(artifact_root)
+    rel_parts = list(py_file.relative_to(artifact_root).with_suffix("").parts)
+    if rel_parts and rel_parts[-1] == "__init__":
         rel_parts = rel_parts[:-1]
     return ".".join((*prefix, *rel_parts))
 
@@ -555,6 +637,7 @@ def _parse_registered_atoms(
             logger.debug("Failed to parse %s", py_file, exc_info=True)
             continue
         module_name = _module_name_for_file(py_file, artifact_root)
+        import_module = _import_module_for_file(py_file, artifact_root)
         function_defs = {
             node.name: node
             for node in tree.body
@@ -601,6 +684,7 @@ def _parse_registered_atoms(
                     namespace_root=namespace_root,
                     namespace_path=namespace_path,
                     source_module_path=_relative_module_path(module_name, namespace_root),
+                    import_module=import_module,
                     source_symbol=node.name,
                     description=description,
                     domain_tags=_infer_domain_tags(namespace_path),
@@ -903,8 +987,10 @@ def derive_seed_inventory(*, base_dir: Path | None = None) -> SeedInventory:
             continue
         parsed_files += len(py_files)
         namespace_root = ".".join(namespace_prefix_for_artifact_root(artifact_root))
+        excluded_prefixes = _provider_excluded_import_prefixes(repo.repo_root)
         if repo.repo_name not in repo_row_names:
             repo_url = _git_remote_url(repo.repo_root)
+            distribution = _provider_distribution_metadata(repo.repo_root)
             repository_rows.append(
                 RepositorySeedRow(
                     repo_name=repo.repo_name,
@@ -912,11 +998,17 @@ def derive_seed_inventory(*, base_dir: Path | None = None) -> SeedInventory:
                     namespace_root=namespace_root,
                     clone_priority=priority,
                     vcs_provider=_vcs_provider(repo_url),
+                    **distribution,
                 )
             )
             repo_row_names.add(repo.repo_name)
 
         for parsed in _parse_registered_atoms(repo=repo, artifact_root=artifact_root):
+            if any(
+                parsed.fqdn == prefix or parsed.fqdn.startswith(prefix + ".")
+                for prefix in excluded_prefixes
+            ):
+                continue
             parsed_atoms += 1
             atom_row = AtomSeedRow(
                 fqdn=parsed.fqdn,
@@ -925,6 +1017,7 @@ def derive_seed_inventory(*, base_dir: Path | None = None) -> SeedInventory:
                 repo_name=parsed.repo_name,
                 source_package=parsed.namespace_root,
                 source_module_path=parsed.source_module_path,
+                import_module=parsed.import_module,
                 source_symbol=parsed.source_symbol,
                 description=parsed.description,
                 domain_tags=parsed.domain_tags,
@@ -1337,6 +1430,7 @@ def seed_core_supabase(
     ensure_owner: bool = False,
     database_url: str | None = None,
     dry_run: bool = False,
+    allow_duplicate_fqdns: bool = False,
 ) -> dict[str, Any]:
     inventory = inventory or derive_seed_inventory(base_dir=base_dir)
     owner = owner or build_owner_seed()
@@ -1349,6 +1443,15 @@ def seed_core_supabase(
     summary["dry_run"] = dry_run
     if dry_run:
         return summary
+
+    if inventory.duplicate_fqdns and not allow_duplicate_fqdns:
+        duplicates = ", ".join(inventory.duplicate_fqdns[:5])
+        suffix = "..." if len(inventory.duplicate_fqdns) > 5 else ""
+        raise ValueError(
+            "Provider publication has duplicate FQDN ownership: "
+            f"{duplicates}{suffix}. Resolve the collision or pass "
+            "--allow-duplicate-fqdns for an intentional migration."
+        )
 
     if ensure_owner:
         resolved_database_url = (
@@ -1434,6 +1537,11 @@ def run_cli(argv: Sequence[str] | None = None) -> int:
         help="Write to Supabase instead of only printing a dry-run summary.",
     )
     parser.add_argument(
+        "--allow-duplicate-fqdns",
+        action="store_true",
+        help="Apply despite duplicate provider FQDN claims (migration use only).",
+    )
+    parser.add_argument(
         "--ensure-owner",
         action="store_true",
         help="Insert the deterministic local owner into auth.users/public.users first.",
@@ -1479,6 +1587,7 @@ def run_cli(argv: Sequence[str] | None = None) -> int:
             ensure_owner=args.ensure_owner,
             database_url=args.database_url,
             dry_run=False,
+            allow_duplicate_fqdns=args.allow_duplicate_fqdns,
         )
     else:
         summary = inventory.summary()

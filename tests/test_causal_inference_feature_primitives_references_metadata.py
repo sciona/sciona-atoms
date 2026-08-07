@@ -70,4 +70,5 @@ def test_atom_leaf_names_are_registered() -> None:
     registered = {name for name in REGISTRY if not name.startswith("witness_")}
     for fqdn in EXPECTED_FQDNS:
         leaf = fqdn.removeprefix("sciona.atoms.causal_inference.feature_primitives.")
-        assert leaf in registered, f"{leaf} not in REGISTRY"
+        implementation_fqdn = f"sciona.atoms.causal_inference.feature_primitives.atoms.{leaf}"
+        assert implementation_fqdn in registered, f"{implementation_fqdn} not in REGISTRY"

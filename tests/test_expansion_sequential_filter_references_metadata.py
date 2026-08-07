@@ -35,7 +35,7 @@ def test_expansion_sequential_filter_reference_keys_are_canonical_registered_and
     for key in atom_keys:
         fqdn, _, _ = key.partition("@")
         leaf = fqdn.removeprefix(prefix)
-        assert leaf in registered
+        assert fqdn in registered
         assert leaf
 
         entry = payload["atoms"][key]

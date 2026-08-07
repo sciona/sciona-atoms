@@ -17,11 +17,11 @@ STATIC_KF_ROOT = (
 )
 
 EXPECTED_STATIC_KF_KEYS = {
-    "sciona.atoms.state_estimation.kalman_filters.static_kf.exposecovariance",
-    "sciona.atoms.state_estimation.kalman_filters.static_kf.exposelatentmean",
-    "sciona.atoms.state_estimation.kalman_filters.static_kf.initializelineargaussianstatemodel",
-    "sciona.atoms.state_estimation.kalman_filters.static_kf.predictlatentstate",
-    "sciona.atoms.state_estimation.kalman_filters.static_kf.updatewithmeasurement",
+    "sciona.atoms.state_estimation.kalman_filters.static_kf.expose_covariance",
+    "sciona.atoms.state_estimation.kalman_filters.static_kf.expose_latent_mean",
+    "sciona.atoms.state_estimation.kalman_filters.static_kf.initialize_linear_gaussian_state_model",
+    "sciona.atoms.state_estimation.kalman_filters.static_kf.predict_latent_state",
+    "sciona.atoms.state_estimation.kalman_filters.static_kf.update_with_measurement",
 }
 
 EXPECTED_STATIC_KF_SOURCE_PATHS = {
@@ -61,7 +61,7 @@ def test_state_estimation_static_kf_review_bundle_covers_all_current_runtime_fqd
     matched_predicates = {entry["pdg_node"]["predicate_id"] for entry in matches}
     assert matched_predicates
     assert matched_predicates <= expected_leaves
-    assert "initializelineargaussianstatemodel" in matched_predicates
+    assert "initialize_linear_gaussian_state_model" in matched_predicates
 
     for row in static_kf_rows:
         assert set(row["source_paths"]) == EXPECTED_STATIC_KF_SOURCE_PATHS

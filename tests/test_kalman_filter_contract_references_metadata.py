@@ -32,5 +32,4 @@ def test_kalman_filter_contract_reference_key_is_canonical_and_registered() -> N
     fqdn, _, _ = expected_key.partition("@")
     leaf = fqdn.removeprefix("sciona.atoms.state_estimation.kalman_filters.")
     registered = {name for name in REGISTRY if not name.startswith("witness_")}
-    assert leaf in registered
-
+    assert f"sciona.atoms.state_estimation.kalman_filters.atoms.{leaf}" in registered

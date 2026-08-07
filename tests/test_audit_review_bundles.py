@@ -1,19 +1,74 @@
 from __future__ import annotations
 
 import json
+import importlib
 import sys
 import textwrap
 from pathlib import Path
 
 from sciona.atoms.audit_review_bundles import (
     discover_review_bundle_paths,
+    load_review_bundle_entries,
     merge_audit_manifest_with_review_bundles,
 )
+
+
+def test_normalized_legacy_row_bundle_is_not_shadowed_by_empty_atoms() -> None:
+    """Rows generated from a compact legacy bundle must reach the merger."""
+    root = Path(__file__).resolve().parents[1]
+    entries = load_review_bundle_entries(
+        root / "data/review_bundles/adaptive_gauss_kronrod_quadrature.review_bundle.json"
+    )
+    assert entries
 
 
 def _write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(textwrap.dedent(text).lstrip(), encoding="utf-8")
+
+
+def test_workspace_callable_replaces_stale_cached_provider_module(tmp_path: Path) -> None:
+    installed = tmp_path / "installed"
+    workspace = tmp_path / "workspace"
+    package_rel = Path("demo_provider") / "family"
+    _write(installed / package_rel / "__init__.py", "from .atoms import *\n")
+    _write(installed / package_rel / "atoms.py", "def old_atom(value):\n    return value\n")
+    _write(workspace / "src" / package_rel / "__init__.py", "from .atoms import *\n")
+    _write(
+        workspace / "src" / package_rel / "atoms.py",
+        "def new_atom(value, scale=1):\n    return value * scale\n",
+    )
+    sys.path.insert(0, str(installed))
+    try:
+        importlib.import_module("demo_provider.family")
+        bundle_path = workspace / "data" / "audit_reviews" / "provider.json"
+        _write(
+            bundle_path,
+            """
+            {
+              "schema_version": "1.0",
+              "provider_repo": "demo-provider",
+              "rows": [{
+                "atom_name": "demo_provider.family.new_atom",
+                "review_status": "pending",
+                "trust_readiness": "unreviewed"
+              }]
+            }
+            """,
+        )
+        entries = load_review_bundle_entries(bundle_path)
+        # Exercise the lower-level merger with the workspace-owned bundle.
+        from sciona.atoms.audit_review_bundles import merge_audit_manifest_entries
+
+        rows, skipped = merge_audit_manifest_entries([], entries)
+        assert skipped == []
+        assert rows[0]["atom_name"] == "demo_provider.family.new_atom"
+        assert rows[0]["argument_names"] == ["value", "scale"]
+    finally:
+        sys.path.remove(str(installed))
+        sys.modules.pop("demo_provider.family.atoms", None)
+        sys.modules.pop("demo_provider.family", None)
+        sys.modules.pop("demo_provider", None)
 
 
 def test_discover_review_bundle_paths_is_provider_owned_and_sorted(tmp_path: Path) -> None:
@@ -420,6 +475,16 @@ def test_merge_creates_entries_from_provider_src_roots(tmp_path: Path) -> None:
     assert atom["module_path"].endswith("demo_family/atoms.py")
     assert atom["argument_names"] == ["signal", "threshold"]
 
+    for module_name in (
+        "sciona.atoms.signal_processing.demo_family.atoms",
+        "sciona.atoms.signal_processing.demo_family",
+        "sciona.atoms.signal_processing",
+    ):
+        sys.modules.pop(module_name, None)
+    atoms_package = sys.modules.get("sciona.atoms")
+    if atoms_package is not None and hasattr(atoms_package, "signal_processing"):
+        delattr(atoms_package, "signal_processing")
+
 
 def test_merge_creates_package_level_entries_from_atoms_module(tmp_path: Path) -> None:
     workspace = tmp_path
@@ -490,3 +555,15 @@ def test_merge_creates_package_level_entries_from_atoms_module(tmp_path: Path) -
     assert atom["module_import_path"] == "sciona.atoms.physics.demo_family.atoms"
     assert atom["module_path"].endswith("demo_family/atoms.py")
     assert atom["argument_names"] == ["values"]
+
+    # The fixture creates a regular package solely inside tmp_path. Do not let
+    # it mask the real PEP 420 physics provider for later federated tests.
+    for module_name in (
+        "sciona.atoms.physics.demo_family.atoms",
+        "sciona.atoms.physics.demo_family",
+        "sciona.atoms.physics",
+    ):
+        sys.modules.pop(module_name, None)
+    atoms_package = sys.modules.get("sciona.atoms")
+    if atoms_package is not None and hasattr(atoms_package, "physics"):
+        delattr(atoms_package, "physics")

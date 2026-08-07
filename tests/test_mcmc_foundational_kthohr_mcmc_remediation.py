@@ -41,13 +41,13 @@ def _test_leapfrog_phase(state: np.ndarray, step_size: float, direction_val: int
 
 def test_kthohr_aees_transition_uses_explicit_state_and_rng() -> None:
     from sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.aees import (
-        metropolishastingstransitionkernel,
+        metropolis_hastings_transition_kernel,
     )
 
     state = np.array([0.25, -0.5])
     key = np.array([123], dtype=np.int64)
-    out_a, key_a = metropolishastingstransitionkernel(state, 2.0, _standard_normal_logp, key)
-    out_b, key_b = metropolishastingstransitionkernel(state, 2.0, _standard_normal_logp, key)
+    out_a, key_a = metropolis_hastings_transition_kernel(state, 2.0, _standard_normal_logp, key)
+    out_b, key_b = metropolis_hastings_transition_kernel(state, 2.0, _standard_normal_logp, key)
 
     assert out_a.shape == state.shape
     assert key_a.shape == key.shape
@@ -57,12 +57,12 @@ def test_kthohr_aees_transition_uses_explicit_state_and_rng() -> None:
 
 
 def test_kthohr_aees_target_oracle_matches_gaussian_mixture_example() -> None:
-    from sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.aees import targetlogkerneloracle
+    from sciona.atoms.inference.mcmc_foundational.kthohr_mcmc.aees import target_log_kernel_oracle
 
     weights = np.array([0.5, 0.5])
     means = np.array([[-2.0, -2.0], [2.0, 2.0]])
     variances = np.array([0.1, 0.1])
-    value = targetlogkerneloracle(np.array([-2.0, -2.0]), weights, means, variances)
+    value = target_log_kernel_oracle(np.array([-2.0, -2.0]), weights, means, variances)
     expected_at_mode = np.log(0.5) - np.log(2.0 * np.pi * 0.1)
 
     assert np.isclose(value, expected_at_mode, atol=1e-12)

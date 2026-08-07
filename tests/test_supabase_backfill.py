@@ -29,6 +29,7 @@ from sciona.atoms.supabase_backfill import (
     input_name_mismatch,
     iter_reference_files,
     load_manifest_entries,
+    _review_bundle_owns_atom,
     load_registry,
     map_source,
     namespace_from_path,
@@ -36,12 +37,33 @@ from sciona.atoms.supabase_backfill import (
     normalize_reference_type,
     normalize_uncertainty_mode,
     normalize_verification_level,
+    resolve_metadata_fqdn,
 )
+from sciona.atoms.supabase_seed import derive_seed_inventory
 
 
 ROOT = Path(__file__).resolve().parents[1]
 _LEGACY_PROVIDER_LABEL = "ageo" + "-atoms"
 _LEGACY_NAMESPACE_LABEL = "age" + "oa"
+
+
+def test_federated_seed_inventory_matches_merged_audit_manifest() -> None:
+    """Every discovered seed atom must have exactly one merged audit row."""
+    workspace = ROOT.parent
+    inventory = derive_seed_inventory(base_dir=workspace)
+    seeded_fqdns = {row.fqdn for row in inventory.atom_rows}
+    manifest_fqdns = {str(row["atom_name"]) for row in load_manifest_entries()}
+
+    catalog_inventories = sorted(workspace.glob("sciona-atoms*/data/audit_reviews/catalog_gap_inventory.json"))
+    assert catalog_inventories
+    catalog_fqdns = {
+        str(row["atom_name"])
+        for path in catalog_inventories
+        for row in json.loads(path.read_text())["rows"]
+    }
+
+    assert seeded_fqdns == manifest_fqdns
+    assert catalog_fqdns <= manifest_fqdns
 
 
 def test_derive_atom_fqdn_supports_namespace_package_roots() -> None:
@@ -50,6 +72,22 @@ def test_derive_atom_fqdn_supports_namespace_package_roots() -> None:
     assert (
         derive_atom_fqdn(cdg_path, atoms_root, "online_filter")
         == "sciona.atoms.signal_processing.biosppy.online_filter"
+    )
+
+
+def test_resolve_metadata_fqdn_removes_only_nested_atoms_module() -> None:
+    lookup = {"sciona.atoms.signal.filter.apply": "atom-id"}
+
+    assert resolve_metadata_fqdn(
+        "sciona.atoms.signal.filter.atoms.apply", lookup
+    ) == ("sciona.atoms.signal.filter.apply", True)
+    assert resolve_metadata_fqdn("sciona.atoms.signal.filter.apply", lookup) == (
+        "sciona.atoms.signal.filter.apply",
+        False,
+    )
+    assert resolve_metadata_fqdn("sciona.atoms.signal.atoms.missing", lookup) == (
+        None,
+        False,
     )
 
 
@@ -170,11 +208,77 @@ def test_load_manifest_entries_merges_provider_owned_manifests(
     assert by_name["sciona.atoms.physics.demo.energy"]["review_status"] == "reviewed"
 
 
+def test_load_manifest_entries_builds_rows_from_tracked_review_bundles(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    workspace = tmp_path / "audit-bundle-workspace"
+    repo = workspace / "sciona-atoms-demo"
+    package_root = repo / "src"
+    module_path = package_root / "bundle_only_demoatoms.py"
+    module_path.parent.mkdir(parents=True, exist_ok=True)
+    module_path.write_text(
+        'def scale(value: float, factor: float = 2.0) -> float:\n'
+        '    """Scale a numeric value."""\n'
+        '    return value * factor\n'
+    )
+    bundle_path = repo / "data" / "review_bundles" / "demo.review_bundle.json"
+    bundle_path.parent.mkdir(parents=True, exist_ok=True)
+    bundle_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "provider_repo": "sciona-atoms-demo",
+                "rows": [
+                    {
+                        "atom_name": "bundle_only_demoatoms.scale",
+                        "trust_readiness": "catalog_ready",
+                        "semantic_verdict": "pass",
+                        "developer_semantic_verdict": "pass",
+                        "has_references": True,
+                        "references_status": "pass",
+                    }
+                ],
+            }
+        )
+    )
+    monkeypatch.syspath_prepend(str(package_root))
+    monkeypatch.setenv("SCIONA_PROVIDER_WORKSPACE_ROOT", str(workspace))
+
+    entries = load_manifest_entries()
+
+    assert len(entries) == 1
+    assert entries[0]["atom_name"] == "bundle_only_demoatoms.scale"
+    assert entries[0]["argument_names"] == ["value", "factor"]
+    assert entries[0]["trust_readiness"] == "reviewed_with_limits"
+
+
+def test_review_bundle_respects_provider_namespace_exclusions(tmp_path: Path) -> None:
+    repo = tmp_path / "sciona-atoms-ml"
+    repo.mkdir()
+    (repo / "pyproject.toml").write_text(
+        '[tool.sciona.provider]\nexcluded-import-prefixes = ["sciona.atoms.numerical"]\n'
+    )
+    bundle = repo / "data" / "review_bundles" / "numerical.json"
+    bundle.parent.mkdir(parents=True)
+    bundle.write_text("{}")
+
+    assert not _review_bundle_owns_atom(
+        bundle, "sciona.atoms.numerical.linear_algebra.solve"
+    )
+    assert _review_bundle_owns_atom(bundle, "sciona.atoms.ml.preprocessing.scale")
+
+
 def test_repository_audit_manifest_has_no_legacy_references() -> None:
     text = (ROOT / "data" / "audit_manifest.json").read_text()
     assert _LEGACY_PROVIDER_LABEL not in text
     assert _LEGACY_NAMESPACE_LABEL not in text
-    assert "sciona.atoms.signal_processing.biosppy.ecg_zz2018_d12.computekurtosissqi" in text
+    retired_fqdn = (
+        "sciona.atoms.signal_processing.biosppy.ecg_zz2018_d12.computekurtosissqi"
+    )
+    assert retired_fqdn not in text
+    retired = json.loads((ROOT / "data" / "retired_catalog_metadata.json").read_text())
+    assert retired_fqdn in {row["fqdn"] for row in retired["retired"]}
 
 
 def test_build_io_spec_rows_maps_inputs_and_outputs() -> None:
@@ -422,6 +526,50 @@ def test_load_registry_rejects_conflicting_provider_entries(monkeypatch, tmp_pat
         assert "Conflicting registry entry" in str(exc)
     else:
         raise AssertionError("Expected conflicting registry entries to fail")
+
+
+def test_load_registry_allows_provider_local_match_metadata(monkeypatch, tmp_path: Path) -> None:
+    repo_a = tmp_path / "sciona-atoms"
+    repo_b = tmp_path / "sciona-atoms-signal"
+    (repo_a / "data" / "references").mkdir(parents=True)
+    (repo_b / "data" / "references").mkdir(parents=True)
+    common = {
+        "ref_id": "shared",
+        "type": "repository",
+        "title": "Shared upstream",
+        "url": "https://example.com/upstream",
+    }
+    (repo_a / "data" / "references" / "registry.json").write_text(
+        json.dumps(
+            {
+                "references": {
+                    "shared": {
+                        **common,
+                        "match_metadata": {"notes": "Used by general atoms"},
+                    }
+                }
+            }
+        )
+    )
+    (repo_b / "data" / "references" / "registry.json").write_text(
+        json.dumps(
+            {
+                "references": {
+                    "shared": {
+                        **common,
+                        "match_metadata": {"notes": "Used by signal atoms"},
+                    }
+                }
+            }
+        )
+    )
+    monkeypatch.setenv(
+        "SCIONA_ATOM_PROVIDER_ROOTS", os.pathsep.join([str(repo_a), str(repo_b)])
+    )
+
+    registry = load_registry()
+
+    assert registry["shared"]["match_metadata"]["notes"] == "Used by general atoms"
 
 
 def test_load_registry_uses_provider_owned_registry_without_ageo_fallback(

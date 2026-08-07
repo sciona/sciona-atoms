@@ -33,5 +33,5 @@ def test_static_kf_reference_keys_are_canonical_and_registered() -> None:
     for key in atom_keys:
         fqdn, _, _ = key.partition("@")
         leaf = fqdn.removeprefix(prefix)
-        assert leaf in registered
+        assert f"sciona.atoms.state_estimation.kalman_filters.static_kf.atoms.{leaf}" in registered
         assert leaf

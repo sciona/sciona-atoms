@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Sequence
 from sciona.atoms.provider_inventory import (
     artifact_root_namespace_prefix,
     discover_audit_manifest_paths,
+    discover_audit_review_bundle_paths,
     discover_references_registry_path,
     iter_provider_artifact_files,
     namespace_prefix_for_artifact_root,
@@ -227,6 +228,31 @@ def _manifest_owns_atom(manifest_path: Path, atom_name: str) -> bool:
     return atom_name.startswith(prefixes)
 
 
+def _review_bundle_owns_atom(bundle_path: Path, atom_name: str) -> bool:
+    """Return whether a review bundle's provider publishes ``atom_name``."""
+    resolved = bundle_path.resolve()
+    repo_root = next(
+        (
+            parent
+            for parent in resolved.parents
+            if parent.name == "sciona-atoms" or parent.name.startswith("sciona-atoms-")
+        ),
+        None,
+    )
+    if repo_root is None or repo_root.name == "sciona-atoms":
+        return True
+    try:
+        from sciona.atoms.supabase_seed import _provider_excluded_import_prefixes
+
+        excluded_prefixes = _provider_excluded_import_prefixes(repo_root)
+    except (FileNotFoundError, KeyError, TypeError, ValueError):
+        return True
+    return not any(
+        atom_name == prefix or atom_name.startswith(f"{prefix}.")
+        for prefix in excluded_prefixes
+    )
+
+
 def load_manifest_entries(path: Path | None = None) -> list[dict[str, Any]]:
     """Load audit manifest entries.
 
@@ -251,7 +277,41 @@ def load_manifest_entries(path: Path | None = None) -> list[dict[str, Any]]:
             if path is None and not _manifest_owns_atom(manifest_path, str(atom_name)):
                 continue
             merged[str(atom_name)] = {**merged.get(str(atom_name), {}), **entry}
-    return [*unkeyed, *merged.values()]
+    entries = [*unkeyed, *merged.values()]
+    if path is not None:
+        return entries
+
+    # Review bundles are the tracked provider-owned source of truth. Generated
+    # audit manifests are intentionally ignored by provider repositories, so a
+    # clean checkout must be able to reconstruct reviewed rows without them.
+    from sciona.atoms.audit_review_bundles import (
+        load_review_bundle_entries,
+        merge_audit_manifest_entries,
+    )
+
+    review_entries = []
+    invalid_bundle_paths: list[Path] = []
+    for bundle_path in discover_audit_review_bundle_paths():
+        try:
+            review_entries.extend(
+                entry
+                for entry in load_review_bundle_entries(bundle_path)
+                if _review_bundle_owns_atom(bundle_path, entry.atom_name)
+            )
+        except ValueError:
+            invalid_bundle_paths.append(bundle_path)
+    entries, skipped_atom_names = merge_audit_manifest_entries(entries, review_entries)
+    if invalid_bundle_paths:
+        logger.warning(
+            "Ignored %d invalid audit review bundles; their atoms remain audit gaps",
+            len(invalid_bundle_paths),
+        )
+    if skipped_atom_names:
+        logger.warning(
+            "Could not resolve %d review-bundle atoms to installed callables",
+            len(skipped_atom_names),
+        )
+    return entries
 
 
 def load_manifest_argument_names(path: Path | None = None) -> dict[str, list[str]]:
@@ -393,14 +453,14 @@ def backfill_io_specs(
             atom_fqdn = derive_atom_fqdn(cdg_path, artifact_root, node_name)
             atom_id = atom_lookup.get(atom_fqdn)
             if not atom_id:
-                logger.warning("No atom found for %s (CDG %s)", atom_fqdn, cdg_path)
+                logger.debug("No atom found for %s (CDG %s)", atom_fqdn, cdg_path)
                 stats["skipped_no_atom"] += 1
                 continue
 
             cdg_input_names = [spec["name"] for spec in node.get("inputs", [])]
             manifest_arg_names = manifest_args.get(atom_fqdn, [])
             if input_name_mismatch(cdg_input_names, manifest_arg_names):
-                logger.warning(
+                logger.debug(
                     "Input name mismatch for %s: CDG=%s manifest=%s",
                     atom_fqdn,
                     cdg_input_names,
@@ -620,8 +680,8 @@ def backfill_technical_descriptions(
 ) -> dict[str, int]:
     """Populate technical ``atom_descriptions`` rows from the audit manifest."""
     manifest = load_manifest_entries(audit_manifest_path)
-    atoms_resp = supabase.table("atoms").select("atom_id, fqdn, description").execute()
-    atom_lookup = {row["fqdn"]: row for row in atoms_resp.data or []}
+    atom_rows = _select_all_rows(supabase, "atoms", "atom_id, fqdn, description")
+    atom_lookup = {row["fqdn"]: row for row in atom_rows}
 
     stats = {"inserted": 0, "skipped_no_content": 0, "skipped_no_atom": 0}
     rows: list[dict[str, Any]] = []
@@ -678,11 +738,15 @@ def load_registry(path: Path | None = None) -> dict[str, dict[str, Any]]:
         for ref_id, entry in refs.items():
             normalized = dict(entry)
             key = str(ref_id)
-            if key in merged and merged[key] != normalized:
-                prior = seen_from[key]
-                raise ValueError(
-                    f"Conflicting registry entry for {key} in {prior} and {registry_path}"
-                )
+            if key in merged:
+                if build_registry_row(key, merged[key]) != build_registry_row(
+                    key, normalized
+                ):
+                    prior = seen_from[key]
+                    raise ValueError(
+                        f"Conflicting registry entry for {key} in {prior} and {registry_path}"
+                    )
+                continue
             merged[key] = normalized
             seen_from[key] = registry_path
     return merged
@@ -731,6 +795,24 @@ def extract_fqdn(atom_key: str) -> str:
     """Extract the FQDN from a manifest-key reference entry."""
     fqdn, _, _rest = atom_key.partition("@")
     return fqdn
+
+
+def resolve_metadata_fqdn(
+    fqdn: str, atom_lookup: dict[str, Any]
+) -> tuple[str | None, bool]:
+    """Resolve canonical atom identity while ignoring implementation-only modules."""
+    if fqdn in atom_lookup:
+        return fqdn, False
+    parts = fqdn.split(".")
+    candidates = {
+        ".".join((*parts[:index], *parts[index + 1 :]))
+        for index, part in enumerate(parts)
+        if part == "atoms" and index > 1
+    }
+    matches = sorted(candidate for candidate in candidates if candidate in atom_lookup)
+    if len(matches) == 1:
+        return matches[0], True
+    return None, False
 
 
 def build_ref_key(ref_id: str, registry_entry: dict[str, Any]) -> str:
@@ -856,7 +938,13 @@ def backfill_references(
     """Populate ``atom_references`` from per-atom ``references.json`` files."""
     registry = load_registry(registry_path)
     atom_lookup = fetch_atom_lookup(supabase)
-    stats = {"inserted": 0, "skipped_no_atom": 0, "skipped_no_registry": 0, "errors": 0}
+    stats = {
+        "inserted": 0,
+        "canonicalized_atom_keys": 0,
+        "skipped_no_atom": 0,
+        "skipped_no_registry": 0,
+        "errors": 0,
+    }
     explicit_ref_atoms: set[str] = set()
 
     for refs_path in iter_reference_files(atoms_root):
@@ -869,11 +957,14 @@ def backfill_references(
 
         for atom_key, atom_data in atoms_block.items():
             fqdn = extract_fqdn(atom_key)
-            atom_id = atom_lookup.get(fqdn)
+            canonical_fqdn, canonicalized = resolve_metadata_fqdn(fqdn, atom_lookup)
+            atom_id = atom_lookup.get(canonical_fqdn or "")
             if not atom_id:
                 logger.warning("No atom found for %s (from %s)", fqdn, refs_path)
                 stats["skipped_no_atom"] += 1
                 continue
+            if canonicalized:
+                stats["canonicalized_atom_keys"] += 1
 
             references = atom_data.get("references", [])
             if not isinstance(references, list):

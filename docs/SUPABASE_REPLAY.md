@@ -36,7 +36,51 @@ export SUPABASE_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/post
 
 Use the local service role key, not a hosted-project key.
 
-## 3. Seed Provider Atoms
+## 3. Publish Provider Catalog
+
+First require catalog metadata to match the source-derived inventory:
+
+```bash
+cd /Users/conrad/personal/sciona-matcher
+.venv/bin/sciona catalog reconcile-providers \
+  --workspace-root /Users/conrad/personal \
+  --strict
+```
+
+Use `--apply` to rewrite only deterministic same-provider aliases. Use
+`--retire-unresolved` only after confirming that the reported metadata no
+longer has an installable implementation; the command writes durable
+tombstones before removing those records.
+
+The supported entrypoint inventories every sibling `sciona-atoms*` provider,
+seeds the relational catalog, populates file-backed publication metadata, and
+refreshes embeddings in one workflow. Run it without `--apply` first:
+
+```bash
+cd /Users/conrad/personal/sciona-matcher
+.venv/bin/sciona catalog publish-providers \
+  --workspace-root /Users/conrad/personal
+```
+
+An applied publication requires the Supabase settings above and
+`OPENAI_API_KEY` for embedding refresh:
+
+```bash
+cd /Users/conrad/personal/sciona-matcher
+.venv/bin/sciona catalog publish-providers \
+  --workspace-root /Users/conrad/personal \
+  --apply \
+  --ensure-owner
+```
+
+Duplicate FQDN ownership fails an applied publication. Use
+`--allow-duplicate-fqdns` only for a deliberate migration with separately
+reviewed ownership.
+
+### Component-level recovery
+
+The lower-level commands remain available for diagnosing or replaying a failed
+stage.
 
 ```bash
 cd /Users/conrad/personal/sciona-atoms
@@ -50,7 +94,7 @@ Expected output includes the discovered provider and atom counts, for example:
 repos=8 atoms=<count> parsed_atoms=<count> dry_run=False
 ```
 
-## 4. Populate File-Backed Metadata
+Populate file-backed metadata independently:
 
 ```bash
 cd /Users/conrad/personal/sciona-atoms
@@ -61,7 +105,7 @@ PYTHONPATH=src /Users/conrad/personal/sciona-matcher/.venv/bin/python \
 This populates the publication pillars: IO specs, parameters, descriptions,
 audit rollups, references, evidence, uncertainty, and verification metadata.
 
-## 5. Verify Publishability
+## 4. Verify Publishability
 
 Query the overall count:
 
@@ -114,7 +158,7 @@ PY
 For a publishable family, every row should have `is_publishable = true` and
 non-zero counts for references, parameters, descriptions, IO specs, and rollups.
 
-## 6. Refresh Publishability Audit Docs
+## 5. Refresh Publishability Audit Docs
 
 After a successful replay, refresh the publishability backlog docs owned by
 `sciona-atoms`:

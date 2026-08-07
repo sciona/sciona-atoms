@@ -44,4 +44,4 @@ def test_particle_filter_contract_reference_key_is_canonical_and_registered() ->
     fqdn, _, _ = expected_tracker_key.partition("@")
     leaf = fqdn.removeprefix("sciona.atoms.state_estimation.particle_filters.")
     registered = {name for name in REGISTRY if not name.startswith("witness_")}
-    assert leaf in registered
+    assert f"sciona.atoms.state_estimation.particle_filters.atoms.{leaf}" in registered

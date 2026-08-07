@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import scipy.sparse
 import pytest
 from icontract.errors import ViolationError
@@ -122,6 +123,7 @@ def test_eigenvector_centrality_arnoldi_behavior() -> None:
     np.testing.assert_allclose(np.linalg.norm(scores), 1.0)
 
 def test_umap_neighbor_graph_embedding_behavior() -> None:
+    pytest.importorskip("umap")
     X = np.random.rand(15, 4)
     
     # Build fuzzy simplicial set
@@ -135,6 +137,7 @@ def test_umap_neighbor_graph_embedding_behavior() -> None:
     assert np.all(np.isfinite(emb))
 
 def test_approximate_neighbor_search_hnsw_behavior() -> None:
+    pytest.importorskip("hnswlib")
     data = np.random.rand(20, 5)
     
     # Build index
@@ -216,4 +219,3 @@ def test_jaccard_similarity_threshold_behavior() -> None:
     # Contract violation
     with pytest.raises(ViolationError):
         jaccard_similarity_threshold(sets, threshold=1.5)
-

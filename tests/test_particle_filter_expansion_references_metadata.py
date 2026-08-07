@@ -32,5 +32,5 @@ def test_particle_filter_expansion_reference_keys_are_canonical_and_registered()
     for key in atom_keys:
         fqdn, _, _ = key.partition("@")
         leaf = fqdn.removeprefix(prefix)
-        assert leaf in registered
+        assert fqdn in registered
         assert leaf

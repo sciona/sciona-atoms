@@ -14,7 +14,10 @@ from sciona.atoms.inference.advancedvi import (
 )
 from sciona.atoms.inference.bayes_rs import bernoulli_probabilistic_oracle
 from sciona.atoms.inference.conjugate_priors.beta_binom import posterior_randmodel, posterior_randmodel_weighted
-from sciona.atoms.inference.jax_advi.optimize_advi import meanfieldvariationalfit, posteriordrawsampling
+from sciona.atoms.inference.jax_advi.optimize_advi import (
+    mean_field_variational_fit,
+    posterior_draw_sampling,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,8 +36,8 @@ TARGET_ATOMS = {
     "sciona.atoms.inference.advancedvi.core.optimizationlooporchestration",
     "sciona.atoms.inference.conjugate_priors.beta_binom.posterior_randmodel",
     "sciona.atoms.inference.conjugate_priors.beta_binom.posterior_randmodel_weighted",
-    "sciona.atoms.inference.jax_advi.optimize_advi.meanfieldvariationalfit",
-    "sciona.atoms.inference.jax_advi.optimize_advi.posteriordrawsampling",
+    "sciona.atoms.inference.jax_advi.optimize_advi.mean_field_variational_fit",
+    "sciona.atoms.inference.jax_advi.optimize_advi.posterior_draw_sampling",
     "sciona.atoms.inference.bayes_rs.bernoulli.bernoulli_probabilistic_oracle",
 }
 
@@ -107,7 +110,7 @@ def test_pubrev_inference_jax_advi_atoms_run_without_external_jax_advi_dependenc
         theta = params["theta"]
         return float(-20.0 * np.sum((theta - 1.0) ** 2))
 
-    free_means, free_sds, objective_fun, rng_state = meanfieldvariationalfit(
+    free_means, free_sds, objective_fun, rng_state = mean_field_variational_fit(
         {"theta": (1,)},
         log_prior,
         log_lik,
@@ -122,13 +125,13 @@ def test_pubrev_inference_jax_advi_atoms_run_without_external_jax_advi_dependenc
     assert np.isfinite(objective_fun())
     assert rng_state == 6
 
-    draws_a, next_rng = posteriordrawsampling(free_means, free_sds, {}, 4, None, 17)
-    draws_b, _ = posteriordrawsampling(free_means, free_sds, {}, 4, None, 17)
+    draws_a, next_rng = posterior_draw_sampling(free_means, free_sds, {}, 4, None, 17)
+    draws_b, _ = posterior_draw_sampling(free_means, free_sds, {}, 4, None, 17)
     assert next_rng == 18
     assert draws_a["theta"].shape == (4, 1)
     assert np.allclose(draws_a["theta"], draws_b["theta"])
 
-    transformed, _ = posteriordrawsampling(
+    transformed, _ = posterior_draw_sampling(
         free_means,
         free_sds,
         {},

@@ -46,5 +46,5 @@ def test_core_expansion_registration_import_smoke() -> None:
             assert hasattr(module, symbol)
 
     registered = set(list_registered())
-    expected = {symbol for symbols in _MODULES_AND_SYMBOLS.values() for symbol in symbols}
+    expected = {f"{module_name}.{symbol}" for module_name, symbols in _MODULES_AND_SYMBOLS.items() for symbol in symbols}
     assert expected <= registered

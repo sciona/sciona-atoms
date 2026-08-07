@@ -20,17 +20,17 @@ REFERENCE_PATHS = [
 ]
 
 SAFE_ATOMS = {
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.initializehmcstate",
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.leapfrogproposalkernel",
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.metropolishmctransition",
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.runsamplingloop",
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.collectposteriorchain",
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.hamiltoniantransitionkernel",
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.initializehmckernelstate",
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.initializesamplerrng",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.initialize_hmc_state",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.leapfrog_proposal_kernel",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.metropolis_hmc_transition",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc.run_sampling_loop",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.collect_posterior_chain",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.hamiltonian_transition_kernel",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.initialize_hmc_kernel_state",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm.initialize_sampler_rng",
     "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts.nuts_recursive_tree_build",
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.initializenutsstate",
-    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.runnutstransitions",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.initialize_nuts_state",
+    "sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm.run_nuts_transitions",
 }
 
 HELD_ATOMS: set[str] = set()
@@ -72,11 +72,11 @@ def test_pubrev008_safe_and_held_fqdns_are_importable() -> None:
 
 def test_pubrev008_safe_hmc_atoms_have_minimal_gaussian_behavior() -> None:
     from sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc import (
-        initializehmcstate,
-        leapfrogproposalkernel,
+        initialize_hmc_state,
+        leapfrog_proposal_kernel,
     )
 
-    state, kernel = initializehmcstate(
+    state, kernel = initialize_hmc_state(
         _standard_normal_logp,
         np.array([0.25, -0.5]),
         step_size=0.05,
@@ -91,7 +91,7 @@ def test_pubrev008_safe_hmc_atoms_have_minimal_gaussian_behavior() -> None:
     assert np.allclose(state[3:5], [-0.25, 0.5], atol=1e-5)
 
     proposal_in = np.array([0.25, -0.5, 0.1, -0.2])
-    proposal_out = leapfrogproposalkernel(proposal_in, kernel, _standard_normal_logp)
+    proposal_out = leapfrog_proposal_kernel(proposal_in, kernel, _standard_normal_logp)
 
     assert proposal_out.shape == (7,)
     assert np.all(np.isfinite(proposal_out))
@@ -100,20 +100,20 @@ def test_pubrev008_safe_hmc_atoms_have_minimal_gaussian_behavior() -> None:
 
 def test_pubrev008_fixed_hmc_transition_and_sampling_loop_move_chain() -> None:
     from sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc import (
-        initializehmcstate,
-        metropolishmctransition,
-        runsamplingloop,
+        initialize_hmc_state,
+        metropolis_hmc_transition,
+        run_sampling_loop,
     )
 
-    state, kernel = initializehmcstate(
+    state, kernel = initialize_hmc_state(
         _standard_normal_logp,
         np.array([0.25, -0.5]),
         step_size=0.04,
         n_leapfrog=5,
         seed=31,
     )
-    next_state_a, stats_a = metropolishmctransition(state, kernel, _standard_normal_logp)
-    next_state_b, stats_b = metropolishmctransition(state, kernel, _standard_normal_logp)
+    next_state_a, stats_a = metropolis_hmc_transition(state, kernel, _standard_normal_logp)
+    next_state_b, stats_b = metropolis_hmc_transition(state, kernel, _standard_normal_logp)
 
     assert next_state_a.shape == state.shape
     assert stats_a.shape == (3,)
@@ -123,7 +123,7 @@ def test_pubrev008_fixed_hmc_transition_and_sampling_loop_move_chain() -> None:
     assert 0.0 <= float(stats_a[1]) <= 1.0
     assert not np.array_equal(next_state_a[-1:], state[-1:])
 
-    samples, trace, final_state = runsamplingloop(state, kernel, 5, 2, _standard_normal_logp)
+    samples, trace, final_state = run_sampling_loop(state, kernel, 5, 2, _standard_normal_logp)
 
     assert samples.shape == (5, 2)
     assert trace.shape == (7, 3)
@@ -135,26 +135,26 @@ def test_pubrev008_fixed_hmc_transition_and_sampling_loop_move_chain() -> None:
 
 def test_pubrev008_safe_hmc_llm_transition_threads_rng_deterministically() -> None:
     from sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm import (
-        hamiltoniantransitionkernel,
-        initializehmckernelstate,
-        initializesamplerrng,
+        hamiltonian_transition_kernel,
+        initialize_hmc_kernel_state,
+        initialize_sampler_rng,
     )
 
-    kernel_spec, chain_state = initializehmckernelstate(
+    kernel_spec, chain_state = initialize_hmc_kernel_state(
         _standard_normal_logp,
         np.array([0.1, -0.2]),
         step_size=0.03,
         n_leapfrog=4,
     )
-    key = initializesamplerrng(17)
+    key = initialize_sampler_rng(17)
 
-    state_a, key_a, stats_a = hamiltoniantransitionkernel(
+    state_a, key_a, stats_a = hamiltonian_transition_kernel(
         chain_state,
         kernel_spec,
         key,
         _standard_normal_logp,
     )
-    state_b, key_b, stats_b = hamiltoniantransitionkernel(
+    state_b, key_b, stats_b = hamiltonian_transition_kernel(
         chain_state,
         kernel_spec,
         key,
@@ -172,20 +172,20 @@ def test_pubrev008_safe_hmc_llm_transition_threads_rng_deterministically() -> No
 
 def test_pubrev008_fixed_hmc_llm_collects_after_real_transitions() -> None:
     from sciona.atoms.inference.mcmc_foundational.mini_mcmc.hmc_llm import (
-        collectposteriorchain,
-        initializehmckernelstate,
-        initializesamplerrng,
+        collect_posterior_chain,
+        initialize_hmc_kernel_state,
+        initialize_sampler_rng,
     )
 
-    kernel_spec, chain_state = initializehmckernelstate(
+    kernel_spec, chain_state = initialize_hmc_kernel_state(
         _standard_normal_logp,
         np.array([0.1, -0.2]),
         step_size=0.03,
         n_leapfrog=4,
     )
-    key = initializesamplerrng(19)
+    key = initialize_sampler_rng(19)
 
-    samples_a, final_state_a, final_key_a, trace_a = collectposteriorchain(
+    samples_a, final_state_a, final_key_a, trace_a = collect_posterior_chain(
         6,
         3,
         chain_state,
@@ -193,7 +193,7 @@ def test_pubrev008_fixed_hmc_llm_collects_after_real_transitions() -> None:
         key,
         _standard_normal_logp,
     )
-    samples_b, final_state_b, final_key_b, trace_b = collectposteriorchain(
+    samples_b, final_state_b, final_key_b, trace_b = collect_posterior_chain(
         6,
         3,
         chain_state,
@@ -214,9 +214,9 @@ def test_pubrev008_fixed_hmc_llm_collects_after_real_transitions() -> None:
 
 
 def test_pubrev008_safe_nuts_initializer_accepts_vector_positions() -> None:
-    from sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm import initializenutsstate
+    from sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm import initialize_nuts_state
 
-    state, key = initializenutsstate(
+    state, key = initialize_nuts_state(
         _standard_normal_logp,
         np.array([0.2, -0.1]),
         target_accept_p=0.8,
@@ -275,17 +275,17 @@ def test_pubrev008_fixed_nuts_tree_returns_source_shaped_bookkeeping() -> None:
 
 def test_pubrev008_fixed_nuts_transitions_are_deterministic_and_not_random_walk() -> None:
     from sciona.atoms.inference.mcmc_foundational.mini_mcmc.nuts_llm import (
-        initializenutsstate,
-        runnutstransitions,
+        initialize_nuts_state,
+        run_nuts_transitions,
     )
 
-    state, key = initializenutsstate(
+    state, key = initialize_nuts_state(
         _standard_normal_logp,
         np.array([0.2, -0.1]),
         target_accept_p=0.8,
         seed=23,
     )
-    samples_a, trace_a, state_a, key_a = runnutstransitions(
+    samples_a, trace_a, state_a, key_a = run_nuts_transitions(
         state,
         key,
         5,
@@ -293,7 +293,7 @@ def test_pubrev008_fixed_nuts_transitions_are_deterministic_and_not_random_walk(
         _standard_normal_logp,
         max_tree_depth=4,
     )
-    samples_b, trace_b, state_b, key_b = runnutstransitions(
+    samples_b, trace_b, state_b, key_b = run_nuts_transitions(
         state,
         key,
         5,

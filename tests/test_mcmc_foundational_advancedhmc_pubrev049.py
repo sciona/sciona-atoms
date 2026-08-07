@@ -37,10 +37,10 @@ TRAJECTORY_REFS_PATH = (
 )
 
 TARGET_ATOMS = {
-    "sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator.hamiltonianphasepointtransition",
-    "sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator.temperingfactorcomputation",
-    "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.buildnutstree",
-    "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.nutstransitionkernel",
+    "sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator.hamiltonian_phase_point_transition",
+    "sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator.tempering_factor_computation",
+    "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.build_nuts_tree",
+    "sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory.nuts_transition_kernel",
 }
 
 
@@ -62,29 +62,29 @@ def test_pubrev049_target_atoms_are_importable() -> None:
 
 def test_pubrev049_tempering_matches_advancedhmc_half_step_schedule() -> None:
     from sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator import (
-        temperingfactorcomputation,
+        tempering_factor_computation,
     )
 
     lf = np.array([0.1, 4.0])
     r = np.ones(3)
 
-    assert temperingfactorcomputation(lf, r, {"i": 1, "is_half": True}, 3) == 2.0
-    assert temperingfactorcomputation(lf, r, {"i": 1, "is_half": False}, 3) == 2.0
-    assert temperingfactorcomputation(lf, r, {"i": 2, "is_half": True}, 3) == 2.0
-    assert temperingfactorcomputation(lf, r, {"i": 2, "is_half": False}, 3) == 0.5
-    assert temperingfactorcomputation(lf, r, {"i": 3, "is_half": True}, 3) == 0.5
-    assert temperingfactorcomputation(lf, r, {"i": 3, "is_half": False}, 3) == 0.5
+    assert tempering_factor_computation(lf, r, {"i": 1, "is_half": True}, 3) == 2.0
+    assert tempering_factor_computation(lf, r, {"i": 1, "is_half": False}, 3) == 2.0
+    assert tempering_factor_computation(lf, r, {"i": 2, "is_half": True}, 3) == 2.0
+    assert tempering_factor_computation(lf, r, {"i": 2, "is_half": False}, 3) == 0.5
+    assert tempering_factor_computation(lf, r, {"i": 3, "is_half": True}, 3) == 0.5
+    assert tempering_factor_computation(lf, r, {"i": 3, "is_half": False}, 3) == 0.5
 
     with pytest.raises(IndexError):
-        temperingfactorcomputation(lf, r, {"i": 4, "is_half": False}, 3)
+        tempering_factor_computation(lf, r, {"i": 4, "is_half": False}, 3)
 
 
 def test_pubrev049_phasepoint_transition_is_finite_leapfrog_step() -> None:
     from sciona.atoms.inference.mcmc_foundational.advancedhmc.integrator import (
-        hamiltonianphasepointtransition,
+        hamiltonian_phase_point_transition,
     )
 
-    z_next, is_valid = hamiltonianphasepointtransition(
+    z_next, is_valid = hamiltonian_phase_point_transition(
         np.array([0.1, 1.0]),
         _quadratic_potential,
         np.array([1.0, 0.0]),
@@ -98,12 +98,12 @@ def test_pubrev049_phasepoint_transition_is_finite_leapfrog_step() -> None:
 
 
 def test_pubrev049_build_nuts_tree_returns_directional_compact_leaves() -> None:
-    from sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory import buildnutstree
+    from sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory import build_nuts_tree
 
     start = np.array([0.0, 1.0])
     initial_energy = _quadratic_potential(start[:1]) + 0.5 * np.dot(start[1:], start[1:])
-    forward = buildnutstree(np.array([7]), _quadratic_potential, start, 1, 2, initial_energy)
-    backward = buildnutstree(np.array([7]), _quadratic_potential, start, -1, 2, initial_energy)
+    forward = build_nuts_tree(np.array([7]), _quadratic_potential, start, 1, 2, initial_energy)
+    backward = build_nuts_tree(np.array([7]), _quadratic_potential, start, -1, 2, initial_energy)
 
     assert forward.ndim == 2
     assert forward.shape[1] == 2
@@ -113,18 +113,18 @@ def test_pubrev049_build_nuts_tree_returns_directional_compact_leaves() -> None:
     assert backward[0, 0] < 0.0
 
     with pytest.raises(ValueError):
-        buildnutstree(np.array([7]), _quadratic_potential, start, 0, 2, initial_energy)
+        build_nuts_tree(np.array([7]), _quadratic_potential, start, 0, 2, initial_energy)
 
 
 def test_pubrev049_nuts_transition_is_deterministic_for_key_and_reports_stats() -> None:
-    from sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory import nutstransitionkernel
+    from sciona.atoms.inference.mcmc_foundational.advancedhmc.trajectory import nuts_transition_kernel
 
     initial = np.array([0.25, -0.5])
     params = np.array([0.05, 4.0, 1000.0])
     key = np.array([17])
 
-    state_a, stats_a = nutstransitionkernel(key, _quadratic_potential, initial, params)
-    state_b, stats_b = nutstransitionkernel(key, _quadratic_potential, initial, params)
+    state_a, stats_a = nuts_transition_kernel(key, _quadratic_potential, initial, params)
+    state_b, stats_b = nuts_transition_kernel(key, _quadratic_potential, initial, params)
 
     assert state_a.shape == initial.shape
     assert np.all(np.isfinite(state_a))

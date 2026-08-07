@@ -491,6 +491,16 @@ def _base_entry_from_callable(atom_name: str, *, import_roots: Sequence[str] = (
     if not module_name or not symbol_name:
         raise ValueError(f"Invalid atom name {atom_name!r}")
     with _temporary_import_roots(import_roots, module_name=module_name):
+        for cached_name in (module_name, f"{module_name}.atoms"):
+            cached = sys.modules.get(cached_name)
+            cached_file_text = str(getattr(cached, "__file__", "") or "")
+            cached_file = Path(cached_file_text)
+            if cached_file_text and import_roots and not any(
+                cached_file.is_relative_to(Path(root).resolve()) for root in import_roots
+            ):
+                # Provider publication must inspect the workspace source, even
+                # if an older wheel for this PEP 420 package was imported first.
+                sys.modules.pop(cached_name, None)
         module = importlib.import_module(module_name)
         if not hasattr(module, symbol_name):
             module = importlib.import_module(f"{module_name}.atoms")
