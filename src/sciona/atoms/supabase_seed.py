@@ -1380,6 +1380,20 @@ def _replace_artifact_benchmark_rows(client: Any, rows: Sequence[dict[str, Any]]
         client.table("artifact_benchmarks").insert(list(rows)).execute()
 
 
+def sync_artifact_benchmark_rows(
+    client: Any,
+    inventory: SeedInventory,
+) -> dict[str, int]:
+    """Attach provider benchmark results after CDG artifact versions exist."""
+    version_ids = _fetch_artifact_version_ids(client)
+    rows, summary = build_artifact_benchmark_rows(
+        inventory,
+        version_ids=version_ids,
+    )
+    _replace_artifact_benchmark_rows(client, rows)
+    return summary
+
+
 def _fetch_source_repo_ids(client: Any) -> dict[str, str]:
     response = client.table("atom_source_repositories").select("repo_name,source_repo_id").execute()
     return {
