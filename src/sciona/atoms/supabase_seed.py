@@ -1413,19 +1413,24 @@ def _fetch_atom_ids(client: Any) -> dict[str, str]:
 
 
 def _fetch_artifact_version_ids(client: Any) -> dict[tuple[str, str], str]:
-    artifact_rows = getattr(
-        client.table("artifact_versions").select("version_id,content_hash,artifact_id").execute(),
-        "data",
-        None,
-    ) or []
+    artifact_rows = _select_all_rows(
+        client,
+        "artifact_versions",
+        "version_id,content_hash,artifact_id",
+    )
     artifact_ids = {str(row["artifact_id"]) for row in artifact_rows if row.get("artifact_id")}
     if not artifact_ids:
         return {}
-    fqdn_rows = getattr(
-        client.table("artifacts").select("artifact_id,fqdn").in_("artifact_id", sorted(artifact_ids)).execute(),
-        "data",
-        None,
-    ) or []
+    fqdn_rows: list[dict[str, Any]] = []
+    sorted_ids = sorted(artifact_ids)
+    for start in range(0, len(sorted_ids), 100):
+        response = (
+            client.table("artifacts")
+            .select("artifact_id,fqdn")
+            .in_("artifact_id", sorted_ids[start : start + 100])
+            .execute()
+        )
+        fqdn_rows.extend(getattr(response, "data", None) or [])
     fqdn_by_id = {str(row["artifact_id"]): str(row["fqdn"]) for row in fqdn_rows if row.get("artifact_id") and row.get("fqdn")}
     return {
         (fqdn_by_id[str(row["artifact_id"])], str(row["content_hash"])): str(row["version_id"])

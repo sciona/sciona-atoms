@@ -873,3 +873,65 @@ def test_fetch_atom_ids_paginates() -> None:
     rows = _fetch_atom_ids(client)
     assert len(rows) == 1001
     assert rows["atom.1000"] == "id-1000"
+
+
+class _ArtifactVersionQuery:
+    def __init__(self, client, table):
+        self.client = client
+        self.table = table
+        self.page = None
+        self.ids = None
+
+    def select(self, _columns):
+        return self
+
+    def range(self, start, end):
+        self.page = (start, end)
+        return self
+
+    def in_(self, _column, values):
+        self.ids = list(values)
+        return self
+
+    def execute(self):
+        if self.table == "artifact_versions":
+            start = 0 if self.page is None else self.page[0]
+            stop = len(self.client.version_rows) if self.page is None else self.page[1] + 1
+            return _FakeResponse(self.client.version_rows[start:stop])
+        assert self.ids is not None
+        self.client.artifact_id_batches.append(self.ids)
+        return _FakeResponse(
+            [
+                {"artifact_id": artifact_id, "fqdn": f"artifact.{artifact_id}"}
+                for artifact_id in self.ids
+            ]
+        )
+
+
+class _ArtifactVersionClient:
+    def __init__(self, count):
+        self.version_rows = [
+            {
+                "version_id": f"version-{index}",
+                "content_hash": f"hash-{index}",
+                "artifact_id": f"id-{index}",
+            }
+            for index in range(count)
+        ]
+        self.artifact_id_batches = []
+
+    def table(self, name):
+        assert name in {"artifact_versions", "artifacts"}
+        return _ArtifactVersionQuery(self, name)
+
+
+def test_fetch_artifact_version_ids_paginates_and_bounds_in_filters() -> None:
+    from sciona.atoms.supabase_seed import _fetch_artifact_version_ids
+
+    client = _ArtifactVersionClient(1205)
+    rows = _fetch_artifact_version_ids(client)
+
+    assert len(rows) == 1205
+    assert rows[("artifact.id-1204", "hash-1204")] == "version-1204"
+    assert len(client.artifact_id_batches) == 13
+    assert max(map(len, client.artifact_id_batches)) == 100
