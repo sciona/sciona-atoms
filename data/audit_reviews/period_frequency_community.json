@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "provider_repo": "sciona-atoms",
+  "bundle_name": "period-frequency-community-review",
+  "atoms": [{
+    "atom_name": "sciona.atoms.physical_quantities.period_frequency.frequency_from_period",
+    "audit": {
+      "review_status": "approved",
+      "review_source": "automated",
+      "publication_tier": 3,
+      "structural_status": "pass",
+      "runtime_status": "pass",
+      "semantic_status": "pass",
+      "developer_semantics_status": "pass",
+      "trust_readiness": "ready",
+      "review_required_actions": [],
+      "review_limitations": [
+        "Converts a supplied finite positive cycle duration in seconds to ordinary frequency in hertz; does not estimate period or calculate angular frequency.",
+        "Preserves array shape and rejects invalid numeric domains and floating overflow or underflow.",
+        "Automated Community review only; no human certification or Tier 2 usage claim."
+      ],
+      "authoritative_sources": ["https://openstax.org/books/university-physics-volume-1/pages/15-1-simple-harmonic-motion"],
+      "validation": {
+        "runner_version": "period-frequency-execution.v1",
+        "synthetic_cases": 256,
+        "relative_tolerance": 0.000001,
+        "methods": ["interpolated rising-zero-crossing period", "independent FFT spectral peak"],
+        "tests": "tests/physics_ingest/test_period_frequency_execution.py"
+      }
+    }
+  }]
+}
